@@ -1,5 +1,5 @@
 // Service Worker para VRVS - Funcionamento Offline
-const CACHE_NAME = "vrvs-v5.3.0";
+const CACHE_NAME = "vrvs-v5.4.0";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -54,6 +54,29 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // ESTRATÉGIA: Network-first para HTML (força atualização)
+    if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
+        event.respondWith(
+            fetch(event.request).then((response) => {
+                // Se conseguiu buscar da rede, atualizar cache
+                if (response && response.status === 200) {
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
+                }
+                return response;
+            }).catch(() => {
+                // Se offline, usar cache
+                return caches.match(event.request).then((response) => {
+                    return response || caches.match('./index.html');
+                });
+            })
+        );
+        return;
+    }
+
+    // Para outros arquivos, usar cache-first
     event.respondWith(
         caches.match(event.request).then((response) => {
             // Retornar do cache se disponível
