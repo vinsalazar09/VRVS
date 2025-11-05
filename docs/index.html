@@ -1397,8 +1397,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Filtrar por Tema</label>
-                            <select class="form-select" id="cadernoFiltroTema" onchange="filtrarCaderno()">
-                                <option value="">Todos os temas</option>
+                            <select class="form-select" id="cadernoFiltroTema" onchange="filtrarCaderno()" disabled>
+                                <option value="">Selecione uma área primeiro</option>
                             </select>
                         </div>
                     </div>
@@ -2973,8 +2973,13 @@
             // Criar anotação se não existir
             obterOuCriarAnotacao(temaId);
             
+            // Encontrar a área do tema
+            const tema = dados.find(t => String(t.id) === String(temaId));
+            if (!tema) return;
+            
             // Filtrar caderno para mostrar apenas este tema
-            document.getElementById('cadernoFiltroArea').value = '';
+            document.getElementById('cadernoFiltroArea').value = tema.area;
+            atualizarSelectTemaPorArea(); // Atualizar select de tema
             document.getElementById('cadernoFiltroTema').value = String(temaId);
             
             // Mostrar seção caderno
@@ -3022,7 +3027,11 @@
                 });
             }
             
-            atualizarSelectTemaPorArea();
+            // Resetar select de tema para desabilitado
+            if (selectTema) {
+                selectTema.innerHTML = '<option value="">Selecione uma área primeiro</option>';
+                selectTema.disabled = true;
+            }
         }
         
         function atualizarSelectTemaPorArea() {
@@ -3031,17 +3040,23 @@
             
             if (!selectTema) return;
             
-            selectTema.innerHTML = '<option value="">Todos os temas</option>';
-            
-            let temasFiltrados = dados;
-            if (filtroArea) {
-                temasFiltrados = dados.filter(t => t.area === filtroArea);
+            if (!filtroArea) {
+                // Se não há área selecionada, desabilitar select de tema
+                selectTema.innerHTML = '<option value="">Selecione uma área primeiro</option>';
+                selectTema.disabled = true;
+                return;
             }
+            
+            // Habilitar e popular com temas da área selecionada
+            selectTema.disabled = false;
+            selectTema.innerHTML = '<option value="">Todos os temas desta área</option>';
+            
+            const temasFiltrados = dados.filter(t => t.area === filtroArea);
             
             temasFiltrados.forEach(t => {
                 const option = document.createElement('option');
                 option.value = t.id;
-                option.textContent = `${t.area} - ${t.tema}`;
+                option.textContent = t.tema; // Mostrar apenas o nome do tema, sem repetir área
                 selectTema.appendChild(option);
             });
         }
