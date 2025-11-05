@@ -6,9 +6,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#17121d">
     
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="shortcut icon" href="logo.png">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="VRVS">
@@ -1313,16 +1313,17 @@
             }
         }
         
-        function calcularProximaRevisao(tema) {
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
+        function calcularProximaRevisao(tema, dataSessao = null) {
+            // CORREÇÃO: Usar data da sessão se fornecida, senão usar data atual
+            const dataBase = dataSessao ? new Date(dataSessao + 'T00:00:00') : new Date();
+            dataBase.setHours(0, 0, 0, 0);
             
             // CORREÇÃO CRÍTICA: Se é PRIMEIRA sessão (contador = 1 OU última data = null), sempre +1 dia
             const sessoes = tema.sessoes || 0;
             const ultEstudo = tema.ultEstudo || null;
             
             if (sessoes === 0 || sessoes === 1 || !ultEstudo || ultEstudo === null || ultEstudo === '') {
-                const proxima = new Date(hoje);
+                const proxima = new Date(dataBase);
                 proxima.setDate(proxima.getDate() + 1);
                 return proxima.toISOString().split('T')[0];
             }
@@ -1348,7 +1349,7 @@
                 }
             }
             
-            const proxima = new Date(hoje);
+            const proxima = new Date(dataBase);
             proxima.setDate(proxima.getDate() + intervalo);
             return proxima.toISOString().split('T')[0];
         }
@@ -2526,7 +2527,8 @@
                 tema.rendimento = rendimento / 100;
                 tema.sessoes = (tema.sessoes || 0) + 1;
                 tema.ultEstudo = dataSessao;
-                tema.agenda = calcularProximaRevisao(tema);
+                // CORREÇÃO: Passar dataSessao para calcular baseado na data do feedback, não na data atual
+                tema.agenda = calcularProximaRevisao(tema, dataSessao);
                 tema.tempo = (tema.tempo || 0) + tempo;
                 tema.status = tema.sessoes === 1 ? 'Em estudo' : tema.status;
                 
