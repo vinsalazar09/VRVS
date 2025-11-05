@@ -1258,6 +1258,7 @@
                                 <button id="cronometroPausa" class="btn btn-small" onclick="pausarCronometro()">⏸️ Pausar</button>
                                 <button id="cronometroIntervalo" class="btn btn-small" onclick="iniciarIntervalo()">⏸️ Intervalo</button>
                                 <button id="cronometroReset" class="btn btn-small" onclick="resetCronometro()">🔄 Resetar</button>
+                                <button id="cronometroEncerrar" class="btn btn-small" onclick="encerrarSessao()" style="background: rgba(0,206,209,0.2); color: #00FFE0; border: 1px solid rgba(0,206,209,0.4);">✅ Encerrar Sessão</button>
                             </div>
                             <div id="tempoIntervalo" style="font-size: 11px; color: rgba(255,165,0,0.7); margin-top: 5px; display: none;">
                                 ⏸️ Em intervalo: <span id="tempoIntervaloDisplay">00:00:00</span>
@@ -1289,6 +1290,30 @@
                         <div class="form-group">
                             <label class="form-label">Duração (min)</label>
                             <input type="number" class="form-input" id="feedbackTempo" min="0" placeholder="Minutos" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📊 Intervalos (opcional)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+                                <input type="number" class="form-input" id="feedbackNumeroIntervalos" min="0" placeholder="Número de pausas" value="0">
+                                <input type="text" class="form-input" id="feedbackIntervalos" placeholder="Ex: 00:05:00, 00:03:30" style="font-size: 12px;">
+                            </div>
+                            <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-top: 5px;">
+                                💡 Use o botão "Encerrar Sessão" no cronômetro para preencher automaticamente
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">❓ Questões (opcional)</label>
+                            <input type="text" class="form-input" id="feedbackQuestoes" placeholder="Ex: 15/20 (acertos/total)" pattern="[0-9]+/[0-9]+">
+                            <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-top: 5px;">
+                                💡 Formato: acertos/total (ex: 17/20)
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🃏 Flashcards (opcional)</label>
+                            <input type="number" class="form-input" id="feedbackFlashcards" min="0" placeholder="Quantidade revisada">
+                            <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-top: 5px;">
+                                💡 Quantidade de flashcards revisados na sessão
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Diretriz Próxima Sessão</label>
@@ -2876,6 +2901,8 @@
         let intervaloInterval = null;
         let tempoTotalIntervalo = 0; // Tempo total de intervalo acumulado (não conta no estudo)
         let cronometroInicioTimestamp = null; // Timestamp de quando o cronômetro foi iniciado (para rodar em segundo plano)
+        let intervalosIndividuais = []; // Array para armazenar cada intervalo individualmente [{tempo: segundos, inicio: timestamp}, ...]
+        let intervaloInicioTimestamp = null; // Timestamp de quando o intervalo atual começou
         
         // Restaurar cronômetro do localStorage se existir
         function restaurarCronometro() {
@@ -2884,13 +2911,15 @@
                 try {
                     const dados = JSON.parse(salvo);
                     if (dados.timestamp) {
-                        // Calcular tempo decorrido desde que foi salvo
+                        // Calcular tempo decorrido desde que foi salvo (BASEADO EM TIMESTAMP)
                         const agora = Date.now();
                         const tempoDecorrido = Math.floor((agora - dados.timestamp) / 1000);
                         
                         // Atualizar valores
                         cronometroSegundos = dados.segundos + tempoDecorrido;
                         tempoTotalIntervalo = dados.tempoIntervalo || 0;
+                        intervalosIndividuais = dados.intervalosIndividuais || []; // Restaurar intervalos individuais
+                        intervaloInicioTimestamp = dados.intervaloInicioTimestamp || null;
                         
                         // Se estava em intervalo, restaurar estado do intervalo
                         if (dados.intervaloAtivo) {
@@ -2910,9 +2939,12 @@
                             }, 1000);
                         }
                         
-                        // Se estava rodando, reiniciar contagem
+                        // Se estava rodando, reiniciar contagem COM TIMESTAMP PRECISO
                         if (dados.rodando && !cronometroRodando) {
                             cronometroRodando = true;
+                            cronometroInicioTimestamp = dados.timestamp; // Usar timestamp original
+                            localStorage.setItem('vrvs_cronometro_timestamp', String(dados.timestamp));
+                            localStorage.setItem('vrvs_cronometro_segundos', String(dados.segundos));
                             iniciarCronometroContagem();
                             document.getElementById('cronometroToggle').textContent = '⏸️ Pausar';
                         }
@@ -2928,13 +2960,19 @@
         // Salvar estado do cronômetro
         function salvarEstadoCronometro() {
             if (cronometroRodando || intervaloAtivo) {
+                // CRÍTICO: Salvar timestamp original, não atualizar
+                const timestampOriginal = localStorage.getItem('vrvs_cronometro_timestamp');
+                const segundosOriginais = localStorage.getItem('vrvs_cronometro_segundos');
+                
                 localStorage.setItem('vrvs_cronometro', JSON.stringify({
                     rodando: cronometroRodando,
-                    segundos: cronometroSegundos,
-                    timestamp: Date.now(),
+                    segundos: segundosOriginais ? parseInt(segundosOriginais) : cronometroSegundos,
+                    timestamp: timestampOriginal ? parseInt(timestampOriginal) : cronometroInicioTimestamp || Date.now(),
                     tempoIntervalo: tempoTotalIntervalo,
                     intervaloAtivo: intervaloAtivo,
-                    intervaloSegundos: intervaloSegundos
+                    intervaloSegundos: intervaloSegundos,
+                    intervalosIndividuais: intervalosIndividuais, // Salvar array de intervalos individuais
+                    intervaloInicioTimestamp: intervaloInicioTimestamp
                 }));
             } else {
                 localStorage.removeItem('vrvs_cronometro');
@@ -2947,17 +2985,44 @@
                 clearInterval(cronometroInterval);
             }
             
-            cronometroInicioTimestamp = Date.now();
+            // CRÍTICO: Manter timestamp original se já existe, senão criar novo
+            let timestampOriginal = localStorage.getItem('vrvs_cronometro_timestamp');
+            let segundosOriginais = localStorage.getItem('vrvs_cronometro_segundos');
+            
+            if (!timestampOriginal) {
+                // Primeira vez iniciando
+                cronometroInicioTimestamp = Date.now();
+                timestampOriginal = String(cronometroInicioTimestamp);
+                segundosOriginais = String(cronometroSegundos);
+            } else {
+                // Continuando contagem - usar timestamp original
+                cronometroInicioTimestamp = parseInt(timestampOriginal);
+            }
+            
+            // Salvar no localStorage
+            localStorage.setItem('vrvs_cronometro_timestamp', timestampOriginal);
+            localStorage.setItem('vrvs_cronometro_segundos', segundosOriginais);
+            
+            // Atualizar display periodicamente (mas cálculo sempre baseado em timestamp)
             cronometroInterval = setInterval(() => {
-                cronometroSegundos++;
                 atualizarDisplayCronometro();
-                // Salvar estado a cada 5 segundos
-                if (cronometroSegundos % 5 === 0) {
-                    salvarEstadoCronometro();
-                }
-            }, 1000);
+            }, 100); // Atualizar a cada 100ms para maior precisão visual
+            
             cronometroRodando = true;
             salvarEstadoCronometro();
+        }
+        
+        // Função para calcular tempo decorrido baseado em timestamp (não depende de intervalos)
+        function calcularTempoDecorrido() {
+            const timestampSalvo = localStorage.getItem('vrvs_cronometro_timestamp');
+            const segundosSalvos = parseInt(localStorage.getItem('vrvs_cronometro_segundos') || '0');
+            
+            if (timestampSalvo && cronometroRodando) {
+                const agora = Date.now();
+                const tempoDecorrido = Math.floor((agora - parseInt(timestampSalvo)) / 1000);
+                return segundosSalvos + tempoDecorrido;
+            }
+            return cronometroSegundos;
         }
         
         function formatarTempoCronometro(segundos) {
@@ -2968,6 +3033,11 @@
         }
         
         function atualizarDisplayCronometro() {
+            // CRÍTICO: Sempre calcular baseado em timestamp quando rodando
+            if (cronometroRodando) {
+                cronometroSegundos = calcularTempoDecorrido();
+            }
+            
             document.getElementById('cronometroDisplay').textContent = formatarTempoCronometro(cronometroSegundos);
             // Atualizar display de tempo total de intervalo acumulado
             if (tempoTotalIntervalo > 0) {
@@ -2985,15 +3055,26 @@
             }
             
             if (cronometroRodando) {
-                // Pausar
+                // Pausar - calcular tempo final baseado em timestamp
                 clearInterval(cronometroInterval);
                 cronometroInterval = null;
+                
+                // Calcular tempo final preciso
+                cronometroSegundos = calcularTempoDecorrido();
+                
                 cronometroRodando = false;
                 cronometroInicioTimestamp = null;
+                localStorage.removeItem('vrvs_cronometro_timestamp');
+                
                 document.getElementById('cronometroToggle').textContent = '⏱️ Iniciar Cronômetro';
                 salvarEstadoCronometro();
+                atualizarDisplayCronometro();
             } else {
-                // Iniciar
+                // Iniciar - salvar timestamp preciso
+                cronometroInicioTimestamp = Date.now();
+                localStorage.setItem('vrvs_cronometro_timestamp', String(cronometroInicioTimestamp));
+                localStorage.setItem('vrvs_cronometro_segundos', String(cronometroSegundos));
+                
                 iniciarCronometroContagem();
                 document.getElementById('cronometroToggle').textContent = '⏸️ Pausar';
             }
@@ -3012,28 +3093,52 @@
             }
             
             if (intervaloAtivo) {
-                // Finalizar intervalo - acumular tempo de intervalo
+                // Finalizar intervalo - calcular tempo baseado em timestamp e salvar individualmente
                 clearInterval(intervaloInterval);
                 intervaloInterval = null;
-                tempoTotalIntervalo += intervaloSegundos; // Acumular tempo de intervalo
+                
+                // Calcular tempo preciso do intervalo baseado em timestamp
+                let tempoIntervaloFinal = intervaloSegundos;
+                if (intervaloInicioTimestamp) {
+                    const agora = Date.now();
+                    tempoIntervaloFinal = Math.floor((agora - intervaloInicioTimestamp) / 1000);
+                }
+                
+                // Salvar intervalo individual
+                intervalosIndividuais.push({
+                    tempo: tempoIntervaloFinal,
+                    inicio: intervaloInicioTimestamp || Date.now() - (tempoIntervaloFinal * 1000)
+                });
+                
+                tempoTotalIntervalo += tempoIntervaloFinal; // Acumular tempo de intervalo
                 intervaloAtivo = false;
                 intervaloSegundos = 0;
+                intervaloInicioTimestamp = null;
+                
                 document.getElementById('cronometroIntervalo').textContent = '⏸️ Intervalo';
                 document.getElementById('tempoIntervalo').style.display = 'none';
                 atualizarDisplayCronometro(); // Atualizar display com tempo acumulado
                 salvarEstadoCronometro(); // Salvar estado atualizado
-                mostrarNotificacaoFeedback(`✅ Intervalo finalizado (${formatarTempoCronometro(tempoTotalIntervalo)} total)`);
+                mostrarNotificacaoFeedback(`✅ Intervalo finalizado (${formatarTempoCronometro(tempoIntervaloFinal)} - Total: ${formatarTempoCronometro(tempoTotalIntervalo)})`);
             } else {
                 // Iniciar intervalo (pausa o cronômetro mas não conta)
                 intervaloAtivo = true;
                 intervaloSegundos = 0;
+                intervaloInicioTimestamp = Date.now(); // Salvar timestamp de início do intervalo
+                
                 document.getElementById('cronometroIntervalo').textContent = '▶️ Finalizar Intervalo';
                 document.getElementById('tempoIntervalo').style.display = 'block';
                 
                 intervaloInterval = setInterval(() => {
-                    intervaloSegundos++;
+                    // Calcular baseado em timestamp para maior precisão
+                    if (intervaloInicioTimestamp) {
+                        const agora = Date.now();
+                        intervaloSegundos = Math.floor((agora - intervaloInicioTimestamp) / 1000);
+                    } else {
+                        intervaloSegundos++;
+                    }
                     document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
-                }, 1000);
+                }, 100);
                 
                 // Pausar cronômetro durante intervalo
                 if (cronometroRodando) {
@@ -3061,16 +3166,94 @@
             cronometroSegundos = 0;
             intervaloSegundos = 0;
             tempoTotalIntervalo = 0; // Resetar tempo total de intervalo
+            intervalosIndividuais = []; // Resetar array de intervalos individuais
+            intervaloInicioTimestamp = null;
             cronometroInicioTimestamp = null;
             atualizarDisplayCronometro();
             document.getElementById('cronometroToggle').textContent = '⏱️ Iniciar Cronômetro';
             document.getElementById('cronometroIntervalo').textContent = '⏸️ Intervalo';
             document.getElementById('tempoIntervalo').style.display = 'none';
             localStorage.removeItem('vrvs_cronometro'); // Limpar do localStorage
+            localStorage.removeItem('vrvs_cronometro_timestamp');
+            localStorage.removeItem('vrvs_cronometro_segundos');
+        }
+        
+        // Função para encerrar sessão e preencher dados automaticamente
+        function encerrarSessao() {
+            // Pausar cronômetro se estiver rodando para calcular tempo final preciso
+            if (cronometroRodando) {
+                clearInterval(cronometroInterval);
+                cronometroInterval = null;
+                cronometroSegundos = calcularTempoDecorrido();
+                cronometroRodando = false;
+                document.getElementById('cronometroToggle').textContent = '⏱️ Iniciar Cronômetro';
+            }
+            
+            // Finalizar intervalo ativo se houver
+            if (intervaloAtivo) {
+                clearInterval(intervaloInterval);
+                intervaloInterval = null;
+                
+                let tempoIntervaloFinal = intervaloSegundos;
+                if (intervaloInicioTimestamp) {
+                    const agora = Date.now();
+                    tempoIntervaloFinal = Math.floor((agora - intervaloInicioTimestamp) / 1000);
+                }
+                
+                intervalosIndividuais.push({
+                    tempo: tempoIntervaloFinal,
+                    inicio: intervaloInicioTimestamp || Date.now() - (tempoIntervaloFinal * 1000)
+                });
+                
+                tempoTotalIntervalo += tempoIntervaloFinal;
+                intervaloAtivo = false;
+                intervaloSegundos = 0;
+                intervaloInicioTimestamp = null;
+            }
+            
+            if (cronometroSegundos === 0) {
+                mostrarNotificacaoFeedback('⚠️ O cronômetro não está rodando!', 'error');
+                return;
+            }
+            
+            // Calcular tempo final preciso
+            const tempoFinalMinutos = obterTempoCronometroMinutos();
+            const numeroIntervalos = intervalosIndividuais.length;
+            const temposIntervalos = intervalosIndividuais.map(i => formatarTempoCronometro(i.tempo)).join(', ');
+            
+            // Preencher campos do formulário automaticamente
+            document.getElementById('feedbackTempo').value = tempoFinalMinutos;
+            
+            // Preencher campo de intervalos (se existir)
+            const intervalosInput = document.getElementById('feedbackIntervalos');
+            if (intervalosInput) {
+                intervalosInput.value = temposIntervalos || '';
+            }
+            
+            const numeroIntervalosInput = document.getElementById('feedbackNumeroIntervalos');
+            if (numeroIntervalosInput) {
+                numeroIntervalosInput.value = numeroIntervalos;
+            }
+            
+            // Mostrar notificação com resumo
+            let resumo = `📊 Sessão Encerrada:\n`;
+            resumo += `⏱️ Tempo total: ${formatarTempoCronometro(cronometroSegundos)} (${tempoFinalMinutos} min)\n`;
+            if (numeroIntervalos > 0) {
+                resumo += `⏸️ Intervalos: ${numeroIntervalos} (${temposIntervalos})\n`;
+                resumo += `⏸️ Tempo total de intervalo: ${formatarTempoCronometro(tempoTotalIntervalo)}\n`;
+            }
+            resumo += `✅ Preencha os outros campos e registre o feedback!`;
+            
+            mostrarNotificacaoFeedback(resumo, 'success');
+            
+            // Scroll para o formulário
+            document.getElementById('feedbackForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
         function obterTempoCronometroMinutos() {
-            return Math.floor(cronometroSegundos / 60);
+            // CRÍTICO: Sempre calcular baseado em timestamp quando rodando (não depende de intervalos)
+            const segundosPrecisos = cronometroRodando ? calcularTempoDecorrido() : cronometroSegundos;
+            return Math.floor(segundosPrecisos / 60);
         }
         
         function obterTempoIntervaloMinutos() {
@@ -3488,49 +3671,61 @@
                         console.log('📱 Aba em segundo plano - cronômetro continua contando');
                     }
                 } else {
-                    // Aba voltou ao foco - restaurar e calcular tempo decorrido
-                    const salvo = localStorage.getItem('vrvs_cronometro');
-                    if (salvo) {
-                        try {
-                            const dados = JSON.parse(salvo);
-                            if (dados.timestamp) {
-                                const agora = Date.now();
-                                const tempoDecorrido = Math.floor((agora - dados.timestamp) / 1000);
-                                
-                                // Atualizar cronômetro principal
-                                cronometroSegundos = dados.segundos + tempoDecorrido;
+                    // Aba voltou ao foco - restaurar e calcular tempo decorrido BASEADO EM TIMESTAMP ORIGINAL
+                    const timestampOriginal = localStorage.getItem('vrvs_cronometro_timestamp');
+                    const segundosOriginais = localStorage.getItem('vrvs_cronometro_segundos');
+                    
+                    if (timestampOriginal && segundosOriginais) {
+                        const agora = Date.now();
+                        const tempoDecorrido = Math.floor((agora - parseInt(timestampOriginal)) / 1000);
+                        
+                        // Atualizar cronômetro principal baseado no timestamp original
+                        cronometroSegundos = parseInt(segundosOriginais) + tempoDecorrido;
+                        
+                        // Restaurar outros dados
+                        const salvo = localStorage.getItem('vrvs_cronometro');
+                        if (salvo) {
+                            try {
+                                const dados = JSON.parse(salvo);
                                 tempoTotalIntervalo = dados.tempoIntervalo || 0;
                                 
                                 // Se estava em intervalo, atualizar intervalo também
                                 if (dados.intervaloAtivo) {
                                     intervaloAtivo = true;
-                                    intervaloSegundos = (dados.intervaloSegundos || 0) + tempoDecorrido;
+                                    const intervaloOriginal = dados.intervaloSegundos || 0;
+                                    intervaloSegundos = intervaloOriginal + tempoDecorrido;
                                     
                                     // Reiniciar timer do intervalo se necessário
                                     if (intervaloInterval) {
                                         clearInterval(intervaloInterval);
                                     }
                                     intervaloInterval = setInterval(() => {
-                                        intervaloSegundos++;
+                                        // Calcular baseado em timestamp para intervalo também
+                                        const agoraIntervalo = Date.now();
+                                        const tempoDecorridoIntervalo = Math.floor((agoraIntervalo - parseInt(timestampOriginal)) / 1000);
+                                        intervaloSegundos = intervaloOriginal + tempoDecorridoIntervalo;
                                         document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
-                                    }, 1000);
+                                    }, 100);
                                     
                                     document.getElementById('cronometroIntervalo').textContent = '▶️ Finalizar Intervalo';
                                     document.getElementById('tempoIntervalo').style.display = 'block';
                                     document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
                                 }
                                 
-                                // Se estava rodando, reiniciar contagem
+                                // Se estava rodando, garantir que continue rodando
                                 if (dados.rodando && !cronometroRodando) {
+                                    cronometroInicioTimestamp = parseInt(timestampOriginal);
                                     iniciarCronometroContagem();
                                     document.getElementById('cronometroToggle').textContent = '⏸️ Pausar';
+                                } else if (dados.rodando && cronometroRodando) {
+                                    // Já está rodando, apenas atualizar display
+                                    atualizarDisplayCronometro();
                                 }
                                 
-                                atualizarDisplayCronometro();
                                 console.log('📱 Aba voltou ao foco - cronômetro atualizado (+' + tempoDecorrido + 's)');
+                            } catch (e) {
+                                console.log('Erro ao restaurar:', e);
                             }
-                        } catch (e) {
-                            console.log('Erro ao restaurar:', e);
                         }
                     }
                 }
@@ -3644,6 +3839,13 @@
                 if (cronometroSegundos > 0) {
                     tempoInput.value = tempo;
                 }
+                
+                // Novos campos opcionais
+                const numeroIntervalos = parseInt(document.getElementById('feedbackNumeroIntervalos').value) || 0;
+                const intervalosTexto = document.getElementById('feedbackIntervalos').value.trim() || '';
+                const questoesTexto = document.getElementById('feedbackQuestoes').value.trim() || '';
+                const flashcards = parseInt(document.getElementById('feedbackFlashcards').value) || 0;
+                
                 const sugestao = document.getElementById('feedbackSugestao').value.trim();
                 const obs = document.getElementById('feedbackObs').value.trim();
                 
@@ -3673,6 +3875,18 @@
                 // Adicionar observações E sugestão
                 let novaObs = '';
                 if (obs) novaObs = `${dataSessao}: ${obs}`;
+                
+                // Adicionar novos dados às observações se preenchidos
+                if (questoesTexto) {
+                    novaObs += (novaObs ? ' | ' : '') + `Q${questoesTexto}`;
+                }
+                if (flashcards > 0) {
+                    novaObs += (novaObs ? ' | ' : '') + `FC${flashcards}`;
+                }
+                if (numeroIntervalos > 0) {
+                    novaObs += (novaObs ? ' | ' : '') + `Intervalos: ${numeroIntervalos} (${intervalosTexto || 'registrados'})`;
+                }
+                
                 if (sugestao) novaObs += (novaObs ? ' | ' : '') + `Sugestão: ${sugestao}`;
                 
                 if (novaObs) {
@@ -3694,6 +3908,10 @@
                     rendimento: rendimento / 100,
                     tempo: tempo,
                     tempoIntervalo: tempoIntervalo, // Tempo de intervalo em minutos (para estatísticas futuras)
+                    numeroIntervalos: numeroIntervalos, // Número de intervalos
+                    intervalos: intervalosTexto, // Tempos de cada intervalo
+                    questoes: questoesTexto, // Questões (acertos/total)
+                    flashcards: flashcards, // Quantidade de flashcards revisados
                     data: dataSessao,
                     observacoes: obs || '-',
                     sugestao: sugestao || '-'
@@ -3704,6 +3922,11 @@
                 
                 this.reset();
                 document.getElementById('feedbackData').value = new Date().toISOString().split('T')[0];
+                // Limpar campos opcionais também
+                document.getElementById('feedbackNumeroIntervalos').value = '0';
+                document.getElementById('feedbackIntervalos').value = '';
+                document.getElementById('feedbackQuestoes').value = '';
+                document.getElementById('feedbackFlashcards').value = '';
                 
                 // Resetar cronômetro após salvar (incluindo tempo de intervalo)
                 resetCronometro();
