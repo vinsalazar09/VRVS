@@ -1338,6 +1338,13 @@
             <div id="exportar" class="section">
                 <div class="card">
                     <div class="card-title">📤 BACKUP DE DADOS</div>
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn" onclick="salvarDadosManualmente()" style="margin-bottom: 12px;">💾 SALVAR DADOS AGORA</button>
+                        <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 20px;">
+                            💡 Salva todos os dados no navegador (dados, histórico, lembretes, anotações)
+                        </div>
+                    </div>
+                    <div class="card-title" style="margin-top: 30px; margin-bottom: 15px; font-size: 14px;">📊 EXPORTAR PARA ARQUIVO</div>
                     <button class="btn btn-secondary" onclick="exportarDados()">📊 Baixar DADOS.csv</button>
                     <button class="btn btn-secondary" onclick="exportarHistorico()" style="margin-top: 12px;">📜 Baixar HISTORICO.csv</button>
                 </div>
@@ -1438,6 +1445,33 @@
         }
         
         limparDadosCorretos();
+        
+        // Função para limpar histórico inválido (usada na inicialização e após importação)
+        function limparHistoricoInvalido() {
+            const historicoOriginal = historico.length;
+            
+            historico = historico.filter(h => {
+                // Remover linhas sem área ou tema
+                if (!h.area || !h.tema) return false;
+                
+                // CORREÇÃO: Filtrar área "Tema" que é erro de importação
+                if (h.area.toLowerCase() === 'tema' || h.tema.toLowerCase() === 'area') return false;
+                
+                // Aplicar fixAreaTema para verificar se ainda é inválido após correção
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(h.area, h.tema);
+                if (!areaCorrigida || areaCorrigida.toLowerCase() === 'tema') return false;
+                if (!temaCorrigido || temaCorrigido.toLowerCase() === 'area') return false;
+                
+                return true;
+            });
+            
+            if (historico.length < historicoOriginal) {
+                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                console.log(`🧹 Limpeza: removidos ${historicoOriginal - historico.length} registros inválidos do histórico`);
+            }
+        }
+        
+        limparHistoricoInvalido(); // Limpar histórico inválido na inicialização
         
         // ==================== FUNÇÕES AUXILIARES ====================
         
@@ -1802,7 +1836,8 @@
                         <td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 11px;">${ultEstudo}</td>
                         <td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 11px;">${agenda}</td>
                         <td style="text-align: center;">
-                            <button class="btn-edit" onclick="openEditModal(${t.id})">🔧</button>
+                            <button class="btn-edit" onclick="openEditModal(${t.id})" title="Editar">🔧</button>
+                            <button class="btn-edit" onclick="deletarTema(${t.id})" title="Excluir tema" style="color: #EF4444;">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -1837,6 +1872,72 @@
                 const temasFiltrados = dados.filter(t => t.area === areaSelecionada);
                 temaSelect.innerHTML += temasFiltrados.map(t => `<option value="${t.id}">${t.tema}</option>`).join('');
             }
+        }
+        
+        function deletarTema(temaId) {
+            const tema = dados.find(t => String(t.id) === String(temaId));
+            if (!tema) {
+                mostrarNotificacaoFeedback('⚠️ Tema não encontrado!', 'error');
+                return;
+            }
+            
+            // Confirmar exclusão
+            const confirmacao = confirm(
+                `⚠️ ATENÇÃO: Excluir tema "${tema.tema}"?\n\n` +
+                `Isso irá REMOVER PERMANENTEMENTE:\n` +
+                `• O tema dos dados\n` +
+                `• Todo o histórico relacionado\n` +
+                `• Lembretes vinculados\n` +
+                `• Anotações do caderno\n\n` +
+                `Esta ação NÃO pode ser desfeita!\n\n` +
+                `Confirmar exclusão?`
+            );
+            
+            if (!confirmacao) return;
+            
+            // Contar quantos registros serão removidos
+            const historicoRelacionado = historico.filter(h => String(h.temaId) === String(temaId));
+            const lembretesRelacionados = lembretes.filter(l => String(l.temaId) === String(temaId));
+            const anotacoesRelacionadas = anotacoes.filter(a => String(a.temaId) === String(temaId));
+            
+            // Remover tema dos dados
+            dados = dados.filter(t => String(t.id) !== String(temaId));
+            
+            // Remover histórico relacionado
+            historico = historico.filter(h => String(h.temaId) !== String(temaId));
+            
+            // Remover lembretes relacionados
+            lembretes = lembretes.filter(l => String(l.temaId) !== String(temaId));
+            
+            // Remover anotações relacionadas
+            anotacoes = anotacoes.filter(a => String(a.temaId) !== String(temaId));
+            
+            // Salvar tudo no localStorage
+            localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+            localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            
+            // Mostrar resumo do que foi removido
+            const resumo = [
+                `✅ Tema removido`,
+                historicoRelacionado.length > 0 ? `${historicoRelacionado.length} registro(s) de histórico` : '',
+                lembretesRelacionados.length > 0 ? `${lembretesRelacionados.length} lembrete(s)` : '',
+                anotacoesRelacionadas.length > 0 ? `${anotacoesRelacionadas.length} anotação(ões)` : ''
+            ].filter(r => r).join('\n');
+            
+            mostrarNotificacaoFeedback(resumo);
+            
+            // Atualizar todas as visualizações
+            renderDados();
+            renderTarefas();
+            renderAgenda();
+            renderHistorico();
+            renderPendencias();
+            updateFeedbackSelect();
+            updateStats();
+            renderLembretes();
+            renderCaderno();
         }
         
         function desfazerUltimoFeedback() {
@@ -1907,18 +2008,38 @@
 
         function renderHistorico() {
             const tbody = document.getElementById('historicoTableBody');
-            if (historico.length === 0) {
+            
+            // CORREÇÃO: Filtrar histórico inválido (área "Tema" e linhas sem dados válidos)
+            const historicoFiltrado = historico.filter(h => {
+                // Remover linhas sem área ou tema
+                if (!h.area || !h.tema) return false;
+                
+                // CORREÇÃO: Filtrar área "Tema" que é erro de importação
+                if (h.area.toLowerCase() === 'tema' || h.tema.toLowerCase() === 'area') return false;
+                
+                // Aplicar fixAreaTema para verificar se ainda é inválido após correção
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(h.area, h.tema);
+                if (!areaCorrigida || areaCorrigida.toLowerCase() === 'tema') return false;
+                if (!temaCorrigido || temaCorrigido.toLowerCase() === 'area') return false;
+                
+                return true;
+            });
+            
+            if (historicoFiltrado.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: rgba(0,206,209,0.5);">Nenhum registro encontrado</td></tr>';
                 return;
             }
             
-            const historicoOrdenado = [...historico].sort((a, b) => {
+            const historicoOrdenado = [...historicoFiltrado].sort((a, b) => {
                 if (!a.data || a.data === '-') return 1;
                 if (!b.data || b.data === '-') return -1;
                 return new Date(b.data) - new Date(a.data);
             });
             
             tbody.innerHTML = historicoOrdenado.map(h => {
+                // CORREÇÃO: Aplicar fixAreaTema para corrigir inversões
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(h.area, h.tema);
+                
                 const data = formatarData(h.data);
                 const rend = h.rendimento ? Math.round(h.rendimento * 100) + '%' : '-';
                 const tempo = h.tempo ? h.tempo + ' min' : '-';
@@ -1930,8 +2051,8 @@
                 return `
                     <tr>
                         <td style="color: ${!h.data || h.data === '-' ? '#EF4444' : 'rgba(0,206,209,0.6)'}; font-size: 11px;">${data}</td>
-                        <td style="color: var(--cobre-light); font-weight: 600;">${h.tema || '-'}</td>
-                        <td style="color: rgba(0,206,209,0.8);">${h.area || '-'}</td>
+                        <td style="color: var(--cobre-light); font-weight: 600;">${temaCorrigido || '-'}</td>
+                        <td style="color: rgba(0,206,209,0.8);">${areaCorrigida || '-'}</td>
                         <td style="text-align: center; color: ${rendColor}; font-weight: 600;">${rend}</td>
                         <td style="text-align: center; color: rgba(255,255,255,0.7);">${tempo}</td>
                         <td style="color: rgba(255,255,255,0.7); font-size: 12px;">${h.observacoes || '-'}</td>
@@ -2461,6 +2582,9 @@
             
             Promise.all(promises)
                 .then(results => {
+                    // CORREÇÃO: Limpar histórico inválido após importação
+                    limparHistoricoInvalido();
+                    
                     const msg = results.map(r => r === 'dados' ? 'Dados' : 'Histórico').join(' e ');
                     mostrarNotificacaoFeedback(`✅ ${msg} importados com sucesso!`);
                     document.getElementById('importDados').value = '';
@@ -2612,6 +2736,20 @@
             const csv = dados2CSV(historico);
             const hoje = new Date().toISOString().split('T')[0];
             downloadCSV(csv, `VRVS_HISTORICO_${hoje}.csv`);
+        }
+        
+        function salvarDadosManualmente() {
+            try {
+                // Salvar todos os dados no localStorage
+                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                
+                mostrarNotificacaoFeedback('✅ Todos os dados salvos com sucesso!');
+            } catch (e) {
+                mostrarNotificacaoFeedback('❌ Erro ao salvar: ' + e.message, 'error');
+            }
         }
         
         function dados2CSV(arr) {
