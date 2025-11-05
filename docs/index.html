@@ -1164,11 +1164,41 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // ==================== DADOS E INICIALIZAÇÃO ====================
+        
+/* === VRVS PATCH 04-NOV-2025 ===============================
+   Corrige inversão Área↔Tema e remove cabeçalhos vazados
+============================================================= */
+function fixAreaTema(rec){
+  if(!rec) return rec;
+  const norm = v => (v??'').toString().trim();
+  rec.area = norm(rec.area);
+  rec.tema = norm(rec.tema);
+
+  // remove linha-cabeçalho vazada (ex.: area='Tema', tema='Área')
+  const a = rec.area.toLowerCase();
+  const t = rec.tema.toLowerCase();
+  if ((a==='tema' && (t==='área' || t==='area'))) return null;
+
+  // Áreas conhecidas - expandir conforme necessário
+  const AREAS = ['ombro e cotovelo','trauma mmss'];
+
+  const areaEhArea = AREAS.includes(a);
+  const temaEhArea = AREAS.includes(t);
+
+  if (temaEhArea && !areaEhArea){
+    const tmp = rec.area; rec.area = rec.tema; rec.tema = tmp;
+  }
+  return rec;
+}
+function mapCorrigir(arr){ return (arr||[]).map(fixAreaTema).filter(Boolean); }
+// ==================== DADOS E INICIALIZAÇÃO ====================
         let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
         let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
         
-        // Limpar dados corrompidos
+        
+        dados = mapCorrigir(dados);
+        historico = mapCorrigir(historico);
+// Limpar dados corrompidos
         function limparDadosCorretos() {
             const dadosOriginais = dados.length;
             dados = dados.filter(t => {
@@ -1271,6 +1301,14 @@
                 proxima.setDate(proxima.getDate() + 1);
                 return proxima.toISOString().split('T')[0];
             }
+            // 2a sessao SEMPRE +1 dia (consolidacao)
+            if (tema.sessoes === 1) {
+                const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
+                const proxima2 = new Date(hoje2);
+                proxima2.setDate(proxima2.getDate() + 1);
+                return proxima2.toISOString().split('T')[0];
+            }
+    
             
             const rendimento = Math.round((tema.rendimento || 0) * 100);
             const prioridade = parseInt(tema.prioridade) || 3;
@@ -1380,7 +1418,7 @@
             const tarefas = dados.filter(t => {
                 if (!t.agenda || !t.tema) return false;
                 if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
-                return t.agenda >= hoje && t.agenda <= seteDiasStr;
+                return t.agenda <= hoje;
             });
             
             const container = document.getElementById('tarefasContainer');
@@ -2485,5 +2523,32 @@
             renderHistorico();
         };
     </script>
+
+<script>(function(){
+  function _corrigirLS(){
+    try{
+      var d = JSON.parse(localStorage.getItem('vrvs_dados')||'[]');
+      var h = JSON.parse(localStorage.getItem('vrvs_historico')||'[]');
+      localStorage.setItem('vrvs_dados', JSON.stringify(mapCorrigir(d)));
+      localStorage.setItem('vrvs_historico', JSON.stringify(mapCorrigir(h)));
+    }catch(e){}
+  }
+  var _p = window.processarImportacao || window.processarImport || null;
+  if (_p){
+    var fn = _p;
+    window.processarImportacao = async function(){
+      var r = await fn.apply(this, arguments);
+      _corrigirLS();
+      if (typeof renderDados==='function') renderDados();
+      if (typeof renderTarefas==='function') renderTarefas();
+      if (typeof renderEstatisticas==='function') renderEstatisticas();
+      if (typeof renderGraficos==='function') renderGraficos();
+      return r;
+    }
+  } else {
+    _corrigirLS();
+  }
+})();</script>
+
 </body>
 </html>
