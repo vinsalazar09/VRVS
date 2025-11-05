@@ -6,8 +6,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a1a1f">
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <title>🧠 VRVS v5.1 FINAL – TEOT 2026</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2486,7 +2486,12 @@
             document.getElementById('feedbackForm').onsubmit = function(e) {
                 e.preventDefault();
                 const temaId = document.getElementById('feedbackTema').value;
+                // CORREÇÃO: Usar data do formulário (input feedbackData)
                 const dataSessao = document.getElementById('feedbackData').value;
+                if (!dataSessao) {
+                    mostrarNotificacaoFeedback('⚠️ Selecione uma data para a sessão!', 'error');
+                    return;
+                }
                 const rendimento = parseInt(document.getElementById('feedbackRendimento').value);
                 const tempoInput = document.getElementById('feedbackTempo');
                 // Usar tempo do cronômetro se disponível, senão usar o input
