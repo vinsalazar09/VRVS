@@ -3170,49 +3170,77 @@
                 </div>
             `;
             
-            // Detalhamento por área
+            // Detalhamento por área (com temas colapsáveis)
             if (!areaFiltro && Object.keys(porArea).length > 0) {
                 html += '<h5 style="color: var(--turquesa-light); margin: 30px 0 15px;">📊 Detalhamento por Área:</h5>';
                 html += '<div style="overflow-x: auto;"><table class="data-table"><thead><tr>';
-                html += '<th>Área</th><th>Sessões</th><th>Tempo</th><th>Performance</th><th>Questões</th><th>Flashcards</th>';
+                html += '<th style="width: 30px;"></th><th>Área</th><th>Sessões</th><th>Tempo</th><th>Performance</th><th>Questões</th><th>Flashcards</th>';
                 html += '</tr></thead><tbody>';
                 
-                Object.keys(porArea).sort().forEach(area => {
+                Object.keys(porArea).sort().forEach((area, index) => {
                     const stats = porArea[area];
+                    const temasDaArea = Object.keys(porTema).filter(t => t.startsWith(area + ' - '));
+                    
+                    html += '<tr style="background: rgba(0,206,209,0.15); cursor: pointer;" onclick="toggleTemasArea(\'' + area.replace(/'/g, "\\'") + '\')">';
+                    html += `<td style="text-align: center; color: var(--turquesa-light); font-weight: bold;">${temasDaArea.length > 0 ? '▶' : ''}</td>`;
+                    html += `<td><strong style="color: var(--turquesa-light);">${area}</strong></td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.sessoes}</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.tempoHoras}h</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.rendimento}%</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.questoes.total > 0 ? stats.questoes.acertos + '/' + stats.questoes.total + ' (' + Math.round((stats.questoes.acertos / stats.questoes.total) * 100) + '%)' : '-'}</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.flashcards > 0 ? stats.flashcards.toLocaleString() : '-'}</td>`;
+                    html += '</tr>';
+                    
+                    // Temas da área (inicialmente ocultos)
+                    if (temasDaArea.length > 0) {
+                        html += `<tr id="temas-${area.replace(/[^a-zA-Z0-9]/g, '-')}" style="display: none;">`;
+                        html += '<td colspan="7" style="padding: 0; background: rgba(0,0,0,0.3);">';
+                        html += '<table style="width: 100%; margin: 0;"><tbody>';
+                        
+                        temasDaArea.forEach(temaKey => {
+                            const temaStats = porTema[temaKey];
+                            const temaNome = temaKey.replace(area + ' - ', '');
+                            html += '<tr style="border-top: 1px solid rgba(0,206,209,0.2);">';
+                            html += `<td style="padding-left: 40px; color: rgba(0,206,209,0.8); font-weight: 500;">${temaNome}</td>`;
+                            html += `<td style="color: rgba(255,255,255,0.8);">${temaStats.sessoes}</td>`;
+                            html += `<td style="color: rgba(255,255,255,0.8);">${temaStats.tempoHoras}h</td>`;
+                            html += `<td style="color: rgba(255,255,255,0.8);">${temaStats.rendimento}%</td>`;
+                            html += `<td style="color: rgba(255,255,255,0.8);">${temaStats.questoes.total > 0 ? temaStats.questoes.acertos + '/' + temaStats.questoes.total + ' (' + Math.round((temaStats.questoes.acertos / temaStats.questoes.total) * 100) + '%)' : '-'}</td>`;
+                            html += `<td style="color: rgba(255,255,255,0.8);">${temaStats.flashcards > 0 ? temaStats.flashcards.toLocaleString() : '-'}</td>`;
+                            html += '</tr>';
+                        });
+                        
+                        html += '</tbody></table></td></tr>';
+                    }
+                });
+                
+                html += '</tbody></table></div>';
+            }
+            
+            // Detalhamento por tema (apenas quando filtrar por área específica)
+            if (areaFiltro && !temaFiltro && Object.keys(porTema).length > 0) {
+                html += '<h5 style="color: var(--turquesa-light); margin: 30px 0 15px;">📚 Temas da Área "' + areaFiltro + '":</h5>';
+                html += '<div style="overflow-x: auto;"><table class="data-table"><thead><tr>';
+                html += '<th>Tema</th><th>Sessões</th><th>Tempo</th><th>Performance</th><th>Questões</th><th>Flashcards</th>';
+                html += '</tr></thead><tbody>';
+                
+                Object.keys(porTema).filter(t => t.startsWith(areaFiltro + ' - ')).sort().forEach(temaKey => {
+                    const stats = porTema[temaKey];
+                    const temaNome = temaKey.replace(areaFiltro + ' - ', '');
                     html += '<tr>';
-                    html += `<td><strong>${area}</strong></td>`;
-                    html += `<td>${stats.sessoes}</td>`;
-                    html += `<td>${stats.tempoHoras}h</td>`;
-                    html += `<td>${stats.rendimento}%</td>`;
-                    html += `<td>${stats.questoes.total > 0 ? stats.questoes.acertos + '/' + stats.questoes.total + ' (' + Math.round((stats.questoes.acertos / stats.questoes.total) * 100) + '%)' : '-'}</td>`;
-                    html += `<td>${stats.flashcards > 0 ? stats.flashcards.toLocaleString() : '-'}</td>`;
+                    html += `<td><strong style="color: var(--turquesa-light);">${temaNome}</strong></td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.sessoes}</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.tempoHoras}h</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.rendimento}%</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.questoes.total > 0 ? stats.questoes.acertos + '/' + stats.questoes.total + ' (' + Math.round((stats.questoes.acertos / stats.questoes.total) * 100) + '%)' : '-'}</td>`;
+                    html += `<td style="color: rgba(255,255,255,0.9);">${stats.flashcards > 0 ? stats.flashcards.toLocaleString() : '-'}</td>`;
                     html += '</tr>';
                 });
                 
                 html += '</tbody></table></div>';
             }
             
-            // Detalhamento por tema
-            if (!temaFiltro && Object.keys(porTema).length > 0) {
-                html += '<h5 style="color: var(--turquesa-light); margin: 30px 0 15px;">📚 Detalhamento por Tema:</h5>';
-                html += '<div style="overflow-x: auto;"><table class="data-table"><thead><tr>';
-                html += '<th>Tema</th><th>Sessões</th><th>Tempo</th><th>Performance</th><th>Questões</th><th>Flashcards</th>';
-                html += '</tr></thead><tbody>';
-                
-                Object.keys(porTema).sort().forEach(temaKey => {
-                    const stats = porTema[temaKey];
-                    html += '<tr>';
-                    html += `<td><strong>${temaKey}</strong></td>`;
-                    html += `<td>${stats.sessoes}</td>`;
-                    html += `<td>${stats.tempoHoras}h</td>`;
-                    html += `<td>${stats.rendimento}%</td>`;
-                    html += `<td>${stats.questoes.total > 0 ? stats.questoes.acertos + '/' + stats.questoes.total + ' (' + Math.round((stats.questoes.acertos / stats.questoes.total) * 100) + '%)' : '-'}</td>`;
-                    html += `<td>${stats.flashcards > 0 ? stats.flashcards.toLocaleString() : '-'}</td>`;
-                    html += '</tr>';
-                });
-                
-                html += '</tbody></table></div>';
-            }
+            // Detalhamento por tema quando filtrado por tema específico (não mostrar, já está no resumo geral)
             
             document.getElementById('analiseResultados').innerHTML = html;
         }
@@ -3246,6 +3274,25 @@
             document.getElementById('analiseDataFim').value = '';
             atualizarSelectsAnalise();
             atualizarAnalises();
+        }
+        
+        // Função para expandir/colapsar temas de uma área
+        function toggleTemasArea(area) {
+            const areaId = 'temas-' + area.replace(/[^a-zA-Z0-9]/g, '-');
+            const row = document.getElementById(areaId);
+            if (!row) return;
+            
+            const isVisible = row.style.display !== 'none';
+            row.style.display = isVisible ? 'none' : 'table-row';
+            
+            // Atualizar ícone
+            const areaRow = row.previousElementSibling;
+            if (areaRow) {
+                const iconCell = areaRow.querySelector('td:first-child');
+                if (iconCell) {
+                    iconCell.textContent = isVisible ? '▶' : '▼';
+                }
+            }
         }
         
         // ==================== CRONÔMETRO DA SESSÃO ====================
