@@ -5767,8 +5767,13 @@
                     return;
                 }
                 
-                tema.area = normalizeArea(document.getElementById('editArea').value.trim());
-                tema.tema = document.getElementById('editTema').value.trim();
+                const areaEditada = document.getElementById('editArea').value.trim();
+                const temaEditado = document.getElementById('editTema').value.trim();
+                
+                // Normalizar e corrigir área/tema
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(areaEditada, temaEditado);
+                tema.area = areaCorrigida;
+                tema.tema = temaCorrigido;
                 tema.prioridade = parseInt(document.getElementById('editPrioridade').value);
                 const novoStatus = document.getElementById('editStatus').value;
                 tema.status = novoStatus;
