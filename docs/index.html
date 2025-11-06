@@ -1118,6 +1118,63 @@
         </div>
     </div>
     
+    <!-- MODAL ENCERRAR SESSÃO -->
+    <div id="encerrarSessaoModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📊 Resumo da Sessão</h2>
+                <button class="modal-close" onclick="closeEncerrarSessaoModal()">×</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(0,206,209,0.3);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-bottom: 5px;">⏱️ Tempo Total</div>
+                            <div id="modalTempoTotal" style="font-size: 20px; font-weight: bold; color: #00FFE0;">00:00:00</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-bottom: 5px;">⏸️ Intervalos</div>
+                            <div id="modalNumIntervalos" style="font-size: 20px; font-weight: bold; color: #00FFE0;">0</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-bottom: 5px;">⏸️ Tempo Total de Intervalos</div>
+                        <div id="modalTempoIntervalos" style="font-size: 16px; font-weight: bold; color: #FFA366;">00:00:00</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 12px; font-weight: 600;">📝 Preencha os dados da sessão:</div>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">❓ Tempo em Questões (min)</label>
+                        <input type="number" class="form-input" id="modalTempoQuestoes" min="0" placeholder="0" style="font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">❓ Quantidade de Questões</label>
+                        <input type="number" class="form-input" id="modalQuantQuestoes" min="0" placeholder="0" style="font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">🃏 Tempo em Flashcards (min)</label>
+                        <input type="number" class="form-input" id="modalTempoFlashcards" min="0" placeholder="0" style="font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label">🃏 Quantidade de Flashcards</label>
+                        <input type="number" class="form-input" id="modalQuantFlashcards" min="0" placeholder="0" style="font-size: 14px;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="preencherDadosSessao()" style="flex: 1;">✅ Preencher Formulário</button>
+                    <button class="btn btn-secondary" onclick="closeEncerrarSessaoModal()" style="flex: 1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="header">
             <div class="header-title">🧠 VRVS CIRCUIT TECH</div>
@@ -1187,10 +1244,11 @@
             <div id="agenda" class="section">
                 <div class="card">
                     <div class="card-title">📅 TIMELINE</div>
-                    <div class="date-range-controls" style="margin-bottom: 20px;">
-                        <input type="date" class="form-input" id="agendaDataInicio" style="margin-right: 10px;">
-                        <input type="date" class="form-input" id="agendaDataFim" style="margin-right: 10px;">
+                    <div class="edit-date-row" style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <input type="date" id="agendaDataInicio" class="form-input" style="flex: 1; max-width: 180px;">
+                        <input type="date" id="agendaDataFim" class="form-input" style="flex: 1; max-width: 180px;">
                         <button class="btn btn-small" onclick="filtrarSemanaAtual()">📅 Semana Atual</button>
+                        <button class="btn btn-small btn-secondary" onclick="renderAgenda()">Aplicar</button>
                     </div>
                     <div id="agendaContainer"></div>
                 </div>
@@ -1270,7 +1328,7 @@
                     <form id="feedbackForm">
                         <div class="form-group">
                             <label class="form-label">Área</label>
-                            <select class="form-select" id="feedbackArea" required>
+                            <select class="form-select" id="feedbackArea" onchange="updateFeedbackTemaSelect()">
                                 <option value="">Selecione a área...</option>
                             </select>
                         </div>
@@ -1554,10 +1612,31 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // ==================== DADOS E INICIALIZAÇÃO ====================
+        // Função para corrigir inversão área↔tema ANTES de carregar dados
+        function fixAreaTemaObjeto(obj) {
+            if (!obj) return obj;
+            const area = String(obj.area || '');
+            const tema = String(obj.tema || '');
+            // Se área está muito longa (>20) E tema contém palavra-chave de área, inverter
+            const areaLikeKeywords = ['trauma', 'ombro', 'cotovelo', 'mão', 'mao', 'punho', 'joelho', 'quadril', 'pelve', 'pé', 'pe', 'tornozelo', 'coluna', 'oncologia', 'tumores', 'mmss', 'mmii'];
+            const temaPareceArea = areaLikeKeywords.some(k => tema.toLowerCase().includes(k));
+            if (area.length > 20 && temaPareceArea) {
+                const tmp = obj.area;
+                obj.area = obj.tema;
+                obj.tema = tmp;
+            }
+            return obj;
+        }
+        
         let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
         let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
         let lembretes = JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]');
         let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'); // Anotações por tema
+        
+        // Aplicar correção de inversão área/tema nos dados carregados
+        if (Array.isArray(dados)) {
+            dados = dados.map(d => fixAreaTemaObjeto(d));
+        }
         
         // Limpar dados corrompidos
         function limparDadosCorretos() {
@@ -1700,15 +1779,28 @@
             return { area: normalizeArea(area, tema), tema: tema };
         }
         
-        function formatarData(dataStr) {
-            if (!dataStr || dataStr === '-' || dataStr.trim() === '') return '-';
+        function dataValida(data) {
+            if (!data || data === '-' || String(data).trim() === '') return false;
             try {
-                const data = new Date(dataStr + 'T00:00:00');
-                if (isNaN(data.getTime())) return '-';
-                return data.toLocaleDateString('pt-BR');
+                const dt = new Date(data + 'T00:00:00');
+                return !isNaN(dt.getTime());
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        function formatarDataBR(data) {
+            if (!dataValida(data)) return '-';
+            try {
+                return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
             } catch (e) {
                 return '-';
             }
+        }
+        
+        function formatarData(dataStr) {
+            // Mantida para compatibilidade - usa formatarDataBR internamente
+            return formatarDataBR(dataStr);
         }
         
         function calcularProximaRevisao(tema, dataSessao = null) {
@@ -1837,6 +1929,7 @@
             const tarefas = dados.filter(t => {
                 if (!t.agenda || !t.tema) return false;
                 if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
+                if (!dataValida(t.agenda)) return false;
                 return t.agenda <= hoje;
             });
             
@@ -1867,7 +1960,7 @@
                         <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
                         <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
                         <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
-                        <div class="task-detail-item">📅 ${formatarData(t.agenda)}</div>
+                        <div class="task-detail-item">📅 ${formatarDataBR(t.agenda)}</div>
                     </div>
                     
                     ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
@@ -1885,18 +1978,29 @@
         
         function renderAgenda() {
             const hoje = new Date().toISOString().split('T')[0];
-            const dataInicio = document.getElementById('agendaDataInicio').value || hoje;
-            const dataFim = document.getElementById('agendaDataFim').value || '';
+            
+            // Período: inputs ou default próximos 7 dias
+            const inputInicio = document.getElementById('agendaDataInicio');
+            const inputFim = document.getElementById('agendaDataFim');
+            let dataInicio = inputInicio && inputInicio.value ? inputInicio.value : '';
+            let dataFim = inputFim && inputFim.value ? inputFim.value : '';
+            
+            if (!dataInicio || !dataFim) {
+                const base = new Date();
+                const start = new Date(base);
+                const end = new Date(base);
+                end.setDate(end.getDate() + 7);
+                dataInicio = start.toISOString().split('T')[0];
+                dataFim = end.toISOString().split('T')[0];
+                if (inputInicio && !inputInicio.value) inputInicio.value = dataInicio;
+                if (inputFim && !inputFim.value) inputFim.value = dataFim;
+            }
             
             const agendadas = dados
                 .filter(t => {
-                    if (!t.agenda) return false;
-                    // CORREÇÃO: Concluído e Suspenso não aparecem na agenda
-                    if (t.status === 'Concluído' || t.status === 'Suspenso') return false;
-                    if (dataFim) {
-                        return t.agenda >= dataInicio && t.agenda <= dataFim;
-                    }
-                    return t.agenda >= dataInicio;
+                    if (!t || !t.agenda || t.status === 'Concluído') return false;
+                    if (!dataValida(t.agenda) || !dataValida(dataInicio) || !dataValida(dataFim)) return false;
+                    return t.agenda >= dataInicio && t.agenda <= dataFim;
                 })
                 .sort((a, b) => a.agenda.localeCompare(b.agenda));
             
@@ -1910,7 +2014,7 @@
                 const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
-                const dataFormatada = formatarData(t.agenda);
+                const dataFormatada = formatarDataBR(t.agenda);
                 const tipo = calcularTipoRevisao(t);
                 
                 return `
@@ -1942,21 +2046,23 @@
         
         function filtrarSemanaAtual() {
             const hoje = new Date();
-            const inicioSemana = new Date(hoje);
-            inicioSemana.setDate(hoje.getDate() - hoje.getDay());
-            const fimSemana = new Date(inicioSemana);
-            fimSemana.setDate(inicioSemana.getDate() + 6);
+            const diaSemana = hoje.getDay(); // 0=Dom, 1=Seg, ...
+            const segunda = new Date(hoje);
+            const domingo = new Date(hoje);
+            const offsetSeg = (diaSemana === 0 ? -6 : 1 - diaSemana);
+            segunda.setDate(hoje.getDate() + offsetSeg);
+            domingo.setDate(segunda.getDate() + 6);
             
-            document.getElementById('agendaDataInicio').value = inicioSemana.toISOString().split('T')[0];
-            document.getElementById('agendaDataFim').value = fimSemana.toISOString().split('T')[0];
+            document.getElementById('agendaDataInicio').value = segunda.toISOString().split('T')[0];
+            document.getElementById('agendaDataFim').value = domingo.toISOString().split('T')[0];
             renderAgenda();
         }
         
         function renderDados() {
             const tbody = document.getElementById('dadosTableBody');
             tbody.innerHTML = dados.map(t => {
-                const ultEstudo = formatarData(t.ultEstudo);
-                const agenda = formatarData(t.agenda);
+                const ultEstudo = formatarDataBR(t.ultEstudo);
+                const agenda = formatarDataBR(t.agenda);
                 const rend = t.rendimento ? Math.round(t.rendimento * 100) + '%' : '-';
                 const rendColor = t.rendimento >= 0.8 ? '#00FFE0' : t.rendimento >= 0.5 ? '#FFA366' : '#EF4444';
                 
@@ -2175,7 +2281,7 @@
                 // CORREÇÃO: Aplicar fixAreaTema para corrigir inversões
                 const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(h.area, h.tema);
                 
-                const data = formatarData(h.data);
+                const data = formatarDataBR(h.data);
                 const rend = h.rendimento ? Math.round(h.rendimento * 100) + '%' : '-';
                 const tempo = h.tempo ? h.tempo + ' min' : '-';
                 let rendColor = '#9CA3AF';
@@ -2207,7 +2313,7 @@
             }
             
             const sessoesNoPeriodo = historico.filter(h => {
-                if (!h.data || h.data === '-') return false;
+                if (!dataValida(h.data)) return false;
                 return h.data >= dataInicio && h.data <= dataFim;
             });
             
@@ -2236,7 +2342,7 @@
             const resultado = `
                 <div style="margin-top: 20px;">
                     <h4 style="color: var(--turquesa-light); margin-bottom: 12px;">
-                        Análise: ${formatarData(dataInicio)} - ${formatarData(dataFim)}
+                        Análise: ${formatarDataBR(dataInicio)} - ${formatarDataBR(dataFim)}
                     </h4>
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -2294,7 +2400,7 @@
             }
             
             const sessoesNoPeriodo = historico.filter(h => {
-                if (!h.data || h.data === '-') return false;
+                if (!dataValida(h.data)) return false;
                 return h.data >= periodo.dataInicio && h.data <= periodo.dataFim;
             });
             
@@ -2909,10 +3015,18 @@
         
         function dados2CSV(arr) {
             if (arr.length === 0) return '';
-            const headers = Object.keys(arr[0]);
+            // União de todas as chaves para garantir todas as colunas
+            const headerSet = new Set();
+            arr.forEach(obj => {
+                if (obj) Object.keys(obj).forEach(k => headerSet.add(k));
+            });
+            // Garantir que observacoes e sugestao estão sempre presentes
+            headerSet.add('observacoes');
+            headerSet.add('sugestao');
+            const headers = Array.from(headerSet);
+            
             const rows = arr.map(obj => headers.map(h => {
-                let val = obj[h];
-                if (val === null || val === undefined) val = '';
+                const val = (obj && obj[h] != null) ? obj[h] : '';
                 const strVal = String(val);
                 // Escapar aspas duplas
                 const escaped = strVal.replace(/"/g, '""');
@@ -3582,7 +3696,7 @@
             localStorage.removeItem('vrvs_cronometro_segundos');
         }
         
-        // Função para encerrar sessão e preencher dados automaticamente
+        // Função para encerrar sessão e mostrar modal
         function encerrarSessao() {
             // Pausar cronômetro se estiver rodando para calcular tempo final preciso
             if (cronometroRodando) {
@@ -3620,35 +3734,64 @@
                 return;
             }
             
-            // Calcular tempo final preciso
-            const tempoFinalMinutos = obterTempoCronometroMinutos();
+            // Preencher dados do modal
+            document.getElementById('modalTempoTotal').textContent = formatarTempoCronometro(cronometroSegundos);
+            document.getElementById('modalNumIntervalos').textContent = intervalosIndividuais.length;
+            document.getElementById('modalTempoIntervalos').textContent = formatarTempoCronometro(tempoTotalIntervalo);
+            
+            // Limpar campos do modal
+            document.getElementById('modalTempoQuestoes').value = '';
+            document.getElementById('modalQuantQuestoes').value = '';
+            document.getElementById('modalTempoFlashcards').value = '';
+            document.getElementById('modalQuantFlashcards').value = '';
+            
+            // Mostrar modal
+            document.getElementById('encerrarSessaoModal').classList.add('active');
+        }
+        
+        function closeEncerrarSessaoModal() {
+            document.getElementById('encerrarSessaoModal').classList.remove('active');
+        }
+        
+        function preencherDadosSessao() {
+            const tempoQuestoes = parseInt(document.getElementById('modalTempoQuestoes').value) || 0;
+            const quantQuestoes = parseInt(document.getElementById('modalQuantQuestoes').value) || 0;
+            const tempoFlashcards = parseInt(document.getElementById('modalTempoFlashcards').value) || 0;
+            const quantFlashcards = parseInt(document.getElementById('modalQuantFlashcards').value) || 0;
+            
+            // Preencher campos do formulário
+            const tempoTotal = tempoQuestoes + tempoFlashcards;
+            if (tempoTotal > 0) {
+                document.getElementById('feedbackTempo').value = tempoTotal;
+            }
+            
+            // Preencher questões (formato: acertos/total)
+            if (quantQuestoes > 0) {
+                document.getElementById('feedbackQuestoes').value = quantQuestoes + '/' + quantQuestoes;
+            }
+            
+            // Preencher flashcards
+            if (quantFlashcards > 0) {
+                document.getElementById('feedbackFlashcards').value = quantFlashcards;
+            }
+            
+            // Preencher intervalo se houver
             const numeroIntervalos = intervalosIndividuais.length;
-            const temposIntervalos = intervalosIndividuais.map(i => formatarTempoCronometro(i.tempo)).join(', ');
-            
-            // Preencher campos do formulário automaticamente
-            document.getElementById('feedbackTempo').value = tempoFinalMinutos;
-            
-            // Preencher campo de intervalos (se existir)
-            const intervalosInput = document.getElementById('feedbackIntervalos');
-            if (intervalosInput) {
-                intervalosInput.value = temposIntervalos || '';
-            }
-            
-            const numeroIntervalosInput = document.getElementById('feedbackNumeroIntervalos');
-            if (numeroIntervalosInput) {
-                numeroIntervalosInput.value = numeroIntervalos;
-            }
-            
-            // Mostrar notificação com resumo
-            let resumo = `📊 Sessão Encerrada:\n`;
-            resumo += `⏱️ Tempo total: ${formatarTempoCronometro(cronometroSegundos)} (${tempoFinalMinutos} min)\n`;
             if (numeroIntervalos > 0) {
-                resumo += `⏸️ Intervalos: ${numeroIntervalos} (${temposIntervalos})\n`;
-                resumo += `⏸️ Tempo total de intervalo: ${formatarTempoCronometro(tempoTotalIntervalo)}\n`;
+                const temposIntervalos = intervalosIndividuais.map(i => formatarTempoCronometro(i.tempo)).join(', ');
+                document.getElementById('feedbackNumeroIntervalos').value = numeroIntervalos;
+                document.getElementById('feedbackIntervalos').value = temposIntervalos;
             }
-            resumo += `✅ Preencha os outros campos e registre o feedback!`;
             
-            mostrarNotificacaoFeedback(resumo, 'success');
+            // Guardar valores no modal para uso posterior (através de atributos data)
+            const modal = document.getElementById('encerrarSessaoModal');
+            modal.dataset.tempoQuestoes = tempoQuestoes;
+            modal.dataset.quantQuestoes = quantQuestoes;
+            modal.dataset.tempoFlashcards = tempoFlashcards;
+            modal.dataset.quantFlashcards = quantFlashcards;
+            
+            // Fechar modal
+            closeEncerrarSessaoModal();
             
             // Scroll para o formulário
             document.getElementById('feedbackForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -4250,6 +4393,31 @@
                 const questoesTexto = document.getElementById('feedbackQuestoes').value.trim() || '';
                 const flashcards = parseInt(document.getElementById('feedbackFlashcards').value) || 0;
                 
+                // Extrair dados de questões (formato: acertos/total)
+                let tempoQuestoes = 0;
+                let quantQuestoes = 0;
+                let quantQuestoesAcertos = 0;
+                if (questoesTexto && questoesTexto.includes('/')) {
+                    const partes = questoesTexto.split('/');
+                    quantQuestoesAcertos = parseInt(partes[0]) || 0;
+                    quantQuestoes = parseInt(partes[1]) || 0;
+                }
+                // Tentar obter tempo de questões do modal ou usar 0
+                const modal = document.getElementById('encerrarSessaoModal');
+                if (modal && modal.dataset.tempoQuestoes) {
+                    tempoQuestoes = parseInt(modal.dataset.tempoQuestoes) || 0;
+                }
+                
+                // Extrair dados de flashcards
+                let tempoFlashcards = 0;
+                let quantFlashcards = 0;
+                if (flashcards > 0) {
+                    quantFlashcards = flashcards;
+                    if (modal && modal.dataset.tempoFlashcards) {
+                        tempoFlashcards = parseInt(modal.dataset.tempoFlashcards) || 0;
+                    }
+                }
+                
                 const sugestao = document.getElementById('feedbackSugestao').value.trim();
                 const obs = document.getElementById('feedbackObs').value.trim();
                 
@@ -4311,11 +4479,16 @@
                     tema: temaCorrigido,
                     rendimento: rendimento / 100,
                     tempo: tempo,
-                    tempoIntervalo: tempoIntervalo, // Tempo de intervalo em minutos (para estatísticas futuras)
+                    tempoIntervalo: tempoIntervalo || 0, // Tempo de intervalo em minutos
                     numeroIntervalos: numeroIntervalos, // Número de intervalos
                     intervalos: intervalosTexto, // Tempos de cada intervalo
-                    questoes: questoesTexto, // Questões (acertos/total)
-                    flashcards: flashcards, // Quantidade de flashcards revisados
+                    tempoQuestoes: tempoQuestoes, // Tempo gasto em questões (min)
+                    quantQuestoes: quantQuestoes, // Quantidade total de questões
+                    quantQuestoesAcertos: quantQuestoesAcertos, // Quantidade de acertos
+                    tempoFlashcards: tempoFlashcards, // Tempo gasto em flashcards (min)
+                    quantFlashcards: quantFlashcards, // Quantidade de flashcards revisados
+                    questoes: questoesTexto, // Questões (acertos/total) - mantido para compatibilidade
+                    flashcards: quantFlashcards, // Quantidade de flashcards - mantido para compatibilidade
                     data: dataSessao,
                     observacoes: obs || '-',
                     sugestao: sugestao || '-'
