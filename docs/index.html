@@ -3390,7 +3390,10 @@
                 promises.push(parseCSV(dadosFile).then(dadosCSV => {
                     dados = dadosCSV.map(t => {
                         if (!t.id) t.id = Date.now() + Math.random();
-                        t.area = normalizeArea(t.area, t.tema);
+                        // Normalizar área/tema corretamente
+                        const { area, tema } = fixAreaTema(t.area || '', t.tema || '');
+                        t.area = area;
+                        t.tema = tema;
                         if (t.rendimento > 1) t.rendimento = t.rendimento / 100;
                         t.prioridade = parseInt(t.prioridade) || 3;
                         t.sessoes = parseInt(t.sessoes) || 0;
@@ -3402,7 +3405,20 @@
                         delete t.tipoRevisao;
                         return t;
                     });
+                    // Remover duplicatas antes de salvar
+                    const temasUnicos = [];
+                    const chavesVistas = new Set();
+                    dados.forEach(t => {
+                        const chave = `${String(t.area).toLowerCase().trim()}_${String(t.tema).toLowerCase().trim()}`;
+                        if (!chavesVistas.has(chave)) {
+                            chavesVistas.add(chave);
+                            temasUnicos.push(t);
+                        }
+                    });
+                    dados = temasUnicos;
                     localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                    // Atualizar variável global
+                    window.dados = dados;
                     return 'dados';
                 }));
             }
