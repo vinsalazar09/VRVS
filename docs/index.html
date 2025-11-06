@@ -5891,8 +5891,10 @@
                 agendaDataFim.addEventListener('change', renderAgenda);
             }
             
-            // CADASTRO FORM
-            document.getElementById('cadastroForm').onsubmit = function(e) {
+            // CADASTRO FORM (só se elemento existir)
+            const cadastroForm = document.getElementById('cadastroForm');
+            if (cadastroForm) {
+                cadastroForm.onsubmit = function(e) {
                 e.preventDefault();
                 const area = document.getElementById('novaArea').value.trim();
                 const tema = document.getElementById('novoTema').value.trim();
