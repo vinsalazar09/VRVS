@@ -4632,7 +4632,7 @@
         }
         
         // Função para encerrar sessão e mostrar modal
-        function encerrarSessao() {
+        window.encerrarSessao = function() {
             // FINALIZAR INTERVALO SE ESTIVER ATIVO (não deixar rodando)
             if (intervaloAtivo) {
                 clearInterval(intervaloInterval);
