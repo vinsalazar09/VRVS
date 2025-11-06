@@ -6583,18 +6583,30 @@
                 renderLembretes();
             };
             
-            // Inicializações
-            renderTarefas();
-            renderAgenda();
-            renderDados();
-            renderPendencias();
-            updateFeedbackSelect();
-            updateStats();
-            renderHistorico();
-            atualizarSelectsLembrete();
-            renderLembretes();
-            atualizarSelectsCaderno();
-            renderCaderno();
+            // Inicializações (com proteção contra erros)
+            try {
+                renderTarefas();
+                renderAgenda();
+                renderDados();
+                renderPendencias();
+                updateFeedbackSelect();
+                updateStats();
+                renderHistorico();
+                atualizarSelectsLembrete();
+                renderLembretes();
+                atualizarSelectsCaderno();
+                renderCaderno();
+            } catch (error) {
+                console.error('❌ Erro ao inicializar renderizações:', error);
+                // Garantir que splash screen seja escondido mesmo com erro
+                setTimeout(() => {
+                    const splash = document.getElementById('splashScreen');
+                    if (splash) {
+                        splash.style.display = 'none';
+                    }
+                    document.body.classList.remove('splash-loading');
+                }, 1000);
+            }
         };
     </script>
 </body>
