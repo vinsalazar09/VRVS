@@ -991,13 +991,32 @@
             background: transparent;
             border: none;
             color: var(--cobre-light);
-            font-size: 24px;
+            font-size: 32px;
+            font-weight: 300;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 1001;
+            pointer-events: auto;
+            user-select: none;
         }
         
         .modal-close:hover {
-            transform: rotate(90deg);
+            color: var(--cobre-neon);
+            transform: rotate(90deg) scale(1.1);
+            background: rgba(255, 170, 0, 0.1);
+            border-radius: 50%;
+        }
+        
+        .modal-close:active {
+            transform: rotate(90deg) scale(0.9);
         }
         
         /* SCROLL BAR CUSTOM */
