@@ -2471,13 +2471,33 @@
         
         function renderDados() {
             // SEMPRE recarregar dados do localStorage antes de renderizar (fix para iOS cache)
-            dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
-            if (Array.isArray(dados)) {
-                dados = dados.map(d => fixAreaTemaObjeto(d));
+            const dadosRaw = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
+            
+            if (!Array.isArray(dadosRaw)) {
+                console.error('❌ Dados não são um array:', dadosRaw);
+                dados = [];
+            } else {
+                // Aplicar correção de inversão área/tema
+                dados = dadosRaw.map(d => {
+                    try {
+                        return fixAreaTemaObjeto(d);
+                    } catch (e) {
+                        console.error('❌ Erro ao corrigir objeto:', d, e);
+                        return d; // Retornar objeto original se houver erro
+                    }
+                }).filter(d => d && d.tema && d.tema.trim() !== ''); // Filtrar apenas objetos válidos com tema
             }
             
+            // Atualizar variável global
+            window.dados = dados;
+            
             const tbody = document.getElementById('dadosTableBody');
-            if (!tbody) return;
+            if (!tbody) {
+                console.error('❌ Elemento dadosTableBody não encontrado');
+                return;
+            }
+            
+            console.log(`📊 Renderizando ${dados.length} temas na aba Dados`);
             
             tbody.innerHTML = dados.map(t => {
                 const ultEstudo = formatarDataBR(t.ultEstudo);
@@ -2502,9 +2522,20 @@
                     </tr>
                 `;
             }).join('');
+            
+            // Se não houver dados, mostrar mensagem
+            if (dados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Nenhum tema cadastrado ainda. Use a aba ➕ Cadastro para adicionar temas.</td></tr>';
+            }
         }
         
         function updateFeedbackSelect() {
+            // Recarregar dados do localStorage antes de atualizar selects
+            dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
+            if (Array.isArray(dados)) {
+                dados = dados.map(d => fixAreaTemaObjeto(d));
+            }
+            
             const areaSelect = document.getElementById('feedbackArea');
             const temaSelect = document.getElementById('feedbackTema');
             
@@ -5392,10 +5423,19 @@
                     sugestao: ''
                 };
                 
+                // Recarregar dados do localStorage antes de adicionar (garantir sincronização)
+                dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
+                if (Array.isArray(dados)) {
+                    dados = dados.map(d => fixAreaTemaObjeto(d));
+                }
+                
                 dados.push(novoTema);
                 localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                
                 this.reset();
                 mostrarNotificacaoFeedback('✅ Tema adicionado com sucesso!');
+                
+                // Atualizar selects e renderizações
                 renderDados();
                 updateFeedbackSelect();
                 renderPendencias();
