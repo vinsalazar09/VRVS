@@ -1196,23 +1196,64 @@
         </div>
     </div>
     
-    <!-- BOTÃO FLUTUANTE DE AJUDA -->
-    <button id="btnAjudaFlutuante" onclick="showSection('tutorial')" style="
+    <!-- BOX DE DÚVIDAS FLUTUANTE -->
+    <div id="boxDuvidas" style="
         position: fixed;
-        bottom: 20px;
+        top: 20px;
         right: 20px;
-        width: 56px;
-        height: 56px;
+        width: 280px;
+        background: rgba(20, 35, 45, 0.95);
+        border: 1px solid rgba(0, 206, 209, 0.3);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 9998;
+        backdrop-filter: blur(10px);
+        display: none;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="color: var(--turquesa-light); font-size: 14px; margin: 0;">❓ Dúvidas Rápidas</h4>
+            <button onclick="fecharBoxDuvidas()" style="
+                background: transparent;
+                border: none;
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 20px;
+                cursor: pointer;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                transition: all 0.2s ease;
+            " onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff'" onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.6)'">×</button>
+        </div>
+        <input type="text" id="perguntaBoxDuvidas" class="form-input" placeholder="Digite sua dúvida..." style="margin-bottom: 10px; font-size: 12px; padding: 8px;">
+        <button class="btn btn-small" onclick="responderDuvidaBox()" style="width: 100%; font-size: 12px; padding: 8px;">🔍 Buscar</button>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,206,209,0.2);">
+            <button class="btn btn-small" onclick="showSection('tutorial')" style="width: 100%; font-size: 11px; padding: 6px; background: rgba(0,206,209,0.1);">Ver Tutorial Completo</button>
+        </div>
+    </div>
+    
+    <!-- BOTÃO PARA ABRIR BOX DE DÚVIDAS -->
+    <button id="btnAbrirDuvidas" onclick="abrirBoxDuvidas()" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         background: linear-gradient(135deg, var(--turquesa-main), var(--turquesa-dark));
         border: 2px solid var(--turquesa-light);
         color: white;
-        font-size: 24px;
+        font-size: 20px;
         cursor: pointer;
         box-shadow: 0 4px 12px rgba(0, 206, 209, 0.4);
-        z-index: 9999;
+        z-index: 9997;
         transition: all 0.3s ease;
-    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        display: block;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Abrir dúvidas rápidas">
         ❓
     </button>
     
@@ -1685,27 +1726,6 @@
             <div id="tutorial" class="section">
                 <div class="card">
                     <div class="card-title">❓ TUTORIAL E AJUDA</div>
-                    
-                    <!-- Vídeo Tutorial -->
-                    <div style="margin-bottom: 30px;">
-                        <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">📹 Vídeo Explicativo</h3>
-                        <div style="background: rgba(0,206,209,0.05); padding: 20px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.2); text-align: center;">
-                            <div id="videoTutorialContainer">
-                                <div id="videoAnimado" style="background: linear-gradient(135deg, rgba(0,206,209,0.1), rgba(13,148,136,0.05)); border-radius: 8px; padding: 20px; min-height: 400px; position: relative; overflow: hidden;">
-                                    <div id="videoSlide" style="text-align: center; padding: 20px;">
-                                        <!-- Slides serão inseridos aqui dinamicamente -->
-                                    </div>
-                                    <div style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;">
-                                        <button class="btn btn-small" onclick="videoAnterior()" id="btnVideoAnterior" style="font-size: 12px;">◀ Anterior</button>
-                                        <button class="btn btn-small" onclick="videoProximo()" id="btnVideoProximo" style="font-size: 12px;">Próximo ▶</button>
-                                    </div>
-                                    <div style="text-align: center; margin-top: 15px; font-size: 12px; color: rgba(0,206,209,0.7);">
-                                        <span id="videoProgresso">1 / 6</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     
                     <!-- Tour Guiado -->
                     <div style="margin-bottom: 30px;">
@@ -4780,99 +4800,95 @@
             localStorage.setItem('vrvs_tutorial_completo', 'true');
         }
         
-        // ==================== VÍDEO ANIMADO TUTORIAL ====================
+        // ==================== BOX DE DÚVIDAS FLUTUANTE ====================
         
-        const slidesVideo = [
-            {
-                titulo: "🧠 Bem-vindo ao VRVS",
-                conteudo: `
-                    <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s infinite;">🧠</div>
-                    <h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 20px;">Sistema de Gestão de Estudos</h3>
-                    <p style="color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                        Uma plataforma completa para organizar seus estudos, acompanhar seu progresso e melhorar seu desempenho.
-                    </p>
-                `
-            },
-            {
-                titulo: "📊 Organize seus Temas",
-                conteudo: `
-                    <div style="font-size: 64px; margin-bottom: 20px;">📊</div>
-                    <h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 20px;">Adicione e Organize</h3>
-                    <p style="color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                        Cadastre seus temas por área, defina prioridades e datas. Tudo organizado em um só lugar.
-                    </p>
-                `
-            },
-            {
-                titulo: "📋 Missões do Dia",
-                conteudo: `
-                    <div style="font-size: 64px; margin-bottom: 20px;">📋</div>
-                    <h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 20px;">O que Estudar Hoje?</h3>
-                    <p style="color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                        Veja suas tarefas do dia e receba diretrizes personalizadas para cada tema. Registre o tempo gasto em questões e flashcards.
-                    </p>
-                `
-            },
-            {
-                titulo: "💬 Registre suas Sessões",
-                conteudo: `
-                    <div style="font-size: 64px; margin-bottom: 20px;">💬</div>
-                    <h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 20px;">Acompanhe seu Progresso</h3>
-                    <p style="color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                        Use o cronômetro integrado, registre seu rendimento, questões e flashcards. Tudo salvo automaticamente.
-                    </p>
-                `
-            },
-            {
-                titulo: "📈 Análises Detalhadas",
-                conteudo: `
-                    <div style="font-size: 64px; margin-bottom: 20px;">📈</div>
-                    <h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 20px;">Veja seu Desempenho</h3>
-                    <p style="color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                        Gráficos, estatísticas por área, análises de tempo. Identifique seus pontos fortes e fracos.
-                    </p>
-                `
-            },
-            {
-                titulo: "✅ Pronto para Começar!",
-                conteudo: `
-                    <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s infinite;">✅</div>
-                    <h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 20px;">Comece Agora</h3>
-                    <p style="color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-                        Adicione seus primeiros temas e comece a estudar de forma mais organizada e eficiente.
-                    </p>
-                `
-            }
-        ];
+        function abrirBoxDuvidas() {
+            const box = document.getElementById('boxDuvidas');
+            const btn = document.getElementById('btnAbrirDuvidas');
+            box.style.display = 'block';
+            btn.style.display = 'none';
+        }
         
-        let slideAtualVideo = 0;
-        
-        function mostrarSlideVideo() {
-            const slide = slidesVideo[slideAtualVideo];
-            document.getElementById('videoSlide').innerHTML = slide.conteudo;
-            document.getElementById('videoProgresso').textContent = `${slideAtualVideo + 1} / ${slidesVideo.length}`;
+        function fecharBoxDuvidas() {
+            const box = document.getElementById('boxDuvidas');
+            const btn = document.getElementById('btnAbrirDuvidas');
             
-            document.getElementById('btnVideoAnterior').style.display = slideAtualVideo === 0 ? 'none' : 'block';
-            document.getElementById('btnVideoProximo').textContent = slideAtualVideo === slidesVideo.length - 1 ? 'Fim ✓' : 'Próximo ▶';
+            // Mostrar pop-up informativo
+            mostrarNotificacaoFeedback('💡 Dica: Qualquer dúvida pode ser encontrada na aba ❓ Tutorial!', 4000);
+            
+            box.style.display = 'none';
+            btn.style.display = 'block';
+            
+            // Salvar preferência do usuário
+            localStorage.setItem('vrvs_box_duvidas_fechado', 'true');
         }
         
-        function videoProximo() {
-            if (slideAtualVideo < slidesVideo.length - 1) {
-                slideAtualVideo++;
-                mostrarSlideVideo();
+        function responderDuvidaBox() {
+            const pergunta = document.getElementById('perguntaBoxDuvidas').value.toLowerCase();
+            let resposta = '';
+            
+            // Sistema simples de palavras-chave (mesma lógica do responderDuvida)
+            if (pergunta.includes('adicionar') || pergunta.includes('novo') || pergunta.includes('criar') || pergunta.includes('tema')) {
+                resposta = faqRespostas.adicionar.texto;
+            } else if (pergunta.includes('feedback') || pergunta.includes('sessão') || pergunta.includes('registrar') || pergunta.includes('cronômetro')) {
+                resposta = faqRespostas.feedback.texto;
+            } else if (pergunta.includes('agenda') || pergunta.includes('timeline') || pergunta.includes('próxim')) {
+                resposta = faqRespostas.agenda.texto;
+            } else if (pergunta.includes('estatística') || pergunta.includes('gráfico') || pergunta.includes('análise') || pergunta.includes('performance')) {
+                resposta = faqRespostas.stats.texto;
+            } else if (pergunta.includes('backup') || pergunta.includes('exportar') || pergunta.includes('salvar') || pergunta.includes('perder')) {
+                resposta = faqRespostas.backup.texto;
+            } else if (pergunta.includes('tempo') || pergunta.includes('questões') || pergunta.includes('flashcard')) {
+                resposta = `
+                    <strong>Registrando tempo por atividade:</strong><br><br>
+                    1. Na aba <strong>📋 Missões</strong> ou <strong>📅 Agenda</strong><br>
+                    2. Clique no botão <strong>⏱️ Mostrar Tempos</strong><br>
+                    3. Preencha os campos opcionais de cada tema<br>
+                    4. Os dados serão incluídos nas análises<br><br>
+                    Você também pode registrar no Feedback de Sessão!
+                `;
+            } else if (pergunta.includes('como') || pergunta.includes('usar') || pergunta.includes('funciona')) {
+                resposta = `
+                    <strong>Não encontrei uma resposta específica.</strong><br><br>
+                    Tente uma destas opções:<br>
+                    • Clique nos botões de perguntas frequentes<br>
+                    • Inicie o <strong>Tour Guiado</strong> na aba Tutorial<br>
+                    • Seja mais específico na pergunta<br><br>
+                    <strong>Exemplos:</strong><br>
+                    "Como adicionar tema?"<br>
+                    "Como fazer backup?"<br>
+                    "Como ver estatísticas?"
+                `;
+            } else {
+                resposta = `
+                    <strong>Desculpe, não entendi sua dúvida.</strong><br><br>
+                    Clique em uma das <strong>Perguntas Frequentes</strong> ou<br>
+                    inicie o <strong>🚀 Tour Guiado</strong> na aba Tutorial!
+                `;
             }
+            
+            // Mostrar resposta em um alerta ou abrir a aba tutorial
+            mostrarNotificacaoFeedback('💡 ' + resposta.replace(/<[^>]*>/g, '').substring(0, 100) + '...', 5000);
+            showSection('tutorial');
         }
         
-        function videoAnterior() {
-            if (slideAtualVideo > 0) {
-                slideAtualVideo--;
-                mostrarSlideVideo();
+        // Enter para buscar resposta no box
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputBoxDuvidas = document.getElementById('perguntaBoxDuvidas');
+            if (inputBoxDuvidas) {
+                inputBoxDuvidas.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        responderDuvidaBox();
+                    }
+                });
             }
-        }
-        
-        // Inicializar vídeo ao carregar página
-        window.addEventListener('DOMContentLoaded', () => {
-            mostrarSlideVideo();
+            
+            // Verificar se o usuário já fechou o box antes
+            const boxFechado = localStorage.getItem('vrvs_box_duvidas_fechado');
+            if (boxFechado === 'true') {
+                document.getElementById('boxDuvidas').style.display = 'none';
+                document.getElementById('btnAbrirDuvidas').style.display = 'block';
+            }
         });
         
         // ==================== FAQ INTELIGENTE ====================
