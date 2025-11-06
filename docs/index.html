@@ -6465,8 +6465,10 @@
                 return window.salvarFeedbackConfirmado();
             }
             
-            // EDIT FORM
-            document.getElementById('editForm').onsubmit = function(e) {
+            // EDIT FORM (só se elemento existir)
+            const editForm = document.getElementById('editForm');
+            if (editForm) {
+                editForm.onsubmit = function(e) {
                 e.preventDefault();
                 const id = document.getElementById('editId').value;
                 const tema = dados.find(t => String(t.id) === String(id));
