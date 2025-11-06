@@ -5846,135 +5846,263 @@
             // FEEDBACK FORM - 100% FUNCIONANDO!
             document.getElementById('feedbackArea').addEventListener('change', updateFeedbackTemaSelect);
             
-            // Garantir que o botão de submit funcione no iPhone
+            // Garantir que o formulário existe e está funcionando
             const feedbackForm = document.getElementById('feedbackForm');
-            const feedbackSubmitBtn = feedbackForm.querySelector('button[type="submit"]');
-            
-            // Adicionar listener de clique no botão como fallback (fix para iPhone)
-            if (feedbackSubmitBtn) {
-                feedbackSubmitBtn.addEventListener('click', function(e) {
-                    // Não prevenir default aqui, deixar o form fazer o submit naturalmente
-                    // Mas garantir que o formulário está válido
-                    if (!feedbackForm.checkValidity()) {
-                        e.preventDefault();
-                        feedbackForm.reportValidity();
+            if (!feedbackForm) {
+                console.error('❌ Formulário de feedback não encontrado!');
+            } else {
+                console.log('✅ Formulário de feedback encontrado');
+                
+                // Remover qualquer listener anterior para evitar conflitos
+                const newForm = feedbackForm.cloneNode(true);
+                feedbackForm.parentNode.replaceChild(newForm, feedbackForm);
+                const feedbackFormFinal = document.getElementById('feedbackForm');
+                
+                // Adicionar listener de submit diretamente
+                feedbackFormFinal.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('📝 Submit do formulário de feedback capturado');
+                    
+                    // Validar campos obrigatórios antes de mostrar modal de confirmação
+                    const temaId = document.getElementById('feedbackTema').value;
+                    if (!temaId) {
+                        mostrarNotificacaoFeedback('⚠️ Selecione um módulo!', 'error');
                         return false;
                     }
+                    
+                    const dataSessao = document.getElementById('feedbackData').value;
+                    if (!dataSessao) {
+                        mostrarNotificacaoFeedback('⚠️ Selecione uma data para a sessão!', 'error');
+                        return false;
+                    }
+                    
+                    const rendimentoInput = document.getElementById('feedbackRendimento');
+                    const rendimento = parseInt(rendimentoInput.value);
+                    if (!rendimento || rendimento < 0 || rendimento > 100) {
+                        mostrarNotificacaoFeedback('⚠️ Preencha a performance (0-100)!', 'error');
+                        return false;
+                    }
+                    
+                    // Coletar todos os dados do formulário
+                    const tempoInput = document.getElementById('feedbackTempo');
+                    const modal = document.getElementById('encerrarSessaoModal');
+                    let tempo = 0;
+                    if (modal && modal.dataset.tempoSalvo) {
+                        tempo = Math.floor(parseInt(modal.dataset.tempoSalvo) / 60);
+                    } else if (cronometroSegundos > 0) {
+                        tempo = obterTempoCronometroMinutos();
+                    } else {
+                        tempo = parseInt(tempoInput.value) || 0;
+                    }
+                    
+                    if (tempo <= 0) {
+                        mostrarNotificacaoFeedback('⚠️ Preencha a duração da sessão!', 'error');
+                        return false;
+                    }
+                    
+                    // Obter tempo de intervalo
+                    let tempoIntervalo = 0;
+                    if (modal && modal.dataset.intervalosSalvos) {
+                        tempoIntervalo = Math.floor(parseInt(modal.dataset.intervalosSalvos) / 60);
+                    } else {
+                        tempoIntervalo = obterTempoIntervaloMinutos();
+                    }
+                    
+                    const numeroIntervalos = parseInt(document.getElementById('feedbackNumeroIntervalos').value) || 0;
+                    const intervalosTexto = document.getElementById('feedbackIntervalos').value.trim() || '';
+                    const questoesTexto = document.getElementById('feedbackQuestoes').value.trim() || '';
+                    const flashcards = parseInt(document.getElementById('feedbackFlashcards').value) || 0;
+                    
+                    const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
+                    const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
+                    let tempoQuestoes = tempoQuestoesInput ? parseInt(tempoQuestoesInput.value) || 0 : 0;
+                    let tempoFlashcards = tempoFlashcardsInput ? parseInt(tempoFlashcardsInput.value) || 0 : 0;
+                    
+                    // Extrair dados de questões
+                    let quantQuestoes = 0;
+                    let quantQuestoesAcertos = 0;
+                    if (questoesTexto && questoesTexto.includes('/')) {
+                        const partes = questoesTexto.split('/');
+                        quantQuestoesAcertos = parseInt(partes[0]) || 0;
+                        quantQuestoes = parseInt(partes[1]) || 0;
+                    }
+                    
+                    // Extrair dados de flashcards
+                    let quantFlashcards = 0;
+                    if (flashcards > 0) {
+                        quantFlashcards = flashcards;
+                    }
+                    
+                    // Se não tiver dados nos boxes mas tiver no modal, usar do modal
+                    if (tempoQuestoes === 0 && modal && modal.dataset.tempoQuestoes) {
+                        tempoQuestoes = parseInt(modal.dataset.tempoQuestoes) || 0;
+                    }
+                    if (tempoFlashcards === 0 && modal && modal.dataset.tempoFlashcards) {
+                        tempoFlashcards = parseInt(modal.dataset.tempoFlashcards) || 0;
+                    }
+                    if (quantQuestoes === 0 && modal && modal.dataset.quantQuestoes) {
+                        quantQuestoes = parseInt(modal.dataset.quantQuestoes) || 0;
+                    }
+                    if (quantFlashcards === 0 && modal && modal.dataset.quantFlashcards) {
+                        quantFlashcards = parseInt(modal.dataset.quantFlashcards) || 0;
+                    }
+                    
+                    const sugestao = document.getElementById('feedbackSugestao').value.trim();
+                    const obs = document.getElementById('feedbackObs').value.trim();
+                    
+                    console.log('📊 Dados coletados:', { temaId, dataSessao, rendimento, tempo, tempoIntervalo });
+                    
+                    // Preencher modal de confirmação com os dados coletados
+                    document.getElementById('confirmarData').value = dataSessao;
+                    document.getElementById('confirmarRendimento').value = rendimento;
+                    document.getElementById('confirmarTempo').value = tempo;
+                    document.getElementById('confirmarTempoIntervalo').value = tempoIntervalo;
+                    document.getElementById('confirmarNumIntervalos').value = numeroIntervalos;
+                    document.getElementById('confirmarTempoQuestoes').value = tempoQuestoes;
+                    document.getElementById('confirmarQuestoes').value = questoesTexto || (quantQuestoes > 0 ? `${quantQuestoesAcertos}/${quantQuestoes}` : '');
+                    document.getElementById('confirmarTempoFlashcards').value = tempoFlashcards;
+                    document.getElementById('confirmarFlashcards').value = quantFlashcards;
+                    document.getElementById('confirmarSugestao').value = sugestao;
+                    document.getElementById('confirmarObs').value = obs;
+                    
+                    // Guardar temaId no modal para uso posterior
+                    const confirmarModal = document.getElementById('confirmarFeedbackModal');
+                    if (confirmarModal) {
+                        confirmarModal.dataset.temaId = temaId;
+                        
+                        // Mostrar modal de confirmação
+                        confirmarModal.classList.add('active');
+                        console.log('✅ Modal de confirmação aberto');
+                    } else {
+                        console.error('❌ Modal de confirmação não encontrado!');
+                        // Se não tiver modal, salvar diretamente
+                        salvarFeedbackDireto(temaId, dataSessao, rendimento, tempo, tempoIntervalo, numeroIntervalos, intervalosTexto, tempoQuestoes, quantQuestoes, quantQuestoesAcertos, tempoFlashcards, quantFlashcards, questoesTexto, sugestao, obs);
+                    }
+                    
+                    return false;
                 });
+                
+                console.log('✅ Listener de submit adicionado ao formulário de feedback');
             }
             
-            feedbackForm.onsubmit = function(e) {
-                e.preventDefault();
-                
-                // Validar campos obrigatórios antes de mostrar modal de confirmação
-                const temaId = document.getElementById('feedbackTema').value;
-                if (!temaId) {
-                    mostrarNotificacaoFeedback('⚠️ Selecione um módulo!', 'error');
+            // Função auxiliar para salvar feedback diretamente (fallback se modal não existir)
+            function salvarFeedbackDireto(temaId, dataSessao, rendimento, tempo, tempoIntervalo, numeroIntervalos, intervalosTexto, tempoQuestoes, quantQuestoes, quantQuestoesAcertos, tempoFlashcards, quantFlashcards, questoesTexto, sugestao, obs) {
+                try {
+                    // IMPORTANTE: Recarregar dados do localStorage antes de processar feedback (fix para iOS)
+                    dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
+                    if (Array.isArray(dados)) {
+                        dados = dados.map(d => fixAreaTemaObjeto(d));
+                    }
+                    historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
+                    
+                    // CORREÇÃO: Comparação correta de IDs
+                    const tema = dados.find(t => String(t.id) === String(temaId));
+                    if (!tema) {
+                        mostrarNotificacaoFeedback('⚠️ Módulo não encontrado! Selecione um módulo válido.', 'error');
+                        return false;
+                    }
+                    
+                    // Atualizar contador80
+                    if (rendimento >= 80) {
+                        tema.contador80 = (tema.contador80 || 0) + 1;
+                    } else {
+                        tema.contador80 = 0;
+                    }
+                    
+                    // Atualizar dados do tema
+                    tema.rendimento = rendimento / 100;
+                    tema.sessoes = (tema.sessoes || 0) + 1;
+                    tema.ultEstudo = dataSessao;
+                    tema.agenda = calcularProximaRevisao(tema, dataSessao);
+                    tema.tempo = (tema.tempo || 0) + tempo;
+                    tema.status = tema.sessoes === 1 ? 'Em estudo' : tema.status;
+                    
+                    // Adicionar observações E sugestão
+                    let novaObs = '';
+                    if (obs) novaObs = `${dataSessao}: ${obs}`;
+                    
+                    // Adicionar novos dados às observações se preenchidos
+                    if (questoesTexto) {
+                        novaObs += (novaObs ? ' | ' : '') + `Q${questoesTexto}`;
+                    }
+                    if (quantFlashcards > 0) {
+                        novaObs += (novaObs ? ' | ' : '') + `FC${quantFlashcards}`;
+                    }
+                    
+                    if (sugestao) novaObs += (novaObs ? ' | ' : '') + `Sugestão: ${sugestao}`;
+                    
+                    if (novaObs) {
+                        tema.observacoes = tema.observacoes 
+                            ? tema.observacoes + '\n' + novaObs
+                            : novaObs;
+                    }
+                    
+                    // SALVAR SUGESTÃO NO TEMA
+                    tema.sugestao = sugestao || '';
+                    
+                    // ADICIONAR AO HISTÓRICO
+                    const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(tema.area, tema.tema);
+                    historico.push({
+                        id: Date.now(),
+                        temaId: tema.id,
+                        area: areaCorrigida,
+                        tema: temaCorrigido,
+                        rendimento: rendimento / 100,
+                        tempo: tempo,
+                        tempoIntervalo: tempoIntervalo,
+                        numeroIntervalos: numeroIntervalos,
+                        intervalos: intervalosTexto,
+                        tempoQuestoes: tempoQuestoes,
+                        quantQuestoes: quantQuestoes,
+                        quantQuestoesAcertos: quantQuestoesAcertos,
+                        tempoFlashcards: tempoFlashcards,
+                        quantFlashcards: quantFlashcards,
+                        questoes: questoesTexto,
+                        flashcards: quantFlashcards,
+                        data: dataSessao,
+                        observacoes: obs || '-',
+                        sugestao: sugestao || '-'
+                    });
+                    
+                    localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                    localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                    
+                    // Limpar formulário
+                    document.getElementById('feedbackForm').reset();
+                    document.getElementById('feedbackData').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('feedbackNumeroIntervalos').value = '0';
+                    document.getElementById('feedbackIntervalos').value = '';
+                    document.getElementById('feedbackQuestoes').value = '';
+                    document.getElementById('feedbackFlashcards').value = '';
+                    const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
+                    const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
+                    if (tempoQuestoesInput) tempoQuestoesInput.value = '';
+                    if (tempoFlashcardsInput) tempoFlashcardsInput.value = '';
+                    
+                    // Resetar cronômetro após salvar
+                    resetCronometro();
+                    
+                    // NOTIFICAÇÃO DE SUCESSO!
+                    const proximaData = formatarData(tema.agenda);
+                    mostrarNotificacaoFeedback(`✅ Performance registrada!<br>📅 Próxima revisão: ${proximaData}`);
+                    
+                    // Atualizar todas as visualizações
+                    renderDados();
+                    renderTarefas();
+                    renderAgenda();
+                    renderPendencias();
+                    updateFeedbackSelect();
+                    renderHistorico();
+                    updateStats();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao salvar feedback:', error);
+                    mostrarNotificacaoFeedback('❌ Erro ao salvar feedback. Tente novamente.', 'error');
                     return false;
                 }
-                
-                const dataSessao = document.getElementById('feedbackData').value;
-                if (!dataSessao) {
-                    mostrarNotificacaoFeedback('⚠️ Selecione uma data para a sessão!', 'error');
-                    return false;
-                }
-                
-                const rendimentoInput = document.getElementById('feedbackRendimento');
-                const rendimento = parseInt(rendimentoInput.value);
-                if (!rendimento || rendimento < 0 || rendimento > 100) {
-                    mostrarNotificacaoFeedback('⚠️ Preencha a performance (0-100)!', 'error');
-                    return false;
-                }
-                
-                // Coletar todos os dados do formulário
-                const tempoInput = document.getElementById('feedbackTempo');
-                const modal = document.getElementById('encerrarSessaoModal');
-                let tempo = 0;
-                if (modal && modal.dataset.tempoSalvo) {
-                    tempo = Math.floor(parseInt(modal.dataset.tempoSalvo) / 60);
-                } else if (cronometroSegundos > 0) {
-                    tempo = obterTempoCronometroMinutos();
-                } else {
-                    tempo = parseInt(tempoInput.value) || 0;
-                }
-                
-                if (tempo <= 0) {
-                    mostrarNotificacaoFeedback('⚠️ Preencha a duração da sessão!', 'error');
-                    return false;
-                }
-                
-                // Obter tempo de intervalo
-                let tempoIntervalo = 0;
-                if (modal && modal.dataset.intervalosSalvos) {
-                    tempoIntervalo = Math.floor(parseInt(modal.dataset.intervalosSalvos) / 60);
-                } else {
-                    tempoIntervalo = obterTempoIntervaloMinutos();
-                }
-                
-                const numeroIntervalos = parseInt(document.getElementById('feedbackNumeroIntervalos').value) || 0;
-                const intervalosTexto = document.getElementById('feedbackIntervalos').value.trim() || '';
-                const questoesTexto = document.getElementById('feedbackQuestoes').value.trim() || '';
-                const flashcards = parseInt(document.getElementById('feedbackFlashcards').value) || 0;
-                
-                const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
-                const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
-                let tempoQuestoes = tempoQuestoesInput ? parseInt(tempoQuestoesInput.value) || 0 : 0;
-                let tempoFlashcards = tempoFlashcardsInput ? parseInt(tempoFlashcardsInput.value) || 0 : 0;
-                
-                // Extrair dados de questões
-                let quantQuestoes = 0;
-                let quantQuestoesAcertos = 0;
-                if (questoesTexto && questoesTexto.includes('/')) {
-                    const partes = questoesTexto.split('/');
-                    quantQuestoesAcertos = parseInt(partes[0]) || 0;
-                    quantQuestoes = parseInt(partes[1]) || 0;
-                }
-                
-                // Extrair dados de flashcards
-                let quantFlashcards = 0;
-                if (flashcards > 0) {
-                    quantFlashcards = flashcards;
-                }
-                
-                // Se não tiver dados nos boxes mas tiver no modal, usar do modal
-                if (tempoQuestoes === 0 && modal && modal.dataset.tempoQuestoes) {
-                    tempoQuestoes = parseInt(modal.dataset.tempoQuestoes) || 0;
-                }
-                if (tempoFlashcards === 0 && modal && modal.dataset.tempoFlashcards) {
-                    tempoFlashcards = parseInt(modal.dataset.tempoFlashcards) || 0;
-                }
-                if (quantQuestoes === 0 && modal && modal.dataset.quantQuestoes) {
-                    quantQuestoes = parseInt(modal.dataset.quantQuestoes) || 0;
-                }
-                if (quantFlashcards === 0 && modal && modal.dataset.quantFlashcards) {
-                    quantFlashcards = parseInt(modal.dataset.quantFlashcards) || 0;
-                }
-                
-                const sugestao = document.getElementById('feedbackSugestao').value.trim();
-                const obs = document.getElementById('feedbackObs').value.trim();
-                
-                // Preencher modal de confirmação com os dados coletados
-                document.getElementById('confirmarData').value = dataSessao;
-                document.getElementById('confirmarRendimento').value = rendimento;
-                document.getElementById('confirmarTempo').value = tempo;
-                document.getElementById('confirmarTempoIntervalo').value = tempoIntervalo;
-                document.getElementById('confirmarNumIntervalos').value = numeroIntervalos;
-                document.getElementById('confirmarTempoQuestoes').value = tempoQuestoes;
-                document.getElementById('confirmarQuestoes').value = questoesTexto || (quantQuestoes > 0 ? `${quantQuestoesAcertos}/${quantQuestoes}` : '');
-                document.getElementById('confirmarTempoFlashcards').value = tempoFlashcards;
-                document.getElementById('confirmarFlashcards').value = quantFlashcards;
-                document.getElementById('confirmarSugestao').value = sugestao;
-                document.getElementById('confirmarObs').value = obs;
-                
-                // Guardar temaId no modal para uso posterior
-                const confirmarModal = document.getElementById('confirmarFeedbackModal');
-                confirmarModal.dataset.temaId = temaId;
-                
-                // Mostrar modal de confirmação
-                document.getElementById('confirmarFeedbackModal').classList.add('active');
-                
-                return false;
-            };
+            }
             
             // Função para fechar modal de confirmação
             function closeConfirmarFeedbackModal() {
