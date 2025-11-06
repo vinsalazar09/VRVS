@@ -5921,11 +5921,21 @@
                         tempoIntervalo = obterTempoIntervaloMinutos();
                     }
                     
-                    const numeroIntervalos = parseInt(document.getElementById('feedbackNumeroIntervalos').value) || 0;
-                    const intervalosTexto = document.getElementById('feedbackIntervalos').value.trim() || '';
-                    const questoesTexto = document.getElementById('feedbackQuestoes').value.trim() || '';
-                    const flashcards = parseInt(document.getElementById('feedbackFlashcards').value) || 0;
+                    const numeroIntervalosEl = document.getElementById('feedbackNumeroIntervalos');
+                    const intervalosTextoEl = document.getElementById('feedbackIntervalos');
+                    const questoesTextoEl = document.getElementById('feedbackQuestoes');
+                    const flashcardsEl = document.getElementById('feedbackFlashcards');
+                    const sugestaoEl = document.getElementById('feedbackSugestao');
+                    const obsEl = document.getElementById('feedbackObs');
                     
+                    const numeroIntervalos = numeroIntervalosEl ? parseInt(numeroIntervalosEl.value) || 0 : 0;
+                    const intervalosTexto = intervalosTextoEl ? intervalosTextoEl.value.trim() || '' : '';
+                    const questoesTexto = questoesTextoEl ? questoesTextoEl.value.trim() || '' : '';
+                    const flashcards = flashcardsEl ? parseInt(flashcardsEl.value) || 0 : 0;
+                    const sugestao = sugestaoEl ? sugestaoEl.value.trim() : '';
+                    const obs = obsEl ? obsEl.value.trim() : '';
+                    
+                    // Processar campos de tempo de questões e flashcards
                     const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
                     const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
                     let tempoQuestoes = tempoQuestoesInput ? parseInt(tempoQuestoesInput.value) || 0 : 0;
@@ -5959,9 +5969,6 @@
                     if (quantFlashcards === 0 && modal && modal.dataset.quantFlashcards) {
                         quantFlashcards = parseInt(modal.dataset.quantFlashcards) || 0;
                     }
-                    
-                    const sugestao = document.getElementById('feedbackSugestao').value.trim();
-                    const obs = document.getElementById('feedbackObs').value.trim();
                     
                     console.log('📊 Dados coletados:', { temaId, dataSessao, rendimento, tempo, tempoIntervalo });
                     
