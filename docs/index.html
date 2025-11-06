@@ -3429,20 +3429,40 @@
                         if (!h.id) h.id = Date.now() + Math.random();
                         // Normalizar área/tema corretamente
                         const { area, tema } = fixAreaTema(h.area || '', h.tema || '');
-                        h.area = area;
-                        h.tema = tema;
-                        if (h.rendimento > 1) h.rendimento = h.rendimento / 100;
-                        h.tempo = parseInt(h.tempo) || 0;
-                        if (!h.data || h.data === '-') {
-                            const obsMatch = (h.observacoes || '').match(/^(\d{4}-\d{2}-\d{2}):/);
+                        
+                        // Criar objeto limpo apenas com campos do histórico (remover campos de dados)
+                        const historicoLimpo = {
+                            id: h.id,
+                            temaId: h.temaId || '',
+                            area: area,
+                            tema: tema,
+                            rendimento: (h.rendimento > 1 ? h.rendimento / 100 : (h.rendimento || 0)),
+                            tempo: parseInt(h.tempo) || 0,
+                            tempoIntervalo: parseInt(h.tempoIntervalo) || 0,
+                            numeroIntervalos: parseInt(h.numeroIntervalos) || 0,
+                            intervalos: h.intervalos || '',
+                            tempoQuestoes: parseInt(h.tempoQuestoes) || 0,
+                            quantQuestoes: parseInt(h.quantQuestoes) || 0,
+                            quantQuestoesAcertos: parseInt(h.quantQuestoesAcertos) || 0,
+                            tempoFlashcards: parseInt(h.tempoFlashcards) || 0,
+                            quantFlashcards: parseInt(h.quantFlashcards) || 0,
+                            questoes: h.questoes || '',
+                            flashcards: parseInt(h.flashcards) || 0,
+                            data: h.data || '',
+                            observacoes: h.observacoes || '',
+                            sugestao: h.sugestao || ''
+                        };
+                        
+                        if (!historicoLimpo.data || historicoLimpo.data === '-') {
+                            const obsMatch = (historicoLimpo.observacoes || '').match(/^(\d{4}-\d{2}-\d{2}):/);
                             if (obsMatch) {
-                                h.data = obsMatch[1];
+                                historicoLimpo.data = obsMatch[1];
                             }
                         }
-                        if (!h.sugestao || h.sugestao === '-') {
-                            h.sugestao = extrairUltimaSugestao(h.observacoes);
+                        if (!historicoLimpo.sugestao || historicoLimpo.sugestao === '-') {
+                            historicoLimpo.sugestao = extrairUltimaSugestao(historicoLimpo.observacoes);
                         }
-                        return h;
+                        return historicoLimpo;
                     });
                     localStorage.setItem('vrvs_historico', JSON.stringify(historico));
                     // Atualizar variável global
@@ -3508,11 +3528,9 @@
                         const data = rows.slice(1).map((r, lineNum) => {
                             return {
                                 id: getVal(r, 'id') || `${Date.now()}_${lineNum}`,
-                                area: getVal(r, 'area', 'topico'),
-                                tema: getVal(r, 'tema', 'assunto', 'titulo'),
-                                status: getVal(r, 'status', 'estado') || 'Não iniciado',
-                                prioridade: parseInt(getVal(r, 'prioridade', 'prior')) || 3,
-                                dificuldade: getVal(r, 'dificuldade', 'dific') || 'Média',
+                                temaId: getVal(r, 'temaid'),
+                                area: getVal(r, 'area'),
+                                tema: getVal(r, 'tema'),
                                 rendimento: (() => {
                                     const valStr = getVal(r, 'rendimento', 'rend');
                                     if (!valStr) return 0;
@@ -3520,15 +3538,20 @@
                                     const val = parseFloat(cleanStr) || 0;
                                     return val > 1 ? val / 100 : val;
                                 })(),
-                                sessoes: parseInt(getVal(r, 'sessoes', 'sessao')) || 0,
-                                ultEstudo: getVal(r, 'ultestudo', 'ultest', 'ultimoestudo', 'ultimo_estudo'),
-                                agenda: getVal(r, 'dataagenda', 'agenda', 'data_agenda'),
-                                tempo: parseInt(getVal(r, 'tempomin', 'tempo')) || 0,
-                                observacoes: getVal(r, 'observacoes', 'obs', 'observacao'),
-                                contador80: parseInt(getVal(r, 'contador80')) || 0,
-                                sugestao: getVal(r, 'sugestao', 'sugestoes'),
+                                tempo: parseInt(getVal(r, 'tempo', 'tempomin')) || 0,
+                                tempoIntervalo: parseInt(getVal(r, 'tempointervalo')) || 0,
+                                numeroIntervalos: parseInt(getVal(r, 'numerointervalos')) || 0,
+                                intervalos: getVal(r, 'intervalos') || '',
+                                tempoQuestoes: parseInt(getVal(r, 'tempoquestoes')) || 0,
+                                quantQuestoes: parseInt(getVal(r, 'quantquestoes')) || 0,
+                                quantQuestoesAcertos: parseInt(getVal(r, 'quantquestoesacertos')) || 0,
+                                tempoFlashcards: parseInt(getVal(r, 'tempoflashcards')) || 0,
+                                quantFlashcards: parseInt(getVal(r, 'quantflashcards')) || 0,
+                                questoes: getVal(r, 'questoes') || '',
+                                flashcards: parseInt(getVal(r, 'flashcards')) || 0,
                                 data: getVal(r, 'data'),
-                                temaId: getVal(r, 'temaid')
+                                observacoes: getVal(r, 'observacoes', 'obs', 'observacao') || '',
+                                sugestao: getVal(r, 'sugestao', 'sugestoes') || ''
                             };
                         }).filter(obj => obj.tema && obj.tema.trim() !== '');
                         resolve(data);
@@ -3609,7 +3632,31 @@
         }
         
         function exportarHistorico() {
-            const csv = dados2CSV(historico);
+            // Filtrar apenas campos relevantes do histórico (não incluir campos do tema)
+            const historicoLimpo = historico.map(h => {
+                return {
+                    id: h.id,
+                    temaId: h.temaId,
+                    area: h.area,
+                    tema: h.tema,
+                    rendimento: h.rendimento,
+                    tempo: h.tempo,
+                    tempoIntervalo: h.tempoIntervalo || 0,
+                    numeroIntervalos: h.numeroIntervalos || 0,
+                    intervalos: h.intervalos || '',
+                    tempoQuestoes: h.tempoQuestoes || 0,
+                    quantQuestoes: h.quantQuestoes || 0,
+                    quantQuestoesAcertos: h.quantQuestoesAcertos || 0,
+                    tempoFlashcards: h.tempoFlashcards || 0,
+                    quantFlashcards: h.quantFlashcards || 0,
+                    questoes: h.questoes || '',
+                    flashcards: h.flashcards || 0,
+                    data: h.data,
+                    observacoes: h.observacoes || '',
+                    sugestao: h.sugestao || ''
+                };
+            });
+            const csv = dados2CSV(historicoLimpo);
             const hoje = new Date().toISOString().split('T')[0];
             downloadCSV(csv, `VRVS_HISTORICO_${hoje}.csv`);
         }
