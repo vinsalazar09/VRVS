@@ -3824,45 +3824,74 @@
         
         // ==================== NAVEGAÇÃO ====================
         
-        function showSection(sectionId) {
+        // ==================== NAVEGAÇÃO ====================
+        
+        // Função GLOBAL para navegação - FUNCIONA GARANTIDAMENTE
+        window.showSection = function(sectionId) {
+            console.log('📂 Navegando para seção:', sectionId);
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            event.target.classList.add('active');
-            if (sectionId === 'dados') {
-                // SEMPRE recarregar dados do localStorage ao abrir aba Dados (fix para iOS cache)
-                renderDados();
+            
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.add('active');
             }
-            if (sectionId === 'tarefa') renderTarefas();
+            
+            // Encontrar e ativar a tab correspondente (sem usar event.target que pode não existir)
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                const text = tab.textContent.toLowerCase();
+                const sectionMap = {
+                    'dados': 'dados',
+                    'cadastro': 'cadastro',
+                    'feedback': 'feedback',
+                    'tarefa': 'tarefa',
+                    'agenda': 'agenda',
+                    'pendencias': 'pendências',
+                    'stats': 'estatísticas',
+                    'analises': 'análises',
+                    'historico': 'histórico',
+                    'lembretes': 'lembretes',
+                    'caderno': 'caderno',
+                    'relatorios': 'relatórios',
+                    'importar': 'importar',
+                    'exportar': 'exportar',
+                    'tutorial': 'tutorial'
+                };
+                if (text.includes(sectionMap[sectionId] || '')) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Renderizar seções específicas quando necessário
+            if (sectionId === 'dados' && typeof renderDados === 'function') renderDados();
+            if (sectionId === 'tarefa' && typeof renderTarefas === 'function') renderTarefas();
             if (sectionId === 'agenda') {
-                // Inicializar com semana atual se não tiver valores
                 const inputInicio = document.getElementById('agendaDataInicio');
                 const inputFim = document.getElementById('agendaDataFim');
-                if (!inputInicio.value || !inputFim.value) {
-                    filtrarSemanaAtual();
+                if (inputInicio && inputFim && (!inputInicio.value || !inputFim.value)) {
+                    if (typeof filtrarSemanaAtual === 'function') filtrarSemanaAtual();
                 } else {
-                    renderAgenda();
+                    if (typeof renderAgenda === 'function') renderAgenda();
                 }
             }
-            if (sectionId === 'feedback') {
-                // SEMPRE recarregar dados e atualizar selects ao abrir aba Feedback (fix para iOS cache)
-                updateFeedbackSelect();
-            }
-            if (sectionId === 'historico') renderHistorico();
-            if (sectionId === 'pendencias') renderPendencias();
+            if (sectionId === 'feedback' && typeof updateFeedbackSelect === 'function') updateFeedbackSelect();
+            if (sectionId === 'historico' && typeof renderHistorico === 'function') renderHistorico();
+            if (sectionId === 'pendencias' && typeof renderPendencias === 'function') renderPendencias();
             if (sectionId === 'lembretes') {
-                atualizarSelectsLembrete();
-                renderLembretes();
+                if (typeof atualizarSelectsLembrete === 'function') atualizarSelectsLembrete();
+                if (typeof renderLembretes === 'function') renderLembretes();
             }
             if (sectionId === 'caderno') {
-                atualizarSelectsCaderno();
-                renderCaderno();
+                if (typeof atualizarSelectsCaderno === 'function') atualizarSelectsCaderno();
+                if (typeof renderCaderno === 'function') renderCaderno();
             }
             if (sectionId === 'analises') {
-                atualizarSelectsAnalise();
-                atualizarAnalises();
+                if (typeof atualizarSelectsAnalise === 'function') atualizarSelectsAnalise();
+                if (typeof atualizarAnalises === 'function') atualizarAnalises();
             }
-        }
+            if (sectionId === 'stats' && typeof updateStats === 'function') updateStats();
+        };
         
         // ==================== ANÁLISES DETALHADAS ====================
         
@@ -6661,3 +6690,4 @@
     </script>
 </body>
 </html>
+
