@@ -6510,10 +6510,13 @@
                 renderPendencias();
                 updateFeedbackSelect();
             };
+            }
             
-            // LEMBRETE FORM
-            document.getElementById('lembreteForm').onsubmit = function(e) {
-                e.preventDefault();
+            // LEMBRETE FORM (só se elemento existir)
+            const lembreteForm = document.getElementById('lembreteForm');
+            if (lembreteForm) {
+                lembreteForm.onsubmit = function(e) {
+                    e.preventDefault();
                 const titulo = document.getElementById('lembreteTitulo').value.trim();
                 const descricao = document.getElementById('lembreteDescricao').value.trim();
                 const periodicidade = document.getElementById('lembretePeriodicidade').value;
