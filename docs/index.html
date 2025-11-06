@@ -4502,13 +4502,18 @@
         
         // Função para encerrar sessão e mostrar modal
         function encerrarSessao() {
-            // Pausar cronômetro se estiver rodando para calcular tempo final preciso
+            // Salvar tempo final antes de zerar
+            let tempoFinalSalvo = 0;
+            
+            // Parar cronômetro completamente se estiver rodando
             if (cronometroRodando) {
                 clearInterval(cronometroInterval);
                 cronometroInterval = null;
-                cronometroSegundos = calcularTempoDecorrido();
+                tempoFinalSalvo = calcularTempoDecorrido();
                 cronometroRodando = false;
                 document.getElementById('cronometroToggle').textContent = '⏱️ Iniciar Cronômetro';
+            } else {
+                tempoFinalSalvo = cronometroSegundos;
             }
             
             // Finalizar intervalo ativo se houver
@@ -4533,13 +4538,13 @@
                 intervaloInicioTimestamp = null;
             }
             
-            if (cronometroSegundos === 0) {
+            if (tempoFinalSalvo === 0) {
                 mostrarNotificacaoFeedback('⚠️ O cronômetro não está rodando!', 'error');
                 return;
             }
             
-            // Preencher dados do modal
-            document.getElementById('modalTempoTotal').textContent = formatarTempoCronometro(cronometroSegundos);
+            // Preencher dados do modal com o tempo salvo
+            document.getElementById('modalTempoTotal').textContent = formatarTempoCronometro(tempoFinalSalvo);
             document.getElementById('modalNumIntervalos').textContent = intervalosIndividuais.length;
             document.getElementById('modalTempoIntervalos').textContent = formatarTempoCronometro(tempoTotalIntervalo);
             
@@ -4548,6 +4553,23 @@
             document.getElementById('modalQuantQuestoes').value = '';
             document.getElementById('modalTempoFlashcards').value = '';
             document.getElementById('modalQuantFlashcards').value = '';
+            
+            // ZERAR CRONÔMETRO COMPLETAMENTE após salvar o tempo
+            cronometroSegundos = tempoFinalSalvo; // Manter o tempo salvo para uso no feedback
+            tempoTotalIntervalo = 0; // Manter intervalo total para exibição
+            // Limpar timestamps e estado do cronômetro
+            localStorage.removeItem('vrvs_cronometro');
+            localStorage.removeItem('vrvs_cronometro_timestamp');
+            localStorage.removeItem('vrvs_cronometro_segundos');
+            
+            // Atualizar display do cronômetro para mostrar tempo final
+            document.getElementById('cronometroDisplay').textContent = formatarTempoCronometro(tempoFinalSalvo);
+            if (tempoTotalIntervalo > 0) {
+                document.getElementById('tempoIntervaloTotal').style.display = 'block';
+                document.getElementById('tempoIntervaloTotalDisplay').textContent = formatarTempoCronometro(tempoTotalIntervalo);
+            } else {
+                document.getElementById('tempoIntervaloTotal').style.display = 'none';
+            }
             
             // Mostrar modal
             document.getElementById('encerrarSessaoModal').classList.add('active');
@@ -4567,6 +4589,16 @@
             const tempoTotal = tempoQuestoes + tempoFlashcards;
             if (tempoTotal > 0) {
                 document.getElementById('feedbackTempo').value = tempoTotal;
+            }
+            
+            // Preencher campos de tempo discretos (boxes discretos)
+            const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
+            const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
+            if (tempoQuestoesInput && tempoQuestoes > 0) {
+                tempoQuestoesInput.value = tempoQuestoes;
+            }
+            if (tempoFlashcardsInput && tempoFlashcards > 0) {
+                tempoFlashcardsInput.value = tempoFlashcards;
             }
             
             // Preencher questões (formato: acertos/total)
@@ -4598,7 +4630,9 @@
             closeEncerrarSessaoModal();
             
             // Scroll para o formulário
-            document.getElementById('feedbackForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => {
+                document.getElementById('feedbackForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
         }
         
         function obterTempoCronometroMinutos() {
@@ -5703,32 +5737,68 @@
             
             // FEEDBACK FORM - 100% FUNCIONANDO!
             document.getElementById('feedbackArea').addEventListener('change', updateFeedbackTemaSelect);
-            document.getElementById('feedbackForm').onsubmit = function(e) {
+            
+            // Garantir que o botão de submit funcione no iPhone
+            const feedbackForm = document.getElementById('feedbackForm');
+            const feedbackSubmitBtn = feedbackForm.querySelector('button[type="submit"]');
+            
+            // Adicionar listener de clique no botão como fallback (fix para iPhone)
+            if (feedbackSubmitBtn) {
+                feedbackSubmitBtn.addEventListener('click', function(e) {
+                    // Não prevenir default aqui, deixar o form fazer o submit naturalmente
+                    // Mas garantir que o formulário está válido
+                    if (!feedbackForm.checkValidity()) {
+                        e.preventDefault();
+                        feedbackForm.reportValidity();
+                        return false;
+                    }
+                });
+            }
+            
+            feedbackForm.onsubmit = function(e) {
                 e.preventDefault();
                 
-                // IMPORTANTE: Recarregar dados do localStorage antes de processar feedback (fix para iOS)
-                dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
-                if (Array.isArray(dados)) {
-                    dados = dados.map(d => fixAreaTemaObjeto(d));
-                }
-                historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
-                
-                const temaId = document.getElementById('feedbackTema').value;
-                // CORREÇÃO: Usar data do formulário (input feedbackData)
-                const dataSessao = document.getElementById('feedbackData').value;
-                if (!dataSessao) {
-                    mostrarNotificacaoFeedback('⚠️ Selecione uma data para a sessão!', 'error');
-                    return;
-                }
-                const rendimento = parseInt(document.getElementById('feedbackRendimento').value);
-                const tempoInput = document.getElementById('feedbackTempo');
-                // Usar tempo do cronômetro se disponível, senão usar o input
-                const tempo = cronometroSegundos > 0 ? obterTempoCronometroMinutos() : (parseInt(tempoInput.value) || 0);
-                const tempoIntervalo = obterTempoIntervaloMinutos(); // Tempo de intervalo em minutos
-                // Se usar cronômetro, atualizar o campo de input também
-                if (cronometroSegundos > 0) {
-                    tempoInput.value = tempo;
-                }
+                try {
+                    // IMPORTANTE: Recarregar dados do localStorage antes de processar feedback (fix para iOS)
+                    dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
+                    if (Array.isArray(dados)) {
+                        dados = dados.map(d => fixAreaTemaObjeto(d));
+                    }
+                    historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
+                    
+                    const temaId = document.getElementById('feedbackTema').value;
+                    if (!temaId) {
+                        mostrarNotificacaoFeedback('⚠️ Selecione um módulo!', 'error');
+                        return false;
+                    }
+                    
+                    // CORREÇÃO: Usar data do formulário (input feedbackData)
+                    const dataSessao = document.getElementById('feedbackData').value;
+                    if (!dataSessao) {
+                        mostrarNotificacaoFeedback('⚠️ Selecione uma data para a sessão!', 'error');
+                        return false;
+                    }
+                    
+                    const rendimentoInput = document.getElementById('feedbackRendimento');
+                    const rendimento = parseInt(rendimentoInput.value);
+                    if (!rendimento || rendimento < 0 || rendimento > 100) {
+                        mostrarNotificacaoFeedback('⚠️ Preencha a performance (0-100)!', 'error');
+                        return false;
+                    }
+                    
+                    const tempoInput = document.getElementById('feedbackTempo');
+                    // Usar tempo do cronômetro se disponível, senão usar o input
+                    const tempo = cronometroSegundos > 0 ? obterTempoCronometroMinutos() : (parseInt(tempoInput.value) || 0);
+                    if (tempo <= 0) {
+                        mostrarNotificacaoFeedback('⚠️ Preencha a duração da sessão!', 'error');
+                        return false;
+                    }
+                    
+                    const tempoIntervalo = obterTempoIntervaloMinutos(); // Tempo de intervalo em minutos
+                    // Se usar cronômetro, atualizar o campo de input também
+                    if (cronometroSegundos > 0) {
+                        tempoInput.value = tempo;
+                    }
                 
                 // Novos campos opcionais
                 const numeroIntervalos = parseInt(document.getElementById('feedbackNumeroIntervalos').value) || 0;
@@ -5774,7 +5844,7 @@
                 const tema = dados.find(t => String(t.id) === String(temaId));
                 if (!tema) {
                     mostrarNotificacaoFeedback('⚠️ Módulo não encontrado! Selecione um módulo válido.', 'error');
-                    return;
+                    return false;
                 }
                 
                 // Atualizar contador80
@@ -5801,11 +5871,8 @@
                 if (questoesTexto) {
                     novaObs += (novaObs ? ' | ' : '') + `Q${questoesTexto}`;
                 }
-                if (flashcards > 0) {
-                    novaObs += (novaObs ? ' | ' : '') + `FC${flashcards}`;
-                }
-                if (numeroIntervalos > 0) {
-                    novaObs += (novaObs ? ' | ' : '') + `Intervalos: ${numeroIntervalos} (${intervalosTexto || 'registrados'})`;
+                if (quantFlashcards > 0) {
+                    novaObs += (novaObs ? ' | ' : '') + `FC${quantFlashcards}`;
                 }
                 
                 if (sugestao) novaObs += (novaObs ? ' | ' : '') + `Sugestão: ${sugestao}`;
@@ -5853,6 +5920,11 @@
                 document.getElementById('feedbackIntervalos').value = '';
                 document.getElementById('feedbackQuestoes').value = '';
                 document.getElementById('feedbackFlashcards').value = '';
+                // Limpar campos de tempo discretos
+                const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
+                const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
+                if (tempoQuestoesInput) tempoQuestoesInput.value = '';
+                if (tempoFlashcardsInput) tempoFlashcardsInput.value = '';
                 
                 // Resetar cronômetro após salvar (incluindo tempo de intervalo)
                 resetCronometro();
@@ -5869,6 +5941,14 @@
                 updateFeedbackSelect();
                 renderHistorico();
                 updateStats();
+                
+                return false; // Prevenir submit padrão
+                
+                } catch (error) {
+                    console.error('❌ Erro ao salvar feedback:', error);
+                    mostrarNotificacaoFeedback('❌ Erro ao salvar feedback. Tente novamente.', 'error');
+                    return false;
+                }
             };
             
             // EDIT FORM
