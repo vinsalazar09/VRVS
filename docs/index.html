@@ -454,6 +454,12 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            /* Fix para iOS - elementos fixos */
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            will-change: transform;
         }
         
         .btn-save-floating:hover {
@@ -461,14 +467,14 @@
             color: #00FFE0;
             border-color: rgba(0, 206, 209, 0.5);
             box-shadow: 0 4px 20px rgba(0, 206, 209, 0.3);
-            transform: translateY(-2px);
+            transform: translateZ(0) translateY(-2px);
         }
         
         .btn-save-floating:active {
             background: linear-gradient(135deg, rgba(0, 206, 209, 0.4) 0%, rgba(0, 206, 209, 0.5) 100%);
             color: #00FFE0;
             box-shadow: 0 6px 25px rgba(0, 206, 209, 0.5);
-            transform: translateY(0) scale(0.98);
+            transform: translateZ(0) translateY(0) scale(0.98);
         }
         
         /* STATS GRID */
@@ -1303,6 +1309,17 @@
     </button>
     
     <style>
+        /* Fix para iOS - elementos fixos devem usar transform para funcionar corretamente */
+        #btnAbrirDuvidas,
+        #menuDuvidas,
+        #boxDuvidas {
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+        
         /* Desktop - botão no topo */
         @media (min-width: 768px) {
             #btnAbrirDuvidas {
@@ -1330,16 +1347,40 @@
                 width: 40px !important;
                 height: 40px !important;
                 font-size: 18px !important;
+                position: fixed !important;
+                -webkit-transform: translateZ(0) !important;
+                transform: translateZ(0) !important;
             }
             #menuDuvidas {
                 bottom: 90px !important;
                 top: auto !important;
+                position: fixed !important;
+                -webkit-transform: translateZ(0) !important;
+                transform: translateZ(0) !important;
             }
             #boxDuvidas {
                 bottom: 90px !important;
                 top: auto !important;
                 width: calc(100vw - 40px) !important;
                 max-width: 320px;
+                position: fixed !important;
+                -webkit-transform: translateZ(0) !important;
+                transform: translateZ(0) !important;
+            }
+            
+        }
+        
+        /* Garantir que elementos fixos não sejam afetados por scroll no iOS */
+        @supports (-webkit-overflow-scrolling: touch) {
+            body {
+                -webkit-overflow-scrolling: touch;
+            }
+            #btnAbrirDuvidas,
+            #menuDuvidas,
+            #boxDuvidas {
+                position: fixed !important;
+                -webkit-transform: translate3d(0, 0, 0) !important;
+                transform: translate3d(0, 0, 0) !important;
             }
         }
     </style>
