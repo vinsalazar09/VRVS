@@ -2602,22 +2602,43 @@
         // A aba Dados mostra apenas temas cadastrados, não sessões do histórico
         
         function updateFeedbackSelect() {
-            // Recarregar dados do localStorage antes de atualizar selects
+            // SEMPRE recarregar dados do localStorage antes de atualizar selects (fix para iOS cache)
             dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
             if (Array.isArray(dados)) {
-                dados = dados.map(d => fixAreaTemaObjeto(d));
+                dados = dados.map(d => {
+                    try {
+                        const corrigido = fixAreaTemaObjeto(d);
+                        // Aplicar fixAreaTema para garantir área/tema corretos
+                        const { area, tema } = fixAreaTema(corrigido.area || '', corrigido.tema || '');
+                        corrigido.area = area;
+                        corrigido.tema = tema;
+                        return corrigido;
+                    } catch (e) {
+                        return d;
+                    }
+                }).filter(d => d && d.tema && d.tema.trim() !== '');
             }
+            
+            // Atualizar variável global
+            window.dados = dados;
             
             const areaSelect = document.getElementById('feedbackArea');
             const temaSelect = document.getElementById('feedbackTema');
             
-            // Obter áreas únicas
+            if (!areaSelect || !temaSelect) {
+                console.error('❌ Elementos de select não encontrados');
+                return;
+            }
+            
+            // Obter áreas únicas (apenas áreas válidas)
             const areas = [...new Set(dados.map(t => t.area).filter(a => a && a.trim()))].sort();
             areaSelect.innerHTML = '<option value="">Selecione a área...</option>' +
                 areas.map(a => `<option value="${a}">${a}</option>`).join('');
             
             // Atualizar temas baseado na área selecionada
             updateFeedbackTemaSelect();
+            
+            console.log(`📋 Atualizados selects de feedback: ${dados.length} temas disponíveis`);
         }
         
         function updateFeedbackTemaSelect() {
@@ -3624,6 +3645,7 @@
             document.getElementById(sectionId).classList.add('active');
             event.target.classList.add('active');
             if (sectionId === 'dados') {
+                // SEMPRE recarregar dados do localStorage ao abrir aba Dados (fix para iOS cache)
                 renderDados();
             }
             if (sectionId === 'tarefa') renderTarefas();
@@ -3637,7 +3659,10 @@
                     renderAgenda();
                 }
             }
-            if (sectionId === 'stats') updateStats();
+            if (sectionId === 'feedback') {
+                // SEMPRE recarregar dados e atualizar selects ao abrir aba Feedback (fix para iOS cache)
+                updateFeedbackSelect();
+            }
             if (sectionId === 'historico') renderHistorico();
             if (sectionId === 'pendencias') renderPendencias();
             if (sectionId === 'lembretes') {
