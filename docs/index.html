@@ -5537,7 +5537,7 @@
                 
                 const novoTema = {
                     id: Date.now(),
-                    area: normalizeArea(area, tema),
+                    area: normalizeArea(area, tema), // Normalizar para uma das 3 áreas válidas
                     tema: tema,
                     status: status,
                     prioridade: prioridade,
@@ -5551,6 +5551,11 @@
                     contador80: 0,
                     sugestao: ''
                 };
+                
+                // Garantir que área/tema estão corretos
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(novoTema.area, novoTema.tema);
+                novoTema.area = areaCorrigida;
+                novoTema.tema = temaCorrigido;
                 
                 // Recarregar dados do localStorage antes de adicionar (garantir sincronização)
                 dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
