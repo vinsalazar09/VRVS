@@ -933,6 +933,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: auto;
+        }
+        
+        .modal:not(.active) {
+            display: none;
+            pointer-events: none;
         }
         
         .modal-content {
@@ -6205,10 +6211,30 @@
                 }
             }
             
-            // Função para fechar modal de confirmação
-            function closeConfirmarFeedbackModal() {
-                document.getElementById('confirmarFeedbackModal').classList.remove('active');
-            }
+            // Função GLOBAL para fechar modal de confirmação - FUNCIONA GARANTIDAMENTE
+            window.closeConfirmarFeedbackModal = function() {
+                console.log('🔴 Fechando modal de confirmação');
+                const modal = document.getElementById('confirmarFeedbackModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                    modal.style.display = 'none';
+                    console.log('✅ Modal fechado');
+                } else {
+                    console.error('❌ Modal não encontrado para fechar');
+                }
+            };
+            
+            // Fechar modal ao clicar fora dele
+            document.addEventListener('click', function(e) {
+                const modal = document.getElementById('confirmarFeedbackModal');
+                if (modal && modal.classList.contains('active')) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent && !modalContent.contains(e.target) && e.target !== modal) {
+                        // Clicou fora do conteúdo do modal
+                        window.closeConfirmarFeedbackModal();
+                    }
+                }
+            });
             
             // Função para salvar feedback após confirmação
             function salvarFeedbackConfirmado() {
