@@ -5843,18 +5843,35 @@
                 }
             };
             
-            // FEEDBACK FORM - 100% FUNCIONANDO!
-            document.getElementById('feedbackArea').addEventListener('change', updateFeedbackTemaSelect);
-            
-            // Garantir que o formulário existe e está funcionando
-            const feedbackForm = document.getElementById('feedbackForm');
-            if (!feedbackForm) {
-                console.error('❌ Formulário de feedback não encontrado!');
-            } else {
+            // FEEDBACK FORM - 100% FUNCIONANDO! (Garantir que DOM está pronto)
+            function inicializarFeedbackForm() {
+                const feedbackArea = document.getElementById('feedbackArea');
+                if (feedbackArea) {
+                    feedbackArea.addEventListener('change', updateFeedbackTemaSelect);
+                }
+                
+                // Garantir que o formulário existe e está funcionando
+                const feedbackForm = document.getElementById('feedbackForm');
+                if (!feedbackForm) {
+                    console.error('❌ Formulário de feedback não encontrado!');
+                    return;
+                }
+                
                 console.log('✅ Formulário de feedback encontrado');
                 
-                // Adicionar listener de submit diretamente (sem clonar para não perder listeners inline)
-                feedbackForm.addEventListener('submit', function(e) {
+                // Remover listener anterior se existir (evitar duplicatas)
+                const newForm = feedbackForm.cloneNode(true);
+                feedbackForm.parentNode.replaceChild(newForm, feedbackForm);
+                const feedbackFormFinal = document.getElementById('feedbackForm');
+                
+                // Restaurar listener de área após clonar
+                const feedbackAreaFinal = document.getElementById('feedbackArea');
+                if (feedbackAreaFinal) {
+                    feedbackAreaFinal.addEventListener('change', updateFeedbackTemaSelect);
+                }
+                
+                // Adicionar listener de submit diretamente
+                feedbackFormFinal.addEventListener('submit', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -5981,16 +5998,8 @@
                 
                 console.log('✅ Listener de submit adicionado ao formulário de feedback');
                 
-                // Garantir que o listener de área também está funcionando
-                const feedbackArea = document.getElementById('feedbackArea');
-                if (feedbackArea) {
-                    feedbackArea.removeEventListener('change', updateFeedbackTemaSelect);
-                    feedbackArea.addEventListener('change', updateFeedbackTemaSelect);
-                    console.log('✅ Listener de área atualizado');
-                }
-                
                 // FALLBACK: Adicionar listener direto no botão também (para garantir funcionamento no iPhone)
-                const submitBtn = feedbackForm.querySelector('button[type="submit"]');
+                const submitBtn = feedbackFormFinal.querySelector('button[type="submit"]');
                 if (submitBtn) {
                     submitBtn.addEventListener('click', function(e) {
                         console.log('🔘 Botão de submit clicado diretamente');
@@ -6001,6 +6010,13 @@
                 } else {
                     console.error('❌ Botão de submit não encontrado!');
                 }
+            }
+            
+            // Inicializar quando DOM estiver pronto
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', inicializarFeedbackForm);
+            } else {
+                inicializarFeedbackForm();
             }
             
             // Função auxiliar para salvar feedback diretamente (fallback se modal não existir)
