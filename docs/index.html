@@ -5963,43 +5963,166 @@
                     const sugestao = document.getElementById('feedbackSugestao').value.trim();
                     const obs = document.getElementById('feedbackObs').value.trim();
                     
+            // FUNÇÃO GLOBAL PARA PROCESSAR FEEDBACK - FUNCIONA GARANTIDAMENTE
+            window.processarFeedbackForm = function() {
+                console.log('🚀 processarFeedbackForm() chamada diretamente');
+                
+                try {
+                    // Validar campos obrigatórios
+                    const temaId = document.getElementById('feedbackTema').value;
+                    if (!temaId) {
+                        mostrarNotificacaoFeedback('⚠️ Selecione um módulo!', 'error');
+                        return false;
+                    }
+                    
+                    const dataSessao = document.getElementById('feedbackData').value;
+                    if (!dataSessao) {
+                        mostrarNotificacaoFeedback('⚠️ Selecione uma data para a sessão!', 'error');
+                        return false;
+                    }
+                    
+                    const rendimentoInput = document.getElementById('feedbackRendimento');
+                    const rendimento = parseInt(rendimentoInput.value);
+                    if (!rendimento || rendimento < 0 || rendimento > 100) {
+                        mostrarNotificacaoFeedback('⚠️ Preencha a performance (0-100)!', 'error');
+                        return false;
+                    }
+                    
+                    console.log('✅ Validação passou');
+                    
+                    // Coletar todos os dados do formulário
+                    const tempoInput = document.getElementById('feedbackTempo');
+                    const modal = document.getElementById('encerrarSessaoModal');
+                    let tempo = 0;
+                    if (modal && modal.dataset.tempoSalvo) {
+                        tempo = Math.floor(parseInt(modal.dataset.tempoSalvo) / 60);
+                    } else if (cronometroSegundos > 0) {
+                        tempo = obterTempoCronometroMinutos();
+                    } else {
+                        tempo = parseInt(tempoInput.value) || 0;
+                    }
+                    
+                    // Tempo é opcional - se não tiver preenchido, usar 0
+                    if (tempo < 0) tempo = 0;
+                    
+                    // Obter tempo de intervalo
+                    let tempoIntervalo = 0;
+                    if (modal && modal.dataset.intervalosSalvos) {
+                        tempoIntervalo = Math.floor(parseInt(modal.dataset.intervalosSalvos) / 60);
+                    } else {
+                        tempoIntervalo = obterTempoIntervaloMinutos();
+                    }
+                    
+                    const numeroIntervalos = parseInt(document.getElementById('feedbackNumeroIntervalos').value) || 0;
+                    const intervalosTexto = document.getElementById('feedbackIntervalos').value.trim() || '';
+                    const questoesTexto = document.getElementById('feedbackQuestoes').value.trim() || '';
+                    const flashcards = parseInt(document.getElementById('feedbackFlashcards').value) || 0;
+                    
+                    const tempoQuestoesInput = document.getElementById('feedbackTempoQuestoes');
+                    const tempoFlashcardsInput = document.getElementById('feedbackTempoFlashcards');
+                    let tempoQuestoes = tempoQuestoesInput ? parseInt(tempoQuestoesInput.value) || 0 : 0;
+                    let tempoFlashcards = tempoFlashcardsInput ? parseInt(tempoFlashcardsInput.value) || 0 : 0;
+                    
+                    // Extrair dados de questões
+                    let quantQuestoes = 0;
+                    let quantQuestoesAcertos = 0;
+                    if (questoesTexto && questoesTexto.includes('/')) {
+                        const partes = questoesTexto.split('/');
+                        quantQuestoesAcertos = parseInt(partes[0]) || 0;
+                        quantQuestoes = parseInt(partes[1]) || 0;
+                    }
+                    
+                    // Extrair dados de flashcards
+                    let quantFlashcards = 0;
+                    if (flashcards > 0) {
+                        quantFlashcards = flashcards;
+                    }
+                    
+                    // Se não tiver dados nos boxes mas tiver no modal, usar do modal
+                    if (tempoQuestoes === 0 && modal && modal.dataset.tempoQuestoes) {
+                        tempoQuestoes = parseInt(modal.dataset.tempoQuestoes) || 0;
+                    }
+                    if (tempoFlashcards === 0 && modal && modal.dataset.tempoFlashcards) {
+                        tempoFlashcards = parseInt(modal.dataset.tempoFlashcards) || 0;
+                    }
+                    if (quantQuestoes === 0 && modal && modal.dataset.quantQuestoes) {
+                        quantQuestoes = parseInt(modal.dataset.quantQuestoes) || 0;
+                    }
+                    if (quantFlashcards === 0 && modal && modal.dataset.quantFlashcards) {
+                        quantFlashcards = parseInt(modal.dataset.quantFlashcards) || 0;
+                    }
+                    
+                    const sugestao = document.getElementById('feedbackSugestao').value.trim();
+                    const obs = document.getElementById('feedbackObs').value.trim();
+                    
                     console.log('📊 Dados coletados:', { temaId, dataSessao, rendimento, tempo, tempoIntervalo });
                     
-                    // Preencher modal de confirmação com os dados coletados
-                    document.getElementById('confirmarData').value = dataSessao;
-                    document.getElementById('confirmarRendimento').value = rendimento;
-                    document.getElementById('confirmarTempo').value = tempo;
-                    document.getElementById('confirmarTempoIntervalo').value = tempoIntervalo;
-                    document.getElementById('confirmarNumIntervalos').value = numeroIntervalos;
-                    document.getElementById('confirmarTempoQuestoes').value = tempoQuestoes;
-                    document.getElementById('confirmarQuestoes').value = questoesTexto || (quantQuestoes > 0 ? `${quantQuestoesAcertos}/${quantQuestoes}` : '');
-                    document.getElementById('confirmarTempoFlashcards').value = tempoFlashcards;
-                    document.getElementById('confirmarFlashcards').value = quantFlashcards;
-                    document.getElementById('confirmarSugestao').value = sugestao;
-                    document.getElementById('confirmarObs').value = obs;
+                    // Preencher modal de confirmação com os dados coletados - VERIFICAR CADA ELEMENTO
+                    try {
+                        const confirmarData = document.getElementById('confirmarData');
+                        const confirmarRendimento = document.getElementById('confirmarRendimento');
+                        const confirmarTempo = document.getElementById('confirmarTempo');
+                        const confirmarTempoIntervalo = document.getElementById('confirmarTempoIntervalo');
+                        const confirmarNumIntervalos = document.getElementById('confirmarNumIntervalos');
+                        const confirmarTempoQuestoes = document.getElementById('confirmarTempoQuestoes');
+                        const confirmarQuestoes = document.getElementById('confirmarQuestoes');
+                        const confirmarTempoFlashcards = document.getElementById('confirmarTempoFlashcards');
+                        const confirmarFlashcards = document.getElementById('confirmarFlashcards');
+                        const confirmarSugestao = document.getElementById('confirmarSugestao');
+                        const confirmarObs = document.getElementById('confirmarObs');
+                        
+                        if (!confirmarData) throw new Error('confirmarData não encontrado');
+                        if (!confirmarRendimento) throw new Error('confirmarRendimento não encontrado');
+                        if (!confirmarTempo) throw new Error('confirmarTempo não encontrado');
+                        if (!confirmarTempoIntervalo) throw new Error('confirmarTempoIntervalo não encontrado');
+                        if (!confirmarNumIntervalos) throw new Error('confirmarNumIntervalos não encontrado');
+                        if (!confirmarTempoQuestoes) throw new Error('confirmarTempoQuestoes não encontrado');
+                        if (!confirmarQuestoes) throw new Error('confirmarQuestoes não encontrado');
+                        if (!confirmarTempoFlashcards) throw new Error('confirmarTempoFlashcards não encontrado');
+                        if (!confirmarFlashcards) throw new Error('confirmarFlashcards não encontrado');
+                        if (!confirmarSugestao) throw new Error('confirmarSugestao não encontrado');
+                        if (!confirmarObs) throw new Error('confirmarObs não encontrado');
+                        
+                        confirmarData.value = dataSessao;
+                        confirmarRendimento.value = rendimento;
+                        confirmarTempo.value = tempo;
+                        confirmarTempoIntervalo.value = tempoIntervalo;
+                        confirmarNumIntervalos.value = numeroIntervalos;
+                        confirmarTempoQuestoes.value = tempoQuestoes;
+                        confirmarQuestoes.value = questoesTexto || (quantQuestoes > 0 ? `${quantQuestoesAcertos}/${quantQuestoes}` : '');
+                        confirmarTempoFlashcards.value = tempoFlashcards;
+                        confirmarFlashcards.value = quantFlashcards;
+                        confirmarSugestao.value = sugestao;
+                        confirmarObs.value = obs;
+                        
+                        console.log('✅ Campos do modal preenchidos');
+                    } catch (error) {
+                        console.error('❌ Erro ao preencher campos do modal:', error);
+                        throw error;
+                    }
                     
                     // Guardar temaId no modal para uso posterior
                     const confirmarModal = document.getElementById('confirmarFeedbackModal');
                     console.log('🔍 Procurando modal de confirmação:', confirmarModal);
-                    if (confirmarModal) {
-                        confirmarModal.dataset.temaId = temaId;
-                        
-                        // Mostrar modal de confirmação
-                        confirmarModal.classList.add('active');
-                        confirmarModal.style.display = 'flex';
-                        console.log('✅ Modal de confirmação aberto - classes:', confirmarModal.className);
-                    } else {
-                        console.error('❌ Modal de confirmação não encontrado!');
-                        // Se não tiver modal, salvar diretamente
-                        salvarFeedbackDireto(temaId, dataSessao, rendimento, tempo, tempoIntervalo, numeroIntervalos, intervalosTexto, tempoQuestoes, quantQuestoes, quantQuestoesAcertos, tempoFlashcards, quantFlashcards, questoesTexto, sugestao, obs);
+                    if (!confirmarModal) {
+                        throw new Error('Modal confirmarFeedbackModal não encontrado no DOM');
                     }
+                    
+                    confirmarModal.dataset.temaId = temaId;
+                    
+                    // Mostrar modal de confirmação
+                    confirmarModal.classList.add('active');
+                    confirmarModal.style.display = 'flex';
+                    console.log('✅ Modal de confirmação aberto - classes:', confirmarModal.className);
                     
                     return false;
                 } catch (error) {
                     console.error('❌ Erro ao processar feedback:', error);
-                    mostrarNotificacaoFeedback('❌ Erro ao processar feedback. Tente novamente.', 'error');
+                    console.error('❌ Stack trace:', error.stack);
+                    mostrarNotificacaoFeedback(`❌ Erro: ${error.message || 'Erro desconhecido'}. Verifique o console (F12) para mais detalhes.`, 'error');
                     return false;
                 }
+            }
             }
             
             // FEEDBACK FORM - 100% FUNCIONANDO! (Garantir que DOM está pronto)
