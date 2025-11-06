@@ -6469,7 +6469,7 @@
             const editForm = document.getElementById('editForm');
             if (editForm) {
                 editForm.onsubmit = function(e) {
-                e.preventDefault();
+                    e.preventDefault();
                 const id = document.getElementById('editId').value;
                 const tema = dados.find(t => String(t.id) === String(id));
                 
