@@ -1870,9 +1870,6 @@
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                         <span>🔍 ANÁLISES DETALHADAS</span>
-                        <button class="btn btn-small" onclick="toggleAnalisesTempo()" style="font-size: 11px; padding: 6px 12px;">
-                            <span id="toggleAnalisesTempoText">⏱️ Mostrar Análises de Tempo</span>
-                        </button>
                     </div>
                     <div style="margin-bottom: 20px;">
                         <div class="form-group">
@@ -1897,6 +1894,21 @@
                                 <button class="btn btn-small" onclick="filtrarAnaliseSemanaAtual()">Semana Atual</button>
                                 <button class="btn btn-small" onclick="filtrarAnaliseMesAtual()">Mês Atual</button>
                                 <button class="btn btn-small" onclick="limparFiltrosAnalise()">Limpar Filtros</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Filtro de Tempo (Opcional) -->
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(0,206,209,0.05); border-radius: 8px; border: 1px solid rgba(0,206,209,0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-size: 13px; color: rgba(0,206,209,0.9); font-weight: 500;">
+                                    ⏱️ Análises de Tempo (Opcional)
+                                </div>
+                                <button class="btn btn-small" onclick="toggleAnalisesTempo()" style="font-size: 11px; padding: 6px 12px;">
+                                    <span id="toggleAnalisesTempoText">⏱️ Mostrar</span>
+                                </button>
+                            </div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">
+                                Visualize tempo médio por sessão, flashcards, intervalos e mais
                             </div>
                         </div>
                     </div>
@@ -2280,6 +2292,27 @@
             return { area: areaNormalizada || area, tema: tema };
         }
         
+        // ==================== TIMEZONE BRASÍLIA ====================
+        // Função helper para obter data atual no timezone de Brasília (UTC-3)
+        function obterDataBrasilia() {
+            const agora = new Date();
+            // Converter para timezone de Brasília (UTC-3)
+            // Criar uma data no formato ISO com timezone de Brasília
+            const offsetBrasilia = -3; // UTC-3
+            const utc = agora.getTime() + (agora.getTimezoneOffset() * 60000);
+            const dataBrasilia = new Date(utc + (3600000 * offsetBrasilia));
+            return dataBrasilia;
+        }
+        
+        // Função para obter string de data no formato YYYY-MM-DD no timezone de Brasília
+        function obterDataBrasiliaString() {
+            const dataBrasilia = obterDataBrasilia();
+            const ano = dataBrasilia.getFullYear();
+            const mes = String(dataBrasilia.getMonth() + 1).padStart(2, '0');
+            const dia = String(dataBrasilia.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        }
+        
         function dataValida(data) {
             if (!data || data === '-' || String(data).trim() === '') return false;
             try {
@@ -2310,8 +2343,8 @@
                 return '';
             }
             
-            // CORREÇÃO: Usar data da sessão se fornecida, senão usar data atual
-            const dataBase = dataSessao ? new Date(dataSessao + 'T00:00:00') : new Date();
+            // CORREÇÃO: Usar data da sessão se fornecida, senão usar data atual (Brasília)
+            const dataBase = dataSessao ? new Date(dataSessao + 'T00:00:00') : obterDataBrasilia();
             dataBase.setHours(0, 0, 0, 0);
             
             // CORREÇÃO CRÍTICA: Se é PRIMEIRA sessão (contador = 1 OU última data = null), sempre +1 dia
@@ -2375,7 +2408,7 @@
         // ==================== RENDERIZAÇÃO DE COMPONENTES ====================
         
         function renderPendencias() {
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterDataBrasiliaString();
             const container = document.getElementById('pendenciasContainer');
             const notificacoes = [];
             
@@ -2438,8 +2471,8 @@
         }
         
         function renderTarefas() {
-            const hoje = new Date();
-            const hojeStr = hoje.toISOString().split('T')[0];
+            const hoje = obterDataBrasilia();
+            const hojeStr = obterDataBrasiliaString();
             
             // Calcular data limite: 7 dias atrás
             const dataLimite = new Date(hoje);
@@ -2463,11 +2496,44 @@
                 return;
             }
             
-            // Ordenar: hoje primeiro, depois por data (mais recente primeiro)
+            // Calcular data de ontem (Brasília)
+            const ontem = new Date(hoje);
+            ontem.setDate(hoje.getDate() - 1);
+            const ontemStr = ontem.toISOString().split('T')[0];
+            
+            // Ordenar por prioridade:
+            // 1. Tema iniciado no dia anterior (primeira sessão) - maior prioridade
+            // 2. Prioridade alta (5) com menor rendimento
+            // 3. Hoje primeiro, depois por data (mais recente primeiro)
             tarefas.sort((a, b) => {
+                // Verificar se é tema iniciado no dia anterior (primeira sessão)
+                const aPrimeiraSessaoOntem = (a.sessoes === 1 && a.ultEstudo === ontemStr);
+                const bPrimeiraSessaoOntem = (b.sessoes === 1 && b.ultEstudo === ontemStr);
+                
+                // Prioridade 1: Tema iniciado no dia anterior
+                if (aPrimeiraSessaoOntem && !bPrimeiraSessaoOntem) return -1;
+                if (!aPrimeiraSessaoOntem && bPrimeiraSessaoOntem) return 1;
+                
+                // Prioridade 2: Prioridade alta (5) com menor rendimento
+                const aPrioridadeAlta = (a.prioridade || 0) === 5;
+                const bPrioridadeAlta = (b.prioridade || 0) === 5;
+                
+                if (aPrioridadeAlta && !bPrioridadeAlta) return -1;
+                if (!aPrioridadeAlta && bPrioridadeAlta) return 1;
+                
+                // Se ambos são prioridade alta, ordenar por menor rendimento
+                if (aPrioridadeAlta && bPrioridadeAlta) {
+                    return (a.rendimento || 0) - (b.rendimento || 0);
+                }
+                
+                // Prioridade 3: Hoje primeiro
                 if (a.agenda === hojeStr && b.agenda !== hojeStr) return -1;
                 if (a.agenda !== hojeStr && b.agenda === hojeStr) return 1;
-                if (a.agenda !== b.agenda) return b.agenda.localeCompare(a.agenda); // Mais recente primeiro
+                
+                // Prioridade 4: Por data (mais recente primeiro)
+                if (a.agenda !== b.agenda) return b.agenda.localeCompare(a.agenda);
+                
+                // Prioridade 5: Por prioridade numérica
                 return (b.prioridade || 0) - (a.prioridade || 0);
             });
             
@@ -2528,8 +2594,8 @@
         }
         
         function renderAgenda() {
-            const hoje = new Date();
-            const hojeStr = hoje.toISOString().split('T')[0];
+            const hoje = obterDataBrasilia();
+            const hojeStr = obterDataBrasiliaString();
             
             // Calcular semana atual (segunda a domingo)
             const diaSemana = hoje.getDay(); // 0=Dom, 1=Seg, ...
@@ -2632,7 +2698,7 @@
         }
         
         function filtrarSemanaAtual() {
-            const hoje = new Date();
+            const hoje = obterDataBrasilia();
             const diaSemana = hoje.getDay(); // 0=Dom, 1=Seg, ...
             const segunda = new Date(hoje);
             const domingo = new Date(hoje);
@@ -3146,7 +3212,7 @@
         
         // Funções de filtro para estatísticas
         function filtrarStatsSemanaAtual() {
-            const hoje = new Date();
+            const hoje = obterDataBrasilia();
             const diaSemana = hoje.getDay();
             const segunda = new Date(hoje);
             const domingo = new Date(hoje);
@@ -3160,7 +3226,7 @@
         }
         
         function filtrarStatsMesAtual() {
-            const hoje = new Date();
+            const hoje = obterDataBrasilia();
             const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
             const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
             
@@ -3756,7 +3822,7 @@
         
         function exportarDados() {
             const csv = dados2CSV(dados);
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterDataBrasiliaString();
             downloadCSV(csv, `VRVS_DADOS_${hoje}.csv`);
         }
         
@@ -3786,7 +3852,7 @@
                 };
             });
             const csv = dados2CSV(historicoLimpo);
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterDataBrasiliaString();
             downloadCSV(csv, `VRVS_HISTORICO_${hoje}.csv`);
         }
         
@@ -3941,6 +4007,10 @@
         
         function atualizarAnalises() {
             calcularAnalises();
+            // Se análises de tempo estiverem visíveis, recalcular também
+            if (window.analisesTempoVisiveis) {
+                calcularAnalisesTempo();
+            }
         }
         
         // Variável global para controlar visibilidade das análises de tempo
@@ -3952,7 +4022,7 @@
             const analiseTempoDiv = document.getElementById('analiseTempo');
             
             if (toggleText) {
-                toggleText.textContent = window.analisesTempoVisiveis ? '⏱️ Ocultar Análises de Tempo' : '⏱️ Mostrar Análises de Tempo';
+                toggleText.textContent = window.analisesTempoVisiveis ? '⏱️ Ocultar' : '⏱️ Mostrar';
             }
             
             if (analiseTempoDiv) {
@@ -4332,7 +4402,7 @@
         }
         
         function filtrarAnaliseMesAtual() {
-            const hoje = new Date();
+            const hoje = obterDataBrasilia();
             const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
             const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
             
@@ -4840,7 +4910,7 @@
                 return null; // Não tem próxima data
             }
             
-            const hoje = new Date();
+            const hoje = obterDataBrasilia();
             hoje.setHours(0, 0, 0, 0);
             const dataInicial = new Date(lembrete.dataInicial + 'T00:00:00');
             const ultimaData = lembrete.ultimaData ? new Date(lembrete.ultimaData + 'T00:00:00') : dataInicial;
@@ -4973,7 +5043,7 @@
                 lembrete.concluido = true;
             } else {
                 // Atualizar última data e calcular próxima
-                const hoje = new Date().toISOString().split('T')[0];
+                const hoje = obterDataBrasiliaString();
                 lembrete.ultimaData = hoje;
                 lembrete.proximaData = calcularProximaDataLembrete(lembrete);
             }
@@ -5006,7 +5076,7 @@
                     area: tema.area,
                     tema: tema.tema,
                     conteudo: '',
-                    ultimaAtualizacao: new Date().toISOString().split('T')[0]
+                    ultimaAtualizacao: obterDataBrasiliaString()
                 };
                 anotacoes.push(anotacao);
                 localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
@@ -5117,75 +5187,48 @@
             const container = document.getElementById('cadernoContainer');
             if (!container) return;
             
-            // Garantir que todos os temas tenham anotação
-            dados.forEach(t => {
-                obterOuCriarAnotacao(t.id);
-            });
-            
-            let anotacoesFiltradas = anotacoes;
-            
-            if (filtroArea) {
-                anotacoesFiltradas = anotacoesFiltradas.filter(a => a.area === filtroArea);
-            }
-            
-            if (filtroTema) {
-                anotacoesFiltradas = anotacoesFiltradas.filter(a => String(a.temaId) === String(filtroTema));
-            }
-            
-            // Agrupar por área
-            const anotacoesPorArea = {};
-            anotacoesFiltradas.forEach(a => {
-                if (!anotacoesPorArea[a.area]) {
-                    anotacoesPorArea[a.area] = [];
-                }
-                anotacoesPorArea[a.area].push(a);
-            });
-            
-            if (anotacoesFiltradas.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma anotação encontrada</div></div>';
+            // Se não houver tema selecionado, mostrar mensagem para selecionar
+            if (!filtroTema) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Selecione uma área e um tema para visualizar as anotações</div></div>';
                 return;
             }
             
-            let html = '';
+            // Garantir que o tema selecionado tenha anotação
+            const tema = dados.find(t => String(t.id) === String(filtroTema));
+            if (!tema) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Tema não encontrado</div></div>';
+                return;
+            }
             
-            Object.keys(anotacoesPorArea).sort().forEach(area => {
-                html += `<div style="margin-bottom: 30px;">`;
-                html += `<h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 18px;">📚 ${area}</h3>`;
-                
-                anotacoesPorArea[area].forEach(anotacao => {
-                    const tema = dados.find(t => String(t.id) === String(anotacao.temaId));
-                    if (!tema) return;
-                    
-                    html += `
-                        <div class="task-item" style="margin-bottom: 20px;" data-tema-id="${anotacao.temaId}">
-                            <div style="margin-bottom: 10px;">
-                                <div style="font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">
-                                    📝 ${anotacao.tema}
-                                </div>
-                                <div style="font-size: 11px; color: rgba(0,206,209,0.6); margin-bottom: 10px;">
-                                    Última atualização: ${formatarData(anotacao.ultimaAtualizacao)}
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 10px;">
-                                <textarea 
-                                    id="anotacao_${anotacao.temaId}" 
-                                    class="form-input" 
-                                    rows="6" 
-                                    style="width: 100%; font-family: inherit; resize: vertical;"
-                                    placeholder="Digite suas anotações aqui..."
-                                    onblur="salvarAnotacao(${anotacao.temaId})"
-                                >${anotacao.conteudo || ''}</textarea>
-                            </div>
-                            <div style="display: flex; gap: 5px;">
-                                <button class="btn-edit" onclick="salvarAnotacao(${anotacao.temaId})" title="Salvar">💾</button>
-                                <button class="btn-edit" onclick="limparAnotacao(${anotacao.temaId})" title="Limpar">🗑️</button>
-                            </div>
+            const anotacao = obterOuCriarAnotacao(tema.id);
+            
+            // Renderizar apenas o tema selecionado
+            const html = `
+                <div class="task-item" style="margin-bottom: 20px;" data-tema-id="${anotacao.temaId}">
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">
+                            📚 ${tema.area} - 📝 ${anotacao.tema}
                         </div>
-                    `;
-                });
-                
-                html += `</div>`;
-            });
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.6); margin-bottom: 10px;">
+                            Última atualização: ${formatarData(anotacao.ultimaAtualizacao)}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <textarea 
+                            id="anotacao_${anotacao.temaId}" 
+                            class="form-input" 
+                            rows="10" 
+                            style="width: 100%; font-family: inherit; resize: vertical;"
+                            placeholder="Digite suas anotações aqui..."
+                            onblur="salvarAnotacao(${anotacao.temaId})"
+                        >${anotacao.conteudo || ''}</textarea>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-edit" onclick="salvarAnotacao(${anotacao.temaId})" title="Salvar">💾</button>
+                        <button class="btn-edit" onclick="limparAnotacao(${anotacao.temaId})" title="Limpar">🗑️</button>
+                    </div>
+                </div>
+            `;
             
             container.innerHTML = html;
         }
@@ -5198,7 +5241,7 @@
             if (!anotacao) return;
             
             anotacao.conteudo = textarea.value.trim();
-            anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
+            anotacao.ultimaAtualizacao = obterDataBrasiliaString();
             
             localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
             mostrarNotificacaoFeedback('✅ Anotação salva!');
@@ -5215,7 +5258,7 @@
             const anotacao = anotacoes.find(a => String(a.temaId) === String(temaId));
             if (anotacao) {
                 anotacao.conteudo = '';
-                anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
+                anotacao.ultimaAtualizacao = obterDataBrasiliaString();
                 localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
                 
                 const textarea = document.getElementById(`anotacao_${temaId}`);
@@ -5886,13 +5929,13 @@
             // Inicializar campo de data com hoje (só se elemento existir)
             const feedbackData = document.getElementById('feedbackData');
             if (feedbackData) {
-                feedbackData.value = new Date().toISOString().split('T')[0];
+                feedbackData.value = obterDataBrasiliaString();
             }
             
             // Inicializar data inicial do lembrete com hoje (só se elemento existir)
             const lembreteDataInicial = document.getElementById('lembreteDataInicial');
             if (lembreteDataInicial) {
-                lembreteDataInicial.value = new Date().toISOString().split('T')[0];
+                lembreteDataInicial.value = obterDataBrasiliaString();
             }
             
             // Event listeners para filtros de agenda (só se elementos existirem)
@@ -6412,7 +6455,7 @@
                     const feedbackForm = document.getElementById('feedbackForm');
                     if (feedbackForm) feedbackForm.reset();
                     const feedbackData = document.getElementById('feedbackData');
-                    if (feedbackData) feedbackData.value = new Date().toISOString().split('T')[0];
+                    if (feedbackData) feedbackData.value = obterDataBrasiliaString();
                     const feedbackNumeroIntervalos = document.getElementById('feedbackNumeroIntervalos');
                     if (feedbackNumeroIntervalos) feedbackNumeroIntervalos.value = '0';
                     const feedbackIntervalos = document.getElementById('feedbackIntervalos');
@@ -6569,7 +6612,7 @@
                 
                 // Limpar formulário
                 this.reset();
-                document.getElementById('lembreteDataInicial').value = new Date().toISOString().split('T')[0];
+                document.getElementById('lembreteDataInicial').value = obterDataBrasiliaString();
                 
                 renderLembretes();
             };
