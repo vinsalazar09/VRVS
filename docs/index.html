@@ -3695,23 +3695,42 @@
             
             if (dadosFile) {
                 promises.push(parseCSV(dadosFile).then(dadosCSV => {
+                    console.log(`📥 [IMPORT DEBUG] Dados CSV parseados:`, {
+                        total: dadosCSV.length,
+                        primeiroItem: dadosCSV[0],
+                        campos: dadosCSV[0] ? Object.keys(dadosCSV[0]) : []
+                    });
+                    
                     dados = dadosCSV.map(t => {
                         if (!t.id) t.id = Date.now() + Math.random();
                         // Normalizar área/tema corretamente
                         const { area, tema } = fixAreaTema(t.area || '', t.tema || '');
                         t.area = area;
                         t.tema = tema;
-                        if (t.rendimento > 1) t.rendimento = t.rendimento / 100;
-                        t.prioridade = parseInt(t.prioridade) || 3;
-                        t.sessoes = parseInt(t.sessoes) || 0;
-                        t.tempo = parseInt(t.tempo) || 0;
-                        t.contador80 = parseInt(t.contador80) || 0;
+                        if (t.rendimento && t.rendimento > 1) t.rendimento = t.rendimento / 100;
+                        // Preservar campos se já existirem, senão usar defaults
+                        t.prioridade = t.prioridade !== undefined ? parseInt(t.prioridade) || 3 : 3;
+                        t.sessoes = t.sessoes !== undefined ? parseInt(t.sessoes) || 0 : 0;
+                        t.tempo = t.tempo !== undefined ? parseInt(t.tempo) || 0 : 0;
+                        t.contador80 = t.contador80 !== undefined ? parseInt(t.contador80) || 0 : 0;
+                        // Preservar status se existir
+                        if (!t.status) t.status = t.sessoes > 0 ? 'Em estudo' : 'Não iniciado';
+                        // Preservar ultEstudo e agenda se existirem
+                        if (!t.ultEstudo && t.sessoes === 0) t.ultEstudo = '';
+                        if (!t.agenda && t.sessoes === 0) t.agenda = '';
                         if (!t.sugestao || t.sugestao === '-') {
                             t.sugestao = extrairUltimaSugestao(t.observacoes);
                         }
                         delete t.tipoRevisao;
                         return t;
                     });
+                    
+                    console.log(`📥 [IMPORT DEBUG] Dados processados:`, {
+                        total: dados.length,
+                        primeiroItem: dados[0],
+                        campos: dados[0] ? Object.keys(dados[0]) : []
+                    });
+                    
                     // Remover duplicatas antes de salvar
                     const temasUnicos = [];
                     const chavesVistas = new Set();
@@ -3726,6 +3745,12 @@
                     localStorage.setItem('vrvs_dados', JSON.stringify(dados));
                     // Atualizar variável global
                     window.dados = dados;
+                    
+                    console.log(`✅ [IMPORT DEBUG] Dados salvos no localStorage:`, {
+                        total: dados.length,
+                        primeiroItem: dados[0]
+                    });
+                    
                     return 'dados';
                 }));
             }
@@ -3838,6 +3863,13 @@
                         );
                         const headerMap = {};
                         headersNormalizados.forEach((h, i) => { headerMap[h] = i; });
+                        
+                        console.log(`📥 [CSV DEBUG] Headers detectados:`, {
+                            originais: headers,
+                            normalizados: headersNormalizados,
+                            headerMap: headerMap
+                        });
+                        
                         const getVal = (r, ...possiveisNomes) => {
                             for (const nome of possiveisNomes) {
                                 const idx = headerMap[nome];
@@ -3848,7 +3880,7 @@
                             return '';
                         };
                         const data = rows.slice(1).map((r, lineNum) => {
-                            return {
+                            const obj = {
                                 id: getVal(r, 'id') || `${Date.now()}_${lineNum}`,
                                 temaId: getVal(r, 'temaid'),
                                 area: getVal(r, 'area'),
@@ -3875,6 +3907,30 @@
                                 observacoes: getVal(r, 'observacoes', 'obs', 'observacao') || '',
                                 sugestao: getVal(r, 'sugestao', 'sugestoes') || ''
                             };
+                            
+                            // CAMPOS ESPECÍFICOS DO CSV DE DADOS (se existirem no CSV)
+                            const statusVal = getVal(r, 'status');
+                            if (statusVal) obj.status = statusVal;
+                            
+                            const prioridadeVal = getVal(r, 'prioridade', 'prior');
+                            if (prioridadeVal) obj.prioridade = parseInt(prioridadeVal) || 3;
+                            
+                            const sessoesVal = getVal(r, 'sessoes', 'sessao');
+                            if (sessoesVal) obj.sessoes = parseInt(sessoesVal) || 0;
+                            
+                            const ultEstudoVal = getVal(r, 'ultestudo', 'ultestudo', 'ultimoestudo');
+                            if (ultEstudoVal) obj.ultEstudo = ultEstudoVal;
+                            
+                            const agendaVal = getVal(r, 'agenda');
+                            if (agendaVal) obj.agenda = agendaVal;
+                            
+                            const dificuldadeVal = getVal(r, 'dificuldade', 'dific');
+                            if (dificuldadeVal) obj.dificuldade = dificuldadeVal;
+                            
+                            const contador80Val = getVal(r, 'contador80', 'contador');
+                            if (contador80Val) obj.contador80 = parseInt(contador80Val) || 0;
+                            
+                            return obj;
                         }).filter(obj => obj.tema && obj.tema.trim() !== '');
                         resolve(data);
                     } catch (err) {
