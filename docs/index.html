@@ -2749,6 +2749,16 @@
             });
             dados = temasUnicos;
             
+            // LIMPAR DADOS INCONSISTENTES: se sessoes === 0 e status é 'Não iniciado' ou 'Planejado', rendimento deve ser 0
+            dados.forEach(t => {
+                if ((t.sessoes === 0 || !t.sessoes) && 
+                    (t.status === 'Não iniciado' || t.status === 'Planejado') && 
+                    t.rendimento && t.rendimento > 0) {
+                    console.log(`🔧 Corrigindo rendimento inconsistente: ${t.tema} (sessoes: ${t.sessoes}, status: ${t.status}, rendimento: ${t.rendimento} -> 0)`);
+                    t.rendimento = 0;
+                }
+            });
+            
             // Salvar dados limpos
             localStorage.setItem('vrvs_dados', JSON.stringify(dados));
             
@@ -2766,8 +2776,15 @@
             tbody.innerHTML = dados.map(t => {
                 const ultEstudo = formatarDataBR(t.ultEstudo);
                 const agenda = formatarDataBR(t.agenda);
-                const rend = t.rendimento ? Math.round(t.rendimento * 100) + '%' : '-';
-                const rendColor = t.rendimento >= 0.8 ? '#00FFE0' : t.rendimento >= 0.5 ? '#FFA366' : '#EF4444';
+                
+                // NÃO mostrar rendimento se sessoes === 0 e status é 'Não iniciado' ou 'Planejado'
+                const deveMostrarRendimento = !((t.sessoes === 0 || !t.sessoes) && 
+                    (t.status === 'Não iniciado' || t.status === 'Planejado'));
+                
+                const rend = (deveMostrarRendimento && t.rendimento) ? Math.round(t.rendimento * 100) + '%' : '-';
+                const rendColor = (deveMostrarRendimento && t.rendimento) 
+                    ? (t.rendimento >= 0.8 ? '#00FFE0' : t.rendimento >= 0.5 ? '#FFA366' : '#EF4444')
+                    : 'rgba(255,255,255,0.5)';
                 
                 return `
                     <tr>
