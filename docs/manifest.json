@@ -1,7 +1,7 @@
 {
   "name": "VRVS",
   "short_name": "VRVS",
-  "description": "Sistema de Revisão e Performance - TEOT 2026",
+  "description": "VRVS - Sistema de Gestão de Estudos",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
