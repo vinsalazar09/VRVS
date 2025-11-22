@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exportar Anotações VRVS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d9488;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #fbbf24;
+        }
+        .btn {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10B981;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #EF4444;
+        }
+        .info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 2px solid #3B82F6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📔 Exportar Anotações</h1>
+        <p style="margin-bottom: 20px; opacity: 0.8;">
+            Este arquivo exporta as anotações do caderno do VRVS
+        </p>
+        <button class="btn" onclick="exportarAnotacoes()">📥 EXPORTAR ANOTAÇÕES</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function exportarAnotacoes() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status info">⏳ Processando...</div>';
+            
+            try {
+                // Pegar anotações do localStorage
+                let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
+                
+                if (anotacoes.length === 0) {
+                    statusDiv.innerHTML = '<div class="status error">❌ Nenhuma anotação encontrada no localStorage</div>';
+                    return;
+                }
+                
+                // Função para converter para CSV
+                function dados2CSV(arr) {
+                    if (arr.length === 0) return '';
+                    const headerSet = new Set();
+                    arr.forEach(obj => {
+                        if (obj) Object.keys(obj).forEach(k => headerSet.add(k));
+                    });
+                    const headers = Array.from(headerSet);
+                    
+                    const rows = arr.map(obj => headers.map(h => {
+                        const val = (obj && obj[h] != null) ? obj[h] : '';
+                        const strVal = String(val);
+                        const escaped = strVal.replace(/"/g, '""');
+                        return (escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')) 
+                            ? `"${escaped}"` 
+                            : escaped;
+                    }).join(','));
+                    
+                    return [headers.join(','), ...rows].join('\n');
+                }
+                
+                // Converter para CSV
+                const csv = dados2CSV(anotacoes);
+                
+                // Criar e baixar arquivo
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const hoje = new Date().toISOString().split('T')[0];
+                a.download = `VRVS_ANOTACOES_${hoje}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                statusDiv.innerHTML = `<div class="status success">✅ ${anotacoes.length} anotação(ões) exportadas com sucesso!<br><br>O arquivo foi baixado.</div>`;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ Erro ao exportar: ${error.message}</div>`;
+                console.error('Erro:', error);
+            }
+        }
+        
+        // Tentar exportar automaticamente ao carregar (opcional)
+        // Descomente a linha abaixo se quiser exportar automaticamente:
+        // window.onload = exportarAnotacoes;
+    </script>
+</body>
+</html>
+
