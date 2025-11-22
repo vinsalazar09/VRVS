@@ -5316,19 +5316,28 @@
                     return;
                 }
                 
-                // Atualizar contador80
-                if (rendimento >= 80) {
-                    tema.contador80 = (tema.contador80 || 0) + 1;
-                } else {
-                    tema.contador80 = 0;
-                }
+                // 🔧 CORREÇÃO MÍNIMA: Salvar contador80 antes para usar no cálculo correto
+                const contador80Antes = parseInt(tema.contador80) || 0;
+                const sessoesAntes = tema.sessoes || 0;
                 
                 // Atualizar dados do tema
                 tema.rendimento = rendimento / 100;
                 tema.sessoes = (tema.sessoes || 0) + 1;
                 tema.ultEstudo = dataSessao;
+                
+                // 🔧 CORREÇÃO: Na segunda sessão, usar contador80 = 0 para o cálculo (primeira não conta)
+                tema.contador80 = (sessoesAntes === 1 ? 0 : contador80Antes);
+                
+                // Calcular próxima revisão ANTES de atualizar contador80
                 // CORREÇÃO: Passar dataSessao para calcular baseado na data do feedback, não na data atual
                 tema.agenda = calcularProximaRevisao(tema, dataSessao);
+                
+                // Atualizar contador80 após calcular o intervalo
+                if (rendimento >= 80) {
+                    tema.contador80 = (sessoesAntes === 1 ? 0 : contador80Antes) + 1;
+                } else {
+                    tema.contador80 = 0;
+                }
                 tema.tempo = (tema.tempo || 0) + tempo;
                 tema.status = tema.sessoes === 1 ? 'Em estudo' : tema.status;
                 
