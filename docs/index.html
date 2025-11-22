@@ -3331,9 +3331,21 @@
         }
         
         function exportarAnotacoes() {
-            const csv = dados2CSV(anotacoes);
+            // 🔧 CORREÇÃO: Exportar apenas anotações que têm conteúdo
+            const anotacoesComConteudo = anotacoes.filter(a => {
+                const conteudo = (a.conteudo || '').trim();
+                return conteudo.length > 0;
+            });
+            
+            if (anotacoesComConteudo.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Nenhuma anotação com conteúdo para exportar!', 'error');
+                return;
+            }
+            
+            const csv = dados2CSV(anotacoesComConteudo);
             const hoje = new Date().toISOString().split('T')[0];
             downloadCSV(csv, `VRVS_ANOTACOES_${hoje}.csv`);
+            mostrarNotificacaoFeedback(`✅ ${anotacoesComConteudo.length} anotação(ões) exportadas!`);
         }
         
         function salvarDadosManualmente() {
