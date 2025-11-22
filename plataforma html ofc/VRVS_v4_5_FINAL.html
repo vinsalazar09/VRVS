@@ -1013,18 +1013,45 @@
             const tema = dados.find(t => t.id === temaId);
             if (!tema) return;
             
-            // Atualizar contador80
-            if (rendimento >= 80) {
-                tema.contador80 = (tema.contador80 || 0) + 1;
-            } else {
+            // 🔧 CORREÇÃO: Calcular intervalo ANTES de atualizar contador80
+            // O contador80 deve representar quantas vezes consecutivas atingiu 80%
+            // ANTES desta sessão, para ser usado no cálculo correto do intervalo
+            
+            // Salvar valores atuais
+            const sessoesAntes = tema.sessoes || 0;
+            const contador80Atual = parseInt(tema.contador80) || 0;
+            
+            // Atualizar dados do tema (mas ainda não o contador80)
+            tema.rendimento = rendimento / 100;
+            tema.sessoes = sessoesAntes + 1;
+            tema.ultEstudo = new Date().toISOString().split('T')[0];
+            
+            // 🔧 IMPORTANTE: Na segunda sessão (primeira vez no algoritmo), 
+            // o contador80 deve ser 0 para o cálculo, independente do valor anterior
+            // (porque a primeira sessão não conta para o algoritmo)
+            if (sessoesAntes === 1) {
+                // Segunda sessão: primeira vez no algoritmo, contador80 = 0
                 tema.contador80 = 0;
             }
+            // Se sessoesAntes > 1, mantém o contador80Atual (já está correto)
             
-            // Atualizar dados do tema
-            tema.rendimento = rendimento / 100;
-            tema.sessoes = (tema.sessoes || 0) + 1;
-            tema.ultEstudo = new Date().toISOString().split('T')[0];
+            // Calcular próxima revisão usando o contador80 correto
             tema.agenda = calcularProximaRevisao(tema);
+            
+            // AGORA atualizar contador80 após calcular o intervalo
+            // Importante: contador80 só conta a partir da segunda sessão (quando entra no algoritmo)
+            if (tema.sessoes >= 2) {
+                if (rendimento >= 80) {
+                    // Se é segunda sessão, estava em 0 (zerado acima), então incrementa para 1
+                    // Se é terceira+ sessão, incrementa do valor atual
+                    tema.contador80 = (sessoesAntes === 1 ? 0 : contador80Atual) + 1;
+                } else {
+                    tema.contador80 = 0;
+                }
+            } else {
+                // Primeira sessão: sempre zera o contador80 (não conta para o algoritmo)
+                tema.contador80 = 0;
+            }
             tema.tempo = (tema.tempo || 0) + tempo;
             tema.status = tema.sessoes === 1 ? 'Em estudo' : tema.status;
             
@@ -1621,6 +1648,70 @@
             if (sectionId === 'stats') updateStats();
             if (sectionId === 'historico') renderHistorico();
         }
+        
+        // 🧪 FUNÇÃO DE TESTE DO ALGORITMO (executar no console)
+        window.testarAlgoritmo = function() {
+            console.log('🧪 TESTE DO ALGORITMO DE REVISÃO\n');
+            
+            // Simular um tema novo
+            let temaTeste = {
+                id: 999999,
+                sessoes: 0,
+                contador80: 0,
+                rendimento: 0,
+                prioridade: 3
+            };
+            
+            console.log('📋 CENÁRIO 1: Primeira sessão (rendimento >= 80%)');
+            temaTeste.sessoes = 0;
+            temaTeste.contador80 = 0;
+            temaTeste.rendimento = 0.85;
+            let agenda1 = calcularProximaRevisao(temaTeste);
+            let intervalo1 = Math.round((new Date(agenda1) - new Date()) / (1000 * 60 * 60 * 24));
+            console.log(`   ✅ Esperado: 1 dia | Resultado: ${intervalo1} dia(s) | ${intervalo1 === 1 ? '✓ CORRETO' : '✗ ERRO'}`);
+            
+            console.log('\n📋 CENÁRIO 2: Segunda sessão (rendimento >= 80%)');
+            temaTeste.sessoes = 1;
+            temaTeste.contador80 = 0; // Deve ser 0 porque primeira sessão não conta
+            temaTeste.rendimento = 0.85;
+            let agenda2 = calcularProximaRevisao(temaTeste);
+            let intervalo2 = Math.round((new Date(agenda2) - new Date()) / (1000 * 60 * 60 * 24));
+            console.log(`   ✅ Esperado: 7 dias | Resultado: ${intervalo2} dia(s) | ${intervalo2 === 7 ? '✓ CORRETO' : '✗ ERRO'}`);
+            
+            console.log('\n📋 CENÁRIO 3: Terceira sessão (rendimento >= 80%, segunda vez consecutiva)');
+            temaTeste.sessoes = 2;
+            temaTeste.contador80 = 1; // Primeira vez que atingiu 80% no algoritmo
+            temaTeste.rendimento = 0.85;
+            let agenda3 = calcularProximaRevisao(temaTeste);
+            let intervalo3 = Math.round((new Date(agenda3) - new Date()) / (1000 * 60 * 60 * 24));
+            console.log(`   ✅ Esperado: 14 dias | Resultado: ${intervalo3} dia(s) | ${intervalo3 === 14 ? '✓ CORRETO' : '✗ ERRO'}`);
+            
+            console.log('\n📋 CENÁRIO 4: Quarta sessão (rendimento >= 80%, terceira vez consecutiva)');
+            temaTeste.sessoes = 3;
+            temaTeste.contador80 = 2;
+            temaTeste.rendimento = 0.85;
+            let agenda4 = calcularProximaRevisao(temaTeste);
+            let intervalo4 = Math.round((new Date(agenda4) - new Date()) / (1000 * 60 * 60 * 24));
+            console.log(`   ✅ Esperado: 30 dias | Resultado: ${intervalo4} dia(s) | ${intervalo4 === 30 ? '✓ CORRETO' : '✗ ERRO'}`);
+            
+            console.log('\n📋 CENÁRIO 5: Segunda sessão com rendimento < 50%');
+            temaTeste.sessoes = 1;
+            temaTeste.contador80 = 0;
+            temaTeste.rendimento = 0.40;
+            let agenda5 = calcularProximaRevisao(temaTeste);
+            let intervalo5 = Math.round((new Date(agenda5) - new Date()) / (1000 * 60 * 60 * 24));
+            console.log(`   ✅ Esperado: 1 dia | Resultado: ${intervalo5} dia(s) | ${intervalo5 === 1 ? '✓ CORRETO' : '✗ ERRO'}`);
+            
+            console.log('\n📋 CENÁRIO 6: Segunda sessão com rendimento entre 50-80%');
+            temaTeste.sessoes = 1;
+            temaTeste.contador80 = 0;
+            temaTeste.rendimento = 0.65;
+            let agenda6 = calcularProximaRevisao(temaTeste);
+            let intervalo6 = Math.round((new Date(agenda6) - new Date()) / (1000 * 60 * 60 * 24));
+            console.log(`   ✅ Esperado: 3 dias | Resultado: ${intervalo6} dia(s) | ${intervalo6 === 3 ? '✓ CORRETO' : '✗ ERRO'}`);
+            
+            console.log('\n✅ Teste concluído! Verifique os resultados acima.');
+        };
         
         // Inicialização
         window.onload = function() {
