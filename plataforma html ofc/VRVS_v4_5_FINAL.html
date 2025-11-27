@@ -300,6 +300,38 @@
             line-height: 1.5;
         }
         
+        .task-theme-item {
+            background: rgba(30, 30, 40, 0.6);
+            border-left: 4px solid var(--ambar-main);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .task-theme-item:hover {
+            background: rgba(40, 40, 50, 0.7);
+            transform: translateX(4px);
+        }
+        .task-theme-item.priority-5 { border-left-color: #EF4444; }
+        .task-theme-item.priority-4 { border-left-color: #F59E0B; }
+        .task-theme-item.priority-3 { border-left-color: var(--ambar-main); }
+        .task-theme-item.priority-2 { border-left-color: #10B981; }
+        .task-theme-item.priority-1 { border-left-color: #3B82F6; }
+        
+        .task-theme-name {
+            color: var(--ambar-light);
+            font-size: 15px;
+            font-weight: 700;
+        }
+        
+        .task-expanded {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(251, 191, 36, 0.2);
+        }
+        
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -408,6 +440,7 @@
             <div class="tab" onclick="showSection('cadastro')">➕ Cadastro</div>
             <div class="tab" onclick="showSection('feedback')">📝 Feedback</div>
             <div class="tab" onclick="showSection('tarefa')">📋 Tarefa</div>
+            <div class="tab" onclick="showSection('pendencia')">⚠️ Pendência</div>
             <div class="tab" onclick="showSection('agenda')">📅 Agenda</div>
             <div class="tab" onclick="showSection('stats')">📈 Estatísticas</div>
             <div class="tab" onclick="showSection('historico')">📜 Histórico</div>
@@ -445,6 +478,14 @@
                 <div class="card">
                     <div class="card-title">📋 TAREFAS DE HOJE</div>
                     <div id="tarefasContainer"></div>
+                </div>
+            </div>
+            
+            <!-- PENDÊNCIA -->
+            <div id="pendencia" class="section">
+                <div class="card">
+                    <div class="card-title">⚠️ PENDÊNCIAS (Mais de 7 dias)</div>
+                    <div id="pendenciasContainer"></div>
                 </div>
             </div>
             
@@ -841,13 +882,24 @@
             return proxima.toISOString().split('T')[0];
         }
         
-        // 🆕 RENDERIZAR TAREFAS - VERSÃO COMPLETA
+        // 🆕 RENDERIZAR TAREFAS - VERSÃO SIMPLIFICADA (apenas temas clicáveis)
+        let tarefasExpandidas = new Set();
+        
         function renderTarefas() {
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const hojeStr = hoje.toISOString().split('T')[0];
+            
+            // Data limite: hoje - 7 dias (tarefas com até 7 dias de atraso)
+            const limite = new Date(hoje);
+            limite.setDate(limite.getDate() - 7);
+            const limiteStr = limite.toISOString().split('T')[0];
+            
             const tarefas = dados.filter(t => {
                 if (!t.agenda || !t.tema) return false;
                 if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
-                return t.agenda <= hoje;
+                // Apenas tarefas com até 7 dias de atraso (hoje até 7 dias atrás)
+                return t.agenda <= hojeStr && t.agenda >= limiteStr;
             });
             
             const container = document.getElementById('tarefasContainer');
@@ -856,22 +908,108 @@
                 return;
             }
             
-            tarefas.sort((a, b) => (b.prioridade || 0) - (a.prioridade || 0));
+            // Ordenar: mais recente primeiro, depois menos sessões
+            tarefas.sort((a, b) => {
+                // Primeiro por data (mais recente primeiro)
+                const diffData = new Date(b.agenda) - new Date(a.agenda);
+                if (diffData !== 0) return diffData;
+                // Depois por menos sessões
+                return (a.sessoes || 0) - (b.sessoes || 0);
+            });
             
             container.innerHTML = tarefas.map(t => {
-                const sugestao = obterSugestaoTema(t); // 🔥 CORRIGIDO
+                const isExpanded = tarefasExpandidas.has(t.id);
+                const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#10B981' : rendPct >= 50 ? '#FBBF24' : '#EF4444';
+                const dataFormatada = t.agenda ? new Date(t.agenda + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+                
+                return `
+                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="toggleTarefa(${t.id})">
+                    <div class="task-theme-name">${t.tema}</div>
+                    ${isExpanded ? `
+                    <div class="task-expanded">
+                        <div class="task-details">
+                            <div class="task-detail-item">📚 ${t.area}</div>
+                            <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
+                            <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
+                            <div class="task-detail-item">🔢 ${t.sessoes || 0} sessões</div>
+                            <div class="task-detail-item">📅 ${dataFormatada}</div>
+                        </div>
+                        ${t.tipoRevisao ? `<div class="task-tipo">${t.tipoRevisao}</div>` : ''}
+                        ${sugestao ? `
+                        <div class="task-suggestion">
+                            <div class="task-suggestion-label">💡 Sugestão:</div>
+                            <div class="task-suggestion-text">${sugestao}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleTarefa(temaId) {
+            if (tarefasExpandidas.has(temaId)) {
+                tarefasExpandidas.delete(temaId);
+            } else {
+                tarefasExpandidas.add(temaId);
+            }
+            renderTarefas();
+        }
+        
+        // 🆕 RENDERIZAR PENDÊNCIAS (tarefas com mais de 7 dias de atraso)
+        function renderPendencias() {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const hojeStr = hoje.toISOString().split('T')[0];
+            
+            // Data limite: hoje - 7 dias
+            const limite = new Date(hoje);
+            limite.setDate(limite.getDate() - 7);
+            const limiteStr = limite.toISOString().split('T')[0];
+            
+            const pendencias = dados.filter(t => {
+                if (!t.agenda || !t.tema) return false;
+                if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
+                // Tarefas com mais de 7 dias de atraso
+                return t.agenda < limiteStr;
+            });
+            
+            const container = document.getElementById('pendenciasContainer');
+            if (pendencias.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div>Nenhuma pendência!</div></div>';
+                return;
+            }
+            
+            // Ordenar: mais recente primeiro, depois menos sessões
+            pendencias.sort((a, b) => {
+                const diffData = new Date(b.agenda) - new Date(a.agenda);
+                if (diffData !== 0) return diffData;
+                return (a.sessoes || 0) - (b.sessoes || 0);
+            });
+            
+            container.innerHTML = pendencias.map(t => {
+                const sugestao = obterSugestaoTema(t);
+                const rendPct = Math.round((t.rendimento || 0) * 100);
+                const rendColor = rendPct >= 80 ? '#10B981' : rendPct >= 50 ? '#FBBF24' : '#EF4444';
+                const dataFormatada = t.agenda ? new Date(t.agenda + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+                const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
                 return `
                 <div class="task-item priority-${t.prioridade || 3}">
-                    <div class="task-name">${t.tema}</div>
+                    <div class="task-header">
+                        <div class="task-name">${t.tema}</div>
+                        <div class="task-date" style="background: rgba(239, 68, 68, 0.2); color: #EF4444;">⚠️ ${diasAtraso} dias atrasado</div>
+                    </div>
                     
                     <div class="task-details">
                         <div class="task-detail-item">📚 ${t.area}</div>
                         <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
                         <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
                         <div class="task-detail-item">🔢 ${t.sessoes || 0} sessões</div>
+                        <div class="task-detail-item">📅 ${dataFormatada}</div>
                     </div>
                     
                     ${t.tipoRevisao ? `<div class="task-tipo">${t.tipoRevisao}</div>` : ''}
@@ -1101,6 +1239,7 @@
             alert('✅ Feedback registrado!\n📅 Próxima revisão: ' + new Date(tema.agenda + 'T00:00:00').toLocaleDateString('pt-BR'));
             
             renderTarefas();
+            renderPendencias();
             renderAgenda();
             renderDados();
             renderHistorico();
@@ -1172,6 +1311,7 @@
             alert('✅ Último feedback desfeito com sucesso!');
             
             renderTarefas();
+            renderPendencias();
             renderAgenda();
             renderDados();
             renderHistorico();
@@ -1466,6 +1606,7 @@
                 localStorage.setItem('vrvs_dados', JSON.stringify(dados));
                 localStorage.setItem('vrvs_historico', JSON.stringify(historico));
                 renderTarefas();
+                renderPendencias();
                 renderAgenda();
                 renderDados();
                 updateFeedbackSelect();
@@ -1644,6 +1785,7 @@
             event.target.classList.add('active');
             if (sectionId === 'dados') renderDados();
             if (sectionId === 'tarefa') renderTarefas();
+            if (sectionId === 'pendencia') renderPendencias();
             if (sectionId === 'agenda') renderAgenda();
             if (sectionId === 'stats') updateStats();
             if (sectionId === 'historico') renderHistorico();
@@ -1717,6 +1859,7 @@
         window.onload = function() {
             verificarBackupAutomatico();
             renderTarefas();
+            renderPendencias();
             renderAgenda();
             renderDados();
             updateFeedbackSelect();
