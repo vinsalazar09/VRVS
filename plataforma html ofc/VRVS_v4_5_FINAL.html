@@ -899,7 +899,10 @@
                 if (!t.agenda || !t.tema) return false;
                 if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
                 // Apenas tarefas com até 7 dias de atraso (hoje até 7 dias atrás)
-                return t.agenda <= hojeStr && t.agenda >= limiteStr;
+                const agendaDate = new Date(t.agenda + 'T00:00:00');
+                const hojeDate = new Date(hojeStr + 'T00:00:00');
+                const limiteDate = new Date(limiteStr + 'T00:00:00');
+                return agendaDate <= hojeDate && agendaDate >= limiteDate;
             });
             
             const container = document.getElementById('tarefasContainer');
@@ -950,14 +953,14 @@
             }).join('');
         }
         
-        function toggleTarefa(temaId) {
+        window.toggleTarefa = function(temaId) {
             if (tarefasExpandidas.has(temaId)) {
                 tarefasExpandidas.delete(temaId);
             } else {
                 tarefasExpandidas.add(temaId);
             }
             renderTarefas();
-        }
+        };
         
         // 🆕 RENDERIZAR PENDÊNCIAS (tarefas com mais de 7 dias de atraso)
         function renderPendencias() {
@@ -974,7 +977,9 @@
                 if (!t.agenda || !t.tema) return false;
                 if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
                 // Tarefas com mais de 7 dias de atraso
-                return t.agenda < limiteStr;
+                const agendaDate = new Date(t.agenda + 'T00:00:00');
+                const limiteDate = new Date(limiteStr + 'T00:00:00');
+                return agendaDate < limiteDate;
             });
             
             const container = document.getElementById('pendenciasContainer');
