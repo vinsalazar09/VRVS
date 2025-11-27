@@ -591,6 +591,9 @@
             margin-bottom: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
         }
         .task-theme-item:hover {
             background: linear-gradient(135deg,
@@ -598,6 +601,10 @@
                 rgba(40, 60, 70, 0.5)
             );
             transform: translateX(4px);
+        }
+        .task-theme-item:active {
+            transform: translateX(2px);
+            opacity: 0.9;
         }
         .task-theme-item.priority-5 { border-left-color: var(--cobre-main); }
         .task-theme-item.priority-4 { border-left-color: var(--cobre-light); }
@@ -2177,7 +2184,12 @@
                 return (a.sessoes || 0) - (b.sessoes || 0);
             });
             
+            // Variável para controlar pendências expandidas
+            let pendenciasExpandidas = window.pendenciasExpandidas || new Set();
+            window.pendenciasExpandidas = pendenciasExpandidas;
+            
             container.innerHTML = pendencias.map(t => {
+                const isExpanded = pendenciasExpandidas.has(t.id);
                 const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
@@ -2186,26 +2198,24 @@
                 const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
                 return `
-                <div class="task-item priority-${t.prioridade || 3}">
-                    <div class="task-header">
-                        <div class="task-name">${t.tema}</div>
-                        <div class="task-date" style="background: rgba(255, 127, 80, 0.2); color: var(--cobre-main); padding: 4px 10px; border-radius: 6px;">⚠️ ${diasAtraso} dias atrasado</div>
-                    </div>
-                    
-                    <div class="task-details">
-                        <div class="task-detail-item">📚 ${t.area}</div>
-                        <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
-                        <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
-                        <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
-                        <div class="task-detail-item">📅 ${dataFormatada}</div>
-                    </div>
-                    
-                    ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
-                    
-                    ${sugestao ? `
-                    <div class="task-suggestion">
-                        <div class="task-suggestion-label">Diretriz</div>
-                        <div class="task-suggestion-text">${sugestao}</div>
+                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia(${t.id})" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent;">
+                    <div class="task-theme-name">${t.tema}</div>
+                    <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
+                    ${isExpanded ? `
+                    <div class="task-expanded">
+                        <div class="task-details">
+                            <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
+                            <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
+                            <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
+                            <div class="task-detail-item">📅 ${dataFormatada}</div>
+                        </div>
+                        ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
+                        ${sugestao ? `
+                        <div class="task-suggestion">
+                            <div class="task-suggestion-label">Diretriz</div>
+                            <div class="task-suggestion-text">${sugestao}</div>
+                        </div>
+                        ` : ''}
                     </div>
                     ` : ''}
                 </div>
@@ -2215,9 +2225,6 @@
         
         // Variável global para controlar visibilidade dos campos de tempo
         window.camposTempoVisiveis = false;
-        
-        // Variável global para controlar tarefas expandidas
-        let tarefasExpandidas = new Set();
         
         function toggleCamposTempo() {
             window.camposTempoVisiveis = !window.camposTempoVisiveis;
@@ -2229,13 +2236,16 @@
             renderAgenda();
         }
         
-        window.toggleTarefa = function(temaId) {
-            if (tarefasExpandidas.has(temaId)) {
-                tarefasExpandidas.delete(temaId);
-            } else {
-                tarefasExpandidas.add(temaId);
+        window.togglePendencia = function(temaId) {
+            if (!window.pendenciasExpandidas) {
+                window.pendenciasExpandidas = new Set();
             }
-            renderTarefas();
+            if (window.pendenciasExpandidas.has(temaId)) {
+                window.pendenciasExpandidas.delete(temaId);
+            } else {
+                window.pendenciasExpandidas.add(temaId);
+            }
+            renderPendencias();
         };
         
         function renderTarefas() {
@@ -2265,42 +2275,71 @@
                 return;
             }
             
-            // Ordenar: mais recente primeiro, depois menos sessões
+            // Ordenar: mais recente primeiro, depois menos sessões (menos sessões em cima)
             tarefas.sort((a, b) => {
+                // Primeiro por data (mais recente primeiro)
                 const diffData = new Date(b.agenda) - new Date(a.agenda);
                 if (diffData !== 0) return diffData;
+                // Depois por menos sessões primeiro (menos sessões em cima)
                 return (a.sessoes || 0) - (b.sessoes || 0);
             });
             
-            container.innerHTML = tarefas.map(t => {
-                const isExpanded = tarefasExpandidas.has(t.id);
+            container.innerHTML = tarefas.map((t, index) => {
                 const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
                 const tipo = calcularTipoRevisao(t);
+                const isHoje = t.agenda === hojeStr;
+                const camposTempoAtivo = window.camposTempoVisiveis || false;
                 const dataFormatada = formatarDataBR(t.agenda);
                 
+                // Padronizar layout: primeira linha (área e prioridade), segunda linha (rendimento, sessões e data)
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="toggleTarefa(${t.id})">
-                    <div class="task-theme-name">${t.tema}</div>
-                    ${isExpanded ? `
-                    <div class="task-expanded">
-                        <div class="task-details">
-                            <div class="task-detail-item">📚 ${t.area}</div>
-                            <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
-                            <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
-                            <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
-                            <div class="task-detail-item">📅 ${dataFormatada}</div>
-                        </div>
-                        ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
-                        ${sugestao ? `
-                        <div class="task-suggestion">
-                            <div class="task-suggestion-label">Diretriz</div>
-                            <div class="task-suggestion-text">${sugestao}</div>
-                        </div>
-                        ` : ''}
+                <div class="task-item priority-${t.prioridade || 3}">
+                    <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
+                    
+                    <div class="task-details">
+                        <div class="task-detail-item">📚 ${t.area}</div>
+                        <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
+                    </div>
+                    
+                    <div class="task-details">
+                        <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
+                        <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
+                        <div class="task-detail-item">📅 ${dataFormatada}</div>
+                    </div>
+                    
+                    ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
+                    
+                    ${sugestao ? `
+                    <div class="task-suggestion">
+                        <div class="task-suggestion-label">Diretriz</div>
+                        <div class="task-suggestion-text">${sugestao}</div>
                     </div>
                     ` : ''}
+                    
+                    <div class="campos-tempo ${camposTempoAtivo ? 'ativo' : ''}" data-tema-id="${t.id}">
+                        <div class="campo-tempo-row">
+                            <div class="campo-tempo-item">
+                                <label>❓ Tempo Questões (min)</label>
+                                <input type="number" min="0" placeholder="0" class="tempo-questoes" data-id="${t.id}">
+                            </div>
+                            <div class="campo-tempo-item">
+                                <label>❓ Qtd Questões</label>
+                                <input type="number" min="0" placeholder="0" class="quant-questoes" data-id="${t.id}">
+                            </div>
+                        </div>
+                        <div class="campo-tempo-row">
+                            <div class="campo-tempo-item">
+                                <label>🃏 Tempo Flashcards (min)</label>
+                                <input type="number" min="0" placeholder="0" class="tempo-flashcards" data-id="${t.id}">
+                            </div>
+                            <div class="campo-tempo-item">
+                                <label>🃏 Qtd Flashcards</label>
+                                <input type="number" min="0" placeholder="0" class="quant-flashcards" data-id="${t.id}">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 `;
             }).join('');
