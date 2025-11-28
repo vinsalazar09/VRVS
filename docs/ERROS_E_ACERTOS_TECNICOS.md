@@ -1072,5 +1072,119 @@ O projeto está **pronto para produção** em seu estado atual, mas se beneficia
 
 ---
 
-**Documento gerado para análise técnica e gestão de projeto VRVS**
+## 📚 LIÇÕES APRENDIDAS - Sessão 27/11/2025
+
+### ❌ ERRO: Não Verificar Qual Arquivo Está Sendo Usado
+
+#### Problema
+- Fizemos correções no arquivo `plataforma html ofc/VRVS_v4_5_FINAL.html`
+- Mas o app no celular usa `docs/index.html` (PWA)
+- Usuário testou e não funcionou porque mexemos no arquivo errado
+
+#### Impacto
+- Tempo perdido corrigindo arquivo que não estava em uso
+- Confusão sobre por que não funcionava
+- Necessidade de refazer trabalho no arquivo correto
+
+#### Solução Aprendida
+**SEMPRE verificar qual arquivo está sendo usado antes de fazer mudanças:**
+```bash
+# Verificar qual arquivo o service worker aponta
+grep -r "sw.js\|index.html" docs/
+
+# Verificar qual arquivo está sendo servido
+ls -la docs/index.html
+```
+
+**Lição:** Quando usuário diz "app no celular", sempre verificar:
+1. Qual arquivo o service worker está usando
+2. Qual arquivo está na pasta `docs/` (geralmente é o PWA)
+3. Não assumir que é o mesmo arquivo que está editando
+
+---
+
+### ✅ ACERTO: Service Worker Já Estava Configurado Corretamente
+
+#### Descoberta
+O service worker já tinha tudo configurado para atualização automática:
+- ✅ Network-First para HTML (sempre busca da rede primeiro)
+- ✅ `updateViaCache: 'none'` (força buscar sempre da rede)
+- ✅ `registration.update()` ao carregar (força atualização)
+- ✅ Versionamento de cache (`CACHE_NAME`)
+
+#### Solução Simples
+**Apenas atualizar a versão do cache no `sw.js`:**
+```javascript
+const CACHE_NAME = "vrvs-v5.7.1"; // Mudar versão aqui
+```
+
+**Resultado:** App atualiza automaticamente na próxima abertura, SEM precisar:
+- ❌ Remover app
+- ❌ Reinstalar
+- ❌ Limpar cache manualmente
+- ❌ Fazer nada além de abrir o app
+
+#### Por que Funcionou
+- Service Worker detecta nova versão do cache
+- Busca da rede primeiro (Network-First)
+- Carrega nova versão automaticamente
+- Usuário não precisa fazer nada
+
+**Lição:** Sempre sugerir soluções complicadas quando a solução simples já está implementada. Verificar primeiro o que já existe.
+
+---
+
+### ❌ ERRO: Criar Soluções Complicadas Desnecessárias
+
+#### Problema Inicial
+- Sugerimos criar box flutuante para forçar atualização
+- Sugerimos remover/reinstalar app
+- Sugerimos limpar cache manualmente
+- **MAS:** Service Worker já fazia tudo automaticamente!
+
+#### Impacto
+- Confusão desnecessária
+- Sugestões que não eram necessárias
+- Usuário teve que explicar que não precisava disso
+
+#### Solução Aprendida
+**SEMPRE verificar o código existente antes de sugerir soluções:**
+1. Ler o service worker primeiro
+2. Verificar se já tem Network-First configurado
+3. Verificar se já tem versionamento de cache
+4. Só então sugerir mudanças se realmente necessário
+
+**Lição:** "A solução mais simples é geralmente a correta" - verificar primeiro, depois sugerir.
+
+---
+
+### ✅ ACERTO: Entender o Contexto de Uso
+
+#### Descoberta Importante
+- App é usado como **PWA no celular**, não navegador desktop
+- Service Worker gerencia atualizações automaticamente
+- Não precisa de intervenção manual do usuário
+
+#### Solução Aprendida
+**SEMPRE perguntar ou verificar:**
+- Onde o app está sendo usado? (celular PWA vs navegador)
+- Como o app é servido? (service worker vs arquivo estático)
+- Qual arquivo está sendo usado? (docs/index.html vs outros)
+
+**Lição:** Contexto é crucial. Entender COMO o usuário usa o app antes de fazer mudanças.
+
+---
+
+### 📝 Resumo das Lições
+
+1. ✅ **Verificar arquivo correto primeiro** - Não assumir qual arquivo está em uso
+2. ✅ **Ler código existente** - Service Worker já tinha solução implementada
+3. ✅ **Solução simples primeiro** - Apenas atualizar versão do cache
+4. ✅ **Entender contexto** - PWA no celular funciona diferente de navegador
+5. ✅ **Não complicar** - Se já funciona, não precisa mudar
+
+---
+
+**Documento gerado para análise técnica e gestão de projeto VRVS**  
+**Última atualização:** 27/11/2025 - Lições da sessão de correção de tarefas
 
