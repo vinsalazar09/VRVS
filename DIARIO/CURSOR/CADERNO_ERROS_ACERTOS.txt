@@ -1,0 +1,39 @@
+═══════════════════════════════════════════════════════════════
+📖 CADERNO DE ERROS E ACERTOS - PLATAFORMA DE REVISÃO TEOT
+═══════════════════════════════════════════════════════════════
+
+**Este arquivo registra erros resolvidos, acertos e problemas conhecidos.**
+**SEMPRE ADICIONAR ao final, NUNCA sobrescrever completamente.**
+
+═══════════════════════════════════════════════════════════════
+📅 REGISTRO DE CHATS
+═══════════════════════════════════════════════════════════════
+
+[SERÁ ATUALIZADO AUTOMATICAMENTE COM CADA CHAT]
+
+═══════════════════════════════════════════════════════════════
+✅ ACERTOS E SOLUÇÕES BEM SUCEDIDAS
+═══════════════════════════════════════════════════════════════
+
+[SERÁ ATUALIZADO COM ACERTOS E SOLUÇÕES]
+
+═══════════════════════════════════════════════════════════════
+❌ ERROS RESOLVIDOS
+═══════════════════════════════════════════════════════════════
+
+[SERÁ ATUALIZADO COM ERROS RESOLVIDOS]
+
+═══════════════════════════════════════════════════════════════
+⚠️ PROBLEMAS CONHECIDOS (AINDA NÃO RESOLVIDOS)
+═══════════════════════════════════════════════════════════════
+
+[SERÁ ATUALIZADO COM PROBLEMAS IDENTIFICADOS]
+
+═══════════════════════════════════════════════════════════════
+💡 LIÇÕES APRENDIDAS
+═══════════════════════════════════════════════════════════════
+
+[SERÁ ATUALIZADO COM LIÇÕES APRENDIDAS]
+
+═══════════════════════════════════════════════════════════════
+
