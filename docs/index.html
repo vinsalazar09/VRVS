@@ -2196,6 +2196,11 @@
                     return '';
                 }
                 
+                // DEBUG: Log para identificar problemas com IDs específicos
+                if (['Fratura de clavícula', 'Epifisiolistese', 'Sd manguito rotador', 'DDQ', 'Luxação e Instabilidade do cotovelo', 'LAC/LEC', 'Epicondilites', 'Fraturas do cotovelo'].includes(t.tema)) {
+                    console.log('[PENDENCIAS DEBUG] Tema:', t.tema, 'ID:', temaId, 'Tipo ID original:', typeof t.id);
+                }
+                
                 // CORREÇÃO: Garantir que comparação no Set use sempre string
                 const isExpanded = pendenciasExpandidas.has(temaId);
                 const sugestao = obterSugestaoTema(t);
@@ -2205,8 +2210,11 @@
                 const dataFormatada = formatarDataBR(t.agenda);
                 const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
+                // CORREÇÃO: Garantir que ID seja número para onclick (igual aos outros lugares)
+                const temaIdNumero = Number(t.id) || t.id;
+                
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia('${temaId}')" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia(${temaIdNumero})" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
                     <div class="task-theme-name">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
@@ -2245,6 +2253,9 @@
         }
         
         window.togglePendencia = function(temaId) {
+            // DEBUG: Log para identificar problemas
+            console.log('[PENDENCIAS] togglePendencia chamado com temaId:', temaId, 'tipo:', typeof temaId);
+            
             // CORREÇÃO: Validar ID antes de processar
             if (temaId == null || temaId === '') {
                 console.warn('[PENDENCIAS] Tentativa de toggle com ID inválido:', temaId);
