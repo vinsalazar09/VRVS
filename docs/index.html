@@ -4924,7 +4924,7 @@
                                     style="width: 100%; font-family: inherit; resize: vertical;"
                                     placeholder="Digite suas anotações aqui..."
                                     onblur="salvarAnotacao(${anotacao.temaId})"
-                                >${escapeHtmlParaTextarea(anotacao.conteudo || '')}</textarea>
+                                >${(anotacao.conteudo || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
                             </div>
                             <div style="display: flex; gap: 5px;">
                                 <button class="btn-edit" onclick="salvarAnotacao(${anotacao.temaId})" title="Salvar">💾</button>
