@@ -3341,6 +3341,7 @@
                     renderAgenda();
                     renderHistorico();
                     renderPendencias();
+                    atualizarSelectsCaderno();
                     renderCaderno();
                     updateFeedbackSelect();
                     updateStats();
@@ -4827,9 +4828,15 @@
             const container = document.getElementById('cadernoContainer');
             if (!container) return;
             
-            // CORREÇÃO: NÃO criar anotações vazias automaticamente
-            // Isso estava sobrescrevendo anotações importadas
-            // Só criar se realmente necessário (quando usuário clicar para editar)
+            // CRÍTICO: Recarregar anotações do localStorage antes de renderizar
+            try {
+                const anotacoesSalvas = localStorage.getItem('vrvs_anotacoes');
+                if (anotacoesSalvas) {
+                    anotacoes = JSON.parse(anotacoesSalvas);
+                }
+            } catch (e) {
+                console.error('[RENDER CADERNO] Erro ao carregar anotações:', e);
+            }
             
             let anotacoesFiltradas = anotacoes;
             
