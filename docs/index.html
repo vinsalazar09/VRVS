@@ -4857,10 +4857,9 @@
             const container = document.getElementById('cadernoContainer');
             if (!container) return;
             
-            // Garantir que todos os temas tenham anotação
-            dados.forEach(t => {
-                obterOuCriarAnotacao(t.id);
-            });
+            // CORREÇÃO: NÃO criar anotações vazias automaticamente
+            // Isso estava sobrescrevendo anotações importadas
+            // Só criar se realmente necessário (quando usuário clicar para editar)
             
             let anotacoesFiltradas = anotacoes;
             
@@ -4875,13 +4874,24 @@
             // Agrupar por área
             const anotacoesPorArea = {};
             anotacoesFiltradas.forEach(a => {
+                // CORREÇÃO: Só mostrar anotações que têm conteúdo OU temaId válido correspondente a um tema
+                const tema = dados.find(t => String(t.id) === String(a.temaId));
+                if (!tema) {
+                    console.warn(`[RENDER CADERNO] Anotação sem tema correspondente: temaId=${a.temaId}, tema="${a.tema}"`);
+                    return; // Pular anotações sem tema correspondente
+                }
+                
+                // Atualizar área e tema da anotação com dados do tema (garantir consistência)
+                a.area = tema.area;
+                a.tema = tema.tema;
+                
                 if (!anotacoesPorArea[a.area]) {
                     anotacoesPorArea[a.area] = [];
                 }
                 anotacoesPorArea[a.area].push(a);
             });
             
-            if (anotacoesFiltradas.length === 0) {
+            if (anotacoesFiltradas.length === 0 || Object.keys(anotacoesPorArea).length === 0) {
                 container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma anotação encontrada</div></div>';
                 return;
             }
