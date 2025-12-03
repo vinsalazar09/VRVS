@@ -2218,15 +2218,16 @@
                 const temaIdEscaped = JSON.stringify(temaIdStr); // Escapa aspas e caracteres especiais
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" style="position: relative; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="flex: 1; cursor: pointer;" onclick="togglePendencia(${temaIdEscaped})" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3);">
-                        <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
-                        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" style="position: relative;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3);" onclick="togglePendencia(${temaIdEscaped})">
+                            <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
+                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
+                        </div>
+                        <button onclick="togglePendencia(${temaIdEscaped}); return false;" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.5); border-radius: 8px; padding: 8px 12px; color: var(--turquesa-light); cursor: pointer; font-size: 20px; min-width: 40px; touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); margin-left: 10px;">${isExpanded ? '▼' : '▶'}</button>
                     </div>
-                    <button onclick="togglePendencia(${temaIdEscaped}); return false;" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.5); border-radius: 8px; padding: 8px 12px; color: var(--turquesa-light); cursor: pointer; font-size: 20px; min-width: 40px; touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); margin-left: 10px;">${isExpanded ? '▼' : '▶'}</button>
-                </div>
-                ${isExpanded ? `
-                <div class="task-expanded" style="pointer-events: none; width: 100%; margin-top: 10px;">
+                    ${isExpanded ? `
+                    <div class="task-expanded" style="pointer-events: none; width: 100%; margin-top: 10px;">
                         <div class="task-details">
                             <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
                             <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
