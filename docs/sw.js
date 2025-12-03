@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.8.1-fix-event-delegation";
+const CACHE_NAME = "vrvs-v5.8.2-fix-touchstart-prevent-context-menu";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

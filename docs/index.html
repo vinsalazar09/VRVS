@@ -594,6 +594,8 @@
             transition: all 0.2s ease;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            -webkit-touch-callout: none; /* CRÍTICO iOS: Desabilita menu de contexto */
+            -webkit-user-select: none; /* CRÍTICO iOS: Desabilita seleção de texto */
             user-select: none;
         }
         .task-theme-item:hover {
@@ -2262,14 +2264,59 @@
             if (!container) return;
             
             // Remover listeners antigos se existirem
-            if (container._pendenciasHandler) {
-                container.removeEventListener('touchend', container._pendenciasHandler);
-                container.removeEventListener('click', container._pendenciasHandler);
+            if (container._pendenciasTouchStart) {
+                container.removeEventListener('touchstart', container._pendenciasTouchStart);
+            }
+            if (container._pendenciasTouchEnd) {
+                container.removeEventListener('touchend', container._pendenciasTouchEnd);
+            }
+            if (container._pendenciasClick) {
+                container.removeEventListener('click', container._pendenciasClick);
             }
             
-            // Handler único para todos os itens
-            const handlePendenciasInteraction = (e) => {
-                // Encontrar o item clicado (pode ser o próprio item ou um filho)
+            // Handler para touchstart (CRÍTICO: captura ANTES do menu de contexto)
+            const handleTouchStart = (e) => {
+                // Encontrar o item tocado
+                let target = e.target;
+                while (target && target !== container) {
+                    if (target.classList.contains('task-theme-item')) {
+                        const temaId = target.getAttribute('data-tema-id');
+                        if (temaId) {
+                            // CRÍTICO: preventDefault no touchstart evita menu de contexto
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Salvar temaId no elemento para usar no touchend
+                            target._pendingToggle = temaId;
+                            console.log('[PENDENCIAS] touchstart detectado, temaId:', temaId);
+                            return;
+                        }
+                    }
+                    target = target.parentElement;
+                }
+            };
+            
+            // Handler para touchend (executa ação após touchstart)
+            const handleTouchEnd = (e) => {
+                let target = e.target;
+                while (target && target !== container) {
+                    if (target.classList.contains('task-theme-item')) {
+                        const temaId = target._pendingToggle || target.getAttribute('data-tema-id');
+                        if (temaId) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('[PENDENCIAS] touchend detectado, temaId:', temaId);
+                            window.togglePendencia(temaId);
+                            // Limpar
+                            delete target._pendingToggle;
+                            return;
+                        }
+                    }
+                    target = target.parentElement;
+                }
+            };
+            
+            // Handler para click (fallback desktop)
+            const handleClick = (e) => {
                 let target = e.target;
                 while (target && target !== container) {
                     if (target.classList.contains('task-theme-item')) {
@@ -2277,7 +2324,7 @@
                         if (temaId) {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('[PENDENCIAS DELEGATION] Interação detectada, temaId:', temaId);
+                            console.log('[PENDENCIAS] click detectado, temaId:', temaId);
                             window.togglePendencia(temaId);
                             return;
                         }
@@ -2286,12 +2333,16 @@
                 }
             };
             
-            // Salvar referência para poder remover depois
-            container._pendenciasHandler = handlePendenciasInteraction;
+            // Salvar referências
+            container._pendenciasTouchStart = handleTouchStart;
+            container._pendenciasTouchEnd = handleTouchEnd;
+            container._pendenciasClick = handleClick;
             
             // Adicionar listeners no container (event delegation)
-            container.addEventListener('touchend', handlePendenciasInteraction, { passive: false, capture: true });
-            container.addEventListener('click', handlePendenciasInteraction, { capture: true });
+            // CRÍTICO: touchstart com capture: true e passive: false para interceptar ANTES do sistema
+            container.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+            container.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+            container.addEventListener('click', handleClick, { capture: true });
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
