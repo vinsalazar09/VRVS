@@ -2224,8 +2224,9 @@
                         <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     </div>
                     <button onclick="togglePendencia(${temaIdEscaped}); return false;" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.5); border-radius: 8px; padding: 8px 12px; color: var(--turquesa-light); cursor: pointer; font-size: 20px; min-width: 40px; touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); margin-left: 10px;">${isExpanded ? '▼' : '▶'}</button>
-                    ${isExpanded ? `
-                    <div class="task-expanded" style="pointer-events: none;">
+                </div>
+                ${isExpanded ? `
+                <div class="task-expanded" style="pointer-events: none; width: 100%; margin-top: 10px;">
                         <div class="task-details">
                             <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
                             <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
