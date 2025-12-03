@@ -113,5 +113,18 @@
 - 💡 **Usar funções nomeadas para event handlers quando precisar remover depois** - Permite remover listeners antigos antes de adicionar novos, evitando acúmulo
 - 🚨 **CRÍTICO: PLATAFORMA É USADA PRINCIPALMENTE NO IPHONE - SEMPRE TESTAR/AJUSTAR PARA MOBILE PRIMEIRO!** - Usuário usa principalmente pelo iPhone, não desktop. Sempre adicionar suporte explícito para eventos touch (touchend) além de click. Não assumir que funciona em mobile só porque funciona em desktop. Este erro já aconteceu múltiplas vezes - SEMPRE pensar em mobile primeiro!
 
+**2025-12-03:**
+- ✅ **PROBLEMA CRÍTICO RESOLVIDO:** renderCaderno criava anotações vazias que sobrescreviam importadas
+  - **Causa:** `renderCaderno()` chamava `obterOuCriarAnotacao()` para TODOS os temas, criando anotações vazias que sobrescreviam as importadas
+  - **Solução:** Removido `obterOuCriarAnotacao()` automático. Agora só cria anotação quando usuário realmente edita
+  - **Prevenção:** NUNCA criar dados automaticamente em funções de renderização. Só criar quando usuário interage explicitamente
+  - **Lição:** Renderização deve ser READ-ONLY. Não deve criar/modificar dados, apenas exibir
+
+- ✅ **PROBLEMA CRÍTICO RESOLVIDO:** Aba Pendências travando por múltiplos event listeners
+  - **Causa:** `togglePendencia()` chamava `inicializarEventListenersPendencias()` após cada toggle, criando múltiplos listeners que causavam travamentos
+  - **Solução:** Removida função `inicializarEventListenersPendencias()` completamente. Voltado para onclick inline (mesma solução das outras abas que funcionam)
+  - **Prevenção:** NUNCA re-inicializar event listeners dentro de funções que são chamadas frequentemente. Se outras abas funcionam com onclick inline, usar a mesma abordagem
+  - **Lição:** Simplicidade > Complexidade. Se onclick inline funciona nas outras abas, usar a mesma solução. Não complicar com event delegation quando não é necessário
+
 ═══════════════════════════════════════════════════════════════
 

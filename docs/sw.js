@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.8.3-fix-render-caderno-sobrescrever";
+const CACHE_NAME = "vrvs-v5.8.4-fix-pendencias-travamento";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

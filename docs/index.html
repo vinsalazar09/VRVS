@@ -2229,8 +2229,11 @@
                 const temaIdStr = String(temaId);
                 const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
                 
+                // Escape para onclick inline (solução simples que funciona)
+                const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
+                
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdEscaped}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
                     <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
@@ -2255,95 +2258,9 @@
             }).join('');
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // EVENT DELEGATION: Mais confiável no iOS Safari
-        // Adiciona listener UMA VEZ no container, funciona para todos os itens
-        // ═══════════════════════════════════════════════════════════════
-        function inicializarEventListenersPendencias() {
-            const container = document.getElementById('pendenciasContainer');
-            if (!container) return;
-            
-            // Remover listeners antigos se existirem
-            if (container._pendenciasTouchStart) {
-                container.removeEventListener('touchstart', container._pendenciasTouchStart);
-            }
-            if (container._pendenciasTouchEnd) {
-                container.removeEventListener('touchend', container._pendenciasTouchEnd);
-            }
-            if (container._pendenciasClick) {
-                container.removeEventListener('click', container._pendenciasClick);
-            }
-            
-            // Handler para touchstart (CRÍTICO: captura ANTES do menu de contexto)
-            const handleTouchStart = (e) => {
-                // Encontrar o item tocado
-                let target = e.target;
-                while (target && target !== container) {
-                    if (target.classList.contains('task-theme-item')) {
-                        const temaId = target.getAttribute('data-tema-id');
-                        if (temaId) {
-                            // CRÍTICO: preventDefault no touchstart evita menu de contexto
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Salvar temaId no elemento para usar no touchend
-                            target._pendingToggle = temaId;
-                            console.log('[PENDENCIAS] touchstart detectado, temaId:', temaId);
-                            return;
-                        }
-                    }
-                    target = target.parentElement;
-                }
-            };
-            
-            // Handler para touchend (executa ação após touchstart)
-            const handleTouchEnd = (e) => {
-                let target = e.target;
-                while (target && target !== container) {
-                    if (target.classList.contains('task-theme-item')) {
-                        const temaId = target._pendingToggle || target.getAttribute('data-tema-id');
-                        if (temaId) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('[PENDENCIAS] touchend detectado, temaId:', temaId);
-                            window.togglePendencia(temaId);
-                            // Limpar
-                            delete target._pendingToggle;
-                            return;
-                        }
-                    }
-                    target = target.parentElement;
-                }
-            };
-            
-            // Handler para click (fallback desktop)
-            const handleClick = (e) => {
-                let target = e.target;
-                while (target && target !== container) {
-                    if (target.classList.contains('task-theme-item')) {
-                        const temaId = target.getAttribute('data-tema-id');
-                        if (temaId) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('[PENDENCIAS] click detectado, temaId:', temaId);
-                            window.togglePendencia(temaId);
-                            return;
-                        }
-                    }
-                    target = target.parentElement;
-                }
-            };
-            
-            // Salvar referências
-            container._pendenciasTouchStart = handleTouchStart;
-            container._pendenciasTouchEnd = handleTouchEnd;
-            container._pendenciasClick = handleClick;
-            
-            // Adicionar listeners no container (event delegation)
-            // CRÍTICO: touchstart com capture: true e passive: false para interceptar ANTES do sistema
-            container.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-            container.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
-            container.addEventListener('click', handleClick, { capture: true });
-        }
+        // REMOVIDO: inicializarEventListenersPendencias()
+        // Usando onclick inline diretamente no HTML (mesma solução das outras abas que funcionam)
+        // Event delegation estava causando múltiplos listeners e travamentos
         
         // Variável global para controlar visibilidade dos campos de tempo
         window.camposTempoVisiveis = false;
@@ -2387,7 +2304,8 @@
                 window.pendenciasExpandidas.add(temaId);
             }
             renderPendencias();
-            inicializarEventListenersPendencias(); // Re-inicializar após render (proteção)
+            // REMOVIDO: Não precisa re-inicializar listeners após cada toggle
+            // Isso estava causando múltiplos listeners e travamentos
         };
         
         function renderTarefas() {
@@ -5853,7 +5771,7 @@
             renderAgenda();
             renderDados();
             renderPendencias();
-            inicializarEventListenersPendencias(); // Event delegation para iOS Safari
+            // REMOVIDO: inicializarEventListenersPendencias() - usando onclick inline agora
             updateFeedbackSelect();
             updateStats();
             renderHistorico();
