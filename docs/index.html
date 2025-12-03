@@ -2241,6 +2241,39 @@
                 </div>
                 `;
             }).join('');
+            
+            // FALLBACK iOS: Event delegation no container para garantir funcionamento
+            // Isso funciona mesmo quando onclick inline é ignorado pelo iOS Safari
+            const containerEl = document.getElementById('pendenciasContainer');
+            if (containerEl) {
+                // Remover listener antigo se existir
+                if (window.pendenciasDelegationHandler) {
+                    containerEl.removeEventListener('click', window.pendenciasDelegationHandler);
+                    containerEl.removeEventListener('touchend', window.pendenciasDelegationHandler);
+                }
+                
+                // Handler de delegação simples
+                window.pendenciasDelegationHandler = function(e) {
+                    const item = e.target.closest('.task-theme-item');
+                    if (item) {
+                        const temaId = item.getAttribute('data-tema-id');
+                        if (temaId) {
+                            // Se já foi tratado pelo onclick inline, não fazer nada (evitar duplo toggle)
+                            if (e.target.closest('[onclick]')) {
+                                return;
+                            }
+                            // Fallback: chamar togglePendencia diretamente
+                            e.preventDefault();
+                            e.stopPropagation();
+                            togglePendencia(temaId);
+                        }
+                    }
+                };
+                
+                // Adicionar listeners (touchend para iOS, click como fallback)
+                containerEl.addEventListener('touchend', window.pendenciasDelegationHandler, { passive: false });
+                containerEl.addEventListener('click', window.pendenciasDelegationHandler, { passive: false });
+            }
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
