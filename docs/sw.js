@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.8.6-fix-csv-anotacoes-quebras-linha";
+const CACHE_NAME = "vrvs-v5.8.7-add-debug-logs-importacao";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

@@ -3293,7 +3293,9 @@
             }
             
             if (anotacoesFile) {
+                console.log('[IMPORT ANOTACOES] Arquivo selecionado:', anotacoesFile.name, 'tamanho:', anotacoesFile.size);
                 promises.push(parseCSVAnotacoes(anotacoesFile).then(anotacoesCSV => {
+                    console.log('[IMPORT ANOTACOES] CSV parseado,', anotacoesCSV.length, 'anotações recebidas');
                     anotacoes = anotacoesCSV.map(a => {
                         if (!a.id) a.id = Date.now() + Math.random();
                         // CRÍTICO: Garantir que temaId seja string e corresponda a um tema válido
@@ -3309,10 +3311,13 @@
                             }
                         }
                         return a;
-                    });
+                    }).filter(a => a.temaId && a.temaId.trim() !== ''); // Filtrar apenas com temaId válido
                     localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
-                    console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações importadas`);
+                    console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações importadas e salvas`);
                     return 'anotacoes';
+                }).catch(err => {
+                    console.error('[IMPORT ANOTACOES] Erro ao importar:', err);
+                    throw err;
                 }));
             }
             
@@ -3418,9 +3423,15 @@
                 reader.onload = (e) => {
                     try {
                         const text = e.target.result;
+                        console.log('[PARSE CSV ANOTACOES] Arquivo lido, tamanho:', text.length, 'caracteres');
+                        console.log('[PARSE CSV ANOTACOES] Primeiros 500 caracteres:', text.substring(0, 500));
                         const rows = parseCSVText(text);
+                        console.log('[PARSE CSV ANOTACOES] Linhas parseadas:', rows.length);
+                        if (rows.length > 0) {
+                            console.log('[PARSE CSV ANOTACOES] Headers:', rows[0]);
+                        }
                         if (rows.length < 2) {
-                            reject(new Error('Arquivo de anotações vazio ou inválido'));
+                            reject(new Error('Arquivo de anotações vazio ou inválido. Linhas encontradas: ' + rows.length));
                             return;
                         }
                         const headers = rows[0];
@@ -3479,6 +3490,11 @@
                             return obj.temaId && obj.temaId.trim() !== '';
                         });
                         console.log(`[PARSE CSV ANOTACOES] ${data.length} anotações parseadas de ${rows.length - 1} linhas`);
+                        console.log('[PARSE CSV ANOTACOES] Primeira anotação:', data[0]);
+                        if (data.length === 0) {
+                            console.warn('[PARSE CSV ANOTACOES] NENHUMA anotação válida encontrada após filtro!');
+                            console.warn('[PARSE CSV ANOTACOES] Verifique se temaId ou tema estão corretos');
+                        }
                         resolve(data);
                     } catch (err) {
                         reject(new Error('Erro ao processar CSV de anotações: ' + err.message));
