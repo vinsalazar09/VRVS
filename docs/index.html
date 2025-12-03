@@ -2210,11 +2210,12 @@
                 const dataFormatada = formatarDataBR(t.agenda);
                 const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
-                // CORREÇÃO: Garantir que ID seja número para onclick (igual aos outros lugares)
-                const temaIdNumero = Number(t.id) || t.id;
+                // CORREÇÃO OPUS: IDs podem ser strings com underscore (ex: "1733174400000_5")
+                // Sempre usar aspas no onclick para tratar como string e evitar erro de sintaxe JS
+                const temaIdStr = String(temaId);
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia(${temaIdNumero})" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia('${temaIdStr}')" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
                     <div class="task-theme-name">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
