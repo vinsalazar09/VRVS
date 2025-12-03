@@ -2228,7 +2228,7 @@
                 const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdEscaped}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
                     <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
@@ -2253,36 +2253,27 @@
             }).join('');
             
             // ═══════════════════════════════════════════════════════════════
-            // FALLBACK: Event listener programático para iOS Safari
-            // Adiciona listeners de toque como fallback caso onclick inline não funcione
+            // CORREÇÃO iOS: Usar APENAS event listeners programáticos
+            // onclick inline pode não funcionar no iOS Safari, então removemos e usamos só listeners
             // ═══════════════════════════════════════════════════════════════
             document.querySelectorAll('.task-theme-item').forEach(item => {
                 const temaId = item.getAttribute('data-tema-id');
                 if (!temaId) return;
                 
-                // Remover listeners antigos se existirem (clonar nó remove listeners)
-                const newItem = item.cloneNode(true);
-                item.parentNode.replaceChild(newItem, item);
+                // Remover onclick inline (vamos usar só event listeners)
+                item.removeAttribute('onclick');
                 
-                // Adicionar listeners de toque como fallback
-                const handleTouch = (e) => {
+                // Adicionar listeners de toque (funciona melhor no iOS)
+                const handleInteraction = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('[PENDENCIAS FALLBACK] Touch detectado via fallback, temaId:', temaId);
+                    console.log('[PENDENCIAS] Interação detectada, temaId:', temaId);
                     window.togglePendencia(temaId);
                 };
                 
-                const handleClick = (e) => {
-                    // Só usar se onclick inline não funcionou
-                    // Verificar se já foi processado pelo onclick
-                    if (!e.defaultPrevented) {
-                        console.log('[PENDENCIAS FALLBACK] Click detectado via fallback, temaId:', temaId);
-                        window.togglePendencia(temaId);
-                    }
-                };
-                
-                newItem.addEventListener('touchend', handleTouch, { passive: false });
-                newItem.addEventListener('click', handleClick);
+                // Usar touchend (melhor para iOS) e click (fallback para desktop)
+                item.addEventListener('touchend', handleInteraction, { passive: false });
+                item.addEventListener('click', handleInteraction);
             });
         }
         
@@ -5728,3 +5719,4 @@
     </script>
 </body>
 </html>
+
