@@ -61,6 +61,21 @@
   - **Lição:** Sempre usar aspas em valores interpolados em atributos HTML que serão interpretados como JavaScript. Nunca assumir que valores são sempre números. Erros de sintaxe JavaScript em atributos HTML são ignorados silenciosamente pelo navegador.
   - **Prevenção:** SEMPRE usar aspas ao interpolar valores em atributos onclick/on* que serão interpretados como JavaScript. Validar formato de IDs gerados automaticamente.
 
+- ⚠️ **PROBLEMA PERSISTENTE (03/12/2025) - iOS Safari PWA:** Alguns itens na aba Pendências não respondem ao toque no iPhone, mesmo após múltiplas correções
+  - **Comportamento:** No MacBook (Chrome/Safari) funciona perfeitamente. No iPhone (Safari iOS, PWA instalado) alguns itens específicos não respondem ao toque, enquanto outros funcionam normalmente.
+  - **Itens afetados:** Fratura de clavícula, Epifisiolistese, Sd manguito rotador, DDQ, Luxação e Instabilidade do cotovelo, LAC/LEC, Epicondilites, Fraturas do cotovelo
+  - **Tentativas realizadas:**
+    1. Event delegation no container
+    2. Onclick inline com aspas simples: `onclick="togglePendencia('${id}')"`
+    3. Escape de aspas com `replace(/'/g, "\\'")`
+    4. Event delegation como fallback (touchend + click)
+    5. Remoção de verificação que bloqueava event delegation
+    6. Atualização agressiva do Service Worker (limpar caches, desregistrar SWs antigos)
+    7. Limpeza manual de cache no Safari (Ajustes → Safari → Avançado)
+  - **Status:** PROBLEMA PERSISTE - Enviado para consulta externa (GPT/Opus) com caso técnico completo
+  - **Arquivos de referência:** `docs/CASO_CONSULTA_EXTERNA_FINAL.md`, `diagnostico_final.py`
+  - **Observação importante:** Código funciona perfeitamente no MacBook, indicando que problema é específico do iOS Safari/PWA, não do código em si
+
 ═══════════════════════════════════════════════════════════════
 ⚠️ PROBLEMAS CONHECIDOS (AINDA NÃO RESOLVIDOS)
 ═══════════════════════════════════════════════════════════════
