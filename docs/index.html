@@ -3447,17 +3447,44 @@
                             return '';
                         };
                         const data = rows.slice(1).map((r, lineNum) => {
-                            return {
+                            let conteudo = getVal(r, 'conteudo', 'conteúdo', 'conteudo', 'texto', 'anotacao', 'anotação');
+                            // Preservar quebras de linha no conteúdo
+                            if (conteudo) {
+                                conteudo = conteudo.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+                            }
+                            
+                            const anotacao = {
                                 id: getVal(r, 'id') || `${Date.now()}_${lineNum}`,
                                 temaId: getVal(r, 'temaid', 'tema_id', 'temaid', 'temaid'),
                                 area: getVal(r, 'area', 'topico'),
                                 tema: getVal(r, 'tema', 'assunto', 'titulo'),
-                                conteudo: getVal(r, 'conteudo', 'conteúdo', 'conteudo', 'texto', 'anotacao', 'anotação'),
-                                ultimaAtualizacao: getVal(r, 'ultimaatualizacao', 'ultima_atualizacao', 'ultimaatualizacao', 'data', 'dataatualizacao')
+                                conteudo: conteudo,
+                                ultimaAtualizacao: getVal(r, 'ultimaatualizacao', 'ultima_atualizacao', 'ultimaatualizacao', 'data', 'dataatualizacao') || new Date().toISOString().split('T')[0]
                             };
+                            
+                            // Tentar resolver temaId pelo nome se necessário
+                            if (!anotacao.temaId || anotacao.temaId.trim() === '') {
+                                if (anotacao.tema) {
+                                    const tema = dados.find(t => String(t.tema).trim() === String(anotacao.tema).trim());
+                                    if (tema) {
+                                        anotacao.temaId = String(tema.id);
+                                        anotacao.area = tema.area;
+                                        anotacao.tema = tema.tema;
+                                    }
+                                }
+                            } else {
+                                // Verificar se temaId existe e atualizar área/tema
+                                const tema = dados.find(t => String(t.id) === String(anotacao.temaId));
+                                if (tema) {
+                                    anotacao.area = tema.area;
+                                    anotacao.tema = tema.tema;
+                                }
+                            }
+                            
+                            return anotacao;
                         }).filter(obj => {
-                            // Manter apenas anotações que têm pelo menos temaId OU tema
-                            return (obj.temaId && obj.temaId.trim() !== '') || (obj.tema && obj.tema.trim() !== '');
+                            // Manter apenas anotações que têm temaId válido
+                            return obj.temaId && obj.temaId.trim() !== '';
                         });
                         console.log(`[PARSE CSV ANOTACOES] ${data.length} anotações parseadas de ${rows.length - 1} linhas`);
                         resolve(data);
@@ -3479,20 +3506,29 @@
             while (i < text.length) {
                 const ch = text[i];
                 if (inQuotes) {
+                    // Dentro de aspas: preservar tudo, incluindo quebras de linha
                     if (ch === '"') {
                         const next = text[i + 1];
                         if (next === '"') {
+                            // Aspas duplas escapadas: ""
                             cell += '"';
                             i += 2;
-                        } else {
+                        } else if (next === ',' || next === '\r' || next === '\n' || i === text.length - 1) {
+                            // Fim do campo entre aspas
                             inQuotes = false;
+                            i += 1;
+                        } else {
+                            // Aspas simples dentro do campo (mantém)
+                            cell += ch;
                             i += 1;
                         }
                     } else {
+                        // Qualquer caractere dentro de aspas (incluindo \n e \r)
                         cell += ch;
                         i += 1;
                     }
                 } else {
+                    // Fora de aspas
                     if (ch === '"') {
                         inQuotes = true;
                         i += 1;
@@ -3518,8 +3554,11 @@
                     }
                 }
             }
-            row.push(cell);
-            rows.push(row);
+            // Adicionar última célula e linha
+            if (cell || row.length > 0) {
+                row.push(cell);
+                rows.push(row);
+            }
             return rows;
         }
         
