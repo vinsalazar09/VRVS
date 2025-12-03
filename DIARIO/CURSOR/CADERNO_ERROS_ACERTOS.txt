@@ -54,6 +54,13 @@
   - **Lição:** Quando algo não funciona, voltar ao básico. Se tabs funcionam com onclick inline, usar a mesma abordagem. Não complicar com event delegation quando onclick inline resolve
   - **Prevenção:** SEMPRE usar a solução mais simples primeiro. Se outros elementos similares funcionam com onclick inline, usar a mesma abordagem antes de tentar soluções complexas
 
+- ✅ **CORREÇÃO DEFINITIVA (02/12/2025) - DIAGNÓSTICO OPUS:** IDs com underscore causavam erro de sintaxe JavaScript no onclick
+  - **Causa Raiz Identificada pelo Opus:** IDs gerados sem valor no CSV recebem formato `${Date.now()}_${lineNum}` (ex: "1733174400000_5"). Quando usado sem aspas no onclick: `onclick="togglePendencia(1733174400000_5)"`, isso é sintaxe JavaScript inválida (underscore não é válido em literal numérico). Navegador ignora silenciosamente o onclick mal formado.
+  - **Por que alguns funcionavam:** Itens com ID numérico puro no CSV funcionavam. Itens sem ID (que recebiam ID gerado com underscore) falhavam.
+  - **Solução:** Sempre usar aspas no onclick para tratar ID como string: `onclick="togglePendencia('${temaIdStr}')"`. Isso funciona tanto para números quanto strings com underscore.
+  - **Lição:** Sempre usar aspas em valores interpolados em atributos HTML que serão interpretados como JavaScript. Nunca assumir que valores são sempre números. Erros de sintaxe JavaScript em atributos HTML são ignorados silenciosamente pelo navegador.
+  - **Prevenção:** SEMPRE usar aspas ao interpolar valores em atributos onclick/on* que serão interpretados como JavaScript. Validar formato de IDs gerados automaticamente.
+
 ═══════════════════════════════════════════════════════════════
 ⚠️ PROBLEMAS CONHECIDOS (AINDA NÃO RESOLVIDOS)
 ═══════════════════════════════════════════════════════════════
