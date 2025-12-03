@@ -2239,6 +2239,30 @@
                 </div>
                 `;
             }).join('');
+            
+            // CORREÇÃO iOS: Event delegation simples no container (mais confiável que onclick inline no iOS)
+            // Remover listener antigo se existir
+            if (window.pendenciasContainerHandler) {
+                container.removeEventListener('click', window.pendenciasContainerHandler);
+                container.removeEventListener('touchend', window.pendenciasContainerHandler);
+            }
+            
+            // Criar handler simples
+            window.pendenciasContainerHandler = function(e) {
+                const item = e.target.closest('.task-theme-item');
+                if (item) {
+                    const temaId = item.getAttribute('data-tema-id');
+                    if (temaId) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        togglePendencia(temaId);
+                    }
+                }
+            };
+            
+            // Adicionar listeners no container (funciona melhor no iOS)
+            container.addEventListener('click', window.pendenciasContainerHandler, { passive: false });
+            container.addEventListener('touchend', window.pendenciasContainerHandler, { passive: false });
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
