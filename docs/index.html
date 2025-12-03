@@ -2214,13 +2214,13 @@
                 // CORREÇÃO OPUS: IDs podem ser strings com underscore (ex: "1733174400000_5")
                 // Sempre usar aspas SIMPLES no onclick para tratar como string
                 // Escape manual de aspas simples no ID
-                // SOLUÇÃO OPUS: Sempre tratar ID como string com aspas no onclick
-                // JSON.stringify garante escape correto de qualquer caractere especial
+                // SOLUÇÃO OPUS: Sempre tratar ID como string com aspas SIMPLES no onclick
+                // Escape manual de aspas simples para não quebrar o HTML
                 const temaIdStr = String(temaId);
-                const temaIdEscaped = JSON.stringify(temaIdStr); // Escapa corretamente aspas e caracteres especiais
+                const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\"); // Escapa aspas simples e barras invertidas
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia(${temaIdEscaped})" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdEscaped}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
                     <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
