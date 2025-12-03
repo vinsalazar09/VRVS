@@ -2214,11 +2214,13 @@
                 // CORREÇÃO OPUS: IDs podem ser strings com underscore (ex: "1733174400000_5")
                 // Sempre usar aspas SIMPLES no onclick para tratar como string
                 // Escape manual de aspas simples no ID
+                // SOLUÇÃO OPUS: Sempre tratar ID como string com aspas no onclick
+                // JSON.stringify garante escape correto de qualquer caractere especial
                 const temaIdStr = String(temaId);
-                const temaIdEscaped = temaIdStr.replace(/'/g, "\\'"); // Escapa apenas aspas simples
+                const temaIdEscaped = JSON.stringify(temaIdStr); // Escapa corretamente aspas e caracteres especiais
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdEscaped}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia(${temaIdEscaped})" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
                     <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
@@ -2241,36 +2243,6 @@
                 </div>
                 `;
             }).join('');
-            
-            // FALLBACK iOS: Event delegation no container para garantir funcionamento
-            // Isso funciona mesmo quando onclick inline é ignorado pelo iOS Safari
-            const containerEl = document.getElementById('pendenciasContainer');
-            if (containerEl) {
-                // Remover listener antigo se existir
-                if (window.pendenciasDelegationHandler) {
-                    containerEl.removeEventListener('click', window.pendenciasDelegationHandler);
-                    containerEl.removeEventListener('touchend', window.pendenciasDelegationHandler);
-                }
-                
-                // Handler de delegação simples
-                window.pendenciasDelegationHandler = function(e) {
-                    const item = e.target.closest('.task-theme-item');
-                    if (item) {
-                        const temaId = item.getAttribute('data-tema-id');
-                        if (temaId) {
-                            // Sempre chamar togglePendencia (a função já verifica se está expandido)
-                            // Isso garante funcionamento mesmo se onclick inline falhar
-                            e.preventDefault();
-                            e.stopPropagation();
-                            togglePendencia(temaId);
-                        }
-                    }
-                };
-                
-                // Adicionar listeners (touchend para iOS, click como fallback)
-                containerEl.addEventListener('touchend', window.pendenciasDelegationHandler, { passive: false });
-                containerEl.addEventListener('click', window.pendenciasDelegationHandler, { passive: false });
-            }
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
