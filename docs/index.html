@@ -2211,17 +2211,24 @@
                 const dataFormatada = formatarDataBR(t.agenda);
                 const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
-                // CORREÇÃO OPUS: IDs podem ser strings com underscore (ex: "1733174400000_5")
-                // Sempre usar aspas SIMPLES no onclick para tratar como string
-                // Escape manual de aspas simples no ID
-                // SOLUÇÃO OPUS/ChatGPT: Sempre tratar ID como string com JSON.stringify
-                // JSON.stringify garante escape correto de TODOS os caracteres especiais
-                // Mais robusto que escape manual - funciona com qualquer caractere no ID
+                // ═══════════════════════════════════════════════════════════════
+                // CORREÇÃO DEFINITIVA: Bug onclick com IDs contendo underscore
+                // ═══════════════════════════════════════════════════════════════
+                // PROBLEMA IDENTIFICADO:
+                // - JSON.stringify retorna aspas duplas: '"1733174400000_5"'
+                // - Quando interpolado em onclick="...", fecha aspas prematuramente
+                // - HTML gerado: onclick="togglePendencia("1733174400000_5")" = INVÁLIDO
+                //
+                // SOLUÇÃO CORRETA (Opus):
+                // - Escape manual de aspas simples e barras
+                // - Usar aspas SIMPLES no onclick (não conflita com aspas duplas do HTML)
+                // - HTML gerado: onclick="togglePendencia('1733174400000_5')" = VÁLIDO
+                // ═══════════════════════════════════════════════════════════════
                 const temaIdStr = String(temaId);
-                const temaIdEscaped = JSON.stringify(temaIdStr); // Escapa automaticamente aspas, barras, etc.
+                const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia(${temaIdEscaped})" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdEscaped}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
                     <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `

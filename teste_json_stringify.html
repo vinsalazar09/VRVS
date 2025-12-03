@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste JSON.stringify no onclick</title>
+</head>
+<body>
+    <h1>Teste de Geração de HTML com JSON.stringify</h1>
+    
+    <script>
+        // Simular o código atual
+        const temaIdStr = "1733174400000_5";
+        const temaIdEscaped = JSON.stringify(temaIdStr);
+        
+        console.log("temaIdStr:", temaIdStr);
+        console.log("JSON.stringify(temaIdStr):", temaIdEscaped);
+        console.log("Tipo:", typeof temaIdEscaped);
+        
+        // Simular o HTML gerado
+        const htmlGerado = `<div onclick="togglePendencia(${temaIdEscaped})">Teste</div>`;
+        console.log("\nHTML GERADO:");
+        console.log(htmlGerado);
+        
+        // Verificar se é válido
+        const parser = new DOMParser();
+        try {
+            const doc = parser.parseFromString(htmlGerado, 'text/html');
+            const div = doc.querySelector('div');
+            if (div) {
+                console.log("\n✅ HTML VÁLIDO");
+                console.log("onclick atributo:", div.getAttribute('onclick'));
+            } else {
+                console.log("\n❌ HTML INVÁLIDO - elemento não encontrado");
+            }
+        } catch (e) {
+            console.log("\n❌ ERRO AO PARSAR HTML:", e.message);
+        }
+        
+        // Teste alternativo: com aspas simples
+        const htmlAlternativo = `<div onclick="togglePendencia('${temaIdStr.replace(/'/g, "\\'")}')">Teste Alternativo</div>`;
+        console.log("\n\nHTML ALTERNATIVO (escape manual):");
+        console.log(htmlAlternativo);
+        
+        try {
+            const doc2 = parser.parseFromString(htmlAlternativo, 'text/html');
+            const div2 = doc2.querySelector('div');
+            if (div2) {
+                console.log("\n✅ HTML ALTERNATIVO VÁLIDO");
+                console.log("onclick atributo:", div2.getAttribute('onclick'));
+            }
+        } catch (e) {
+            console.log("\n❌ ERRO NO HTML ALTERNATIVO:", e.message);
+        }
+    </script>
+</body>
+</html>
+

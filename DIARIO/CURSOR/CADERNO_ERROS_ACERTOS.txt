@@ -72,9 +72,18 @@
     5. Remoção de verificação que bloqueava event delegation
     6. Atualização agressiva do Service Worker (limpar caches, desregistrar SWs antigos)
     7. Limpeza manual de cache no Safari (Ajustes → Safari → Avançado)
+    8. ❌ **TENTATIVA INCORRETA:** Uso de `JSON.stringify()` no onclick - gera HTML inválido
   - **Status:** PROBLEMA PERSISTE - Enviado para consulta externa (GPT/Opus) com caso técnico completo
   - **Arquivos de referência:** `docs/CASO_CONSULTA_EXTERNA_FINAL.md`, `diagnostico_final.py`
   - **Observação importante:** Código funciona perfeitamente no MacBook, indicando que problema é específico do iOS Safari/PWA, não do código em si
+
+- ✅ **BUG CRÍTICO DESCOBERTO E CORRIGIDO (03/12/2025):** JSON.stringify no onclick gera HTML inválido
+  - **Causa Raiz:** `JSON.stringify(temaIdStr)` retorna string COM aspas duplas: `"\"1733174400000_5\""`. Quando interpolado em `onclick="togglePendencia(${json})"`, gera HTML inválido: `onclick="togglePendencia("1733174400000_5")"` - as aspas duplas fecham o atributo prematuramente.
+  - **Por que não foi detectado antes:** Navegadores desktop podem ser mais permissivos com HTML mal formado. iPhone (PWA) é mais estrito.
+  - **Solução aplicada:** Reverter para escape manual com aspas simples: `temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\")` e usar `onclick="togglePendencia('${temaIdEscaped}')"`. Isso gera HTML válido: `onclick="togglePendencia('1733174400000_5')"`.
+  - **Lição:** JSON.stringify é útil para JSON, mas NÃO para interpolação em atributos HTML. Aspas duplas retornadas por JSON.stringify quebram atributos HTML que usam aspas duplas. Sempre usar escape manual + aspas simples para atributos onclick.
+  - **Prevenção:** NUNCA usar JSON.stringify diretamente em atributos HTML. Sempre usar escape manual + aspas simples. Testar geração de HTML com script antes de implementar.
+  - **Arquivos:** `docs/DESCOBERTA_BUG_JSON_STRINGIFY.md`, `analise_json_stringify.py`
 
 ═══════════════════════════════════════════════════════════════
 ⚠️ PROBLEMAS CONHECIDOS (AINDA NÃO RESOLVIDOS)
