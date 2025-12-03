@@ -2258,11 +2258,8 @@
                     if (item) {
                         const temaId = item.getAttribute('data-tema-id');
                         if (temaId) {
-                            // Se já foi tratado pelo onclick inline, não fazer nada (evitar duplo toggle)
-                            if (e.target.closest('[onclick]')) {
-                                return;
-                            }
-                            // Fallback: chamar togglePendencia diretamente
+                            // Sempre chamar togglePendencia (a função já verifica se está expandido)
+                            // Isso garante funcionamento mesmo se onclick inline falhar
                             e.preventDefault();
                             e.stopPropagation();
                             togglePendencia(temaId);
