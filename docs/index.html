@@ -2336,6 +2336,7 @@
                 window.pendenciasExpandidas.add(temaId);
             }
             renderPendencias();
+            inicializarEventListenersPendencias(); // Re-inicializar após render (proteção)
         };
         
         function renderTarefas() {
