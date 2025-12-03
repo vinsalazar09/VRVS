@@ -2240,29 +2240,35 @@
                 `;
             }).join('');
             
-            // CORREÇÃO iOS: Event delegation simples no container (mais confiável que onclick inline no iOS)
-            // Remover listener antigo se existir
-            if (window.pendenciasContainerHandler) {
-                container.removeEventListener('click', window.pendenciasContainerHandler);
-                container.removeEventListener('touchend', window.pendenciasContainerHandler);
-            }
-            
-            // Criar handler simples
-            window.pendenciasContainerHandler = function(e) {
-                const item = e.target.closest('.task-theme-item');
-                if (item) {
+            // CORREÇÃO iOS: Adicionar listeners diretamente em cada item após renderizar
+            // Isso é mais confiável que event delegation no iOS Safari
+            setTimeout(() => {
+                const items = container.querySelectorAll('.task-theme-item');
+                items.forEach(item => {
                     const temaId = item.getAttribute('data-tema-id');
-                    if (temaId) {
+                    if (!temaId) return;
+                    
+                    // Remover listeners antigos se existirem (marcar com data attribute)
+                    if (item.dataset.listenerAdded === 'true') {
+                        // Já tem listener, pular (evitar duplicação)
+                        return;
+                    }
+                    
+                    // Criar handler
+                    const handler = function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         togglePendencia(temaId);
-                    }
-                }
-            };
-            
-            // Adicionar listeners no container (funciona melhor no iOS)
-            container.addEventListener('click', window.pendenciasContainerHandler, { passive: false });
-            container.addEventListener('touchend', window.pendenciasContainerHandler, { passive: false });
+                    };
+                    
+                    // Adicionar listeners
+                    item.addEventListener('click', handler, { passive: false });
+                    item.addEventListener('touchend', handler, { passive: false });
+                    
+                    // Marcar como tendo listener
+                    item.dataset.listenerAdded = 'true';
+                });
+            }, 100);
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
@@ -5364,13 +5370,19 @@
                 navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then((registration) => {
                     console.log('✅ Service Worker registrado com sucesso:', registration.scope);
                     
+                    // FORÇAR ATUALIZAÇÃO IMEDIATA DO SERVICE WORKER
+                    registration.update().then(() => {
+                        // Se há uma nova versão foi encontrada, forçar ativação
+                        if (registration.waiting) {
+                            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            window.location.reload();
+                        }
+                    });
+                    
                     // Verificar atualizações periodicamente
                     setInterval(() => {
                         registration.update();
                     }, 60000); // Verificar a cada minuto
-                    
-                    // Forçar atualização ao carregar
-                    registration.update();
                 }).catch((error) => {
                     console.log('⚠️ Erro ao registrar Service Worker:', error);
                 });
