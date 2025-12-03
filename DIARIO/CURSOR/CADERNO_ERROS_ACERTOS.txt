@@ -48,10 +48,11 @@
   - **Solução:** Criada função `inicializarEventListenersPendencias()` que adiciona o listener apenas uma vez durante inicialização, removendo listener antigo se existir
   - **Prevenção:** Sempre usar event delegation com função nomeada que pode ser removida, adicionar listener apenas uma vez durante inicialização
 
-- ✅ **CORREÇÃO CRÍTICA MOBILE (02/12/2025):** Suporte explícito para eventos touch no iPhone
-  - **Causa:** Correção anterior só adicionava listener para 'click', que pode não funcionar bem em mobile/iPhone
-  - **Solução:** Adicionado listener também para 'touchend' além de 'click', garantindo funcionamento tanto em desktop quanto mobile/iPhone
-  - **Prevenção:** SEMPRE adicionar suporte para eventos touch quando criar event listeners. SEMPRE pensar em mobile primeiro, já que plataforma é usada principalmente no iPhone
+- ✅ **CORREÇÃO CRÍTICA MOBILE (02/12/2025):** Mudança para onclick inline (solução mais simples e que funciona)
+  - **Causa:** Event delegation com touchend não estava funcionando no iPhone. Tentativa anterior de adicionar listeners programaticamente falhou
+  - **Solução:** Mudado para usar `onclick` inline diretamente no HTML, igual às tabs que funcionam. Removida função `inicializarEventListenersPendencias()` e event delegation complexa
+  - **Lição:** Quando algo não funciona, voltar ao básico. Se tabs funcionam com onclick inline, usar a mesma abordagem. Não complicar com event delegation quando onclick inline resolve
+  - **Prevenção:** SEMPRE usar a solução mais simples primeiro. Se outros elementos similares funcionam com onclick inline, usar a mesma abordagem antes de tentar soluções complexas
 
 ═══════════════════════════════════════════════════════════════
 ⚠️ PROBLEMAS CONHECIDOS (AINDA NÃO RESOLVIDOS)

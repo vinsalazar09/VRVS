@@ -2206,7 +2206,7 @@
                 const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaId}" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia('${temaId}')" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
                     <div class="task-theme-name">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
@@ -2229,38 +2229,6 @@
                 </div>
                 `;
             }).join('');
-        }
-        
-        // CORREÇÃO: Event delegation adicionado apenas uma vez durante inicialização
-        // para evitar múltiplos listeners que causam travamentos
-        // ⚠️ CRÍTICO: Plataforma é usada principalmente no iPhone - SEMPRE testar/ajustar para mobile primeiro!
-        function inicializarEventListenersPendencias() {
-            const container = document.getElementById('pendenciasContainer');
-            if (!container) return;
-            
-            // Remover listeners antigos se existirem (usando named function para poder remover)
-            if (window.pendenciasClickHandler) {
-                container.removeEventListener('click', window.pendenciasClickHandler);
-                container.removeEventListener('touchend', window.pendenciasClickHandler);
-            }
-            
-            // Criar handler nomeado que funciona tanto para click quanto touch (mobile/iPhone)
-            window.pendenciasClickHandler = function(e) {
-                const taskItem = e.target.closest('.task-theme-item');
-                if (taskItem) {
-                    const temaId = taskItem.getAttribute('data-tema-id');
-                    if (temaId) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        togglePendencia(temaId);
-                    }
-                }
-            };
-            
-            // Adicionar listeners para click (desktop) e touchend (mobile/iPhone)
-            // touchend é melhor que touchstart para evitar conflitos com scroll
-            container.addEventListener('click', window.pendenciasClickHandler);
-            container.addEventListener('touchend', window.pendenciasClickHandler);
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
@@ -5671,7 +5639,6 @@
             renderTarefas();
             renderAgenda();
             renderDados();
-            inicializarEventListenersPendencias(); // Inicializar event listener apenas uma vez
             renderPendencias();
             updateFeedbackSelect();
             updateStats();
