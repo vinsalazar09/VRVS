@@ -2269,6 +2269,13 @@
             // Garantir que temaId seja string para comparação consistente
             temaId = String(temaId);
             
+            // DEBUG: Log específico para itens problemáticos
+            const temasProblema = ['Fratura de clavícula', 'Epifisiolistese', 'Sd manguito rotador', 'DDQ', 'Luxação e Instabilidade do cotovelo', 'LAC/LEC', 'Epicondilites', 'Fraturas do cotovelo'];
+            const tema = dados.find(t => String(t.id) === temaId);
+            if (tema && temasProblema.includes(tema.tema)) {
+                console.log('[PENDENCIAS DEBUG] Item problemático detectado:', tema.tema, 'ID:', temaId);
+            }
+            
             if (!window.pendenciasExpandidas) {
                 window.pendenciasExpandidas = new Set();
             }
