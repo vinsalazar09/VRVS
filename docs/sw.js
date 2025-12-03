@@ -15,9 +15,20 @@ const FILES_TO_CACHE = [
 self.addEventListener('install', (event) => {
     console.log('[Service Worker] Instalando versão:', CACHE_NAME);
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Fazendo cache dos arquivos');
-            return cache.addAll(FILES_TO_CACHE);
+        // Limpar TODOS os caches antigos primeiro
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    console.log('[Service Worker] Removendo cache antigo na instalação:', cacheName);
+                    return caches.delete(cacheName);
+                })
+            );
+        }).then(() => {
+            // Depois criar novo cache
+            return caches.open(CACHE_NAME).then((cache) => {
+                console.log('[Service Worker] Fazendo cache dos arquivos');
+                return cache.addAll(FILES_TO_CACHE);
+            });
         })
     );
     // Forçar ativação imediata para atualizações
