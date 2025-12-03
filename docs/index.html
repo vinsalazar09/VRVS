@@ -2216,10 +2216,9 @@
                 const temaIdStr = String(temaId);
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer; position: relative; z-index: 10;">
-                    <div class="pendencia-touch-overlay" data-tema-id="${temaIdStr}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; background: transparent; cursor: pointer;"></div>
-                    <div class="task-theme-name" style="pointer-events: none; user-select: none; position: relative; z-index: 1;">${t.tema}</div>
-                    <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none; position: relative; z-index: 1;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdStr}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                    <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
+                    <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
                     <div class="task-expanded" style="pointer-events: none;">
                         <div class="task-details">
@@ -2240,39 +2239,6 @@
                 </div>
                 `;
             }).join('');
-            
-            // CORREÇÃO iOS: Adicionar listeners nos overlays invisíveis (mais confiável)
-            // Usar requestAnimationFrame para garantir que DOM está pronto
-            requestAnimationFrame(() => {
-                const overlays = container.querySelectorAll('.pendencia-touch-overlay');
-                overlays.forEach(overlay => {
-                    const temaId = overlay.getAttribute('data-tema-id');
-                    if (!temaId) return;
-                    
-                    // Remover listeners antigos se existirem
-                    if (overlay.dataset.listenerAdded === 'true') {
-                        return;
-                    }
-                    
-                    // Handler simples
-                    const handler = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        togglePendencia(temaId);
-                        return false;
-                    };
-                    
-                    // Adicionar TODOS os tipos de eventos touch possíveis
-                    overlay.addEventListener('click', handler, { passive: false, capture: true });
-                    overlay.addEventListener('touchend', handler, { passive: false, capture: true });
-                    overlay.addEventListener('touchstart', handler, { passive: false, capture: true });
-                    overlay.addEventListener('tap', handler, { passive: false, capture: true });
-                    
-                    // Marcar como tendo listener
-                    overlay.dataset.listenerAdded = 'true';
-                });
-            });
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
