@@ -2215,7 +2215,7 @@
                 const temaIdStr = String(temaId);
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia('${temaIdStr}')" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdStr}')" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
                     <div class="task-theme-name">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
@@ -2238,6 +2238,32 @@
                 </div>
                 `;
             }).join('');
+            
+            // CORREÇÃO iOS: Adicionar event listeners diretos após renderizar
+            // Safari iOS às vezes ignora onclick inline em elementos gerados dinamicamente
+            // Esta abordagem garante que funcione mesmo no iOS
+            setTimeout(() => {
+                const items = container.querySelectorAll('.task-theme-item');
+                items.forEach(item => {
+                    // Pegar temaId do data-attribute ou do onclick
+                    const temaId = item.getAttribute('data-tema-id');
+                    
+                    if (temaId) {
+                        // Remover onclick inline e adicionar listener direto (mais confiável no iOS)
+                        item.removeAttribute('onclick');
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            togglePendencia(temaId);
+                        });
+                        item.addEventListener('touchend', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            togglePendencia(temaId);
+                        });
+                    }
+                });
+            }, 0);
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
