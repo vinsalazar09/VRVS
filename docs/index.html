@@ -3296,7 +3296,7 @@
                 console.log('[IMPORT ANOTACOES] Arquivo selecionado:', anotacoesFile.name, 'tamanho:', anotacoesFile.size);
                 promises.push(parseCSVAnotacoes(anotacoesFile).then(anotacoesCSV => {
                     console.log('[IMPORT ANOTACOES] CSV parseado,', anotacoesCSV.length, 'anotações recebidas');
-                    anotacoes = anotacoesCSV.map(a => {
+                    const anotacoesImportadas = anotacoesCSV.map(a => {
                         if (!a.id) a.id = Date.now() + Math.random();
                         // CRÍTICO: Garantir que temaId seja string e corresponda a um tema válido
                         a.temaId = String(a.temaId || a.temaid || '');
@@ -3312,6 +3312,9 @@
                         }
                         return a;
                     }).filter(a => a.temaId && a.temaId.trim() !== ''); // Filtrar apenas com temaId válido
+                    
+                    // CRÍTICO: Atualizar variável global E localStorage
+                    anotacoes = anotacoesImportadas;
                     localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
                     console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações importadas e salvas`);
                     return 'anotacoes';
