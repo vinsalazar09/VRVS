@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RECUPERAR ANOTAÇÕES - FÁCIL</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 { color: #ff6b6b; text-align: center; }
+        .instrucoes {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #4ecdc4;
+        }
+        .passo {
+            margin: 15px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+            border-left: 4px solid #4ecdc4;
+        }
+        .passo strong {
+            color: #4ecdc4;
+            font-size: 18px;
+        }
+        button {
+            background: #4ecdc4;
+            color: #1a1a1a;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+        }
+        button:hover {
+            background: #45b8b0;
+        }
+        .teclas {
+            background: #444;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            display: inline-block;
+            margin: 5px;
+        }
+        .aviso {
+            background: #ff6b6b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 RECUPERAR SUAS ANOTAÇÕES</h1>
+    
+    <div class="aviso">
+        ⚠️ IMPORTANTE: Abra o app VRVS em OUTRA ABA primeiro!
+    </div>
+
+    <div class="instrucoes">
+        <div class="passo">
+            <strong>PASSO 1:</strong> Abra o app VRVS em outra aba do navegador
+            <br>Vá até: Desktop → Teot → docs → index.html
+        </div>
+
+        <div class="passo">
+            <strong>PASSO 2:</strong> Abra o Console no app VRVS
+            <br><br>
+            <strong>No Chrome:</strong>
+            <br>Pressione juntas: <span class="teclas">⌘</span> + <span class="teclas">⌥</span> + <span class="teclas">I</span>
+            <br>OU clique com botão direito → "Inspecionar"
+            <br><br>
+            <strong>No Safari:</strong>
+            <br>Primeiro: Safari → Preferências → Avançado → Marque "Mostrar menu Desenvolvedor"
+            <br>Depois: Safari → Desenvolvedor → Mostrar Console JavaScript
+            <br>OU pressione: <span class="teclas">⌘</span> + <span class="teclas">⌥</span> + <span class="teclas">C</span>
+        </div>
+
+        <div class="passo">
+            <strong>PASSO 3:</strong> Clique no botão abaixo para copiar o código automaticamente
+        </div>
+
+        <button onclick="copiarCodigo()">📋 COPIAR CÓDIGO DE RECUPERAÇÃO</button>
+
+        <div class="passo">
+            <strong>PASSO 4:</strong> Volte para a aba do app VRVS
+            <br>Cole o código no Console (onde tem cursor piscando)
+            <br>Pressione <span class="teclas">Enter</span>
+        </div>
+
+        <div class="passo">
+            <strong>PASSO 5:</strong> Vai aparecer uma mensagem dizendo quantas anotações foram recuperadas
+            <br>Recarregue a página (<span class="teclas">⌘</span> + <span class="teclas">R</span>)
+            <br>Vá para a aba <strong>"Caderno"</strong>
+        </div>
+    </div>
+
+    <textarea id="codigo" style="display: none;"></textarea>
+
+    <script>
+        // Carregar o código do arquivo
+        fetch('RECUPERAR_ANOTACOES_DIRETO.js')
+            .then(r => r.text())
+            .then(text => {
+                document.getElementById('codigo').value = text;
+            })
+            .catch(e => {
+                console.error('Erro ao carregar arquivo:', e);
+                document.getElementById('codigo').value = 'Erro ao carregar arquivo. Abra RECUPERAR_ANOTACOES_DIRETO.js manualmente.';
+            });
+
+        function copiarCodigo() {
+            const codigo = document.getElementById('codigo').value;
+            if (!codigo || codigo.includes('Erro')) {
+                alert('Erro ao carregar código. Por favor, abra o arquivo RECUPERAR_ANOTACOES_DIRETO.js manualmente e copie o conteúdo.');
+                return;
+            }
+            
+            navigator.clipboard.writeText(codigo).then(() => {
+                alert('✅ Código copiado! Agora vá para a aba do app VRVS e cole no Console.');
+            }).catch(() => {
+                // Fallback se clipboard não funcionar
+                const textarea = document.createElement('textarea');
+                textarea.value = codigo;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Código copiado! Agora vá para a aba do app VRVS e cole no Console.');
+            });
+        }
+    </script>
+</body>
+</html>
+
