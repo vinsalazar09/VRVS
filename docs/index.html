@@ -2189,7 +2189,15 @@
             window.pendenciasExpandidas = pendenciasExpandidas;
             
             container.innerHTML = pendencias.map(t => {
-                const isExpanded = pendenciasExpandidas.has(t.id);
+                // CORREÇÃO: Garantir que ID seja sempre válido e consistente (sempre string)
+                const temaId = t.id != null ? String(t.id) : null;
+                if (!temaId) {
+                    console.warn('[PENDENCIAS] Tema sem ID válido:', t.tema);
+                    return '';
+                }
+                
+                // CORREÇÃO: Garantir que comparação no Set use sempre string
+                const isExpanded = pendenciasExpandidas.has(temaId);
                 const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
@@ -2198,17 +2206,17 @@
                 const diasAtraso = Math.floor((new Date(hojeStr) - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" onclick="togglePendencia(${t.id})" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaId}" style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;">
                     <div class="task-theme-name">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
-                    <div class="task-expanded">
+                    <div class="task-expanded" style="pointer-events: none;">
                         <div class="task-details">
                             <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
                             <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
                             <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
                             <div class="task-detail-item">📅 ${dataFormatada}</div>
-                        </div>
+                </div>
                         ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
                         ${sugestao ? `
                         <div class="task-suggestion">
@@ -2221,6 +2229,38 @@
                 </div>
                 `;
             }).join('');
+        }
+        
+        // CORREÇÃO: Event delegation adicionado apenas uma vez durante inicialização
+        // para evitar múltiplos listeners que causam travamentos
+        // ⚠️ CRÍTICO: Plataforma é usada principalmente no iPhone - SEMPRE testar/ajustar para mobile primeiro!
+        function inicializarEventListenersPendencias() {
+            const container = document.getElementById('pendenciasContainer');
+            if (!container) return;
+            
+            // Remover listeners antigos se existirem (usando named function para poder remover)
+            if (window.pendenciasClickHandler) {
+                container.removeEventListener('click', window.pendenciasClickHandler);
+                container.removeEventListener('touchend', window.pendenciasClickHandler);
+            }
+            
+            // Criar handler nomeado que funciona tanto para click quanto touch (mobile/iPhone)
+            window.pendenciasClickHandler = function(e) {
+                const taskItem = e.target.closest('.task-theme-item');
+                if (taskItem) {
+                    const temaId = taskItem.getAttribute('data-tema-id');
+                    if (temaId) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        togglePendencia(temaId);
+                    }
+                }
+            };
+            
+            // Adicionar listeners para click (desktop) e touchend (mobile/iPhone)
+            // touchend é melhor que touchstart para evitar conflitos com scroll
+            container.addEventListener('click', window.pendenciasClickHandler);
+            container.addEventListener('touchend', window.pendenciasClickHandler);
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
@@ -2237,6 +2277,15 @@
         }
         
         window.togglePendencia = function(temaId) {
+            // CORREÇÃO: Validar ID antes de processar
+            if (temaId == null || temaId === '') {
+                console.warn('[PENDENCIAS] Tentativa de toggle com ID inválido:', temaId);
+                return;
+            }
+            
+            // Garantir que temaId seja string para comparação consistente
+            temaId = String(temaId);
+            
             if (!window.pendenciasExpandidas) {
                 window.pendenciasExpandidas = new Set();
             }
@@ -5622,6 +5671,7 @@
             renderTarefas();
             renderAgenda();
             renderDados();
+            inicializarEventListenersPendencias(); // Inicializar event listener apenas uma vez
             renderPendencias();
             updateFeedbackSelect();
             updateStats();

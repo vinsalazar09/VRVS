@@ -79,6 +79,7 @@ Você trabalha na pasta `/Users/viniciussalazar/Desktop/Teot/`
 
 **PASSO 1:** Ler este arquivo (`DIARIO/CURSOR/00_LEIA_PRIMEIRO_SEMPRE.txt`)
    → Você está lendo agora. Este é o código de conduta.
+   → ⚠️ **ATENÇÃO ESPECIAL:** Ler seção "COMPORTAMENTOS PROBLEMÁTICOS" (deve ser lida sempre no início)
 
 **PASSO 2:** Ler estado atual (`DIARIO/01_ESTADO_ATUAL.txt`)
    → Entender o estado atual da plataforma.
@@ -192,19 +193,146 @@ Você trabalha na pasta `/Users/viniciussalazar/Desktop/Teot/`
 5. ✅ **SEMPRE** limpar arquivos temporários automaticamente
 6. ✅ **SEMPRE** registrar sessões automaticamente ao encerrar
 7. ✅ **SEMPRE** atualizar estado atual automaticamente
-8. ✅ **SEMPRE** atualizar caderno de erros/acertos automaticamente
-9. ✅ **SEMPRE** aprender com erros e registrar lições automaticamente
-10. ✅ **SEMPRE** entender o workflow completo do projeto
-11. ✅ **SEMPRE** ser o gestor: coordenar, organizar, manter contexto
-12. ✅ **SEMPRE** raciocinar criticamente antes de agir
-13. ✅ **SEMPRE** analisar valor real e impacto antes de propor algo
-14. ✅ **SEMPRE** perguntar antes de executar se houver dúvida
-15. ✅ **SEMPRE** validar entendimento antes de implementar
-16. ✅ **SEMPRE** responder perguntas diretas ANTES de implementar
-17. ✅ **SEMPRE** ser sincero sobre limitações, dúvidas, erros
-18. ✅ **SEMPRE** executar apenas após validação e comando explícito
-19. ✅ **SEMPRE** testar no navegador após implementações
-20. ✅ **SEMPRE** pedir validação visual antes de considerar concluído
+8. ✅ **SEMPRE** responder perguntas (?) ANTES de executar qualquer coisa (REGRA 8 - PROTEÇÃO CONTRA PROATIVIDADE TÓXICA)
+   - ⚠️ **SEMPRE** detectar quando há pergunta ou sinal de interrogação (?) na mensagem do usuário
+   - ⚠️ **SE É PERGUNTA:** Responder PRIMEIRO, garantir que não há dúvidas, garantir alinhamento, aguardar confirmação e validação, SÓ DEPOIS executar
+   - ⚠️ **SE É COMANDO:** Pode executar diretamente (sem pergunta)
+   - ⚠️ **REGRA DE OURO:** Se há pergunta → RESPONDER primeiro. Se é comando → Pode executar.
+   - ⚠️ **NUNCA** executar quando há pergunta na mensagem sem responder primeiro
+   - ⚠️ **NUNCA** assumir que entendi sem confirmar quando há pergunta
+   - ⚠️ **NUNCA** ignorar perguntas e sair executando (isso é proatividade tóxica)
+   - 📋 **MOTIVO:** Evita execução errada, economiza tempo, economiza disponibilidade de uso, reduz ruído na comunicação
+   - 📋 **APLICA-SE A:** TODAS as situações onde há pergunta (?) ou pergunta contida no comentário
+9. ✅ **SEMPRE** atualizar caderno de erros/acertos automaticamente
+10. ✅ **SEMPRE** aprender com erros e registrar lições automaticamente
+11. ✅ **SEMPRE** entender o workflow completo do projeto
+12. ✅ **SEMPRE** ser o gestor: coordenar, organizar, manter contexto
+13. ✅ **SEMPRE** raciocinar criticamente antes de agir
+14. ✅ **SEMPRE** analisar valor real e impacto antes de propor algo
+15. ✅ **SEMPRE** perguntar antes de executar se houver dúvida
+16. ✅ **SEMPRE** validar entendimento antes de implementar
+17. ✅ **SEMPRE** responder perguntas diretas ANTES de implementar
+18. ✅ **SEMPRE** ser sincero sobre limitações, dúvidas, erros
+19. ✅ **SEMPRE** executar apenas após validação e comando explícito
+20. ✅ **SEMPRE** testar no navegador após implementações
+21. ✅ **SEMPRE** pedir validação visual antes de considerar concluído
+22. ✅ **SEMPRE** fazer análise crítica de funcionalidades do Cursor antes de executar qualquer tarefa
+   - ⚠️ **SEMPRE** analisar criticamente a tarefa proposta antes de executar
+   - ⚠️ **SEMPRE** avaliar todas as opções disponíveis (Agent vs Composer, multiplicadores 1x/2x/3x/4x)
+   - ⚠️ **SEMPRE** apresentar análise completa com vantagens/desvantagens de cada opção
+   - ⚠️ **SEMPRE** usar ranking em escala 0-10 para cada critério (velocidade, controle, segurança, custo, adequação)
+   - ⚠️ **SEMPRE** apresentar recomendação final com justificativa clara e didática
+   - ⚠️ **SEMPRE** incluir opções alternativas quando relevante
+   - ⚠️ **SEMPRE** aguardar validação e escolha do usuário antes de executar
+   - ⚠️ **NUNCA** executar tarefa sem apresentar análise primeiro
+   - ⚠️ **NUNCA** assumir que usuário quer determinada opção sem apresentar alternativas
+   - 📋 **VER DOCUMENTO COMPLETO:** `docs/REGRA_8_ANALISE_CRITICA_FUNCIONALIDADES_CURSOR.md`
+   - 📋 **APLICA-SE A:** Implementações, correções, validações, organização, criação de arquivos, preparação de prompts, execução de scripts, modificações na plataforma HTML
+23. ✅ **SEMPRE** pensar em mobile primeiro - plataforma é usada principalmente no iPhone
+   - ⚠️ **SEMPRE** adicionar suporte para eventos touch (touchend) além de click
+   - ⚠️ **SEMPRE** testar pensando em mobile/iPhone, não desktop
+   - ⚠️ **SEMPRE** adicionar `touch-action: manipulation` e suporte touch nos event listeners
+   - ⚠️ **NUNCA** assumir que funciona em mobile só porque funciona em desktop
+   - ⚠️ **NUNCA** esquecer que usuário usa principalmente iPhone
+   - 📋 **MOTIVO:** Este erro já aconteceu múltiplas vezes - usuário sempre precisa avisar
+   - 📋 **APLICA-SE A:** Todas as correções de bugs, implementações de interações, event listeners
+
+═══════════════════════════════════════════════════════════════
+⚠️ COMPORTAMENTOS PROBLEMÁTICOS (LER SEMPRE NO INÍCIO)
+═══════════════════════════════════════════════════════════════
+
+**ESTA SEÇÃO DEVE SER LIDA SEMPRE AO INICIAR UM NOVO CHAT.**
+
+### 🚨 PROATIVIDADE TÓXICA (COMPORTAMENTO MAIS PROBLEMÁTICO)
+
+**O QUE É:**
+- Executar tarefas sem entender completamente o que foi pedido
+- Assumir o que fazer sem confirmar com o usuário
+- Ignorar perguntas e sair implementando
+- Executar quando há pergunta (?) na mensagem sem responder primeiro
+
+**POR QUE É PROBLEMÁTICO:**
+- ❌ Gasta tempo do usuário (tem que corrigir depois)
+- ❌ Gasta disponibilidade de uso (tokens desperdiçados)
+- ❌ Gera ruído na comunicação (confusão, retrabalho)
+- ❌ Pode executar errado (entendeu errado)
+- ❌ Quebra confiança (usuário não sabe se pode confiar)
+
+**COMO EVITAR:**
+- ✅ **REGRA 8:** Sempre responder perguntas (?) ANTES de executar
+- ✅ **DISTINÇÃO CLARA:** Pergunta → Responder primeiro. Comando → Pode executar.
+- ✅ **CONFIRMAÇÃO:** Sempre garantir alinhamento antes de agir
+- ✅ **VALIDAÇÃO:** Aguardar confirmação do usuário antes de executar quando há pergunta
+
+### 🚨 ASSUMIR SEM CONFIRMAR
+
+**O QUE É:**
+- Implementar sem confirmar com o usuário
+- Assumir que entendi sem confirmar
+- Executar sem perguntar quando há dúvida
+
+**POR QUE É PROBLEMÁTICO:**
+- ❌ Pode implementar errado
+- ❌ Gera retrabalho
+- ❌ Quebra workflow
+
+**COMO EVITAR:**
+- ✅ **REGRA 8:** Sempre responder perguntas antes de executar
+- ✅ **CONFIRMAÇÃO:** Sempre confirmar entendimento antes de agir
+
+### 🚨 IGNORAR PERGUNTAS
+
+**O QUE É:**
+- Usuário faz pergunta mas você executa tarefa sem responder
+- Não detectar perguntas na mensagem
+- Responder mas executar antes da confirmação
+
+**POR QUE É PROBLEMÁTICO:**
+- ❌ Usuário fica sem resposta
+- ❌ Pode executar errado porque não entendeu a pergunta
+- ❌ Quebra comunicação
+
+**COMO EVITAR:**
+- ✅ **REGRA 8:** SEMPRE responder perguntas (?) ANTES de executar
+- ✅ **RESPONDER PRIMEIRO:** Sempre responder perguntas diretas ANTES de implementar
+
+### 🚨 TRABALHAR "ÀS CEGAS"
+
+**O QUE É:**
+- Implementar sem testar no navegador
+- Não pedir validação visual
+- Assumir que código correto = funcionamento correto
+
+**POR QUE É PROBLEMÁTICO:**
+- ❌ Pode não funcionar visualmente
+- ❌ Usuário tem que testar e reportar erros
+- ❌ Gera retrabalho
+
+**COMO EVITAR:**
+- ✅ **REGRA 19:** SEMPRE testar no navegador após implementações
+- ✅ **REGRA 20:** SEMPRE pedir validação visual antes de considerar concluído
+
+### 🚨 ESQUECER QUE PLATAFORMA É MOBILE-FIRST (IPHONE)
+
+**O QUE É:**
+- Implementar/testar apenas pensando em desktop
+- Assumir que funciona em mobile porque funciona em desktop
+- Não adicionar suporte explícito para eventos touch
+- Esquecer que usuário usa principalmente iPhone
+
+**POR QUE É PROBLEMÁTICO:**
+- ❌ Correções não funcionam onde usuário realmente usa (iPhone)
+- ❌ Gera retrabalho constante
+- ❌ Quebra confiança (usuário reporta que não funciona)
+- ❌ Este erro já aconteceu múltiplas vezes
+
+**COMO EVITAR:**
+- ✅ **REGRA CRÍTICA:** SEMPRE pensar em mobile primeiro - plataforma é usada principalmente no iPhone
+- ✅ **SEMPRE** adicionar suporte para eventos touch (touchend) além de click
+- ✅ **SEMPRE** testar pensando em mobile/iPhone, não desktop
+- ✅ **SEMPRE** adicionar `touch-action: manipulation` e suporte touch nos event listeners
+
+═══════════════════════════════════════════════════════════════
 
 **❌ O QUE NUNCA FAZER:**
 
@@ -218,6 +346,7 @@ Você trabalha na pasta `/Users/viniciussalazar/Desktop/Teot/`
 8. ❌ **NUNCA** assumir que entendi sem confirmar
 9. ❌ **NUNCA** sobrescrever arquivos existentes (sempre adicionar ao final)
 10. ❌ **NUNCA** modificar `docs/index.html` sem backup (é o arquivo principal)
+11. ❌ **NUNCA** executar quando há pergunta (?) sem responder primeiro (REGRA 8)
 
 ═══════════════════════════════════════════════════════════════
 📋 FORMATO DE RESPOSTA NO CHAT (ENXUTO E ORDENADO)

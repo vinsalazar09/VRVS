@@ -9,19 +9,49 @@
 📅 REGISTRO DE CHATS
 ═══════════════════════════════════════════════════════════════
 
-[SERÁ ATUALIZADO AUTOMATICAMENTE COM CADA CHAT]
+**CHAT INICIADO:** 2025-11-29 (Sexta-feira) ~17:00
+**CHAT ENCERRADO:** 2025-11-29 (Sexta-feira) 17:57
+
+**CHAT INICIADO:** 2025-12-02 (Terça-feira) 22:28
+
+**CHAT INICIADO:** 2025-12-02 (Terça-feira) 23:35
 
 ═══════════════════════════════════════════════════════════════
 ✅ ACERTOS E SOLUÇÕES BEM SUCEDIDAS
 ═══════════════════════════════════════════════════════════════
 
-[SERÁ ATUALIZADO COM ACERTOS E SOLUÇÕES]
+**2025-11-29:**
+- ✅ Criação rápida e eficiente de HTMLs interativos (dificuldade 2/10)
+- ✅ Sistema de validação automatizada com script Python
+- ✅ Adaptação fácil de cores usando variáveis CSS
+- ✅ Estrutura reutilizável para criação de novos documentos HTML
+- ✅ Documentação técnica completa para facilitar replicação
 
 ═══════════════════════════════════════════════════════════════
 ❌ ERROS RESOLVIDOS
 ═══════════════════════════════════════════════════════════════
 
-[SERÁ ATUALIZADO COM ERROS RESOLVIDOS]
+**2025-12-02:**
+- ✅ **PROBLEMA CRÍTICO RESOLVIDO:** Itens na aba "Pendências" não respondiam ao clique/toque
+  - **Causa:** IDs inválidos (undefined/null) ou elementos filhos interceptando eventos
+  - **Solução implementada:**
+    1. Validação de ID antes de renderizar (garantir que sempre seja string válida)
+    2. Substituição de onclick inline por data-attribute + event delegation
+    3. Adição de `pointer-events: none` em elementos filhos para evitar interceptação
+    4. Validação robusta na função togglePendencia() com conversão consistente para string
+    5. Event delegation no container para garantir funcionamento mesmo com elementos filhos
+  - **Itens afetados:** Fratura de clavícula, Epifisiolistese, Sd manguito rotador, DDQ, Luxação e Instabilidade do cotovelo, LAC/LEC, Epicondilites, Fraturas do cotovelo
+  - **Prevenção:** Validação de ID sempre que renderizar, uso de event delegation, proteção contra IDs inválidos
+
+- ✅ **CORREÇÃO ADICIONAL (02/12/2025):** Event listener sendo adicionado múltiplas vezes causando travamentos
+  - **Causa:** Event listener era adicionado toda vez que `renderPendencias()` era chamado, criando múltiplos listeners no mesmo elemento
+  - **Solução:** Criada função `inicializarEventListenersPendencias()` que adiciona o listener apenas uma vez durante inicialização, removendo listener antigo se existir
+  - **Prevenção:** Sempre usar event delegation com função nomeada que pode ser removida, adicionar listener apenas uma vez durante inicialização
+
+- ✅ **CORREÇÃO CRÍTICA MOBILE (02/12/2025):** Suporte explícito para eventos touch no iPhone
+  - **Causa:** Correção anterior só adicionava listener para 'click', que pode não funcionar bem em mobile/iPhone
+  - **Solução:** Adicionado listener também para 'touchend' além de 'click', garantindo funcionamento tanto em desktop quanto mobile/iPhone
+  - **Prevenção:** SEMPRE adicionar suporte para eventos touch quando criar event listeners. SEMPRE pensar em mobile primeiro, já que plataforma é usada principalmente no iPhone
 
 ═══════════════════════════════════════════════════════════════
 ⚠️ PROBLEMAS CONHECIDOS (AINDA NÃO RESOLVIDOS)
@@ -33,7 +63,23 @@
 💡 LIÇÕES APRENDIDAS
 ═══════════════════════════════════════════════════════════════
 
-[SERÁ ATUALIZADO COM LIÇÕES APRENDIDAS]
+**2025-11-29:**
+- 💡 Criação de HTML interativo é uma das tarefas mais leves e rápidas (2/10 de dificuldade)
+- 💡 Ter um template/estrutura pronta facilita muito a criação de novos documentos
+- 💡 Validação automatizada garante qualidade e consistência
+- 💡 Documentação técnica bem feita permite replicação rápida em outros projetos
+- 💡 Organização e estrutura são fundamentais para criação eficiente
+- 💡 HTML standalone é melhor para compartilhamento do que integração direta
+
+**2025-12-02:**
+- 💡 **Event delegation é mais robusto que onclick inline** - Funciona mesmo com elementos filhos e evita problemas com IDs inválidos
+- 💡 **Sempre validar IDs antes de usar** - IDs undefined/null podem quebrar silenciosamente funções JavaScript
+- 💡 **Consistência de tipos no Set() é crítica** - Garantir que sempre use o mesmo tipo (string) para comparações funcionarem
+- 💡 **pointer-events: none em elementos filhos** - Evita que elementos filhos interceptem eventos de clique do elemento pai
+- 💡 **Problemas intermitentes podem ser causados por dados inconsistentes** - Alguns itens funcionam e outros não geralmente indica problema com dados, não código
+- 💡 **NUNCA adicionar event listeners dentro de funções de renderização** - Isso cria múltiplos listeners que causam travamentos e comportamentos estranhos. Sempre adicionar listeners apenas uma vez durante inicialização
+- 💡 **Usar funções nomeadas para event handlers quando precisar remover depois** - Permite remover listeners antigos antes de adicionar novos, evitando acúmulo
+- 🚨 **CRÍTICO: PLATAFORMA É USADA PRINCIPALMENTE NO IPHONE - SEMPRE TESTAR/AJUSTAR PARA MOBILE PRIMEIRO!** - Usuário usa principalmente pelo iPhone, não desktop. Sempre adicionar suporte explícito para eventos touch (touchend) além de click. Não assumir que funciona em mobile só porque funciona em desktop. Este erro já aconteceu múltiplas vezes - SEMPRE pensar em mobile primeiro!
 
 ═══════════════════════════════════════════════════════════════
 
