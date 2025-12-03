@@ -2225,11 +2225,8 @@
                 // - Escape manual de aspas simples e barras
                 // - Usar aspas SIMPLES no onclick (não conflita com aspas duplas do HTML)
                 // - HTML gerado: onclick="togglePendencia('1733174400000_5')" = VÁLIDO
-                // ═══════════════════════════════════════════════════════════════
-                const temaIdStr = String(temaId);
-                const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
-                
                 // Escape para onclick inline (solução simples que funciona)
+                const temaIdStr = String(temaId);
                 const temaIdEscaped = temaIdStr.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
                 
                 return `
