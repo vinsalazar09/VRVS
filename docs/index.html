@@ -2251,6 +2251,39 @@
                 </div>
                 `;
             }).join('');
+            
+            // ═══════════════════════════════════════════════════════════════
+            // FALLBACK: Event listener programático para iOS Safari
+            // Adiciona listeners de toque como fallback caso onclick inline não funcione
+            // ═══════════════════════════════════════════════════════════════
+            document.querySelectorAll('.task-theme-item').forEach(item => {
+                const temaId = item.getAttribute('data-tema-id');
+                if (!temaId) return;
+                
+                // Remover listeners antigos se existirem (clonar nó remove listeners)
+                const newItem = item.cloneNode(true);
+                item.parentNode.replaceChild(newItem, item);
+                
+                // Adicionar listeners de toque como fallback
+                const handleTouch = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('[PENDENCIAS FALLBACK] Touch detectado via fallback, temaId:', temaId);
+                    window.togglePendencia(temaId);
+                };
+                
+                const handleClick = (e) => {
+                    // Só usar se onclick inline não funcionou
+                    // Verificar se já foi processado pelo onclick
+                    if (!e.defaultPrevented) {
+                        console.log('[PENDENCIAS FALLBACK] Click detectado via fallback, temaId:', temaId);
+                        window.togglePendencia(temaId);
+                    }
+                };
+                
+                newItem.addEventListener('touchend', handleTouch, { passive: false });
+                newItem.addEventListener('click', handleClick);
+            });
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
