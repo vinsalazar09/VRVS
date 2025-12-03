@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.8.0-fix-event-listeners-only";
+const CACHE_NAME = "vrvs-v5.8.1-fix-event-delegation";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

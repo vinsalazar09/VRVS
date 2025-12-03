@@ -2251,30 +2251,47 @@
                 </div>
                 `;
             }).join('');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // EVENT DELEGATION: Mais confiável no iOS Safari
+        // Adiciona listener UMA VEZ no container, funciona para todos os itens
+        // ═══════════════════════════════════════════════════════════════
+        function inicializarEventListenersPendencias() {
+            const container = document.getElementById('pendenciasContainer');
+            if (!container) return;
             
-            // ═══════════════════════════════════════════════════════════════
-            // CORREÇÃO iOS: Usar APENAS event listeners programáticos
-            // onclick inline pode não funcionar no iOS Safari, então removemos e usamos só listeners
-            // ═══════════════════════════════════════════════════════════════
-            document.querySelectorAll('.task-theme-item').forEach(item => {
-                const temaId = item.getAttribute('data-tema-id');
-                if (!temaId) return;
-                
-                // Remover onclick inline (vamos usar só event listeners)
-                item.removeAttribute('onclick');
-                
-                // Adicionar listeners de toque (funciona melhor no iOS)
-                const handleInteraction = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('[PENDENCIAS] Interação detectada, temaId:', temaId);
-                    window.togglePendencia(temaId);
-                };
-                
-                // Usar touchend (melhor para iOS) e click (fallback para desktop)
-                item.addEventListener('touchend', handleInteraction, { passive: false });
-                item.addEventListener('click', handleInteraction);
-            });
+            // Remover listeners antigos se existirem
+            if (container._pendenciasHandler) {
+                container.removeEventListener('touchend', container._pendenciasHandler);
+                container.removeEventListener('click', container._pendenciasHandler);
+            }
+            
+            // Handler único para todos os itens
+            const handlePendenciasInteraction = (e) => {
+                // Encontrar o item clicado (pode ser o próprio item ou um filho)
+                let target = e.target;
+                while (target && target !== container) {
+                    if (target.classList.contains('task-theme-item')) {
+                        const temaId = target.getAttribute('data-tema-id');
+                        if (temaId) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('[PENDENCIAS DELEGATION] Interação detectada, temaId:', temaId);
+                            window.togglePendencia(temaId);
+                            return;
+                        }
+                    }
+                    target = target.parentElement;
+                }
+            };
+            
+            // Salvar referência para poder remover depois
+            container._pendenciasHandler = handlePendenciasInteraction;
+            
+            // Adicionar listeners no container (event delegation)
+            container.addEventListener('touchend', handlePendenciasInteraction, { passive: false, capture: true });
+            container.addEventListener('click', handlePendenciasInteraction, { capture: true });
         }
         
         // Variável global para controlar visibilidade dos campos de tempo
@@ -5708,6 +5725,7 @@
             renderAgenda();
             renderDados();
             renderPendencias();
+            inicializarEventListenersPendencias(); // Event delegation para iOS Safari
             updateFeedbackSelect();
             updateStats();
             renderHistorico();
