@@ -2213,10 +2213,12 @@
                 
                 // CORREÇÃO OPUS: IDs podem ser strings com underscore (ex: "1733174400000_5")
                 // Sempre usar aspas no onclick para tratar como string e evitar erro de sintaxe JS
+                // Usar JSON.stringify para garantir escape correto de caracteres especiais
                 const temaIdStr = String(temaId);
+                const temaIdEscaped = JSON.stringify(temaIdStr); // Escapa aspas e caracteres especiais
                 
                 return `
-                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia('${temaIdStr}')" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
+                <div class="task-theme-item priority-${t.prioridade || 3}" data-tema-id="${temaIdStr}" onclick="togglePendencia(${temaIdEscaped})" style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,127,80,0.3); cursor: pointer;">
                     <div class="task-theme-name" style="pointer-events: none; user-select: none;">${t.tema}</div>
                     <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; pointer-events: none; user-select: none;">📚 ${t.area} • ⚠️ ${diasAtraso} dias atrasado</div>
                     ${isExpanded ? `
