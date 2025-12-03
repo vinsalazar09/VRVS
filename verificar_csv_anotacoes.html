@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verificar CSV Anotações</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        textarea { width: 100%; height: 300px; background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 10px; }
+        button { padding: 10px 20px; background: #0a6; color: #fff; border: none; cursor: pointer; margin: 10px 0; }
+        button:hover { background: #0c8; }
+        pre { background: #2a2a2a; padding: 10px; border: 1px solid #444; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Verificar CSV de Anotações</h1>
+    <p>Cole o conteúdo do CSV aqui ou selecione o arquivo:</p>
+    <input type="file" id="fileInput" accept=".csv" />
+    <textarea id="csvContent" placeholder="Cole o conteúdo do CSV aqui..."></textarea>
+    <button onclick="verificarCSV()">Verificar CSV</button>
+    <div id="resultado"></div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('csvContent').value = e.target.result;
+                    verificarCSV();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function verificarCSV() {
+            const csv = document.getElementById('csvContent').value;
+            if (!csv.trim()) {
+                alert('Por favor, cole o conteúdo do CSV ou selecione o arquivo');
+                return;
+            }
+
+            // Parse CSV simples
+            const lines = csv.split('\n').filter(l => l.trim());
+            if (lines.length === 0) {
+                document.getElementById('resultado').innerHTML = '<pre>❌ CSV vazio!</pre>';
+                return;
+            }
+
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const rows = lines.slice(1).map(line => {
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            current += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (ch === ',' && !inQuotes) {
+                        values.push(current.trim());
+                        current = '';
+                    } else {
+                        current += ch;
+                    }
+                }
+                values.push(current.trim());
+                return values;
+            });
+
+            let html = '<h2>📊 Análise do CSV</h2>';
+            html += `<p><strong>Total de linhas:</strong> ${lines.length}</p>`;
+            html += `<p><strong>Headers encontrados:</strong> ${headers.length}</p>`;
+            
+            html += '<h3>📋 Headers:</h3><pre>';
+            headers.forEach((h, i) => {
+                html += `${i + 1}. "${h}"\n`;
+            });
+            html += '</pre>';
+
+            html += '<h3>📝 Primeiras 5 linhas de dados:</h3><pre>';
+            rows.slice(0, 5).forEach((row, i) => {
+                html += `\nLinha ${i + 1}:\n`;
+                headers.forEach((header, j) => {
+                    html += `  ${header}: "${row[j] || ''}"\n`;
+                });
+            });
+            html += '</pre>';
+
+            // Verificar campos esperados
+            const camposEsperados = ['id', 'temaId', 'area', 'tema', 'conteudo', 'ultimaAtualizacao'];
+            const headersLower = headers.map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ''));
+            
+            html += '<h3>✅ Campos encontrados vs esperados:</h3><pre>';
+            camposEsperados.forEach(campo => {
+                const encontrado = headersLower.find(h => h.includes(campo.toLowerCase()));
+                if (encontrado) {
+                    const idx = headersLower.indexOf(encontrado);
+                    html += `✅ ${campo} → encontrado como "${headers[idx]}"\n`;
+                } else {
+                    html += `❌ ${campo} → NÃO ENCONTRADO\n`;
+                }
+            });
+            html += '</pre>';
+
+            // Verificar se há conteúdo
+            const conteudoIdx = headersLower.findIndex(h => h.includes('conteudo') || h.includes('conteúdo'));
+            if (conteudoIdx >= 0) {
+                html += '<h3>📄 Anotações com conteúdo:</h3><pre>';
+                let comConteudo = 0;
+                rows.forEach((row, i) => {
+                    const conteudo = (row[conteudoIdx] || '').trim();
+                    if (conteudo.length > 0) {
+                        comConteudo++;
+                        const temaIdx = headersLower.findIndex(h => h.includes('tema') && !h.includes('temaid'));
+                        const tema = temaIdx >= 0 ? row[temaIdx] : 'N/A';
+                        html += `${comConteudo}. ${tema}: ${conteudo.substring(0, 50)}...\n`;
+                    }
+                });
+                html += `\nTotal: ${comConteudo} anotações com conteúdo\n`;
+                html += '</pre>';
+            }
+
+            document.getElementById('resultado').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
+

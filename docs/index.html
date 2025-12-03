@@ -3378,13 +3378,25 @@
             }
             
             if (anotacoesFile) {
-                promises.push(parseCSV(anotacoesFile).then(anotacoesCSV => {
+                promises.push(parseCSVAnotacoes(anotacoesFile).then(anotacoesCSV => {
                     anotacoes = anotacoesCSV.map(a => {
                         if (!a.id) a.id = Date.now() + Math.random();
+                        // CRÍTICO: Garantir que temaId seja string e corresponda a um tema válido
                         a.temaId = String(a.temaId || a.temaid || '');
+                        // Se temaId está vazio, tentar encontrar pelo nome do tema
+                        if (!a.temaId || a.temaId.trim() === '') {
+                            const tema = dados.find(t => String(t.tema).trim() === String(a.tema || '').trim());
+                            if (tema) {
+                                a.temaId = String(tema.id);
+                                console.log(`[IMPORT ANOTACOES] temaId encontrado para "${a.tema}": ${a.temaId}`);
+                            } else {
+                                console.warn(`[IMPORT ANOTACOES] Não foi possível encontrar temaId para "${a.tema}"`);
+                            }
+                        }
                         return a;
                     });
                     localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                    console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações importadas`);
                     return 'anotacoes';
                 }));
             }
@@ -3474,6 +3486,60 @@
                         resolve(data);
                     } catch (err) {
                         reject(err);
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // PARSER ESPECÍFICO PARA ANOTAÇÕES
+        // Mapeia campos corretos: id, temaId, area, tema, conteudo, ultimaAtualizacao
+        // ═══════════════════════════════════════════════════════════════
+        function parseCSVAnotacoes(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo de anotações'));
+                reader.onload = (e) => {
+                    try {
+                        const text = e.target.result;
+                        const rows = parseCSVText(text);
+                        if (rows.length < 2) {
+                            reject(new Error('Arquivo de anotações vazio ou inválido'));
+                            return;
+                        }
+                        const headers = rows[0];
+                        const headersNormalizados = headers.map(h => 
+                            h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').replace(/[()]/g, '').replace(/\./g, '')
+                        );
+                        const headerMap = {};
+                        headersNormalizados.forEach((h, i) => { headerMap[h] = i; });
+                        const getVal = (r, ...possiveisNomes) => {
+                            for (const nome of possiveisNomes) {
+                                const idx = headerMap[nome];
+                                if (idx !== undefined && r[idx] !== undefined && r[idx] !== null && String(r[idx]).trim() !== '') {
+                                    return stripOuterQuotes(String(r[idx]));
+                                }
+                            }
+                            return '';
+                        };
+                        const data = rows.slice(1).map((r, lineNum) => {
+                            return {
+                                id: getVal(r, 'id') || `${Date.now()}_${lineNum}`,
+                                temaId: getVal(r, 'temaid', 'tema_id', 'temaid', 'temaid'),
+                                area: getVal(r, 'area', 'topico'),
+                                tema: getVal(r, 'tema', 'assunto', 'titulo'),
+                                conteudo: getVal(r, 'conteudo', 'conteúdo', 'conteudo', 'texto', 'anotacao', 'anotação'),
+                                ultimaAtualizacao: getVal(r, 'ultimaatualizacao', 'ultima_atualizacao', 'ultimaatualizacao', 'data', 'dataatualizacao')
+                            };
+                        }).filter(obj => {
+                            // Manter apenas anotações que têm pelo menos temaId OU tema
+                            return (obj.temaId && obj.temaId.trim() !== '') || (obj.tema && obj.tema.trim() !== '');
+                        });
+                        console.log(`[PARSE CSV ANOTACOES] ${data.length} anotações parseadas de ${rows.length - 1} linhas`);
+                        resolve(data);
+                    } catch (err) {
+                        reject(new Error('Erro ao processar CSV de anotações: ' + err.message));
                     }
                 };
                 reader.readAsText(file, 'UTF-8');
