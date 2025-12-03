@@ -1457,7 +1457,7 @@
             <!-- PENDÊNCIAS -->
             <div id="pendencias" class="section">
                 <div class="card">
-                    <div class="card-title">🔔 ALERTAS DO SISTEMA</div>
+                    <div class="card-title">🔔 ALERTAS DO SISTEMA <span style="font-size: 10px; opacity: 0.6;">(v3)</span></div>
                     <div id="pendenciasContainer"></div>
                 </div>
             </div>
@@ -2256,7 +2256,10 @@
         
         window.togglePendencia = function(temaId) {
             // DEBUG: Log para identificar problemas
-            console.log('[PENDENCIAS] togglePendencia chamado com temaId:', temaId, 'tipo:', typeof temaId);
+            console.log('[PENDENCIAS v3] togglePendencia chamado com temaId:', temaId, 'tipo:', typeof temaId);
+            
+            // DEBUG VISUAL: Mostrar alerta para confirmar que função foi chamada
+            alert('DEBUG v3: togglePendencia chamado com ID: ' + temaId);
             
             // CORREÇÃO: Validar ID antes de processar
             if (temaId == null || temaId === '') {
