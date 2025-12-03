@@ -582,10 +582,10 @@
         
         .task-theme-item {
             background: linear-gradient(135deg,
-                rgba(20, 35, 45, 0.6),
-                rgba(30, 50, 60, 0.4)
+                rgba(20, 35, 45, 0.95),
+                rgba(30, 50, 60, 0.9)
             );
-            backdrop-filter: blur(15px);
+            /* backdrop-filter: blur(15px); */ /* DESABILITADO: Pode causar problemas de hit-testing no iOS Safari */
             border-left: 4px solid rgba(0, 206, 209, 0.5);
             border-radius: 12px;
             padding: 14px 16px;
