@@ -7468,7 +7468,22 @@
                     return;
                 }
                 
-                tema.area = normalizeArea(document.getElementById('editArea').value.trim());
+                // Pegar área do input se estiver visível, senão do select
+                const editAreaInput = document.getElementById('editAreaInput');
+                let areaEdit = '';
+                if (editAreaInput && editAreaInput.style.display !== 'none' && editAreaInput.value.trim()) {
+                    areaEdit = editAreaInput.value.trim();
+                } else {
+                    areaEdit = document.getElementById('editArea').value.trim();
+                }
+                
+                // Validar que não é a opção especial
+                if (areaEdit === '__NOVA_AREA__' || !areaEdit) {
+                    mostrarNotificacaoFeedback('⚠️ Selecione ou adicione uma área válida!', 'error');
+                    return;
+                }
+                
+                tema.area = normalizeArea(areaEdit);
                 tema.tema = document.getElementById('editTema').value.trim();
                 tema.prioridade = parseInt(document.getElementById('editPrioridade').value);
                 const novoStatus = document.getElementById('editStatus').value;
