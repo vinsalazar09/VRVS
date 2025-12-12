@@ -22,7 +22,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="VRVS">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>🧠 VRVS v5.1 – Sistema de Gestão de Estudos</title>
+    <title>🧠 VRVS v5.2 – Sistema de Gestão de Estudos</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -5816,34 +5816,123 @@
                 }
             }, 30000); // Salvar a cada 30 segundos
             
+            // ==================== SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA ====================
+            const APP_VERSION = '5.2';
+            const SW_VERSION = 'vrvs-v5.2-diario-aprendizados-20251212';
+            
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
-                // Limpar todos os Service Workers antigos primeiro
-                navigator.serviceWorker.getRegistrations().then((registrations) => {
-                    return Promise.all(registrations.map(reg => reg.unregister()));
-                }).then(() => {
-                    // Registrar novo Service Worker
-                    return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
-                }).then((registration) => {
-                    console.log('✅ Service Worker registrado com sucesso:', registration.scope);
+                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then((registration) => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
                     
-                    // FORÇAR ATUALIZAÇÃO IMEDIATA DO SERVICE WORKER
-                    registration.update().then(() => {
-                        // Se há uma nova versão foi encontrada, forçar ativação
-                        if (registration.waiting) {
-                            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-                            window.location.reload();
-                        }
+                    // Verificar atualizações imediatamente
+                    registration.update();
+                    
+                    // Detectar quando há nova versão disponível
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('🔄 Nova versão do Service Worker detectada!');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Há uma nova versão instalada, mas ainda não ativa
+                                mostrarNotificacaoAtualizacao();
+                            }
+                        });
                     });
                     
-                    // Verificar atualizações periodicamente
+                    // Verificar atualizações periodicamente (a cada 1 minuto)
                     setInterval(() => {
                         registration.update();
-                    }, 30000); // Verificar a cada 30 segundos (mais frequente)
+                    }, 60000);
+                    
+                    // Limpar caches antigos ao iniciar
+                    if ('caches' in window) {
+                        caches.keys().then((cacheNames) => {
+                            cacheNames.forEach((cacheName) => {
+                                if (!cacheName.includes('v5.2') && cacheName.startsWith('vrvs-')) {
+                                    console.log('🗑️ Removendo cache antigo:', cacheName);
+                                    caches.delete(cacheName);
+                                }
+                            });
+                        });
+                    }
                 }).catch((error) => {
-                    console.log('⚠️ Erro ao registrar Service Worker:', error);
+                    console.error('⚠️ Erro ao registrar Service Worker:', error);
                 });
             }
+            
+            // Função para mostrar notificação de atualização
+            function mostrarNotificacaoAtualizacao() {
+                const notificacao = document.createElement('div');
+                notificacao.id = 'notificacaoAtualizacao';
+                notificacao.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(135deg, var(--cobre-main), var(--cobre-dark));
+                    color: white;
+                    padding: 16px 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 20px rgba(255, 127, 80, 0.4);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    animation: slideInRight 0.3s ease;
+                `;
+                notificacao.innerHTML = `
+                    <span>🔄 Nova versão disponível!</span>
+                    <button onclick="atualizarApp()" style="
+                        background: white;
+                        color: var(--cobre-main);
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-size: 13px;
+                    ">Atualizar Agora</button>
+                `;
+                document.body.appendChild(notificacao);
+                
+                // Auto-remover após 10 segundos se não clicar
+                setTimeout(() => {
+                    if (notificacao.parentNode) {
+                        notificacao.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => notificacao.remove(), 300);
+                    }
+                }, 10000);
+            }
+            
+            // Função para forçar atualização do app
+            window.atualizarApp = function() {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then((registrations) => {
+                        registrations.forEach((registration) => {
+                            if (registration.waiting) {
+                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        });
+                    });
+                    
+                    // Limpar todos os caches
+                    if ('caches' in window) {
+                        caches.keys().then((cacheNames) => {
+                            return Promise.all(cacheNames.map(name => caches.delete(name)));
+                        }).then(() => {
+                            console.log('✅ Cache limpo! Recarregando...');
+                            window.location.reload(true);
+                        });
+                    } else {
+                        window.location.reload(true);
+                    }
+                } else {
+                    window.location.reload(true);
+                }
+            };
             
             // Splash Screen - Esconder após carregar
             setTimeout(() => {
