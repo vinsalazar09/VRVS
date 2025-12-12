@@ -7412,10 +7412,11 @@
             atualizarSelectsCaderno();
             renderCaderno();
             
-            // Popular datalist de áreas fixas no cadastro (corrige bug do template literal)
-            const datalistAreasFixas = document.getElementById('listAreasFixas');
-            if (datalistAreasFixas) {
-                datalistAreasFixas.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            // Popular select de áreas fixas no cadastro
+            const novaAreaSelect = document.getElementById('novaArea');
+            if (novaAreaSelect) {
+                novaAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
+                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('');
             }
             
             // Inicializar Diário
