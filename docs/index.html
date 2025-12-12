@@ -2676,6 +2676,71 @@
         
         limparHistoricoInvalido(); // Limpar histórico inválido na inicialização
         
+        // CORREÇÃO URGENTE: Normalizar áreas duplicadas em todos os dados
+        function normalizarAreasEmMassa() {
+            let alteracoes = 0;
+            
+            // Normalizar dados
+            if (Array.isArray(dados)) {
+                dados.forEach(t => {
+                    const areaAntiga = t.area;
+                    t.area = normalizarArea(t.area);
+                    if (areaAntiga !== t.area) alteracoes++;
+                });
+            }
+            
+            // Normalizar histórico
+            if (Array.isArray(historico)) {
+                historico.forEach(h => {
+                    const areaAntiga = h.area;
+                    h.area = normalizarArea(h.area);
+                    if (areaAntiga !== h.area) alteracoes++;
+                });
+            }
+            
+            // Normalizar anotações
+            if (Array.isArray(anotacoes)) {
+                anotacoes.forEach(a => {
+                    if (a.area) {
+                        const areaAntiga = a.area;
+                        a.area = normalizarArea(a.area);
+                        if (areaAntiga !== a.area) alteracoes++;
+                    }
+                });
+            }
+            
+            // Normalizar diário
+            try {
+                const diarioSalvo = localStorage.getItem('vrvs_diario');
+                if (diarioSalvo) {
+                    const diario = JSON.parse(diarioSalvo);
+                    if (diario && Array.isArray(diario.entradas)) {
+                        diario.entradas.forEach(e => {
+                            if (e.area) {
+                                const areaAntiga = e.area;
+                                e.area = normalizarArea(e.area);
+                                if (areaAntiga !== e.area) alteracoes++;
+                            }
+                        });
+                        localStorage.setItem('vrvs_diario', JSON.stringify(diario));
+                    }
+                }
+            } catch (e) {
+                console.warn('[NORMALIZAÇÃO] Erro ao normalizar diário:', e);
+            }
+            
+            // Salvar dados normalizados
+            if (alteracoes > 0) {
+                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                console.log(`✅ Normalização: ${alteracoes} áreas corrigidas`);
+            }
+        }
+        
+        // Executar normalização na inicialização
+        normalizarAreasEmMassa();
+        
         // ==================== FUNÇÕES AUXILIARES ====================
         
         function mostrarNotificacaoFeedback(mensagem, tipo = 'success') {
@@ -2719,33 +2784,76 @@
             return '⚡ Questões/flashcards';
         }
         
-        function normalizeArea(rawArea, tema) {
-            if (!rawArea && !tema) return '';
-            let area = String(rawArea || '').trim().toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        // CORREÇÃO: Normalização robusta de áreas para evitar duplicatas
+        function normalizarArea(area) {
+            if (!area || typeof area !== 'string') return '';
             
-            const areaMap = {
+            // Normalizar: remover espaços extras, converter para minúsculas, remover acentos
+            const areaNormalizada = area.trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' '); // Normalizar espaços múltiplos
+            
+            // Mapa completo de variações para áreas fixas
+            const mapaNormalizacao = {
+                // Ciências Básicas
+                'ciencias basicas': 'Ciências Básicas',
+                
+                // Ortopedia Pediátrica
+                'ortopedia pediatrica': 'Ortopedia Pediátrica',
+                
+                // Mão e Punho → Mão (unificar todas variações)
+                'mao e punho': 'Mão',
+                'mão e punho': 'Mão',
+                'mao': 'Mão',
+                'mão': 'Mão',
+                'punho': 'Mão',
+                
+                // Trauma MMSS
                 'trauma mmss': 'Trauma MMSS',
                 'trauma membros superiores': 'Trauma MMSS',
+                
+                // Trauma MMII
                 'trauma mmii': 'Trauma MMII',
                 'trauma membros inferiores': 'Trauma MMII',
+                
+                // Ombro e Cotovelo
                 'ombro e cotovelo': 'Ombro e Cotovelo',
                 'ombro': 'Ombro e Cotovelo',
                 'cotovelo': 'Ombro e Cotovelo',
-                'mao': 'Mão',
-                'punho': 'Mão',
+                
+                // Outras áreas (manter como estão)
                 'joelho': 'Joelho',
                 'quadril': 'Quadril',
                 'pelve': 'Quadril',
                 'pe e tornozelo': 'Pé e Tornozelo',
+                'pé e tornozelo': 'Pé e Tornozelo',
                 'tornozelo': 'Pé e Tornozelo',
                 'coluna': 'Coluna',
                 'oncologia': 'Oncologia',
-                'tumores': 'Oncologia'
+                'tumores': 'Oncologia',
+                'trauma pediatrico': 'Trauma Pediátrico',
+                'trauma pediátrico': 'Trauma Pediátrico'
             };
             
-            if (areaMap[area]) return areaMap[area];
-            return area.replace(/\b\w/g, m => m.toUpperCase());
+            // Verificar se área normalizada está no mapa
+            if (mapaNormalizacao[areaNormalizada]) {
+                return mapaNormalizacao[areaNormalizada];
+            }
+            
+            // Se não está no mapa, verificar se já é uma área fixa (case-insensitive)
+            const areaFixasLower = AREAS_FIXAS.map(a => a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+            const index = areaFixasLower.indexOf(areaNormalizada);
+            if (index !== -1) {
+                return AREAS_FIXAS[index]; // Retornar versão correta com acentos
+            }
+            
+            // Fallback: capitalizar primeira letra de cada palavra
+            return area.trim().replace(/\b\w/g, m => m.toUpperCase());
+        }
+        
+        // Manter função antiga para compatibilidade (chama a nova)
+        function normalizeArea(rawArea, tema) {
+            return normalizarArea(rawArea);
         }
         
         function fixAreaTema(area, tema) {
