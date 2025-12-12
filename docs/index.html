@@ -6209,6 +6209,16 @@
             // Inicializar Diário
             carregarDiario();
             renderDiario();
+            
+            // Garantir que botão + Nova tenha texto branco visível (corrige problema de herança do card-title)
+            setTimeout(() => {
+                const btnNova = document.getElementById('btnNovaDiario');
+                if (btnNova) {
+                    btnNova.style.setProperty('color', '#FFFFFF', 'important');
+                    btnNova.style.setProperty('-webkit-text-fill-color', '#FFFFFF', 'important');
+                    btnNova.style.setProperty('text-shadow', '0 1px 3px rgba(0,0,0,0.5)', 'important');
+                }
+            }, 100);
         };
         
         // ==================== DIÁRIO DE APRENDIZADOS ====================
