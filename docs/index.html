@@ -1917,45 +1917,7 @@
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                         <span>📔 DIÁRIO DE APRENDIZADOS</span>
-                        <button class="btn btn-small" onclick="abrirNovaEntradaDiario()">+ Nova</button>
-                    </div>
-                    
-                    <!-- Toggle de Modo -->
-                    <div class="diario-modos" style="margin-bottom: 16px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; width: fit-content;">
-                        <button class="modo-btn active" id="modoRecall" onclick="setModoDiario('recall')" style="background: var(--cobre-main); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
-                            🧠 Recall
-                        </button>
-                        <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
-                            📖 Respostas
-                        </button>
-                    </div>
-                    
-                    <!-- Filtros -->
-                    <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-                        <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
-                            <option value="data">📅 Por Data</option>
-                            <option value="tema">📁 Por Tema</option>
-                        </select>
-                        <select class="form-select form-select-sm" id="filtroDiarioArea" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
-                            <option value="">Todas as áreas</option>
-                        </select>
-                        <input type="date" class="form-input form-input-sm" id="filtroDiarioData" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
-                    </div>
-                    
-                    <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
-                    <div id="diarioRevisarHoje" style="display: none; background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 12px; padding: 14px; margin-bottom: 20px;"></div>
-                    
-                    <!-- Container principal -->
-                    <div id="diarioContainer"></div>
-                </div>
-            </div>
-            
-            <!-- DIÁRIO -->
-            <div id="diario" class="section">
-                <div class="card">
-                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>📔 DIÁRIO DE APRENDIZADOS</span>
-                        <button class="btn btn-small" onclick="abrirNovaEntradaDiario()">+ Nova</button>
+                        <button class="btn btn-small" onclick="abrirNovaEntradaDiario()" style="background: var(--cobre-main); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; min-width: 80px;">+ Nova</button>
                     </div>
                     
                     <!-- Toggle de Modo -->
@@ -5165,23 +5127,23 @@
                                     Última atualização: ${formatarData(anotacao.ultimaAtualizacao)}
                                 </div>
                             </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="font-size: 12px; color: var(--cobre-light); margin-bottom: 5px; display: block; font-weight: 600;">🔥 Hot Topics (pontos de prova)</label>
+                                <textarea 
+                                    id="hotTopics_${anotacao.temaId}" 
+                                    class="form-input" 
+                                    rows="3" 
+                                    style="width: 100%; font-family: inherit; resize: vertical; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.3); border-radius: 6px; padding: 10px;"
+                                    placeholder="Digite pontos importantes do tema..."
+                                    onblur="salvarAnotacao(${anotacao.temaId})"
+                                >${((anotacao.hotTopics || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                            </div>
                             ${anotacao.hotTopics ? `
                                 <div style="margin-bottom: 10px; padding: 10px; background: rgba(255,127,80,0.1); border-left: 3px solid var(--cobre-main); border-radius: 4px;">
                                     <div style="font-size: 11px; font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">🔥 Hot Topics</div>
                                     <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-wrap;">${(anotacao.hotTopics || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
                                 </div>
                             ` : ''}
-                            <div style="margin-bottom: 10px;">
-                                <label style="font-size: 12px; color: rgba(0,206,209,0.8); margin-bottom: 5px; display: block;">🔥 Hot Topics (pontos de prova)</label>
-                                <textarea 
-                                    id="hotTopics_${anotacao.temaId}" 
-                                    class="form-input" 
-                                    rows="3" 
-                                    style="width: 100%; font-family: inherit; resize: vertical; background: rgba(255,127,80,0.05); border-color: rgba(255,127,80,0.3);"
-                                    placeholder="Ex: 1) Classificação de Wiltze&#10;2) Técnica de Gill&#10;3) Clínica do adolescente..."
-                                    onblur="salvarAnotacao(${anotacao.temaId})"
-                                >${((anotacao.hotTopics || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
-                            </div>
                             <div style="margin-bottom: 10px;">
                                 <label style="font-size: 12px; color: rgba(0,206,209,0.8); margin-bottom: 5px; display: block;">📝 Anotações Gerais</label>
                                 <textarea 
@@ -6243,7 +6205,366 @@
             renderLembretes();
             atualizarSelectsCaderno();
             renderCaderno();
+            
+            // Inicializar Diário
+            carregarDiario();
+            renderDiario();
         };
+        
+        // ==================== DIÁRIO DE APRENDIZADOS ====================
+        
+        const DIARIO_SCHEMA_VERSION = '1.0';
+        let modoDiario = 'recall'; // 'recall' ou 'respostas'
+        
+        function carregarDiario() {
+            try {
+                const diarioSalvo = localStorage.getItem('vrvs_diario');
+                if (diarioSalvo) {
+                    const diario = JSON.parse(diarioSalvo);
+                    if (diario.entradas && Array.isArray(diario.entradas)) {
+                        window.diario = diario;
+                    } else {
+                        window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+                    }
+                } else {
+                    window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+                }
+            } catch (e) {
+                console.error('[DIÁRIO] Erro ao carregar:', e);
+                window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+            }
+        }
+        
+        function salvarDiario() {
+            try {
+                window.diario.schemaVersion = DIARIO_SCHEMA_VERSION;
+                localStorage.setItem('vrvs_diario', JSON.stringify(window.diario));
+            } catch (e) {
+                console.error('[DIÁRIO] Erro ao salvar:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao salvar diário!', 'error');
+            }
+        }
+        
+        function setModoDiario(modo) {
+            modoDiario = modo;
+            
+            // Atualizar botões
+            const btnRecall = document.getElementById('modoRecall');
+            const btnRespostas = document.getElementById('modoRespostas');
+            
+            if (btnRecall && btnRespostas) {
+                if (modo === 'recall') {
+                    btnRecall.style.background = 'var(--cobre-main)';
+                    btnRecall.style.color = 'white';
+                    btnRespostas.style.background = 'transparent';
+                    btnRespostas.style.color = 'rgba(255,255,255,0.6)';
+                } else {
+                    btnRespostas.style.background = 'var(--cobre-main)';
+                    btnRespostas.style.color = 'white';
+                    btnRecall.style.background = 'transparent';
+                    btnRecall.style.color = 'rgba(255,255,255,0.6)';
+                }
+            }
+            
+            renderDiario();
+        }
+        
+        function abrirNovaEntradaDiario() {
+            // Limpar campos
+            document.getElementById('novaDiarioId').value = '';
+            document.getElementById('novaDiarioArea').value = '';
+            document.getElementById('novaDiarioTema').value = '';
+            document.getElementById('novaDiarioTopico').value = '';
+            document.getElementById('novaDiarioResposta').value = '';
+            document.getElementById('novaDiarioAtencao').checked = false;
+            
+            // Popular datalist com áreas fixas
+            const datalist = document.getElementById('listAreasDiario');
+            if (datalist) {
+                datalist.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            }
+            
+            // Mostrar modal
+            document.getElementById('modalNovaDiario').classList.add('active');
+        }
+        
+        function fecharModalDiario() {
+            document.getElementById('modalNovaDiario').classList.remove('active');
+        }
+        
+        function salvarEntradaDiario() {
+            const area = document.getElementById('novaDiarioArea').value.trim();
+            const tema = document.getElementById('novaDiarioTema').value.trim();
+            const topico = document.getElementById('novaDiarioTopico').value.trim();
+            const resposta = document.getElementById('novaDiarioResposta').value.trim();
+            const atencao = document.getElementById('novaDiarioAtencao').checked;
+            
+            if (!area || !tema || !topico) {
+                mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
+                return;
+            }
+            
+            const entradaId = document.getElementById('novaDiarioId').value;
+            const hoje = new Date().toISOString().split('T')[0];
+            
+            if (entradaId) {
+                // Editar entrada existente
+                const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
+                if (entrada) {
+                    entrada.area = area;
+                    entrada.tema = tema;
+                    entrada.topico = topico;
+                    entrada.resposta = resposta;
+                    entrada.atencao = atencao;
+                    entrada.ultimaAtualizacao = hoje;
+                }
+            } else {
+                // Nova entrada
+                const novaEntrada = {
+                    id: Date.now(),
+                    data: hoje,
+                    area: area,
+                    tema: tema,
+                    topico: topico,
+                    resposta: resposta,
+                    atencao: atencao,
+                    criadoEm: hoje,
+                    ultimaAtualizacao: hoje
+                };
+                window.diario.entradas.push(novaEntrada);
+            }
+            
+            salvarDiario();
+            fecharModalDiario();
+            renderDiario();
+            mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
+        }
+        
+        function salvarEContinuarDiario() {
+            salvarEntradaDiario();
+            setTimeout(() => {
+                abrirNovaEntradaDiario();
+            }, 300);
+        }
+        
+        function renderDiario() {
+            const container = document.getElementById('diarioContainer');
+            if (!container) return;
+            
+            if (!window.diario || !window.diario.entradas || window.diario.entradas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma entrada no diário ainda</div><div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5);">Clique em "+ Nova" para adicionar</div></div>';
+                
+                // Esconder seção "Revisar Hoje"
+                const revisarHoje = document.getElementById('diarioRevisarHoje');
+                if (revisarHoje) revisarHoje.style.display = 'none';
+                
+                return;
+            }
+            
+            const filtroVista = document.getElementById('filtroDiarioVista')?.value || 'data';
+            const filtroArea = document.getElementById('filtroDiarioArea')?.value || '';
+            const filtroData = document.getElementById('filtroDiarioData')?.value || '';
+            
+            // Atualizar select de áreas
+            const areaSelect = document.getElementById('filtroDiarioArea');
+            if (areaSelect) {
+                const areas = [...new Set(window.diario.entradas.map(e => e.area))].sort();
+                areaSelect.innerHTML = '<option value="">Todas as áreas</option>';
+                areas.forEach(area => {
+                    areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
+                });
+                if (filtroArea) areaSelect.value = filtroArea;
+            }
+            
+            // Filtrar entradas
+            let entradasFiltradas = window.diario.entradas;
+            
+            if (filtroArea) {
+                entradasFiltradas = entradasFiltradas.filter(e => e.area === filtroArea);
+            }
+            
+            if (filtroData) {
+                entradasFiltradas = entradasFiltradas.filter(e => e.data === filtroData);
+            }
+            
+            // Separar entradas que precisam revisão (com ⚠️)
+            const hoje = new Date().toISOString().split('T')[0];
+            const entradasRevisar = entradasFiltradas.filter(e => e.atencao);
+            
+            // Renderizar seção "Revisar Hoje"
+            const revisarHoje = document.getElementById('diarioRevisarHoje');
+            if (revisarHoje) {
+                if (entradasRevisar.length > 0) {
+                    revisarHoje.style.display = 'block';
+                    revisarHoje.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="color: var(--cobre-main); font-size: 14px; font-weight: 600;">⚠️ Revisar Hoje</h3>
+                        </div>
+                        ${entradasRevisar.map(e => renderEntradaDiario(e)).join('')}
+                    `;
+                } else {
+                    revisarHoje.style.display = 'none';
+                }
+            }
+            
+            // Remover entradas com atenção da lista principal
+            entradasFiltradas = entradasFiltradas.filter(e => !e.atencao);
+            
+            if (filtroVista === 'data') {
+                renderDiarioPorData(entradasFiltradas, container);
+            } else {
+                renderDiarioPorTema(entradasFiltradas, container);
+            }
+        }
+        
+        function renderDiarioPorData(entradas, container) {
+            // Agrupar por data
+            const porData = {};
+            entradas.forEach(e => {
+                if (!porData[e.data]) porData[e.data] = [];
+                porData[e.data].push(e);
+            });
+            
+            const datasOrdenadas = Object.keys(porData).sort((a, b) => new Date(b) - new Date(a));
+            
+            if (datasOrdenadas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma entrada encontrada</div></div>';
+                return;
+            }
+            
+            let html = '';
+            datasOrdenadas.forEach(data => {
+                html += `<div style="margin-bottom: 24px;">
+                    <h3 style="color: var(--turquesa-light); font-size: 15px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,206,209,0.2);">
+                        📅 ${formatarDataCompleta(data)}
+                    </h3>
+                    ${porData[data].map(e => renderEntradaDiario(e)).join('')}
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderDiarioPorTema(entradas, container) {
+            // Agrupar por tema
+            const porTema = {};
+            entradas.forEach(e => {
+                const temaKey = `${e.area} - ${e.tema}`;
+                if (!porTema[temaKey]) porTema[temaKey] = [];
+                porTema[temaKey].push(e);
+            });
+            
+            const temasOrdenados = Object.keys(porTema).sort();
+            
+            if (temasOrdenados.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma entrada encontrada</div></div>';
+                return;
+            }
+            
+            let html = '';
+            temasOrdenados.forEach(temaKey => {
+                html += `<div style="margin-bottom: 24px;">
+                    <h3 style="color: var(--turquesa-light); font-size: 15px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,206,209,0.2);">
+                        📁 ${temaKey}
+                    </h3>
+                    ${porTema[temaKey].map(e => renderEntradaDiario(e)).join('')}
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderEntradaDiario(entrada) {
+            const mostrarResposta = modoDiario === 'respostas';
+            
+            return `
+                <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255,127,80,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 4px;">
+                                ${entrada.area} • ${entrada.tema}
+                            </div>
+                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px;">
+                                ❓ ${entrada.topico}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            ${entrada.atencao ? '<span style="color: var(--cobre-main); font-size: 18px;">⚠️</span>' : ''}
+                            <button onclick="editarEntradaDiario(${entrada.id})" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
+                        </div>
+                    </div>
+                    ${mostrarResposta && entrada.resposta ? `
+                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                            ✅ ${entrada.resposta.replace(/\n/g, '<br>')}
+                        </div>
+                    ` : mostrarResposta ? `
+                        <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
+                            (Sem resposta ainda)
+                        </div>
+                    ` : `
+                        <button onclick="toggleRespostaIndividual(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
+                            👁️ Ver Resposta
+                        </button>
+                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                            ✅ ${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+        
+        function toggleRespostaIndividual(entradaId) {
+            const respostaDiv = document.getElementById(`resposta_${entradaId}`);
+            if (respostaDiv) {
+                respostaDiv.style.display = respostaDiv.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        function editarEntradaDiario(entradaId) {
+            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+            if (!entrada) return;
+            
+            document.getElementById('novaDiarioId').value = entrada.id;
+            document.getElementById('novaDiarioArea').value = entrada.area;
+            document.getElementById('novaDiarioTema').value = entrada.tema;
+            document.getElementById('novaDiarioTopico').value = entrada.topico;
+            document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
+            document.getElementById('novaDiarioAtencao').checked = entrada.atencao || false;
+            
+            // Popular datalist
+            const datalist = document.getElementById('listAreasDiario');
+            if (datalist) {
+                datalist.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            }
+            
+            document.getElementById('modalNovaDiario').classList.add('active');
+        }
+        
+        function toggleAtencaoDiario(entradaId) {
+            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+            if (entrada) {
+                entrada.atencao = !entrada.atencao;
+                entrada.ultimaAtualizacao = new Date().toISOString().split('T')[0];
+                salvarDiario();
+                renderDiario();
+            }
+        }
+        
+        function formatarDataCompleta(dataStr) {
+            const data = new Date(dataStr + 'T00:00:00');
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const ontem = new Date(hoje);
+            ontem.setDate(ontem.getDate() - 1);
+            
+            if (dataStr === hoje.toISOString().split('T')[0]) {
+                return 'Hoje';
+            } else if (dataStr === ontem.toISOString().split('T')[0]) {
+                return 'Ontem';
+            } else {
+                return data.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
     </script>
 </body>
 </html>
