@@ -1549,9 +1549,10 @@
                 <input type="hidden" id="editId">
                 <div class="form-group">
                     <label class="form-label">Área</label>
-                    <select class="form-select" id="editArea" required>
+                    <select class="form-select" id="editArea" required onchange="handleEditAreaChange(this)">
                         <option value="">Selecione...</option>
                     </select>
+                    <input type="text" class="form-input" id="editAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Tema</label>
@@ -1967,9 +1968,10 @@
                     <form id="cadastroForm">
                         <div class="form-group">
                             <label class="form-label">Área de Conhecimento</label>
-                            <select class="form-select" id="novaArea" required>
+                            <select class="form-select" id="novaArea" required onchange="handleNovaAreaChange(this)">
                                 <option value="">Selecione...</option>
                             </select>
+                            <input type="text" class="form-input" id="novaAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tema Específico</label>
@@ -2964,7 +2966,15 @@
             const editAreaSelect = document.getElementById('editArea');
             if (editAreaSelect) {
                 editAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
-                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('');
+                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('') +
+                    '<option value="__NOVA_AREA__">➕ Adicionar Nova Área...</option>';
+            }
+            
+            // Garantir que input está escondido ao abrir modal
+            const editAreaInput = document.getElementById('editAreaInput');
+            if (editAreaInput) {
+                editAreaInput.style.display = 'none';
+                editAreaInput.required = false;
             }
             
             document.getElementById('editId').value = tema.id;
@@ -2978,6 +2988,117 @@
         
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('active');
+        }
+        
+        // Função para gerenciar adição de nova área no cadastro
+        function handleNovaAreaChange(select) {
+            handleAreaChange(select, 'novaAreaInput');
+        }
+        
+        // Função para gerenciar adição de nova área na edição
+        function handleEditAreaChange(select) {
+            handleAreaChange(select, 'editAreaInput');
+        }
+        
+        // Função genérica para gerenciar adição de nova área
+        function handleAreaChange(select, inputId) {
+            const areaInput = document.getElementById(inputId);
+            if (!areaInput) return;
+            
+            if (select.value === '__NOVA_AREA__') {
+                // Mostrar input e esconder select
+                select.style.display = 'none';
+                areaInput.style.display = 'block';
+                areaInput.value = '';
+                areaInput.focus();
+                areaInput.required = true;
+                
+                // Quando perder foco ou pressionar Enter, voltar para select
+                areaInput.onblur = function() {
+                    const valorDigitado = areaInput.value.trim();
+                    if (valorDigitado) {
+                        // Normalizar e adicionar ao select se não existir
+                        const areaNormalizada = normalizarArea(valorDigitado);
+                        select.value = areaNormalizada;
+                        
+                        // Se não está nas áreas fixas, adicionar como opção temporária
+                        const opcoes = Array.from(select.options).map(opt => opt.value);
+                        if (!opcoes.includes(areaNormalizada) && areaNormalizada !== '__NOVA_AREA__') {
+                            // Adicionar antes da opção "__NOVA_AREA__"
+                            const novaOpcao = document.createElement('option');
+                            novaOpcao.value = areaNormalizada;
+                            novaOpcao.textContent = areaNormalizada;
+                            select.insertBefore(novaOpcao, select.lastElementChild);
+                        }
+                    }
+                    
+                    // Voltar para select
+                    select.style.display = 'block';
+                    areaInput.style.display = 'none';
+                    areaInput.required = false;
+                    areaInput.onblur = null;
+                };
+                
+                areaInput.onkeypress = function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        areaInput.blur();
+                    }
+                };
+            } else {
+                // Esconder input se selecionar outra opção
+                areaInput.style.display = 'none';
+                areaInput.required = false;
+            }
+        }
+            const novaAreaInput = document.getElementById('novaAreaInput');
+            if (!novaAreaInput) return;
+            
+            if (select.value === '__NOVA_AREA__') {
+                // Mostrar input e esconder select
+                select.style.display = 'none';
+                novaAreaInput.style.display = 'block';
+                novaAreaInput.value = '';
+                novaAreaInput.focus();
+                novaAreaInput.required = true;
+                
+                // Quando perder foco ou pressionar Enter, voltar para select
+                novaAreaInput.onblur = function() {
+                    const valorDigitado = novaAreaInput.value.trim();
+                    if (valorDigitado) {
+                        // Normalizar e adicionar ao select se não existir
+                        const areaNormalizada = normalizarArea(valorDigitado);
+                        select.value = areaNormalizada;
+                        
+                        // Se não está nas áreas fixas, adicionar como opção temporária
+                        const opcoes = Array.from(select.options).map(opt => opt.value);
+                        if (!opcoes.includes(areaNormalizada) && areaNormalizada !== '__NOVA_AREA__') {
+                            // Adicionar antes da opção "__NOVA_AREA__"
+                            const novaOpcao = document.createElement('option');
+                            novaOpcao.value = areaNormalizada;
+                            novaOpcao.textContent = areaNormalizada;
+                            select.insertBefore(novaOpcao, select.lastElementChild);
+                        }
+                    }
+                    
+                    // Voltar para select
+                    select.style.display = 'block';
+                    novaAreaInput.style.display = 'none';
+                    novaAreaInput.required = false;
+                    novaAreaInput.onblur = null;
+                };
+                
+                novaAreaInput.onkeypress = function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        novaAreaInput.blur();
+                    }
+                };
+            } else {
+                // Esconder input se selecionar outra opção
+                novaAreaInput.style.display = 'none';
+                novaAreaInput.required = false;
+            }
         }
 
         // ==================== RENDERIZAÇÃO DE COMPONENTES ====================
@@ -7127,7 +7248,21 @@
             // CADASTRO FORM
             document.getElementById('cadastroForm').onsubmit = function(e) {
                 e.preventDefault();
-                const area = document.getElementById('novaArea').value.trim();
+                // Pegar área do input se estiver visível, senão do select
+                const novaAreaInput = document.getElementById('novaAreaInput');
+                let area = '';
+                if (novaAreaInput && novaAreaInput.style.display !== 'none' && novaAreaInput.value.trim()) {
+                    area = novaAreaInput.value.trim();
+                } else {
+                    area = document.getElementById('novaArea').value.trim();
+                }
+                
+                // Validar que não é a opção especial
+                if (area === '__NOVA_AREA__' || !area) {
+                    mostrarNotificacaoFeedback('⚠️ Selecione ou adicione uma área válida!', 'error');
+                    return;
+                }
+                
                 const tema = document.getElementById('novoTema').value.trim();
                 const prioridade = parseInt(document.getElementById('novaPrioridade').value);
                 const status = document.getElementById('novaStatus').value;
@@ -7416,7 +7551,8 @@
             const novaAreaSelect = document.getElementById('novaArea');
             if (novaAreaSelect) {
                 novaAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
-                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('');
+                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('') +
+                    '<option value="__NOVA_AREA__">➕ Adicionar Nova Área...</option>';
             }
             
             // Inicializar Diário
