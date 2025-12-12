@@ -1549,7 +1549,9 @@
                 <input type="hidden" id="editId">
                 <div class="form-group">
                     <label class="form-label">Área</label>
-                    <input type="text" class="form-input" id="editArea" required>
+                    <select class="form-select" id="editArea" required>
+                        <option value="">Selecione...</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Tema</label>
@@ -1965,8 +1967,9 @@
                     <form id="cadastroForm">
                         <div class="form-group">
                             <label class="form-label">Área de Conhecimento</label>
-                            <input type="text" class="form-input" id="novaArea" list="listAreasFixas" placeholder="Ex: Ombro e Cotovelo" required>
-                            <datalist id="listAreasFixas"></datalist>
+                            <select class="form-select" id="novaArea" required>
+                                <option value="">Selecione...</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tema Específico</label>
@@ -2957,8 +2960,15 @@
                 return;
             }
             
+            // Popular select de áreas com AREAS_FIXAS
+            const editAreaSelect = document.getElementById('editArea');
+            if (editAreaSelect) {
+                editAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
+                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('');
+            }
+            
             document.getElementById('editId').value = tema.id;
-            document.getElementById('editArea').value = tema.area;
+            editAreaSelect.value = tema.area || '';
             document.getElementById('editTema').value = tema.tema;
             document.getElementById('editPrioridade').value = tema.prioridade || 3;
             document.getElementById('editStatus').value = tema.status || 'Planejado';
