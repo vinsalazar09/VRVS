@@ -5210,12 +5210,6 @@
                                     onblur="salvarAnotacao(${anotacao.temaId})"
                                 >${((anotacao.hotTopics || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
                             </div>
-                            ${anotacao.hotTopics ? `
-                                <div style="margin-bottom: 10px; padding: 10px; background: rgba(255,127,80,0.1); border-left: 3px solid var(--cobre-main); border-radius: 4px;">
-                                    <div style="font-size: 11px; font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">🔥 Hot Topics</div>
-                                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-wrap;">${(anotacao.hotTopics || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-                                </div>
-                            ` : ''}
                             <div style="margin-bottom: 10px;">
                                 <label style="font-size: 12px; color: rgba(0,206,209,0.8); margin-bottom: 5px; display: block;">📝 Anotações Gerais</label>
                                 <textarea 
