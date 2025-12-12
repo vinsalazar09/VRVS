@@ -2070,10 +2070,26 @@
             const idsExistentes = new Set(existentes.map(a => a.id));
             
             novas.forEach(nova => {
-                const existente = existentes.find(a => a.id === nova.id);
+                // Procurar por ID ou temaId (para mesclar anotações do mesmo tema)
+                const existente = existentes.find(a => 
+                    a.id === nova.id || 
+                    (String(a.temaId) === String(nova.temaId) && String(nova.temaId) !== '')
+                );
+                
                 if (existente) {
+                    // Mesclar preservando hotTopics se ambos existirem (priorizar o novo se não vazio)
+                    if (nova.hotTopics !== undefined && nova.hotTopics !== null && nova.hotTopics.trim() !== '') {
+                        existente.hotTopics = nova.hotTopics;
+                    }
+                    // Mesclar conteúdo geral (preservar existente se novo estiver vazio)
+                    if (nova.conteudo !== undefined && nova.conteudo !== null && nova.conteudo.trim() !== '') {
+                        existente.conteudo = nova.conteudo;
+                    }
+                    // Atualizar outros campos
                     Object.assign(existente, nova);
                 } else {
+                    // Garantir que hotTopics existe mesmo se vazio
+                    if (!nova.hotTopics) nova.hotTopics = '';
                     mescladas.push(nova);
                 }
             });
@@ -3519,10 +3535,10 @@
                         return a;
                     }).filter(a => a.temaId && a.temaId.trim() !== ''); // Filtrar apenas com temaId válido
                     
-                    // CRÍTICO: Atualizar variável global E localStorage
-                    anotacoes = anotacoesImportadas;
+                    // CRÍTICO: Mesclar com anotações existentes (preservar dados existentes)
+                    anotacoes = mesclarAnotacoes(anotacoesImportadas, anotacoes);
                     localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
-                    console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações importadas e salvas`);
+                    console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações após mesclagem (${anotacoesImportadas.length} novas)`);
                     return 'anotacoes';
                 }).catch(err => {
                     console.error('[IMPORT ANOTACOES] Erro ao importar:', err);
@@ -3666,12 +3682,57 @@
                                 conteudo = conteudo.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
                             }
                             
+                            // Separar Hot Topics do conteúdo geral
+                            let hotTopics = '';
+                            let conteudoGeral = conteudo || '';
+                            
+                            if (conteudo) {
+                                // Procurar por padrões de Hot Topics no início do conteúdo
+                                const hotTopicsPatterns = [
+                                    /^HOT\s+TOPICS?\s*🔥?\s*\n/i,
+                                    /^Hot\s+Topics?\s*🔥?\s*\n/i,
+                                    /^hot\s+topics?\s*🔥?\s*\n/i,
+                                    /^HOT\s+TOPICS?\s*🔥/i,
+                                    /^Hot\s+Topics?\s*🔥/i
+                                ];
+                                
+                                let hotTopicsStart = -1;
+                                for (const pattern of hotTopicsPatterns) {
+                                    const match = conteudo.match(pattern);
+                                    if (match) {
+                                        hotTopicsStart = match.index + match[0].length;
+                                        break;
+                                    }
+                                }
+                                
+                                if (hotTopicsStart > -1) {
+                                    // Extrair Hot Topics (tudo após o marcador até o fim ou próxima seção)
+                                    const restante = conteudo.substring(hotTopicsStart);
+                                    // Se houver conteúdo após Hot Topics, separar
+                                    const partes = restante.split(/\n\n+/);
+                                    
+                                    if (partes.length > 0) {
+                                        hotTopics = partes[0].trim();
+                                        // O resto vai para conteúdo geral (se houver mais de uma parte)
+                                        if (partes.length > 1) {
+                                            conteudoGeral = partes.slice(1).join('\n\n').trim();
+                                        } else {
+                                            conteudoGeral = '';
+                                        }
+                                    } else {
+                                        hotTopics = restante.trim();
+                                        conteudoGeral = '';
+                                    }
+                                }
+                            }
+                            
                             const anotacao = {
                                 id: getVal(r, 'id') || `${Date.now()}_${lineNum}`,
                                 temaId: getVal(r, 'temaid', 'tema_id', 'temaid', 'temaid'),
                                 area: getVal(r, 'area', 'topico'),
                                 tema: getVal(r, 'tema', 'assunto', 'titulo'),
-                                conteudo: conteudo,
+                                conteudo: conteudoGeral,
+                                hotTopics: hotTopics,
                                 ultimaAtualizacao: getVal(r, 'ultimaatualizacao', 'ultima_atualizacao', 'ultimaatualizacao', 'data', 'dataatualizacao') || new Date().toISOString().split('T')[0]
                             };
                             
@@ -5119,7 +5180,12 @@
                 html += `<div style="margin-bottom: 30px;">`;
                 html += `<h3 style="color: var(--turquesa-light); margin-bottom: 15px; font-size: 18px;">📚 ${area}</h3>`;
                 
-                anotacoesPorArea[area].forEach(anotacao => {
+                // Ordenar temas dentro da área alfabeticamente (como sugerido pelo Opus)
+                anotacoesPorArea[area].sort((a, b) => {
+                    const temaA = a.tema || '';
+                    const temaB = b.tema || '';
+                    return temaA.localeCompare(temaB, 'pt-BR', { sensitivity: 'base' });
+                }).forEach(anotacao => {
                     const tema = dados.find(t => String(t.id) === String(anotacao.temaId));
                     if (!tema) return;
                     
