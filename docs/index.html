@@ -1521,8 +1521,7 @@
 <body class="splash-loading">
     <!-- SPLASH SCREEN -->
     <div id="splashScreen">
-        <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" id="splashLogoImg" onerror="this.style.display='none'; document.getElementById('splashLogoFallback').style.display='flex';">
-        <div class="splash-logo" id="splashLogoFallback" style="display: none; width: 200px; height: 200px; margin: 0 auto 30px; background: linear-gradient(135deg, var(--turquesa-neon), var(--cobre-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 80px; color: rgba(20,35,45,0.9); font-weight: bold; text-shadow: 0 0 20px rgba(0,255,224,0.5); animation: logoFloat 3s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(0, 255, 224, 0.3));">VRVS</div>
+        <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
         <div class="splash-loader"></div>
@@ -9222,39 +9221,25 @@
         
         // ==================== INICIALIZAÇÃO ATUALIZADA ====================
         
-        // Função initApp - inicialização completa da aplicação
-        function initApp() {
-            // Splash Screen - Esconder após carregar
-            setTimeout(() => {
-                const splash = document.getElementById('splashScreen');
-                if (splash) {
-                    splash.classList.add('fade-out');
-                    document.body.classList.remove('splash-loading');
-                    setTimeout(() => {
-                        splash.classList.add('hidden');
-                    }, 800);
-                }
-            }, 2500); // Mostrar por 2.5 segundos
+        // Sobrescrever initApp para incluir novas renderizações (se existir)
+        if (typeof initApp !== 'undefined') {
+            const initAppOriginal = initApp;
+            initApp = function() {
+                initAppOriginal();
             
-            // Renderizar novas abas se estiverem ativas
-            setTimeout(() => {
-                if (document.getElementById('analyticsContainer')) {
-                    renderAnalytics();
-                }
-                if (document.getElementById('ajudaContainer')) {
-                    renderAjuda();
-                }
-                if (document.getElementById('cadernoAreasContainer')) {
-                    renderCadernoV2();
-                }
-            }, 500);
-        }
-        
-        // Chamar initApp quando DOM estiver pronto
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
+                // Renderizar novas abas se estiverem ativas
+                setTimeout(() => {
+                    if (document.getElementById('analyticsContainer')) {
+                        renderAnalytics();
+                    }
+                    if (document.getElementById('ajudaContainer')) {
+                        renderAjuda();
+                    }
+                    if (document.getElementById('cadernoAreasContainer')) {
+                        renderCadernoV2();
+                    }
+                }, 500);
+            };
         }
     </script>
 </body>
