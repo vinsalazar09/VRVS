@@ -346,8 +346,36 @@
         
         .form-textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 150px;
+            max-height: 400px;
+            overflow-y: auto;
             font-family: inherit;
+            line-height: 1.6;
+        }
+        
+        /* CORREÇÃO: Cursor piscando fora dos boxes no mobile */
+        .form-input, .form-textarea {
+            -webkit-user-select: text;
+            user-select: text;
+            caret-color: var(--cobre-main);
+        }
+        
+        .form-input:focus, .form-textarea:focus {
+            position: relative;
+            z-index: 1000;
+        }
+        
+        /* CORREÇÃO: Ajustar viewport quando teclado aparece no mobile */
+        @media screen and (max-width: 768px) {
+            .form-input:focus, .form-textarea:focus {
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+            }
+            
+            /* Garantir que modal seja scrollável quando input está em foco */
+            .modal-content {
+                -webkit-overflow-scrolling: touch;
+            }
         }
         
         /* BUTTONS NEON */
@@ -1610,6 +1638,11 @@
             <div class="modal-body">
                 <input type="hidden" id="novaDiarioId">
                 
+                <div class="form-group">
+                    <label class="form-label">📅 Data</label>
+                    <input type="date" class="form-input" id="novaDiarioData">
+                </div>
+                
                 <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label class="form-label">Área</label>
@@ -1630,7 +1663,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">✅ Resposta</label>
-                    <textarea class="form-textarea" id="novaDiarioResposta" rows="4" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..."></textarea>
+                    <textarea class="form-textarea" id="novaDiarioResposta" rows="6" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..." style="min-height: 150px; overflow-y: auto;"></textarea>
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background: rgba(255,159,64,0.1); border-radius: 8px; border: 1px solid rgba(255,159,64,0.3);">
@@ -1745,7 +1778,7 @@
                     <label class="form-label" style="color: var(--cobre-light);">🔥 Hot Topics (pontos de prova)</label>
                     <textarea class="form-textarea" id="editAnotacaoHotTopics" rows="5" 
                         placeholder="1) Classificação de Wiltze&#10;2) Técnica de Gill&#10;3) Clínica do adolescente..."
-                        style="background: rgba(255,127,80,0.05); border-color: rgba(255,127,80,0.3);"></textarea>
+                        style="background: rgba(255,127,80,0.05); border-color: rgba(255,127,80,0.3); min-height: 120px; overflow-y: auto;"></textarea>
                     <div style="font-size: 11px; color: rgba(255,127,80,0.7); margin-top: 5px;">
                         💡 Liste os pontos que mais caem na prova
                     </div>
@@ -1755,7 +1788,7 @@
                 <div class="form-group">
                     <label class="form-label">📝 Anotações Gerais</label>
                     <textarea class="form-textarea" id="editAnotacaoConteudo" rows="6" 
-                        placeholder="Suas anotações sobre o tema..."></textarea>
+                        placeholder="Suas anotações sobre o tema..." style="min-height: 150px; overflow-y: auto;"></textarea>
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
@@ -2022,7 +2055,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Diretriz Próxima Sessão</label>
-                            <textarea class="form-textarea" id="feedbackSugestao" rows="3" placeholder="Ex: Revisar flashcards + questões"></textarea>
+                            <textarea class="form-textarea" id="feedbackSugestao" rows="4" placeholder="Ex: Revisar flashcards + questões" style="min-height: 100px; overflow-y: auto;"></textarea>
                         </div>
                         <button type="submit" class="btn">✅ SALVAR PERFORMANCE</button>
                     </form>
@@ -7334,6 +7367,13 @@
             document.getElementById('novaDiarioResposta').value = '';
             document.getElementById('novaDiarioAtencao').checked = false;
             
+            // Definir data padrão (hoje)
+            const hoje = new Date().toISOString().split('T')[0];
+            const dataInput = document.getElementById('novaDiarioData');
+            if (dataInput) {
+                dataInput.value = hoje;
+            }
+            
             // Popular datalist com áreas fixas
             const datalistAreas = document.getElementById('listAreasDiario');
             if (datalistAreas) {
@@ -7386,6 +7426,8 @@
             const topico = document.getElementById('novaDiarioTopico').value.trim();
             const resposta = document.getElementById('novaDiarioResposta').value.trim();
             const atencao = document.getElementById('novaDiarioAtencao').checked;
+            const dataInput = document.getElementById('novaDiarioData');
+            const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
             
             if (!area || !tema || !topico) {
                 mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
@@ -7404,13 +7446,14 @@
                     entrada.topico = topico;
                     entrada.resposta = resposta;
                     entrada.atencao = atencao;
+                    entrada.data = data; // Usar data do campo
                     entrada.ultimaAtualizacao = hoje;
                 }
             } else {
                 // Nova entrada
                 const novaEntrada = {
                     id: Date.now(),
-                    data: hoje,
+                    data: data, // Usar data do campo
                     area: area,
                     tema: tema,
                     topico: topico,
@@ -7627,6 +7670,10 @@
             if (!entrada) return;
             
             document.getElementById('novaDiarioId').value = entrada.id;
+            const dataInput = document.getElementById('novaDiarioData');
+            if (dataInput) {
+                dataInput.value = entrada.data || new Date().toISOString().split('T')[0];
+            }
             document.getElementById('novaDiarioArea').value = entrada.area;
             document.getElementById('novaDiarioTema').value = entrada.tema;
             document.getElementById('novaDiarioTopico').value = entrada.topico;
@@ -8201,10 +8248,32 @@
             `;
             
             // Renderizar gráficos usando os IDs específicos da aba Analytics
-            requestAnimationFrame(() => {
+            // CORREÇÃO: Aguardar Chart.js estar disponível e DOM estar pronto
+            const tentarRenderizarGraficos = () => {
+                if (typeof Chart === 'undefined') {
+                    console.warn('[ANALYTICS GRAFICOS] Chart.js não está disponível ainda, tentando novamente...');
+                    setTimeout(tentarRenderizarGraficos, 100);
+                    return;
+                }
+                
+                const canvasBarras = document.getElementById('chartBarrasAnalytics');
+                const canvasLinha = document.getElementById('chartLinhaAnalytics');
+                const canvasRadar = document.getElementById('chartRadarAnalytics');
+                
+                if (!canvasBarras || !canvasLinha || !canvasRadar) {
+                    console.warn('[ANALYTICS GRAFICOS] Canvas não encontrado, tentando novamente...');
+                    setTimeout(tentarRenderizarGraficos, 100);
+                    return;
+                }
+                
+                console.log('[ANALYTICS GRAFICOS] Renderizando gráficos...');
                 renderChartBarras('chartBarrasAnalytics');
                 renderChartLinha('chartLinhaAnalytics');
                 renderChartRadar('chartRadarAnalytics');
+            };
+            
+            requestAnimationFrame(() => {
+                setTimeout(tentarRenderizarGraficos, 50);
             });
         }
         
@@ -8258,8 +8327,20 @@
             `;
             
             // Chamar função de histórico específica para Analytics após DOM estar pronto
-            requestAnimationFrame(() => {
+            // CORREÇÃO: Aguardar DOM estar pronto e tentar múltiplas vezes se necessário
+            const tentarRenderizarHistorico = () => {
+                const tbody = document.getElementById('historicoTableBodyAnalytics');
+                if (!tbody) {
+                    console.warn('[ANALYTICS HISTORICO] Tbody não encontrado, tentando novamente...');
+                    setTimeout(tentarRenderizarHistorico, 100);
+                    return;
+                }
+                console.log('[ANALYTICS HISTORICO] Renderizando histórico...');
                 renderHistoricoAnalytics();
+            };
+            
+            requestAnimationFrame(() => {
+                setTimeout(tentarRenderizarHistorico, 50);
             });
         }
         
