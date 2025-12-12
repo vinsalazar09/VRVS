@@ -9221,25 +9221,39 @@
         
         // ==================== INICIALIZAÇÃO ATUALIZADA ====================
         
-        // Sobrescrever initApp para incluir novas renderizações
-        if (typeof initApp !== 'undefined') {
-            const initAppOriginal = initApp;
-            initApp = function() {
-                initAppOriginal();
+        // Função initApp - inicialização completa da aplicação
+        function initApp() {
+            // Splash Screen - Esconder após carregar
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                if (splash) {
+                    splash.classList.add('fade-out');
+                    document.body.classList.remove('splash-loading');
+                    setTimeout(() => {
+                        splash.classList.add('hidden');
+                    }, 800);
+                }
+            }, 2500); // Mostrar por 2.5 segundos
             
-                // Renderizar novas abas se estiverem ativas
-                setTimeout(() => {
-                    if (document.getElementById('analyticsContainer')) {
-                        renderAnalytics();
-                    }
-                    if (document.getElementById('ajudaContainer')) {
-                        renderAjuda();
-                    }
-                    if (document.getElementById('cadernoAreasContainer')) {
-                        renderCadernoV2();
-                    }
-                }, 500);
-            };
+            // Renderizar novas abas se estiverem ativas
+            setTimeout(() => {
+                if (document.getElementById('analyticsContainer')) {
+                    renderAnalytics();
+                }
+                if (document.getElementById('ajudaContainer')) {
+                    renderAjuda();
+                }
+                if (document.getElementById('cadernoAreasContainer')) {
+                    renderCadernoV2();
+                }
+            }, 500);
+        }
+        
+        // Chamar initApp quando DOM estiver pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
         }
     </script>
 </body>
