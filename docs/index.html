@@ -358,23 +358,39 @@
             -webkit-user-select: text;
             user-select: text;
             caret-color: var(--cobre-main);
+            /* Forçar cursor a aparecer dentro do elemento */
+            position: relative;
         }
         
         .form-input:focus, .form-textarea:focus {
             position: relative;
             z-index: 1000;
+            /* Forçar aceleração hardware para corrigir renderização do cursor */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            /* Garantir que elemento está visível e focado */
+            will-change: transform;
+            -webkit-tap-highlight-color: rgba(255, 127, 80, 0.3);
         }
         
         /* CORREÇÃO: Ajustar viewport quando teclado aparece no mobile */
         @media screen and (max-width: 768px) {
-            .form-input:focus, .form-textarea:focus {
-                transform: translateZ(0);
-                -webkit-transform: translateZ(0);
+            /* Prevenir zoom automático no iOS quando input recebe foco */
+            .form-input, .form-textarea, .form-select {
+                font-size: 16px !important;
             }
             
             /* Garantir que modal seja scrollável quando input está em foco */
             .modal-content {
                 -webkit-overflow-scrolling: touch;
+                /* Ajustar posição do modal quando teclado aparece */
+                position: relative;
+            }
+            
+            /* Forçar scroll para elemento focado */
+            .form-input:focus, .form-textarea:focus, .form-select:focus {
+                scroll-margin-top: 100px;
+                -webkit-scroll-margin-top: 100px;
             }
         }
         
@@ -1646,13 +1662,15 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label class="form-label">Área</label>
-                        <input type="text" class="form-input" id="novaDiarioArea" list="listAreasDiario" placeholder="Ex: Joelho">
-                        <datalist id="listAreasDiario"></datalist>
+                        <select class="form-select" id="novaDiarioArea" onchange="atualizarTemasDiario(this.value)">
+                            <option value="">Selecione...</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label class="form-label">Tema</label>
-                        <input type="text" class="form-input" id="novaDiarioTema" list="listTemasDiario" placeholder="Ex: Menisco">
-                        <datalist id="listTemasDiario"></datalist>
+                        <select class="form-select" id="novaDiarioTema">
+                            <option value="">Selecione uma área primeiro</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -7361,8 +7379,6 @@
         function abrirNovaEntradaDiario() {
             // Limpar campos
             document.getElementById('novaDiarioId').value = '';
-            document.getElementById('novaDiarioArea').value = '';
-            document.getElementById('novaDiarioTema').value = '';
             document.getElementById('novaDiarioTopico').value = '';
             document.getElementById('novaDiarioResposta').value = '';
             document.getElementById('novaDiarioAtencao').checked = false;
@@ -7374,24 +7390,23 @@
                 dataInput.value = hoje;
             }
             
-            // Popular datalist com áreas fixas
-            const datalistAreas = document.getElementById('listAreasDiario');
-            if (datalistAreas) {
-                datalistAreas.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            // Popular select de áreas com AREAS_FIXAS
+            const areaSelect = document.getElementById('novaDiarioArea');
+            if (areaSelect) {
+                areaSelect.innerHTML = '<option value="">Selecione...</option>';
+                AREAS_FIXAS.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area;
+                    option.textContent = area;
+                    areaSelect.appendChild(option);
+                });
+                areaSelect.value = ''; // Limpar seleção
             }
             
-            // Limpar datalist de temas
-            const datalistTemas = document.getElementById('listTemasDiario');
-            if (datalistTemas) {
-                datalistTemas.innerHTML = '';
-            }
-            
-            // Adicionar listener para atualizar temas quando área mudar
-            const areaInput = document.getElementById('novaDiarioArea');
-            if (areaInput) {
-                areaInput.oninput = function() {
-                    atualizarTemasDiario(this.value);
-                };
+            // Limpar select de temas
+            const temaSelect = document.getElementById('novaDiarioTema');
+            if (temaSelect) {
+                temaSelect.innerHTML = '<option value="">Selecione uma área primeiro</option>';
             }
             
             // Mostrar modal
@@ -7399,9 +7414,11 @@
         }
         
         function atualizarTemasDiario(areaSelecionada) {
-            const datalistTemas = document.getElementById('listTemasDiario');
-            if (!datalistTemas || !areaSelecionada) {
-                if (datalistTemas) datalistTemas.innerHTML = '';
+            const temaSelect = document.getElementById('novaDiarioTema');
+            if (!temaSelect || !areaSelecionada) {
+                if (temaSelect) {
+                    temaSelect.innerHTML = '<option value="">Selecione uma área primeiro</option>';
+                }
                 return;
             }
             
@@ -7412,8 +7429,14 @@
                 .filter((tema, index, self) => self.indexOf(tema) === index) // Remover duplicatas
                 .sort();
             
-            // Popular datalist
-            datalistTemas.innerHTML = temasDaArea.map(tema => `<option value="${tema}">`).join('');
+            // Popular select
+            temaSelect.innerHTML = '<option value="">Selecione...</option>';
+            temasDaArea.forEach(tema => {
+                const option = document.createElement('option');
+                option.value = tema;
+                option.textContent = tema;
+                temaSelect.appendChild(option);
+            });
         }
         
         function fecharModalDiario() {
@@ -7674,29 +7697,35 @@
             if (dataInput) {
                 dataInput.value = entrada.data || new Date().toISOString().split('T')[0];
             }
-            document.getElementById('novaDiarioArea').value = entrada.area;
-            document.getElementById('novaDiarioTema').value = entrada.tema;
+            // Popular select de áreas
+            const areaSelect = document.getElementById('novaDiarioArea');
+            if (areaSelect) {
+                areaSelect.innerHTML = '<option value="">Selecione...</option>';
+                AREAS_FIXAS.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area;
+                    option.textContent = area;
+                    areaSelect.appendChild(option);
+                });
+                areaSelect.value = entrada.area; // Selecionar área da entrada
+            }
+            
+            // Atualizar temas baseado na área selecionada
+            atualizarTemasDiario(entrada.area);
+            
+            // Selecionar tema após popular select
+            setTimeout(() => {
+                const temaSelect = document.getElementById('novaDiarioTema');
+                if (temaSelect) {
+                    temaSelect.value = entrada.tema;
+                }
+            }, 50);
+            
             document.getElementById('novaDiarioTopico').value = entrada.topico;
             document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
             document.getElementById('novaDiarioAtencao').checked = entrada.atencao || false;
             
-            // Popular datalist de áreas
-            const datalistAreas = document.getElementById('listAreasDiario');
-            if (datalistAreas) {
-                datalistAreas.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
-            }
-            
-            // Atualizar temas baseado na área da entrada
-            atualizarTemasDiario(entrada.area);
-            
-            // Adicionar listener para atualizar temas quando área mudar
-            const areaInput = document.getElementById('novaDiarioArea');
-            if (areaInput) {
-                areaInput.oninput = function() {
-                    atualizarTemasDiario(this.value);
-                };
-            }
-            
+            // Mostrar modal
             document.getElementById('modalNovaDiario').classList.add('active');
         }
         

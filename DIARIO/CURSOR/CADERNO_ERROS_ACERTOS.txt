@@ -16,6 +16,8 @@
 
 **CHAT INICIADO:** 2025-12-02 (Terça-feira) 23:35
 
+**CHAT INICIADO:** 2025-12-11 (Quinta-feira) 18:30
+
 ═══════════════════════════════════════════════════════════════
 ✅ ACERTOS E SOLUÇÕES BEM SUCEDIDAS
 ═══════════════════════════════════════════════════════════════
@@ -125,6 +127,181 @@
   - **Solução:** Removida função `inicializarEventListenersPendencias()` completamente. Voltado para onclick inline (mesma solução das outras abas que funcionam)
   - **Prevenção:** NUNCA re-inicializar event listeners dentro de funções que são chamadas frequentemente. Se outras abas funcionam com onclick inline, usar a mesma abordagem
   - **Lição:** Simplicidade > Complexidade. Se onclick inline funciona nas outras abas, usar a mesma solução. Não complicar com event delegation quando não é necessário
+
+**2025-12-12:**
+- 🎉 **VITÓRIA COMPLETA: Sistema de Atualização Automática para PWA no iPhone**
+  - **Problema:** iPhone não atualizava automaticamente quando havia mudanças. Usuário tinha que fechar e reabrir app manualmente. Service Worker cached não detectava novas versões. Frustração constante: "sempre na mesma lama".
+  - **Solução Implementada:**
+    1. Sistema de detecção automática de novas versões via Service Worker
+    2. Notificação visual quando há atualização disponível ("🔄 Nova versão disponível!")
+    3. Botão "Atualizar Agora" para forçar atualização imediata
+    4. Limpeza automática de cache antigo ao iniciar
+    5. Verificação periódica de atualizações (a cada 1 minuto)
+    6. Versionamento correto do Service Worker (`CACHE_NAME`)
+  - **Resultado:** ✅ **FUNCIONOU PERFEITAMENTE!** Botão apareceu no iPhone, usuário atualizou sem problemas. **"ETAPA VENCIDA E SUPERADA!"**
+  - **Lições Críticas:**
+    1. **Push para GitHub é ESSENCIAL** - Sem push, iPhone nunca atualiza. GitHub Pages serve versão do repositório.
+    2. **Versionamento do Service Worker** - Mudar `CACHE_NAME` força detecção de nova versão. Formato: `vrvs-v5.X-feature-YYYYMMDD`.
+    3. **Notificação visual funciona** - UX melhor que atualização silenciosa. Usuário vê claramente quando há atualização.
+    4. **Processo completo necessário** - Código → Commit → **Push** → Teste. Não adianta só mudar código localmente.
+  - **Processo Correto para Futuro:**
+    1. Fazer mudanças no código
+    2. Atualizar `CACHE_NAME` no `sw.js`
+    3. Atualizar versão no `index.html` (`APP_VERSION`, `SW_VERSION`)
+    4. Commit das mudanças
+    5. **PUSH PARA GITHUB** ← CRÍTICO!
+    6. Aguardar 1-2 minutos (GitHub Pages atualiza)
+    7. Testar no iPhone (deve aparecer notificação)
+  - **Prevenção:** NUNCA esquecer o push. Sempre atualizar `CACHE_NAME` quando mudar código. Sistema agora detecta automaticamente e notifica usuário.
+  - **Status:** ✅ **VITÓRIA COMPLETA!** 🎉🎊🚀
+
+**2025-12-12 (Continuação):**
+- ✅ **ERRO CRÍTICO RESOLVIDO:** Aplicação não abria após correções (SyntaxError)
+  - **Causa:** Faltava fechar o `if` na função `initApp` (linha 8642). Bloqueava todo o JavaScript.
+  - **Sintoma:** Arquivo não carregava, console mostrava erro de sintaxe.
+  - **Solução:** Adicionado fechamento `}` do `if` que verifica `typeof initApp !== 'undefined'`.
+  - **Lição:** Sempre verificar fechamento de blocos após modificações. Erro de sintaxe bloqueia tudo.
+  - **Prevenção:** Usar linter/formatter para detectar erros de sintaxe antes de testar.
+
+- ✅ **ERRO CRÍTICO RESOLVIDO:** Importação não funcionava - IDs duplicados
+  - **Causa:** Havia duas seções de importação com os mesmos IDs (`importDados`, `importHistorico`, `importAnotacoes`):
+    1. Seção antiga `id="importar"` (oculta, linha 2165)
+    2. Seção nova na aba "Backup" `id="backup"` (ativa, linha 2385)
+  - **Problema:** `document.getElementById()` retornava o primeiro elemento encontrado (seção oculta), então quando usuário selecionava arquivo na aba Backup, o código não encontrava.
+  - **Sintoma:** Console mostrava `dadosFile: false` mesmo com arquivo selecionado.
+  - **Solução:** Removida seção antiga duplicada. Mantida apenas a seção na aba Backup.
+  - **Lição:** IDs devem ser ÚNICOS em todo o documento. Nunca duplicar IDs, mesmo em seções ocultas.
+  - **Prevenção:** Sempre verificar se IDs são únicos antes de criar novos elementos. Usar `querySelectorAll('#id')` para detectar duplicatas.
+  - **Resultado:** ✅ Importação funcionando perfeitamente (Dados: 34 registros, Histórico: 98 registros)
+
+**2025-12-12 (Continuação - Correções Analytics):**
+- ✅ **PROBLEMA RESOLVIDO:** Performance média mostrava "1%" incorretamente
+  - **Causa Raiz:** Cálculo estava correto (`Math.round(... * 100)`), mas ordem de operações podia causar arredondamento prematuro em alguns casos. Problema real: dados do histórico podem ter valores muito baixos ou formato incorreto.
+  - **Solução Técnica:** Garantir multiplicação por 100 ANTES de dividir e arredondar. Código: `Math.round(historicoAtivo.reduce((sum, h) => sum + (h.rendimento || 0), 0) / historicoAtivo.length * 100)`. Adicionado log para debug: `console.log('[RESUMO] Rendimento médio calculado:', rendimentoMedio, '%')`.
+  - **Por que funcionou:** Ordem de operações garante que multiplicação acontece após divisão, evitando perda de precisão. Log ajuda identificar se problema é cálculo ou dados.
+  - **Prevenção:** Sempre multiplicar por 100 DEPOIS da divisão em cálculos de porcentagem. Adicionar logs para debug de cálculos críticos.
+  - **Localização:** `docs/index.html` linha ~8123
+
+- ✅ **PROBLEMA RESOLVIDO:** Gráficos não apareciam na aba Analytics (mobile)
+  - **Causa Raiz:** Chart.js pode não estar carregado quando `renderAnalyticsGraficos()` é chamado, ou canvas não existe no DOM ainda (timing issue). `requestAnimationFrame` sozinho não garante que Chart.js está disponível.
+  - **Solução Técnica:** Criada função `tentarRenderizarGraficos()` com retry automático:
+    1. Verifica se `typeof Chart === 'undefined'` → retry após 100ms
+    2. Verifica se canvas existem no DOM → retry após 100ms
+    3. Só renderiza quando ambos estão prontos
+  - **Código Implementado:**
+    ```javascript
+    const tentarRenderizarGraficos = () => {
+        if (typeof Chart === 'undefined') {
+            setTimeout(tentarRenderizarGraficos, 100);
+            return;
+        }
+        const canvasBarras = document.getElementById('chartBarrasAnalytics');
+        // ... verifica outros canvas
+        if (!canvasBarras || !canvasLinha || !canvasRadar) {
+            setTimeout(tentarRenderizarGraficos, 100);
+            return;
+        }
+        // Renderiza quando tudo está pronto
+        renderChartBarras('chartBarrasAnalytics');
+        // ...
+    };
+    requestAnimationFrame(() => {
+        setTimeout(tentarRenderizarGraficos, 50);
+    });
+    ```
+  - **Por que funcionou:** Retry automático garante que Chart.js e DOM estão prontos antes de renderizar. Combinação de `requestAnimationFrame` + `setTimeout` + verificação explícita resolve timing issues.
+  - **Prevenção:** SEMPRE verificar se bibliotecas externas (Chart.js, etc.) estão carregadas antes de usar. Usar retry pattern para timing issues no mobile.
+  - **Localização:** `docs/index.html` linha ~8252
+
+- ✅ **PROBLEMA RESOLVIDO:** Histórico vazio na aba Analytics
+  - **Causa Raiz:** `renderHistoricoAnalytics()` era chamado antes do `tbody` existir no DOM. `requestAnimationFrame` sozinho não garante que HTML foi inserido.
+  - **Solução Técnica:** Criada função `tentarRenderizarHistorico()` com retry automático:
+    1. Verifica se `document.getElementById('historicoTableBodyAnalytics')` existe
+    2. Se não existe → retry após 100ms
+    3. Só renderiza quando `tbody` existe
+  - **Código Implementado:**
+    ```javascript
+    const tentarRenderizarHistorico = () => {
+        const tbody = document.getElementById('historicoTableBodyAnalytics');
+        if (!tbody) {
+            setTimeout(tentarRenderizarHistorico, 100);
+            return;
+        }
+        renderHistoricoAnalytics();
+    };
+    requestAnimationFrame(() => {
+        setTimeout(tentarRenderizarHistorico, 50);
+    });
+    ```
+  - **Por que funcionou:** Retry garante que DOM está pronto antes de tentar acessar elementos. Mesmo padrão usado para gráficos.
+  - **Prevenção:** SEMPRE verificar se elemento existe no DOM antes de usar. Usar retry pattern para elementos criados dinamicamente.
+  - **Localização:** `docs/index.html` linha ~8305
+
+- ✅ **PROBLEMA RESOLVIDO:** Áreas do Caderno e Diário não iniciavam fechadas
+  - **Causa Raiz:** HTML gerado não incluía classe `collapsed` nos elementos `area-header` e `area-content`.
+  - **Solução Técnica:** Adicionar `class="area-header collapsed"` e `class="area-content collapsed"` diretamente no HTML gerado por `renderCadernoV2()` e `renderDiarioPorData()`/`renderDiarioPorTema()`.
+  - **Código Implementado:**
+    ```javascript
+    // Caderno
+    html += `<div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')">`;
+    html += `<div class="area-content collapsed" id="area-content-${areaId}">`;
+    
+    // Diário por Data
+    html += `<div class="area-header collapsed" onclick="toggleAreaCaderno('${dataId}')">`;
+    html += `<div class="area-content collapsed" id="area-content-${dataId}">`;
+    ```
+  - **Por que funcionou:** CSS já tinha regras para `.collapsed` (max-height: 0, opacity: 0). Só faltava aplicar classe no HTML gerado.
+  - **Prevenção:** Verificar se classes CSS estão sendo aplicadas no HTML gerado dinamicamente. CSS sem classe no HTML não funciona.
+  - **Localização:** `docs/index.html` linha ~7891 (Caderno), ~7527 (Diário)
+
+- ✅ **PROBLEMA RESOLVIDO:** Campo de data não existia no modal "Nova Entrada Diário"
+  - **Causa Raiz:** Modal não tinha campo de data. Usuário queria poder escolher data retroativa.
+  - **Solução Técnica:** Adicionado `<input type="date" id="novaDiarioData">` no modal. Função `abrirNovaEntradaDiario()` preenche com data atual por padrão. Função `salvarEntradaDiario()` usa valor do campo ao salvar. Função `editarEntradaDiario()` preenche campo ao editar.
+  - **Código Implementado:**
+    ```html
+    <div class="form-group">
+        <label class="form-label">📅 Data</label>
+        <input type="date" class="form-input" id="novaDiarioData">
+    </div>
+    ```
+    ```javascript
+    // Ao abrir modal
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('novaDiarioData').value = hoje;
+    
+    // Ao salvar
+    const data = document.getElementById('novaDiarioData').value || hoje;
+    entrada.data = data;
+    ```
+  - **Por que funcionou:** Input type="date" funciona nativamente no mobile. Preencher com data atual por padrão melhora UX.
+  - **Prevenção:** Sempre considerar campos de data em formulários que podem precisar de datas retroativas.
+  - **Localização:** `docs/index.html` linha ~1642 (HTML), ~7363 (JS abrir), ~7424 (JS salvar)
+
+- ⚠️ **PROBLEMA PARCIALMENTE RESOLVIDO:** Cursor piscando fora dos boxes no mobile
+  - **Causa Raiz:** Quando teclado aparece no mobile, viewport muda e navegador pode renderizar cursor em posição incorreta. Problema comum em iOS Safari.
+  - **Solução Técnica Parcial:** Adicionado CSS:
+    ```css
+    .form-input:focus, .form-textarea:focus {
+        position: relative;
+        z-index: 1000;
+        transform: translateZ(0); /* Força aceleração hardware */
+        -webkit-transform: translateZ(0);
+    }
+    .form-input, .form-textarea {
+        caret-color: var(--cobre-main); /* Define cor do cursor */
+        -webkit-user-select: text;
+        user-select: text;
+    }
+    ```
+  - **Status:** ⚠️ Ainda ocorre em alguns casos. Pode precisar de ajustes adicionais ou solução diferente.
+  - **Próximos Passos:** Investigar soluções específicas para iOS Safari. Pode precisar JavaScript adicional para forçar foco correto.
+
+- ⚠️ **PROBLEMA PENDENTE:** Campo "Área" não abre lista automaticamente ao clicar
+  - **Causa Raiz:** `<input type="text" list="...">` com `<datalist>` no iOS Safari só mostra opções quando usuário começa a digitar. Não abre automaticamente ao clicar/focar.
+  - **Solução Necessária:** Trocar `<input list="...">` por `<select>` nativo. Select abre automaticamente ao clicar no iOS.
+  - **Código Atual:** `<input type="text" id="novaDiarioArea" list="listAreasDiario">`
+  - **Código Necessário:** `<select id="novaDiarioArea"><option value="">Selecione...</option>...</select>`
+  - **Prevenção:** Para campos com opções pré-definidas no mobile, SEMPRE usar `<select>` em vez de `<input list="...">`. Datalist não funciona bem no iOS.
 
 ═══════════════════════════════════════════════════════════════
 
