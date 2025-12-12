@@ -1314,6 +1314,54 @@
         </div>
     </div>
     
+    <!-- MODAL NOVA ENTRADA DIÁRIO -->
+    <div id="modalNovaDiario" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">✏️ NOVA ENTRADA</h2>
+                <button class="modal-close" onclick="fecharModalDiario()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <input type="hidden" id="novaDiarioId">
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label class="form-label">Área</label>
+                        <input type="text" class="form-input" id="novaDiarioArea" list="listAreasDiario" placeholder="Ex: Joelho">
+                        <datalist id="listAreasDiario"></datalist>
+                    </div>
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label class="form-label">Tema</label>
+                        <input type="text" class="form-input" id="novaDiarioTema" placeholder="Ex: Menisco">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">❓ Tópico / Pergunta</label>
+                    <input type="text" class="form-input" id="novaDiarioTopico" placeholder="Ex: Classificação de FAIRBANKS">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">✅ Resposta</label>
+                    <textarea class="form-textarea" id="novaDiarioResposta" rows="4" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..."></textarea>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                    <input type="checkbox" id="novaDiarioAtencao" style="width: 18px; height: 18px;">
+                    <label for="novaDiarioAtencao" style="color: var(--cobre-light); font-size: 13px; cursor: pointer;">
+                        ⚠️ Marcar para revisitar amanhã
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="salvarEntradaDiario()" style="flex: 1;">💾 SALVAR</button>
+                    <button class="btn btn-secondary" onclick="salvarEContinuarDiario()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- MODAL ENCERRAR SESSÃO -->
     <div id="encerrarSessaoModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
@@ -1335,7 +1383,7 @@
                     </div>
                     <div>
                         <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-bottom: 5px;">⏸️ Tempo Total de Intervalos</div>
-                        <div id="modalTempoIntervalos" style="font-size: 16px; font-weight: bold; color: #FFA366;">00:00:00</div>
+                        <div id="modalTempoIntervalos" style="font-size: 16px; font-weight: bold; color: #FFA366;">0 min</div>
                     </div>
                 </div>
                 
@@ -1389,6 +1437,7 @@
             <div class="tab" onclick="showSection('historico')">📜 Histórico</div>
             <div class="tab" onclick="showSection('lembretes')">📌 Lembretes</div>
             <div class="tab" onclick="showSection('caderno')">📔 Caderno</div>
+            <div class="tab" onclick="showSection('diario')">📔 Diário</div>
             <div class="tab" onclick="showSection('relatorios')">📊 Relatórios</div>
             <div class="tab" onclick="showSection('importar')">📥 Importar</div>
             <div class="tab" onclick="showSection('exportar')">📤 Exportar</div>
@@ -1471,7 +1520,10 @@
                     <form id="cadastroForm">
                         <div class="form-group">
                             <label class="form-label">Área de Conhecimento</label>
-                            <input type="text" class="form-input" id="novaArea" placeholder="Ex: Ombro e Cotovelo" required>
+                            <input type="text" class="form-input" id="novaArea" list="listAreasFixas" placeholder="Ex: Ombro e Cotovelo" required>
+                            <datalist id="listAreasFixas">
+                                ${AREAS_FIXAS.map(area => `<option value="${area}">`).join('')}
+                            </datalist>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tema Específico</label>
@@ -1511,7 +1563,7 @@
                                 <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 5px;">⏱️ Tempo da Sessão</div>
                                 <div id="cronometroDisplay" style="font-size: 28px; font-weight: bold; color: #00FFE0; font-family: 'Courier New', monospace;">00:00:00</div>
                                 <div id="tempoIntervaloTotal" style="font-size: 11px; color: rgba(255,165,0,0.7); margin-top: 5px; display: none;">
-                                    ⏸️ Intervalo acumulado: <span id="tempoIntervaloTotalDisplay">00:00:00</span>
+                                    ⏸️ Intervalo acumulado: <span id="tempoIntervaloTotalDisplay">0 min</span>
                                 </div>
                             </div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -1522,7 +1574,7 @@
                                 <button id="cronometroEncerrar" class="btn btn-small" onclick="encerrarSessao()" style="background: rgba(0,206,209,0.2); color: #00FFE0; border: 1px solid rgba(0,206,209,0.4);">✅ Encerrar Sessão</button>
                             </div>
                             <div id="tempoIntervalo" style="font-size: 11px; color: rgba(255,165,0,0.7); margin-top: 5px; display: none;">
-                                ⏸️ Em intervalo: <span id="tempoIntervaloDisplay">00:00:00</span>
+                                ⏸️ Em intervalo: <span id="tempoIntervaloDisplay">0 min</span>
                             </div>
                         </div>
                     </div>
@@ -1578,11 +1630,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Diretriz Próxima Sessão</label>
-                            <input type="text" class="form-input" id="feedbackSugestao" placeholder="Ex: Revisar flashcards + questões">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Log da Sessão</label>
-                            <textarea class="form-textarea" id="feedbackObs" placeholder="Ex: Q17/20 em 30min | FC8/10 em 15min"></textarea>
+                            <textarea class="form-textarea" id="feedbackSugestao" rows="3" placeholder="Ex: Revisar flashcards + questões"></textarea>
                         </div>
                         <button type="submit" class="btn">✅ SALVAR PERFORMANCE</button>
                     </form>
@@ -1864,6 +1912,82 @@
                 </div>
             </div>
             
+            <!-- DIÁRIO -->
+            <div id="diario" class="section">
+                <div class="card">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>📔 DIÁRIO DE APRENDIZADOS</span>
+                        <button class="btn btn-small" onclick="abrirNovaEntradaDiario()">+ Nova</button>
+                    </div>
+                    
+                    <!-- Toggle de Modo -->
+                    <div class="diario-modos" style="margin-bottom: 16px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; width: fit-content;">
+                        <button class="modo-btn active" id="modoRecall" onclick="setModoDiario('recall')" style="background: var(--cobre-main); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            🧠 Recall
+                        </button>
+                        <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            📖 Respostas
+                        </button>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                            <option value="data">📅 Por Data</option>
+                            <option value="tema">📁 Por Tema</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="filtroDiarioArea" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                            <option value="">Todas as áreas</option>
+                        </select>
+                        <input type="date" class="form-input form-input-sm" id="filtroDiarioData" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                    </div>
+                    
+                    <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
+                    <div id="diarioRevisarHoje" style="display: none; background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 12px; padding: 14px; margin-bottom: 20px;"></div>
+                    
+                    <!-- Container principal -->
+                    <div id="diarioContainer"></div>
+                </div>
+            </div>
+            
+            <!-- DIÁRIO -->
+            <div id="diario" class="section">
+                <div class="card">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>📔 DIÁRIO DE APRENDIZADOS</span>
+                        <button class="btn btn-small" onclick="abrirNovaEntradaDiario()">+ Nova</button>
+                    </div>
+                    
+                    <!-- Toggle de Modo -->
+                    <div class="diario-modos" style="margin-bottom: 16px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; width: fit-content;">
+                        <button class="modo-btn active" id="modoRecall" onclick="setModoDiario('recall')" style="background: var(--cobre-main); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            🧠 Recall
+                        </button>
+                        <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            📖 Respostas
+                        </button>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                            <option value="data">📅 Por Data</option>
+                            <option value="tema">📁 Por Tema</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="filtroDiarioArea" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                            <option value="">Todas as áreas</option>
+                        </select>
+                        <input type="date" class="form-input form-input-sm" id="filtroDiarioData" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                    </div>
+                    
+                    <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
+                    <div id="diarioRevisarHoje" style="display: none; background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 12px; padding: 14px; margin-bottom: 20px;"></div>
+                    
+                    <!-- Container principal -->
+                    <div id="diarioContainer"></div>
+                </div>
+            </div>
+            
             <!-- CADERNO -->
             <div id="caderno" class="section">
                 <div class="card">
@@ -1907,6 +2031,105 @@
             }
             return obj;
         }
+        
+        // ==================== FUNÇÕES DE SEGURANÇA ====================
+        
+        function fazerBackupCompleto() {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
+                historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
+                anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
+                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]')
+            };
+            
+            const backupKey = `vrvs_backup_${Date.now()}`;
+            localStorage.setItem(backupKey, JSON.stringify(backup));
+            
+            // Manter apenas últimos 5 backups
+            const backupKeys = Object.keys(localStorage)
+                .filter(k => k.startsWith('vrvs_backup_'))
+                .sort()
+                .reverse();
+            
+            if (backupKeys.length > 5) {
+                backupKeys.slice(5).forEach(k => localStorage.removeItem(k));
+            }
+            
+            console.log(`[BACKUP] Backup criado: ${backupKey}`);
+            return backupKey;
+        }
+        
+        function validarAntesDeSalvar(tipo, dados) {
+            const erros = [];
+            
+            switch(tipo) {
+                case 'anotacoes':
+                    dados.forEach((a, idx) => {
+                        if (!a.id) erros.push(`Anotação ${idx} sem ID`);
+                    });
+                    break;
+                case 'diario':
+                    renderDiario();
+                    break;
+                    if (dados.entries) {
+                        dados.entries.forEach((e, idx) => {
+                            if (!e.id) erros.push(`Entrada ${idx} sem ID`);
+                            if (!e.data) erros.push(`Entrada ${idx} sem data`);
+                            if (!e.topico) erros.push(`Entrada ${idx} sem tópico`);
+                        });
+                    }
+                    break;
+                case 'dados':
+                    dados.forEach((d, idx) => {
+                        if (!d.id) erros.push(`Tema ${idx} sem ID`);
+                        if (!d.area) erros.push(`Tema ${idx} sem área`);
+                        if (!d.tema) erros.push(`Tema ${idx} sem tema`);
+                    });
+                    break;
+            }
+            
+            if (erros.length > 0) {
+                console.error('[VALIDAÇÃO] Erros encontrados:', erros);
+                throw new Error(`Validação falhou: ${erros.join(', ')}`);
+            }
+            
+            return true;
+        }
+        
+        function mesclarAnotacoes(novas, existentes) {
+            const mescladas = [...existentes];
+            const idsExistentes = new Set(existentes.map(a => a.id));
+            
+            novas.forEach(nova => {
+                const existente = existentes.find(a => a.id === nova.id);
+                if (existente) {
+                    Object.assign(existente, nova);
+                } else {
+                    mescladas.push(nova);
+                }
+            });
+            
+            return mescladas;
+        }
+        
+        // Áreas fixas do sistema
+        const AREAS_FIXAS = [
+            'Ciências Básicas',
+            'Coluna',
+            'Joelho',
+            'Mão',
+            'Ombro e Cotovelo',
+            'Oncologia',
+            'Ortopedia Pediátrica',
+            'Pé e Tornozelo',
+            'Quadril',
+            'Trauma MMII',
+            'Trauma MMSS',
+            'Trauma Pediátrico'
+        ];
+        
+        // ==================== DADOS E INICIALIZAÇÃO ====================
         
         let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
         let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
@@ -2539,13 +2762,28 @@
             const areaSelect = document.getElementById('feedbackArea');
             const temaSelect = document.getElementById('feedbackTema');
             
-            // Obter áreas únicas
-            const areas = [...new Set(dados.map(t => t.area).filter(a => a && a.trim()))].sort();
+            // Usar áreas fixas como base, adicionando áreas existentes que não estão na lista
+            const areasExistentes = [...new Set(dados.map(t => t.area).filter(a => a && a.trim()))];
+            const areasCompletas = [...new Set([...AREAS_FIXAS, ...areasExistentes])].sort();
+            
             areaSelect.innerHTML = '<option value="">Selecione a área...</option>' +
-                areas.map(a => `<option value="${a}">${a}</option>`).join('');
+                areasCompletas.map(a => `<option value="${a}">${a}</option>`).join('');
             
             // Atualizar temas baseado na área selecionada
             updateFeedbackTemaSelect();
+        }
+        
+        function preencherDropdownAreas(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            // Se for datalist, atualizar
+            if (element.tagName === 'INPUT' && element.list) {
+                const datalist = document.getElementById(element.list.id || 'listAreasFixas');
+                if (datalist) {
+                    datalist.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+                }
+            }
         }
         
         function updateFeedbackTemaSelect() {
@@ -3682,6 +3920,9 @@
                 atualizarSelectsCaderno();
                 renderCaderno();
             }
+            if (sectionId === 'diario') {
+                renderDiario();
+            }
             if (sectionId === 'analises') {
                 atualizarSelectsAnalise();
                 atualizarAnalises();
@@ -4185,7 +4426,7 @@
                             intervaloSegundos = dados.intervaloSegundos + tempoDecorrido;
                             document.getElementById('cronometroIntervalo').textContent = '▶️ Finalizar Intervalo';
                             document.getElementById('tempoIntervalo').style.display = 'block';
-                            document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
+                            document.getElementById('tempoIntervaloDisplay').textContent = formatarIntervaloMinutos(intervaloSegundos);
                             
                             // Reiniciar intervalo timer
                             if (intervaloInterval) {
@@ -4193,7 +4434,7 @@
                             }
                             intervaloInterval = setInterval(() => {
                                 intervaloSegundos++;
-                                document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
+                                document.getElementById('tempoIntervaloDisplay').textContent = formatarIntervaloMinutos(intervaloSegundos);
                             }, 1000);
                         }
                         
@@ -4290,6 +4531,11 @@
             return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segs).padStart(2, '0')}`;
         }
         
+        function formatarIntervaloMinutos(segundos) {
+            const minutos = Math.floor(segundos / 60);
+            return minutos > 0 ? `${minutos} min` : '0 min';
+        }
+        
         function atualizarDisplayCronometro() {
             // CRÍTICO: Sempre calcular baseado em timestamp quando rodando
             if (cronometroRodando) {
@@ -4300,7 +4546,7 @@
             // Atualizar display de tempo total de intervalo acumulado
             if (tempoTotalIntervalo > 0) {
                 document.getElementById('tempoIntervaloTotal').style.display = 'block';
-                document.getElementById('tempoIntervaloTotalDisplay').textContent = formatarTempoCronometro(tempoTotalIntervalo);
+                document.getElementById('tempoIntervaloTotalDisplay').textContent = formatarIntervaloMinutos(tempoTotalIntervalo);
             } else {
                 document.getElementById('tempoIntervaloTotal').style.display = 'none';
             }
@@ -4395,7 +4641,7 @@
                     } else {
                         intervaloSegundos++;
                     }
-                    document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
+                    document.getElementById('tempoIntervaloDisplay').textContent = formatarIntervaloMinutos(intervaloSegundos);
                 }, 100);
                 
                 // Pausar cronômetro durante intervalo
@@ -4477,7 +4723,7 @@
             // Preencher dados do modal
             document.getElementById('modalTempoTotal').textContent = formatarTempoCronometro(cronometroSegundos);
             document.getElementById('modalNumIntervalos').textContent = intervalosIndividuais.length;
-            document.getElementById('modalTempoIntervalos').textContent = formatarTempoCronometro(tempoTotalIntervalo);
+            document.getElementById('modalTempoIntervalos').textContent = formatarIntervaloMinutos(tempoTotalIntervalo);
             
             // Limpar campos do modal
             document.getElementById('modalTempoQuestoes').value = '';
@@ -4708,6 +4954,28 @@
         
         // ==================== CADERNO DE ANOTAÇÕES ====================
         
+        function migrarAnotacoesParaHotTopics() {
+            // Migração segura: adicionar campo hotTopics sem perder dados
+            const backupKey = fazerBackupCompleto();
+            const anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
+            
+            let atualizadas = false;
+            const anotacoesMigradas = anotacoesAtuais.map(a => {
+                if (a.hotTopics === undefined) {
+                    a.hotTopics = ''; // Campo novo, vazio por padrão
+                    atualizadas = true;
+                }
+                return a;
+            });
+            
+            if (atualizadas) {
+                validarAntesDeSalvar('anotacoes', anotacoesMigradas);
+                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoesMigradas));
+                anotacoes = anotacoesMigradas;
+                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado. Backup: ${backupKey}`);
+            }
+        }
+        
         function obterOuCriarAnotacao(temaId) {
             let anotacao = anotacoes.find(a => String(a.temaId) === String(temaId));
             if (!anotacao) {
@@ -4720,6 +4988,7 @@
                     area: tema.area,
                     tema: tema.tema,
                     conteudo: '',
+                    hotTopics: '', // Campo novo
                     ultimaAtualizacao: new Date().toISOString().split('T')[0]
                 };
                 anotacoes.push(anotacao);
@@ -4896,7 +5165,25 @@
                                     Última atualização: ${formatarData(anotacao.ultimaAtualizacao)}
                                 </div>
                             </div>
+                            ${anotacao.hotTopics ? `
+                                <div style="margin-bottom: 10px; padding: 10px; background: rgba(255,127,80,0.1); border-left: 3px solid var(--cobre-main); border-radius: 4px;">
+                                    <div style="font-size: 11px; font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">🔥 Hot Topics</div>
+                                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-wrap;">${(anotacao.hotTopics || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                                </div>
+                            ` : ''}
                             <div style="margin-bottom: 10px;">
+                                <label style="font-size: 12px; color: rgba(0,206,209,0.8); margin-bottom: 5px; display: block;">🔥 Hot Topics (pontos de prova)</label>
+                                <textarea 
+                                    id="hotTopics_${anotacao.temaId}" 
+                                    class="form-input" 
+                                    rows="3" 
+                                    style="width: 100%; font-family: inherit; resize: vertical; background: rgba(255,127,80,0.05); border-color: rgba(255,127,80,0.3);"
+                                    placeholder="Ex: 1) Classificação de Wiltze&#10;2) Técnica de Gill&#10;3) Clínica do adolescente..."
+                                    onblur="salvarAnotacao(${anotacao.temaId})"
+                                >${((anotacao.hotTopics || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="font-size: 12px; color: rgba(0,206,209,0.8); margin-bottom: 5px; display: block;">📝 Anotações Gerais</label>
                                 <textarea 
                                     id="anotacao_${anotacao.temaId}" 
                                     class="form-input" 
@@ -4922,12 +5209,14 @@
         
         function salvarAnotacao(temaId) {
             const textarea = document.getElementById(`anotacao_${temaId}`);
+            const hotTopicsTextarea = document.getElementById(`hotTopics_${temaId}`);
             if (!textarea) return;
             
             const anotacao = obterOuCriarAnotacao(temaId);
             if (!anotacao) return;
             
             anotacao.conteudo = textarea.value.trim();
+            anotacao.hotTopics = hotTopicsTextarea ? hotTopicsTextarea.value.trim() : '';
             anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
             
             localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
@@ -4945,11 +5234,14 @@
             const anotacao = anotacoes.find(a => String(a.temaId) === String(temaId));
             if (anotacao) {
                 anotacao.conteudo = '';
+                anotacao.hotTopics = '';
                 anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
                 localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
                 
                 const textarea = document.getElementById(`anotacao_${temaId}`);
+                const hotTopicsTextarea = document.getElementById(`hotTopics_${temaId}`);
                 if (textarea) textarea.value = '';
+                if (hotTopicsTextarea) hotTopicsTextarea.value = '';
                 
                 mostrarNotificacaoFeedback('🗑️ Anotação limpa!');
                 
@@ -5399,6 +5691,27 @@
             }
         });
         
+        // ==================== MIGRAÇÕES E INICIALIZAÇÕES ====================
+        
+        // Executar migrações na inicialização
+        migrarAnotacoesParaHotTopics();
+        
+        // Inicializar estrutura do Diário se não existir
+        function inicializarDiario() {
+            const diarioExistente = localStorage.getItem('vrvs_diario');
+            if (diarioExistente) return;
+            
+            const diarioInicial = {
+                schemaVersion: 1,
+                entries: []
+            };
+            
+            localStorage.setItem('vrvs_diario', JSON.stringify(diarioInicial));
+            console.log('[DIÁRIO] Estrutura inicializada');
+        }
+        
+        inicializarDiario();
+        
         // ==================== WINDOW ONLOAD ====================
         
         window.onload = function() {
@@ -5462,12 +5775,12 @@
                                         const agoraIntervalo = Date.now();
                                         const tempoDecorridoIntervalo = Math.floor((agoraIntervalo - parseInt(timestampOriginal)) / 1000);
                                         intervaloSegundos = intervaloOriginal + tempoDecorridoIntervalo;
-                                        document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
+                                        document.getElementById('tempoIntervaloDisplay').textContent = formatarIntervaloMinutos(intervaloSegundos);
                                     }, 100);
                                     
                                     document.getElementById('cronometroIntervalo').textContent = '▶️ Finalizar Intervalo';
                                     document.getElementById('tempoIntervalo').style.display = 'block';
-                                    document.getElementById('tempoIntervaloDisplay').textContent = formatarTempoCronometro(intervaloSegundos);
+                                    document.getElementById('tempoIntervaloDisplay').textContent = formatarIntervaloMinutos(intervaloSegundos);
                                 }
                                 
                                 // Se estava rodando, garantir que continue rodando
@@ -5642,7 +5955,7 @@
                 }
                 
                 const sugestao = document.getElementById('feedbackSugestao').value.trim();
-                const obs = document.getElementById('feedbackObs').value.trim();
+                const obs = ''; // Campo removido - não mais usado
                 
                 // CORREÇÃO: Comparação correta de IDs
                 const tema = dados.find(t => String(t.id) === String(temaId));
@@ -5722,7 +6035,7 @@
                     questoes: questoesTexto, // Questões (acertos/total) - mantido para compatibilidade
                     flashcards: quantFlashcards, // Quantidade de flashcards - mantido para compatibilidade
                     data: dataSessao,
-                    observacoes: obs || '-',
+                    observacoes: '-', // Campo removido do formulário
                     sugestao: sugestao || '-'
                 });
                 

@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.8.9-fix-variavel-global-anotacoes";
+const CACHE_NAME = "vrvs-v5.2-diario-aprendizados-20251212";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
