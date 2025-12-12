@@ -6212,6 +6212,12 @@
             atualizarSelectsCaderno();
             renderCaderno();
             
+            // Popular datalist de áreas fixas no cadastro (corrige bug do template literal)
+            const datalistAreasFixas = document.getElementById('listAreasFixas');
+            if (datalistAreasFixas) {
+                datalistAreasFixas.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            }
+            
             // Inicializar Diário
             carregarDiario();
             renderDiario();
@@ -6226,6 +6232,11 @@
                 }
             }, 100);
         };
+        
+        function atualizarTemasCadastro(areaSelecionada) {
+            // Função para atualizar temas no cadastro quando área mudar (se necessário no futuro)
+            // Por enquanto, apenas placeholder
+        }
         
         // ==================== DIÁRIO DE APRENDIZADOS ====================
         
