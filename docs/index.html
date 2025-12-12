@@ -1194,6 +1194,284 @@
         body.splash-loading {
             overflow: hidden;
         }
+        
+        /* ===== NOVOS ESTILOS - REFATORAÇÃO v2.0 ===== */
+        
+        /* Sub-navegação dentro de abas */
+        .sub-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            width: fit-content;
+            margin-bottom: 16px;
+        }
+        
+        .sub-nav-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .sub-nav-btn:hover {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sub-nav-btn.active {
+            background: var(--cobre-main);
+            color: white;
+        }
+        
+        /* Toggle view (Timeline/Atrasados) */
+        .toggle-view {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: 10px;
+            width: fit-content;
+            margin-bottom: 16px;
+        }
+        
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .toggle-btn.active {
+            background: var(--turquesa-main);
+            color: white;
+        }
+        
+        /* ===== CADERNO - ÁREAS COLAPSÁVEIS ===== */
+        
+        .area-section {
+            margin-bottom: 16px;
+        }
+        
+        .area-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, rgba(0, 206, 209, 0.1), rgba(13, 148, 136, 0.05));
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .area-header:hover {
+            border-color: var(--cobre-main);
+            background: linear-gradient(135deg, rgba(255, 127, 80, 0.1), rgba(255, 127, 80, 0.05));
+        }
+        
+        .area-header.collapsed {
+            border-radius: 12px;
+            margin-bottom: 0;
+        }
+        
+        .area-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .area-header-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--turquesa-light);
+        }
+        
+        .area-header-count {
+            font-size: 11px;
+            color: rgba(0, 206, 209, 0.7);
+            background: rgba(0, 206, 209, 0.1);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+        
+        .area-header-toggle {
+            font-size: 12px;
+            color: var(--turquesa-light);
+            transition: transform 0.2s ease;
+        }
+        
+        .area-header.collapsed .area-header-toggle {
+            transform: rotate(-90deg);
+        }
+        
+        .area-content {
+            padding: 12px 0 0 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+        }
+        
+        .area-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            padding: 0;
+        }
+        
+        /* ===== CADERNO - LISTA DE TEMAS ===== */
+        
+        .tema-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .tema-item {
+            background: rgba(20, 35, 45, 0.4);
+            border: 1px solid rgba(0, 206, 209, 0.15);
+            border-radius: 10px;
+            padding: 12px 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .tema-item:hover {
+            border-color: rgba(255, 127, 80, 0.3);
+        }
+        
+        .tema-item.has-content {
+            border-left: 3px solid var(--turquesa-main);
+        }
+        
+        .tema-item.has-hottopics {
+            border-left: 3px solid var(--cobre-main);
+        }
+        
+        .tema-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .tema-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cobre-light);
+        }
+        
+        .tema-item-date {
+            font-size: 11px;
+            color: rgba(0, 206, 209, 0.6);
+        }
+        
+        .tema-item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        
+        .tema-item-btn {
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 6px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        .tema-item-btn:hover {
+            opacity: 1;
+        }
+        
+        /* ===== CADERNO - HOT TOPICS PREVIEW ===== */
+        
+        .hottopics-preview {
+            background: rgba(255, 127, 80, 0.08);
+            border: 1px solid rgba(255, 127, 80, 0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        
+        .hottopics-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cobre-light);
+            margin-bottom: 6px;
+        }
+        
+        .hottopics-content {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        /* ===== CADERNO - CONTEÚDO PREVIEW ===== */
+        
+        .conteudo-preview {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+            max-height: 60px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .conteudo-preview::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, rgba(20, 35, 45, 0.9));
+        }
+        
+        /* ===== CADERNO - PLACEHOLDER VAZIO ===== */
+        
+        .tema-item-empty {
+            font-size: 12px;
+            color: rgba(0, 206, 209, 0.5);
+            font-style: italic;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+        
+        .tema-item-empty:hover {
+            color: var(--cobre-light);
+        }
+        
+        /* ===== PERFORMANCE MOBILE ===== */
+        
+        @media (max-width: 768px) {
+            body::after {
+                animation: none;
+                opacity: 0.2;
+            }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body class="splash-loading">
@@ -1427,6 +1705,87 @@
         </div>
     </div>
     
+    <!-- MODAL EDITAR ANOTAÇÃO (CADERNO V2) -->
+    <div id="modalEditarAnotacao" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📝 EDITAR ANOTAÇÃO</h2>
+                <button class="modal-close" onclick="fecharModalAnotacao()">×</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 20px;">
+                <input type="hidden" id="editAnotacaoTemaId">
+                
+                <!-- Info do tema -->
+                <div style="margin-bottom: 20px; padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border: 1px solid rgba(0,206,209,0.2);">
+                    <div style="font-size: 11px; color: rgba(0,206,209,0.7); margin-bottom: 4px;">TEMA</div>
+                    <div id="editAnotacaoTema" style="font-size: 16px; font-weight: 600; color: var(--cobre-light);"></div>
+                    <div id="editAnotacaoArea" style="font-size: 12px; color: rgba(255,255,255,0.6);"></div>
+                </div>
+                
+                <!-- Hot Topics -->
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--cobre-light);">🔥 Hot Topics (pontos de prova)</label>
+                    <textarea class="form-textarea" id="editAnotacaoHotTopics" rows="5" 
+                        placeholder="1) Classificação de Wiltze&#10;2) Técnica de Gill&#10;3) Clínica do adolescente..."
+                        style="background: rgba(255,127,80,0.05); border-color: rgba(255,127,80,0.3);"></textarea>
+                    <div style="font-size: 11px; color: rgba(255,127,80,0.7); margin-top: 5px;">
+                        💡 Liste os pontos que mais caem na prova
+                    </div>
+                </div>
+                
+                <!-- Anotações Gerais -->
+                <div class="form-group">
+                    <label class="form-label">📝 Anotações Gerais</label>
+                    <textarea class="form-textarea" id="editAnotacaoConteudo" rows="6" 
+                        placeholder="Suas anotações sobre o tema..."></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="salvarAnotacaoModal()" style="flex: 1;">💾 SALVAR</button>
+                    <button class="btn btn-secondary" onclick="fecharModalAnotacao()" style="flex: 1;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL CADASTRO DE TEMA -->
+    <div id="modalCadastro" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">➕ ADICIONAR TEMA</h2>
+                <button class="modal-close" onclick="fecharModalCadastro()">×</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 20px;">
+                <form id="modalCadastroForm" onsubmit="salvarNovoTemaModal(event)">
+                    <div class="form-group">
+                        <label class="form-label">Área de Conhecimento</label>
+                        <select class="form-select" id="modalNovaArea" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tema Específico</label>
+                        <input type="text" class="form-input" id="modalNovoTema" placeholder="Ex: Sd manguito rotador" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prioridade (1-5)</label>
+                        <input type="number" class="form-input" id="modalNovaPrioridade" min="1" max="5" value="3" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Data de Início (opcional)</label>
+                        <input type="date" class="form-input" id="modalNovaDataInicio">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn" style="flex: 1;">✅ ADICIONAR</button>
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalCadastro()" style="flex: 1;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="header">
             <div class="header-title">🧠 VRVS CIRCUIT TECH</div>
@@ -1434,35 +1793,35 @@
         </div>
         
         <div class="tabs">
-            <div class="tab active" onclick="showSection('dados')">📊 Dados</div>
-            <div class="tab" onclick="showSection('cadastro')">➕ Cadastro</div>
-            <div class="tab" onclick="showSection('feedback')">📝 Feedback</div>
+            <!-- ESTUDO (uso diário) -->
             <div class="tab" onclick="showSection('tarefa')">📋 Tarefa</div>
-            <div class="tab" onclick="showSection('agenda')">📅 Agenda</div>
-            <div class="tab" onclick="showSection('pendencias')">🔔 Pendências</div>
-            <div class="tab" onclick="showSection('stats')">📈 Estatísticas</div>
-            <div class="tab" onclick="showSection('analises')">🔍 Análises</div>
-            <div class="tab" onclick="showSection('historico')">📜 Histórico</div>
-            <div class="tab" onclick="showSection('lembretes')">📌 Lembretes</div>
-            <div class="tab" onclick="showSection('caderno')">📔 Caderno</div>
+            <div class="tab" onclick="showSection('feedback')">📝 Feedback</div>
             <div class="tab" onclick="showSection('diario')">📔 Diário</div>
-            <div class="tab" onclick="showSection('relatorios')">📊 Relatórios</div>
-            <div class="tab" onclick="showSection('importar')">📥 Importar</div>
-            <div class="tab" onclick="showSection('exportar')">📤 Exportar</div>
-            <div class="tab" onclick="showSection('tutorial')">❓ Tutorial</div>
+            <div class="tab" onclick="showSection('caderno')">📓 Caderno</div>
+            <!-- PLANEJAMENTO -->
+            <div class="tab" onclick="showSection('agenda')">📅 Agenda</div>
+            <div class="tab active" onclick="showSection('dados')">📊 Dados</div>
+            <!-- ANÁLISE -->
+            <div class="tab" onclick="showSection('analytics')">📈 Analytics</div>
+            <!-- SISTEMA -->
+            <div class="tab" onclick="showSection('backup')">💾 Backup</div>
+            <div class="tab" onclick="showSection('ajuda')">❓ Ajuda</div>
         </div>
         
         <div class="content">
             <!-- DADOS -->
             <div id="dados" class="section active">
                 <div class="card">
-                    <div class="card-title">📊 BANCO DE DADOS</div>
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span>📊 BANCO DE DADOS</span>
+                        <button class="btn btn-small" onclick="abrirModalCadastro()" style="background: var(--cobre-main);">➕ Novo Tema</button>
+                    </div>
                     <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                        <button class="btn" onclick="salvarDadosManualmente()" style="background: rgba(0, 206, 209, 0.15); color: rgba(0, 206, 209, 0.8); border: 1px solid rgba(0, 206, 209, 0.3); font-weight: 500;">
-                            💾 SALVAR DADOS AGORA
+                        <button class="btn btn-small" onclick="salvarDadosManualmente()" style="background: rgba(0, 206, 209, 0.15); color: rgba(0, 206, 209, 0.8); border: 1px solid rgba(0, 206, 209, 0.3); font-weight: 500;">
+                            💾 Salvar
                         </button>
                         <div style="font-size: 11px; color: rgba(0,206,209,0.7);">
-                            💡 Salva tudo automaticamente no navegador
+                            💡 Dados salvam automaticamente
                         </div>
                     </div>
                     <div style="overflow-x: auto;">
@@ -1499,30 +1858,40 @@
                 </div>
             </div>
             
-            <!-- AGENDA -->
+            <!-- AGENDA (inclui Pendências) -->
             <div id="agenda" class="section">
                 <div class="card">
-                    <div class="card-title">📅 TIMELINE</div>
-                    <div class="edit-date-row" style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <div class="card-title">📅 AGENDA E ALERTAS</div>
+                    
+                    <!-- Toggle: Timeline vs Atrasados -->
+                    <div class="toggle-view">
+                        <button class="toggle-btn active" id="btnTimeline" onclick="setVistaAgenda('timeline')">📅 Timeline</button>
+                        <button class="toggle-btn" id="btnAtrasados" onclick="setVistaAgenda('atrasados')">🔔 Atrasados</button>
+                    </div>
+                    
+                    <!-- Filtros (só aparece em Timeline) -->
+                    <div id="agendaFiltros" class="edit-date-row" style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                         <input type="date" id="agendaDataInicio" class="form-input" style="flex: 1; max-width: 180px;">
                         <input type="date" id="agendaDataFim" class="form-input" style="flex: 1; max-width: 180px;">
-                        <button class="btn btn-small" onclick="filtrarSemanaAtual()">📅 Semana Atual</button>
-                        <button class="btn btn-small btn-secondary" onclick="renderAgenda()">Aplicar</button>
+                        <button class="btn btn-small" onclick="filtrarSemanaAtual()">📅 Semana</button>
+                        <button class="btn btn-small btn-secondary" onclick="renderAgendaUnificada()">Aplicar</button>
                     </div>
+                    
+                    <!-- Container único -->
                     <div id="agendaContainer"></div>
                 </div>
             </div>
 
-            <!-- PENDÊNCIAS -->
-            <div id="pendencias" class="section">
+            <!-- PENDÊNCIAS (mantido para compatibilidade, oculto) -->
+            <div id="pendencias" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">🔔 ALERTAS DO SISTEMA</div>
                     <div id="pendenciasContainer"></div>
                 </div>
             </div>
             
-            <!-- CADASTRO -->
-            <div id="cadastro" class="section">
+            <!-- CADASTRO (mantido para compatibilidade, oculto - usar modal) -->
+            <div id="cadastro" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">➕ ADICIONAR TEMA</div>
                     <form id="cadastroForm">
@@ -1645,9 +2014,9 @@
             </div>
             
             <!-- ESTATÍSTICAS -->
-            <div id="stats" class="section">
+            <div id="stats" class="section" style="display: none;">
                 <div class="card">
-                    <div class="card-title">📊 ANÁLISES</div>
+                    <div class="card-title">📊 ANALYTICS</div>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-value" id="statTemas">0</div>
@@ -1690,7 +2059,7 @@
             </div>
             
             <!-- ANÁLISES DETALHADAS -->
-            <div id="analises" class="section">
+            <div id="analises" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                         <span>🔍 ANÁLISES DETALHADAS</span>
@@ -1736,7 +2105,7 @@
             </div>
             
             <!-- HISTÓRICO -->
-            <div id="historico" class="section">
+            <div id="historico" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">📜 REGISTRO COMPLETO</div>
                     
@@ -1760,7 +2129,7 @@
             </div>
 
             <!-- RELATÓRIOS -->
-            <div id="relatorios" class="section">
+            <div id="relatorios" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">📊 ANÁLISE POR PERÍODO</div>
                     <div class="date-range-controls">
@@ -1776,7 +2145,7 @@
             </div>
             
             <!-- IMPORTAR -->
-            <div id="importar" class="section">
+            <div id="importar" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">📥 IMPORTAR DADOS</div>
                     <div class="form-group">
@@ -1797,7 +2166,7 @@
             </div>
             
             <!-- EXPORTAR -->
-            <div id="exportar" class="section">
+            <div id="exportar" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">📤 BACKUP DE DADOS</div>
                     <div style="margin-bottom: 20px;">
@@ -1814,7 +2183,7 @@
             </div>
             
             <!-- TUTORIAL E AJUDA -->
-            <div id="tutorial" class="section">
+            <div id="tutorial" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">❓ TUTORIAL E AJUDA</div>
                     
@@ -1878,7 +2247,7 @@
             </div>
             
             <!-- LEMBRETES -->
-            <div id="lembretes" class="section">
+            <div id="lembretes" class="section" style="display: none;">
                 <div class="card">
                     <div class="card-title">📌 LEMBRETES E ANOTAÇÕES</div>
                     <div style="margin-bottom: 20px;">
@@ -1957,24 +2326,104 @@
             </div>
             
             <!-- CADERNO -->
+            <!-- CADERNO (v2 - áreas colapsáveis) -->
             <div id="caderno" class="section">
                 <div class="card">
-                    <div class="card-title">📔 CADERNO DE ANOTAÇÕES</div>
-                    <div style="margin-bottom: 20px;">
-                        <div class="form-group">
-                            <label class="form-label">Filtrar por Área</label>
-                            <select class="form-select" id="cadernoFiltroArea" onchange="atualizarSelectTemaPorArea(); filtrarCaderno();">
-                                <option value="">Todas as áreas</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Filtrar por Tema</label>
-                            <select class="form-select" id="cadernoFiltroTema" onchange="filtrarCaderno()" disabled>
-                                <option value="">Selecione uma área primeiro</option>
-                            </select>
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span>📓 CADERNO DE ANOTAÇÕES</span>
+                        <button class="btn btn-small" onclick="exportarHotTopicsHTML()" style="background: var(--cobre-main);">🔥 Exportar HTML</button>
+                    </div>
+                    
+                    <!-- Filtro compacto -->
+                    <div style="margin-bottom: 16px;">
+                        <select class="form-select" id="cadernoFiltroArea" onchange="renderCadernoV2()" style="max-width: 300px;">
+                            <option value="">Todas as áreas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Container com áreas colapsáveis -->
+                    <div id="cadernoAreasContainer"></div>
+                </div>
+            </div>
+            
+            <!-- ANALYTICS (Stats + Análises + Relatórios + Histórico) -->
+            <div id="analytics" class="section">
+                <div class="card">
+                    <div class="card-title">📈 ANÁLISES</div>
+                    
+                    <!-- Sub-navegação -->
+                    <div class="sub-nav">
+                        <button class="sub-nav-btn active" id="btnAnalyticsResumo" onclick="setVistaAnalytics('resumo')">📊 Resumo</button>
+                        <button class="sub-nav-btn" id="btnAnalyticsGraficos" onclick="setVistaAnalytics('graficos')">📈 Gráficos</button>
+                        <button class="sub-nav-btn" id="btnAnalyticsDetalhado" onclick="setVistaAnalytics('detalhado')">🔍 Detalhado</button>
+                        <button class="sub-nav-btn" id="btnAnalyticsHistorico" onclick="setVistaAnalytics('historico')">📜 Histórico</button>
+                    </div>
+                    
+                    <!-- Container dinâmico -->
+                    <div id="analyticsContainer"></div>
+                </div>
+            </div>
+            
+            <!-- BACKUP (Importar + Exportar) -->
+            <div id="backup" class="section">
+                <div class="card">
+                    <div class="card-title">💾 BACKUP E RESTAURAÇÃO</div>
+                    
+                    <!-- Exportar -->
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📤 EXPORTAR DADOS</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <button class="btn btn-secondary" onclick="exportarDados()">📊 DADOS.csv</button>
+                            <button class="btn btn-secondary" onclick="exportarHistorico()">📜 HISTORICO.csv</button>
+                            <button class="btn btn-secondary" onclick="exportarAnotacoes()">📔 ANOTACOES.csv</button>
+                            <button class="btn btn-secondary" onclick="exportarDiarioCSV()">📔 DIARIO.csv</button>
+                            <button class="btn" onclick="exportarHotTopicsHTML()" style="background: var(--cobre-main);">🔥 Hot Topics HTML</button>
                         </div>
                     </div>
-                    <div id="cadernoContainer"></div>
+                    
+                    <!-- Importar -->
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR DADOS</h3>
+                        <div class="form-group">
+                            <label class="form-label">Arquivo DADOS.csv</label>
+                            <input type="file" class="form-input" id="importDados" accept=".csv">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Arquivo HISTORICO.csv</label>
+                            <input type="file" class="form-input" id="importHistorico" accept=".csv">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Arquivo ANOTACOES.csv (opcional)</label>
+                            <input type="file" class="form-input" id="importAnotacoes" accept=".csv">
+                        </div>
+                        <button class="btn" onclick="importarArquivos()">📥 PROCESSAR IMPORTAÇÃO</button>
+                    </div>
+                    
+                    <!-- Reset -->
+                    <div style="border-top: 1px solid rgba(255,127,80,0.3); padding-top: 20px;">
+                        <h3 style="color: var(--cobre-light); font-size: 14px; margin-bottom: 15px;">⚠️ ZONA DE PERIGO</h3>
+                        <button class="btn btn-danger" onclick="limparTudo()">🗑️ RESET COMPLETO</button>
+                        <div style="font-size: 11px; color: rgba(255,127,80,0.7); margin-top: 8px;">
+                            ⚠️ Esta ação apaga TODOS os dados. Faça backup antes!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AJUDA (Tutorial + Lembretes) -->
+            <div id="ajuda" class="section">
+                <div class="card">
+                    <div class="card-title">❓ AJUDA E CONFIGURAÇÕES</div>
+                    
+                    <!-- Sub-navegação -->
+                    <div class="sub-nav">
+                        <button class="sub-nav-btn active" id="btnAjudaTutorial" onclick="setVistaAjuda('tutorial')">📚 Tutorial</button>
+                        <button class="sub-nav-btn" id="btnAjudaLembretes" onclick="setVistaAjuda('lembretes')">📌 Lembretes</button>
+                        <button class="sub-nav-btn" id="btnAjudaFaq" onclick="setVistaAjuda('faq')">💬 FAQ</button>
+                    </div>
+                    
+                    <!-- Container dinâmico -->
+                    <div id="ajudaContainer"></div>
                 </div>
             </div>
             
@@ -3933,11 +4382,19 @@
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            event.target.classList.add('active');
+            
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.add('active');
+            }
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
             if (sectionId === 'dados') renderDados();
             if (sectionId === 'tarefa') renderTarefas();
-            if (sectionId === 'agenda') renderAgenda();
+            if (sectionId === 'agenda') renderAgendaUnificada();
             if (sectionId === 'stats') updateStats();
             if (sectionId === 'historico') renderHistorico();
             if (sectionId === 'pendencias') renderPendencias();
@@ -3946,8 +4403,7 @@
                 renderLembretes();
             }
             if (sectionId === 'caderno') {
-                atualizarSelectsCaderno();
-                renderCaderno();
+                renderCadernoV2();
             }
             if (sectionId === 'diario') {
                 renderDiario();
@@ -3955,6 +4411,16 @@
             if (sectionId === 'analises') {
                 atualizarSelectsAnalise();
                 atualizarAnalises();
+            }
+            // Novas seções consolidadas
+            if (sectionId === 'analytics') {
+                renderAnalytics();
+            }
+            if (sectionId === 'backup') {
+                // Nada especial para renderizar
+            }
+            if (sectionId === 'ajuda') {
+                renderAjuda();
             }
         }
         
@@ -6695,6 +7161,995 @@
                 return data.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }
         }
+        
+        // ==================== NOVAS FUNÇÕES - REFATORAÇÃO v2.0 ====================
+        
+        // ==================== MODAL CADASTRO ====================
+        
+        function abrirModalCadastro() {
+            // Popular select de áreas com AREAS_FIXAS
+            const selectArea = document.getElementById('modalNovaArea');
+            selectArea.innerHTML = '<option value="">Selecione...</option>';
+            AREAS_FIXAS.forEach(area => {
+                selectArea.innerHTML += `<option value="${area}">${area}</option>`;
+            });
+            
+            // Limpar campos
+            document.getElementById('modalNovoTema').value = '';
+            document.getElementById('modalNovaPrioridade').value = '3';
+            document.getElementById('modalNovaDataInicio').value = '';
+            
+            document.getElementById('modalCadastro').classList.add('active');
+        }
+        
+        function fecharModalCadastro() {
+            document.getElementById('modalCadastro').classList.remove('active');
+        }
+        
+        function salvarNovoTemaModal(event) {
+            event.preventDefault();
+            
+            const area = document.getElementById('modalNovaArea').value;
+            const tema = document.getElementById('modalNovoTema').value.trim();
+            const prioridade = parseInt(document.getElementById('modalNovaPrioridade').value) || 3;
+            const dataInicio = document.getElementById('modalNovaDataInicio').value;
+            
+            if (!area || !tema) {
+                mostrarNotificacaoFeedback('⚠️ Preencha área e tema!', 'error');
+                return;
+            }
+            
+            // Verificar duplicata
+            const duplicado = dados.find(t => 
+                t.area.toLowerCase() === area.toLowerCase() && 
+                t.tema.toLowerCase() === tema.toLowerCase()
+            );
+            
+            if (duplicado) {
+                mostrarNotificacaoFeedback('⚠️ Tema já existe!', 'error');
+                return;
+            }
+            
+            const novoTema = {
+                id: Date.now(),
+                area: area,
+                tema: tema,
+                status: 'Planejado',
+                prioridade: prioridade,
+                rendimento: 0,
+                sessoes: 0,
+                tempo: 0,
+                agenda: dataInicio || '',
+                ultimoEstudo: ''
+            };
+            
+            dados.push(novoTema);
+            localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+            
+            // Criar anotação vazia para o tema
+            const novaAnotacao = {
+                id: Date.now() + 1,
+                temaId: String(novoTema.id),
+                area: area,
+                tema: tema,
+                conteudo: '',
+                hotTopics: '',
+                ultimaAtualizacao: ''
+            };
+            anotacoes.push(novaAnotacao);
+            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            
+            fecharModalCadastro();
+            renderDadosTable();
+            mostrarNotificacaoFeedback('✅ Tema adicionado com sucesso!');
+        }
+        
+        // ==================== MODAL EDITAR ANOTAÇÃO ====================
+        
+        function fecharModalAnotacao() {
+            document.getElementById('modalEditarAnotacao').classList.remove('active');
+        }
+        
+        function editarAnotacaoModal(temaId) {
+            const tema = dados.find(t => String(t.id) === String(temaId));
+            const anotacao = anotacoes.find(a => String(a.temaId) === String(temaId));
+            
+            if (!tema) return;
+            
+            // Preencher modal
+            document.getElementById('editAnotacaoTemaId').value = temaId;
+            document.getElementById('editAnotacaoTema').textContent = tema.tema;
+            document.getElementById('editAnotacaoArea').textContent = tema.area;
+            document.getElementById('editAnotacaoHotTopics').value = anotacao?.hotTopics || '';
+            document.getElementById('editAnotacaoConteudo').value = anotacao?.conteudo || '';
+            
+            document.getElementById('modalEditarAnotacao').classList.add('active');
+        }
+        
+        function salvarAnotacaoModal() {
+            const temaId = document.getElementById('editAnotacaoTemaId').value;
+            const hotTopics = document.getElementById('editAnotacaoHotTopics').value.trim();
+            const conteudo = document.getElementById('editAnotacaoConteudo').value.trim();
+            
+            const tema = dados.find(t => String(t.id) === String(temaId));
+            if (!tema) return;
+            
+            let anotacao = anotacoes.find(a => String(a.temaId) === String(temaId));
+            
+            if (!anotacao) {
+                anotacao = {
+                    id: Date.now(),
+                    temaId: String(temaId),
+                    area: tema.area,
+                    tema: tema.tema,
+                    conteudo: '',
+                    hotTopics: '',
+                    ultimaAtualizacao: ''
+                };
+                anotacoes.push(anotacao);
+            }
+            
+            anotacao.hotTopics = hotTopics;
+            anotacao.conteudo = conteudo;
+            anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
+            
+            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            
+            document.getElementById('modalEditarAnotacao').classList.remove('active');
+            renderCadernoV2();
+            mostrarNotificacaoFeedback('✅ Anotação salva!');
+        }
+        
+        // ==================== CADERNO V2 ====================
+        
+        function renderCadernoV2() {
+            const container = document.getElementById('cadernoAreasContainer');
+            if (!container) return;
+            
+            // Recarregar anotações
+            try {
+                const anotacoesSalvas = localStorage.getItem('vrvs_anotacoes');
+                if (anotacoesSalvas) {
+                    anotacoes = JSON.parse(anotacoesSalvas);
+                }
+            } catch (e) {
+                console.error('[CADERNO] Erro ao carregar anotações:', e);
+            }
+            
+            const filtroArea = document.getElementById('cadernoFiltroArea')?.value || '';
+            
+            // Popular select de áreas
+            const selectArea = document.getElementById('cadernoFiltroArea');
+            if (selectArea && selectArea.options.length <= 1) {
+                const areasUnicas = [...new Set(dados.map(t => t.area))].sort();
+                areasUnicas.forEach(area => {
+                    const opt = document.createElement('option');
+                    opt.value = area;
+                    opt.textContent = area;
+                    selectArea.appendChild(opt);
+                });
+            }
+            
+            // Agrupar temas por área
+            const areaGroups = {};
+            
+            dados.forEach(tema => {
+                if (tema.status === 'Suspenso') return;
+                if (filtroArea && tema.area !== filtroArea) return;
+                
+                if (!areaGroups[tema.area]) {
+                    areaGroups[tema.area] = [];
+                }
+                
+                // Buscar anotação do tema
+                const anotacao = anotacoes.find(a => String(a.temaId) === String(tema.id));
+                
+                areaGroups[tema.area].push({
+                    temaId: tema.id,
+                    tema: tema.tema,
+                    area: tema.area,
+                    conteudo: anotacao?.conteudo || '',
+                    hotTopics: anotacao?.hotTopics || '',
+                    ultimaAtualizacao: anotacao?.ultimaAtualizacao || ''
+                });
+            });
+            
+            if (Object.keys(areaGroups).length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📓</div><div>Nenhum tema encontrado</div></div>';
+                return;
+            }
+            
+            // Ordenar áreas
+            const areasOrdenadas = Object.keys(areaGroups).sort();
+            
+            let html = '';
+            
+            areasOrdenadas.forEach(area => {
+                const temas = areaGroups[area];
+                const temasComConteudo = temas.filter(t => t.conteudo || t.hotTopics).length;
+                const areaId = area.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+                
+                html += `
+                    <div class="area-section" data-area="${area}">
+                        <div class="area-header" onclick="toggleAreaCaderno('${areaId}')">
+                            <div class="area-header-left">
+                                <span class="area-header-title">📁 ${area}</span>
+                                <span class="area-header-count">${temasComConteudo}/${temas.length}</span>
+                            </div>
+                            <span class="area-header-toggle">▼</span>
+                        </div>
+                        <div class="area-content" id="area-content-${areaId}">
+                            <div class="tema-list">
+                `;
+                
+                // Ordenar temas alfabeticamente
+                temas.sort((a, b) => a.tema.localeCompare(b.tema, 'pt-BR'));
+                
+                temas.forEach(tema => {
+                    const temHotTopics = tema.hotTopics && tema.hotTopics.trim();
+                    const temConteudo = tema.conteudo && tema.conteudo.trim();
+                    
+                    let itemClass = 'tema-item';
+                    if (temHotTopics) itemClass += ' has-hottopics';
+                    else if (temConteudo) itemClass += ' has-content';
+                    
+                    html += `
+                        <div class="${itemClass}" data-tema-id="${tema.temaId}">
+                            <div class="tema-item-header">
+                                <span class="tema-item-name">📝 ${tema.tema}</span>
+                                <div class="tema-item-actions">
+                                    ${tema.ultimaAtualizacao ? `<span class="tema-item-date">${formatarData(tema.ultimaAtualizacao)}</span>` : ''}
+                                    <button class="tema-item-btn" onclick="editarAnotacaoModal(${tema.temaId})" title="Editar">✏️</button>
+                                </div>
+                            </div>
+                    `;
+                    
+                    // Hot Topics (se existir)
+                    if (temHotTopics) {
+                        const hotTopicsPreview = tema.hotTopics.length > 200 
+                            ? tema.hotTopics.substring(0, 200) + '...' 
+                            : tema.hotTopics;
+                        html += `
+                            <div class="hottopics-preview">
+                                <span class="hottopics-badge">🔥 Hot Topics</span>
+                                <div class="hottopics-content">${escapeHtmlCaderno(hotTopicsPreview)}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Conteúdo (se existir e não tiver hot topics)
+                    if (temConteudo && !temHotTopics) {
+                        const conteudoPreview = tema.conteudo.length > 150 
+                            ? tema.conteudo.substring(0, 150) + '...' 
+                            : tema.conteudo;
+                        html += `
+                            <div class="conteudo-preview">${escapeHtmlCaderno(conteudoPreview)}</div>
+                        `;
+                    }
+                    
+                    // Se não tem nada
+                    if (!temHotTopics && !temConteudo) {
+                        html += `
+                            <div class="tema-item-empty" onclick="editarAnotacaoModal(${tema.temaId})">
+                                Toque para adicionar anotações
+                            </div>
+                        `;
+                    }
+                    
+                    html += `</div>`; // fecha tema-item
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function toggleAreaCaderno(areaId) {
+            const header = document.querySelector(`[onclick="toggleAreaCaderno('${areaId}')"]`);
+            const content = document.getElementById(`area-content-${areaId}`);
+            
+            if (header && content) {
+                header.classList.toggle('collapsed');
+                content.classList.toggle('collapsed');
+                
+                // Se está expandindo, calcular max-height
+                if (!content.classList.contains('collapsed')) {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            }
+        }
+        
+        function escapeHtmlCaderno(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+        
+        // ==================== AGENDA UNIFICADA ====================
+        
+        let vistaAgenda = 'timeline';
+        
+        function setVistaAgenda(vista) {
+            vistaAgenda = vista;
+            
+            // Atualizar botões
+            document.getElementById('btnTimeline').classList.toggle('active', vista === 'timeline');
+            document.getElementById('btnAtrasados').classList.toggle('active', vista === 'atrasados');
+            
+            // Mostrar/esconder filtros
+            const filtros = document.getElementById('agendaFiltros');
+            if (filtros) {
+                filtros.style.display = vista === 'timeline' ? 'flex' : 'none';
+            }
+            
+            renderAgendaUnificada();
+        }
+        
+        function renderAgendaUnificada() {
+            if (vistaAgenda === 'atrasados') {
+                renderPendencias();
+            } else {
+                renderAgenda();
+            }
+        }
+        
+        // ==================== ANALYTICS ====================
+        
+        let vistaAnalytics = 'resumo';
+        
+        function setVistaAnalytics(vista) {
+            vistaAnalytics = vista;
+            
+            // Atualizar botões
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => {
+                if (btn.id && btn.id.startsWith('btnAnalytics')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            const btnAtivo = document.getElementById(`btnAnalytics${vista.charAt(0).toUpperCase() + vista.slice(1)}`);
+            if (btnAtivo) btnAtivo.classList.add('active');
+            
+            renderAnalytics();
+        }
+        
+        function renderAnalytics() {
+            const container = document.getElementById('analyticsContainer');
+            if (!container) return;
+            
+            switch(vistaAnalytics) {
+                case 'resumo':
+                    renderAnalyticsResumo(container);
+                    break;
+                case 'graficos':
+                    renderAnalyticsGraficos(container);
+                    break;
+                case 'detalhado':
+                    renderAnalyticsDetalhado(container);
+                    break;
+                case 'historico':
+                    renderAnalyticsHistorico(container);
+                    break;
+            }
+        }
+        
+        function renderAnalyticsResumo(container) {
+            // Calcular estatísticas
+            const totalTemas = dados.filter(t => t.status !== 'Suspenso').length;
+            const totalSessoes = historico.length;
+            const rendimentoMedio = historico.length > 0 
+                ? Math.round(historico.reduce((acc, h) => acc + (h.rendimento || 0), 0) / historico.length) 
+                : 0;
+            const tempoTotal = dados.reduce((acc, t) => acc + (t.tempo || 0), 0);
+            const horasTotal = Math.round(tempoTotal / 60);
+            
+            // Calcular questões e flashcards
+            let totalQuestoes = 0;
+            let totalFlashcards = 0;
+            historico.forEach(h => {
+                if (h.questoes) {
+                    const match = String(h.questoes).match(/(\d+)/);
+                    if (match) totalQuestoes += parseInt(match[1]);
+                }
+                if (h.flashcards) {
+                    totalFlashcards += parseInt(h.flashcards) || 0;
+                }
+            });
+            
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${totalTemas}</div>
+                        <div class="stat-label">Módulos Ativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalSessoes}</div>
+                        <div class="stat-label">Sessões Totais</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${rendimentoMedio}%</div>
+                        <div class="stat-label">Performance Média</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${horasTotal}h</div>
+                        <div class="stat-label">Tempo Investido</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalQuestoes}</div>
+                        <div class="stat-label">Questões Resolvidas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalFlashcards}</div>
+                        <div class="stat-label">Flashcards Revisados</div>
+                    </div>
+                </div>
+                
+                <!-- Filtro de período -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0,206,209,0.05); border-radius: 8px;">
+                    <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 10px;">📅 Análise por Período</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="date" class="form-input" id="analyticsDataInicio" style="flex: 1; min-width: 120px;">
+                        <input type="date" class="form-input" id="analyticsDataFim" style="flex: 1; min-width: 120px;">
+                        <button class="btn btn-small" onclick="gerarRelatorioAnalytics()">Gerar</button>
+                    </div>
+                    <div id="analyticsRelatorioResultado" style="margin-top: 15px;"></div>
+                </div>
+            `;
+        }
+        
+        function renderAnalyticsGraficos(container) {
+            container.innerHTML = `
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">📊 Performance por Área</h4>
+                    <canvas id="chartBarrasAnalytics" width="400" height="200"></canvas>
+                </div>
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">📈 Evolução Temporal</h4>
+                    <canvas id="chartLinhaAnalytics" width="400" height="200"></canvas>
+                </div>
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">🎯 Radar de Competências</h4>
+                    <canvas id="chartRadarAnalytics" width="400" height="300"></canvas>
+                </div>
+            `;
+            
+            // Re-renderizar gráficos após inserir no DOM
+            setTimeout(() => {
+                renderCharts();
+            }, 100);
+        }
+        
+        function renderAnalyticsDetalhado(container) {
+            // Renderizar análises detalhadas
+            container.innerHTML = `
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--turquesa-light); font-size: 14px;">🔍 Análises por Área e Tema</span>
+                    <button class="btn btn-small" onclick="toggleAnalisesTempo()" style="font-size: 11px;">
+                        <span id="toggleAnalisesTempoText">⏱️ Mostrar Análises de Tempo</span>
+                    </button>
+                </div>
+                <div id="analisesDetalhadas"></div>
+            `;
+            
+            // Chamar função de análises existente
+            setTimeout(() => {
+                renderAnalises();
+            }, 100);
+        }
+        
+        function renderAnalyticsHistorico(container) {
+            // Renderizar histórico
+            container.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <span style="color: var(--turquesa-light); font-size: 14px;">📜 Histórico de Sessões</span>
+                </div>
+                <div id="historicoTabela" style="overflow-x: auto;"></div>
+            `;
+            
+            // Chamar função de histórico existente
+            setTimeout(() => {
+                renderHistorico();
+            }, 100);
+        }
+        
+        function gerarRelatorioAnalytics() {
+            const dataInicio = document.getElementById('analyticsDataInicio')?.value;
+            const dataFim = document.getElementById('analyticsDataFim')?.value;
+            const container = document.getElementById('analyticsRelatorioResultado');
+            
+            if (!dataInicio || !dataFim) {
+                container.innerHTML = '<div style="color: var(--cobre-light);">⚠️ Selecione as datas</div>';
+                return;
+            }
+            
+            // Filtrar histórico pelo período
+            const historicoFiltrado = historico.filter(h => {
+                const data = h.data;
+                return data >= dataInicio && data <= dataFim;
+            });
+            
+            if (historicoFiltrado.length === 0) {
+                container.innerHTML = '<div style="color: rgba(255,255,255,0.6);">Nenhuma sessão encontrada no período.</div>';
+                return;
+            }
+            
+            const totalSessoes = historicoFiltrado.length;
+            const rendMedio = Math.round(historicoFiltrado.reduce((a, h) => a + (h.rendimento || 0), 0) / totalSessoes);
+            const tempoTotal = historicoFiltrado.reduce((a, h) => a + (h.tempo || 0), 0);
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                    <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${totalSessoes}</div>
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Sessões</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${rendMedio}%</div>
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Performance</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${Math.round(tempoTotal/60)}h</div>
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Tempo</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ==================== AJUDA ====================
+        
+        let vistaAjuda = 'tutorial';
+        
+        function setVistaAjuda(vista) {
+            vistaAjuda = vista;
+            
+            // Atualizar botões
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => {
+                if (btn.id && btn.id.startsWith('btnAjuda')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            const btnAtivo = document.getElementById(`btnAjuda${vista.charAt(0).toUpperCase() + vista.slice(1)}`);
+            if (btnAtivo) btnAtivo.classList.add('active');
+            
+            renderAjuda();
+        }
+        
+        function renderAjuda() {
+            const container = document.getElementById('ajudaContainer');
+            if (!container) return;
+            
+            switch(vistaAjuda) {
+                case 'tutorial':
+                    renderAjudaTutorial(container);
+                    break;
+                case 'lembretes':
+                    renderAjudaLembretes(container);
+                    break;
+                case 'faq':
+                    renderAjudaFaq(container);
+                    break;
+            }
+        }
+        
+        function renderAjudaTutorial(container) {
+            container.innerHTML = `
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">🎯 Tour Guiado</h3>
+                    <button class="btn" onclick="iniciarTutorial()">🚀 Iniciar Tour da Plataforma</button>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 10px;">
+                        Um guia passo a passo por todas as funcionalidades
+                    </p>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(0,206,209,0.1), rgba(13,148,136,0.05)); border-radius: 8px; padding: 20px;">
+                    <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">📚 Guia Rápido</h3>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div>
+                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📋 Tarefa</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Veja o que estudar hoje baseado na revisão espaçada.</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📝 Feedback</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Registre suas sessões de estudo com tempo, performance e questões.</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📔 Diário</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Anote aprendizados do dia no formato pergunta/resposta para recall ativo.</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📓 Caderno</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Registre Hot Topics (pontos de prova) e anotações por tema.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderAjudaLembretes(container) {
+            container.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <form id="lembreteFormAjuda" onsubmit="adicionarLembreteAjuda(event)">
+                        <div class="form-group">
+                            <label class="form-label">Título do Lembrete</label>
+                            <input type="text" class="form-input" id="lembreteTituloAjuda" placeholder="Ex: Revisar vias de acesso" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Descrição (opcional)</label>
+                            <textarea class="form-input" id="lembreteDescricaoAjuda" rows="2" placeholder="Detalhes..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Periodicidade</label>
+                            <select class="form-select" id="lembretePeriodicidadeAjuda" required>
+                                <option value="pontual">Pontual</option>
+                                <option value="diaria">Diária</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="mensal">Mensal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data Inicial</label>
+                            <input type="date" class="form-input" id="lembreteDataAjuda" required>
+                        </div>
+                        <button type="submit" class="btn">➕ Adicionar Lembrete</button>
+                    </form>
+                </div>
+                <div id="lembretesListaAjuda"></div>
+            `;
+            
+            // Renderizar lembretes existentes
+            setTimeout(() => {
+                renderLembretesLista();
+            }, 100);
+        }
+        
+        function renderLembretesLista() {
+            const container = document.getElementById('lembretesListaAjuda');
+            if (!container) return;
+            
+            if (lembretes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📌</div><div>Nenhum lembrete</div></div>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+            lembretes.forEach(l => {
+                html += `
+                    <div class="task-item" style="padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--cobre-light);">${l.titulo}</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.6);">${l.periodicidade} • ${formatarData(l.dataInicial)}</div>
+                            </div>
+                            <button class="btn-edit" onclick="removerLembrete(${l.id})" title="Remover">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function adicionarLembreteAjuda(event) {
+            event.preventDefault();
+            
+            const titulo = document.getElementById('lembreteTituloAjuda').value.trim();
+            const descricao = document.getElementById('lembreteDescricaoAjuda').value.trim();
+            const periodicidade = document.getElementById('lembretePeriodicidadeAjuda').value;
+            const dataInicial = document.getElementById('lembreteDataAjuda').value;
+            
+            if (!titulo || !dataInicial) return;
+            
+            const novoLembrete = {
+                id: Date.now(),
+                titulo: titulo,
+                descricao: descricao,
+                periodicidade: periodicidade,
+                dataInicial: dataInicial,
+                temaId: null,
+                ativo: true
+            };
+            
+            lembretes.push(novoLembrete);
+            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+            
+            // Limpar form
+            document.getElementById('lembreteTituloAjuda').value = '';
+            document.getElementById('lembreteDescricaoAjuda').value = '';
+            document.getElementById('lembreteDataAjuda').value = '';
+            
+            renderLembretesLista();
+            mostrarNotificacaoFeedback('✅ Lembrete adicionado!');
+        }
+        
+        function renderAjudaFaq(container) {
+            container.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="perguntaAssistenteAjuda" class="form-input" placeholder="Digite sua dúvida..." style="margin-bottom: 10px;">
+                    <button class="btn btn-secondary" onclick="responderDuvidaAjuda()">🔍 Buscar Resposta</button>
+                </div>
+                <div id="respostaAssistenteAjuda" style="display: none; margin-bottom: 20px;"></div>
+                
+                <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">📚 Perguntas Frequentes</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('adicionar')" style="text-align: left;">❓ Como adicionar um tema?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('feedback')" style="text-align: left;">❓ Como registrar uma sessão?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('agenda')" style="text-align: left;">❓ Como usar a agenda?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('backup')" style="text-align: left;">❓ Como fazer backup?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('hottopics')" style="text-align: left;">❓ O que são Hot Topics?</button>
+                </div>
+                <div id="respostaFaqAjuda" style="margin-top: 20px;"></div>
+            `;
+        }
+        
+        function mostrarRespostaAjuda(tipo) {
+            const container = document.getElementById('respostaFaqAjuda');
+            const respostas = {
+                'adicionar': 'Vá em <b>Dados</b> e clique no botão <b>➕ Novo Tema</b>. Preencha a área, tema e prioridade.',
+                'feedback': 'Vá em <b>Feedback</b>, selecione o tema, preencha data, performance e tempo, e clique em Salvar.',
+                'agenda': 'A <b>Agenda</b> mostra seus estudos programados. Use o toggle para ver <b>Timeline</b> (cronograma) ou <b>Atrasados</b> (pendências).',
+                'backup': 'Vá em <b>Backup</b> e clique nos botões para exportar seus dados em CSV. Para restaurar, use a seção Importar.',
+                'hottopics': '<b>Hot Topics</b> são os pontos mais importantes de cada tema - aqueles que caem com frequência na prova. Anote-os no <b>Caderno</b>.'
+            };
+            
+            container.innerHTML = `
+                <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px; border-left: 3px solid var(--turquesa-light);">
+                    <div style="font-size: 14px; color: var(--text-light); line-height: 1.6;">${respostas[tipo] || 'Resposta não encontrada.'}</div>
+                </div>
+            `;
+        }
+        
+        function responderDuvidaAjuda() {
+            const pergunta = document.getElementById('perguntaAssistenteAjuda')?.value?.toLowerCase() || '';
+            const container = document.getElementById('respostaAssistenteAjuda');
+            
+            if (!pergunta.trim()) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            let resposta = 'Não encontrei uma resposta específica. Tente explorar as perguntas frequentes abaixo.';
+            
+            if (pergunta.includes('tema') || pergunta.includes('adicionar') || pergunta.includes('cadastr')) {
+                resposta = 'Para adicionar um tema, vá em <b>Dados</b> e clique em <b>➕ Novo Tema</b>.';
+            } else if (pergunta.includes('feedback') || pergunta.includes('sessão') || pergunta.includes('registr')) {
+                resposta = 'Para registrar uma sessão, vá em <b>Feedback</b> e preencha os dados da sua sessão de estudo.';
+            } else if (pergunta.includes('backup') || pergunta.includes('export') || pergunta.includes('salvar')) {
+                resposta = 'Para fazer backup, vá em <b>Backup</b> e exporte seus dados em CSV.';
+            } else if (pergunta.includes('hot') || pergunta.includes('prova') || pergunta.includes('importante')) {
+                resposta = 'Use <b>Hot Topics</b> no <b>Caderno</b> para anotar os pontos mais importantes de cada tema.';
+            }
+            
+            container.innerHTML = `
+                <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px; border-left: 3px solid var(--turquesa-light);">
+                    <div style="color: var(--turquesa-light); font-weight: bold; margin-bottom: 8px;">💡 Resposta:</div>
+                    <div style="font-size: 14px; color: var(--text-light); line-height: 1.6;">${resposta}</div>
+                </div>
+            `;
+            container.style.display = 'block';
+        }
+        
+        // ==================== EXPORTAÇÃO HOT TOPICS HTML ====================
+        
+        function exportarHotTopicsHTML(areaFiltro = null) {
+            // Filtrar anotações que têm hot topics
+            let anotacoesComHotTopics = anotacoes.filter(a => a.hotTopics && a.hotTopics.trim());
+            
+            if (anotacoesComHotTopics.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Nenhum Hot Topic encontrado!', 'error');
+                return;
+            }
+            
+            // Aplicar filtro de área se especificado
+            if (areaFiltro) {
+                anotacoesComHotTopics = anotacoesComHotTopics.filter(a => a.area === areaFiltro);
+            }
+            
+            if (anotacoesComHotTopics.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Nenhum Hot Topic para esta área!', 'error');
+                return;
+            }
+            
+            // Agrupar por área
+            const porArea = {};
+            anotacoesComHotTopics.forEach(a => {
+                if (!porArea[a.area]) porArea[a.area] = [];
+                porArea[a.area].push(a);
+            });
+            
+            // Gerar HTML
+            const dataGeracao = new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Hot Topics TEOT 2026</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, #0a1a1f 0%, #051015 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0 40px;
+            border-bottom: 2px solid rgba(0, 206, 209, 0.3);
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #00FFE0, #FF9F40);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: rgba(0, 206, 209, 0.8); font-size: 14px; }
+        .area { margin-bottom: 40px; }
+        .area-title {
+            color: #00CED1;
+            font-size: 20px;
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 206, 209, 0.3);
+            margin-bottom: 20px;
+        }
+        .tema {
+            background: rgba(20, 35, 45, 0.6);
+            border: 1px solid rgba(255, 159, 64, 0.3);
+            border-left: 4px solid #FF9F40;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .tema-title {
+            color: #FFB84D;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .hot-topics {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        footer {
+            text-align: center;
+            padding: 40px 0 20px;
+            border-top: 1px solid rgba(0, 206, 209, 0.2);
+            margin-top: 40px;
+        }
+        .footer-text { color: rgba(255, 255, 255, 0.5); font-size: 12px; }
+        .footer-logo { color: #00CED1; font-weight: 700; margin-top: 10px; }
+        @media print {
+            body { background: white; color: black; }
+            .tema { border: 1px solid #ccc; break-inside: avoid; }
+            .area-title { color: #0d9488; }
+            .tema-title { color: #b8701f; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔥 Hot Topics TEOT 2026</h1>
+            <p class="subtitle">Gerado em ${dataGeracao}</p>
+        </header>
+        
+        ${Object.keys(porArea).sort().map(area => `
+            <div class="area">
+                <h2 class="area-title">📁 ${area}</h2>
+                ${porArea[area].sort((a, b) => a.tema.localeCompare(b.tema, 'pt-BR')).map(anotacao => `
+                    <div class="tema">
+                        <div class="tema-title">📝 ${anotacao.tema}</div>
+                        <div class="hot-topics">${anotacao.hotTopics.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;')}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('')}
+        
+        <footer>
+            <p class="footer-text">Documento gerado automaticamente</p>
+            <p class="footer-logo">🧠 VRVS CIRCUIT TECH</p>
+        </footer>
+    </div>
+</body>
+</html>`;
+            
+            // Download
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const nomeArquivo = areaFiltro 
+                ? `HOT_TOPICS_${areaFiltro.replace(/\s+/g, '_').toUpperCase()}_${new Date().toISOString().split('T')[0]}.html`
+                : `HOT_TOPICS_COMPLETO_${new Date().toISOString().split('T')[0]}.html`;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            mostrarNotificacaoFeedback(`✅ ${anotacoesComHotTopics.length} Hot Topics exportados!`);
+        }
+        
+        // ==================== EXPORTAÇÃO DIÁRIO CSV ====================
+        
+        function exportarDiarioCSV() {
+            if (!window.diario || !window.diario.entradas || window.diario.entradas.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Nenhuma entrada no diário!', 'error');
+                return;
+            }
+            
+            const headers = ['id', 'data', 'area', 'tema', 'topico', 'resposta', 'atencao', 'criadoEm', 'ultimaAtualizacao'];
+            let csv = headers.join(',') + '\n';
+            
+            window.diario.entradas.forEach(e => {
+                const linha = [
+                    e.id,
+                    e.data,
+                    `"${(e.area || '').replace(/"/g, '""')}"`,
+                    `"${(e.tema || '').replace(/"/g, '""')}"`,
+                    `"${(e.topico || '').replace(/"/g, '""')}"`,
+                    `"${(e.resposta || '').replace(/"/g, '""')}"`,
+                    e.atencao ? 'true' : 'false',
+                    e.criadoEm || '',
+                    e.ultimaAtualizacao || ''
+                ];
+                csv += linha.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `DIARIO_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            mostrarNotificacaoFeedback('✅ Diário exportado!');
+        }
+        
+        // ==================== INICIALIZAÇÃO ATUALIZADA ====================
+        
+        // Sobrescrever initApp para incluir novas renderizações
+        const initAppOriginal = initApp;
+        initApp = function() {
+            initAppOriginal();
+            
+            // Renderizar novas abas se estiverem ativas
+            setTimeout(() => {
+                if (document.getElementById('analyticsContainer')) {
+                    renderAnalytics();
+                }
+                if (document.getElementById('ajudaContainer')) {
+                    renderAjuda();
+                }
+                if (document.getElementById('cadernoAreasContainer')) {
+                    renderCadernoV2();
+                }
+            }, 500);
+        };
     </script>
 </body>
 </html>
