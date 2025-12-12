@@ -1705,6 +1705,23 @@
         </div>
     </div>
     
+    <!-- MODAL DE ATUALIZAÇÃO -->
+    <div id="modalAtualizacao" class="modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="atualizacaoTitulo">🎉 Nova Versão Disponível!</h2>
+                <button class="modal-close" onclick="fecharModalAtualizacao()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div id="atualizacaoConteudo"></div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn" onclick="iniciarTutorialAtualizacao()" style="flex: 1;">🎯 Ver Tutorial</button>
+                    <button class="btn btn-secondary" onclick="fecharModalAtualizacao()" style="flex: 1;">Pular</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- MODAL EDITAR ANOTAÇÃO (CADERNO V2) -->
     <div id="modalEditarAnotacao" class="modal">
         <div class="modal-content" style="max-width: 600px;">
