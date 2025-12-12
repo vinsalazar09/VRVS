@@ -2135,8 +2135,7 @@
                                     <th>Área</th>
                                     <th>Rend.</th>
                                     <th>Tempo</th>
-                                    <th>Observações</th>
-                                    <th>Sugestão</th>
+                                    <th>Diretriz</th>
                                 </tr>
                             </thead>
                             <tbody id="historicoTableBody"></tbody>
@@ -2162,25 +2161,7 @@
             </div>
             
             <!-- IMPORTAR -->
-            <div id="importar" class="section" style="display: none;">
-                <div class="card">
-                    <div class="card-title">📥 IMPORTAR DADOS</div>
-                    <div class="form-group">
-                        <label class="form-label">Arquivo DADOS.csv</label>
-                        <input type="file" class="form-input" id="importDados" accept=".csv">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Arquivo HISTORICO.csv</label>
-                        <input type="file" class="form-input" id="importHistorico" accept=".csv">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Arquivo ANOTACOES.csv (opcional)</label>
-                        <input type="file" class="form-input" id="importAnotacoes" accept=".csv">
-                    </div>
-                    <button class="btn" onclick="importarArquivos()">📥 PROCESSAR IMPORTAÇÃO</button>
-                    <button class="btn btn-danger" onclick="limparTudo()">🗑️ RESET COMPLETO</button>
-                </div>
-            </div>
+            <!-- Seção antiga removida - importação agora está na aba Backup -->
             
             <!-- EXPORTAR -->
             <div id="exportar" class="section" style="display: none;">
@@ -2412,6 +2393,10 @@
                         <div class="form-group">
                             <label class="form-label">Arquivo ANOTACOES.csv (opcional)</label>
                             <input type="file" class="form-input" id="importAnotacoes" accept=".csv">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Arquivo DIARIO.csv (opcional)</label>
+                            <input type="file" class="form-input" id="importDiario" accept=".csv">
                         </div>
                         <button class="btn" onclick="importarArquivos()">📥 PROCESSAR IMPORTAÇÃO</button>
                     </div>
@@ -3387,6 +3372,13 @@
 
         function renderHistorico() {
             const tbody = document.getElementById('historicoTableBody');
+            if (!tbody) {
+                console.warn('[RENDER HISTORICO] Tbody não encontrado! Verificando novamente em 100ms...');
+                setTimeout(() => renderHistorico(), 100);
+                return;
+            }
+            
+            console.log('[RENDER HISTORICO] Total de registros no histórico:', historico.length);
             
             // CORREÇÃO: Filtrar histórico inválido (área "Tema" e linhas sem dados válidos)
             const historicoFiltrado = historico.filter(h => {
@@ -3404,8 +3396,11 @@
                 return true;
             });
             
+            console.log('[RENDER HISTORICO] Registros após filtro:', historicoFiltrado.length);
+            
             if (historicoFiltrado.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: rgba(0,206,209,0.5);">Nenhum registro encontrado</td></tr>';
+                console.warn('[RENDER HISTORICO] Nenhum registro válido encontrado após filtro!');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: rgba(0,206,209,0.5);">Nenhum registro encontrado</td></tr>';
                 return;
             }
             
@@ -3434,8 +3429,7 @@
                         <td style="color: rgba(0,206,209,0.8);">${areaCorrigida || '-'}</td>
                         <td style="text-align: center; color: ${rendColor}; font-weight: 600;">${rend}</td>
                         <td style="text-align: center; color: rgba(255,255,255,0.7);">${tempo}</td>
-                        <td style="color: rgba(255,255,255,0.7); font-size: 12px;">${h.observacoes || '-'}</td>
-                        <td style="color: rgba(255,255,255,0.7); font-size: 12px;">${h.sugestao || '-'}</td>
+                        <td style="color: rgba(255,255,255,0.7); font-size: 12px;">${(h.observacoes && h.observacoes !== '-' ? h.observacoes + ' ' : '') + (h.sugestao && h.sugestao !== '-' ? h.sugestao : '') || '-'}</td>
                     </tr>
                 `;
             }).join('');
@@ -3615,9 +3609,13 @@
         let chartRadarInst = null;
         
         // GRÁFICO 1: Performance média POR ÁREA
-        function renderChartBarras() {
-            const ctx = document.getElementById('chartBarras');
-            if (!ctx) return;
+        function renderChartBarras(canvasId = 'chartBarras') {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.warn('[CHART BARRAS] Canvas não encontrado! ID:', canvasId);
+                return;
+            }
+            console.log('[CHART BARRAS] Renderizando gráfico... ID:', canvasId);
             
             // AGRUPAR POR ÁREA!!!
             const areaStats = {};
@@ -3646,15 +3644,64 @@
             }
             const sorted = areaRendimento.sort((a, b) => b[1] - a[1]);
             
+            console.log('[CHART BARRAS] Áreas encontradas:', Object.keys(areaStats).length);
+            console.log('[CHART BARRAS] Dados ordenados:', sorted.length, 'áreas');
+            
             if (sorted.length === 0) {
+                console.warn('[CHART BARRAS] Nenhum dado para exibir! Histórico:', historico.length, 'registros');
                 if (chartBarrasInst) { chartBarrasInst.destroy(); chartBarrasInst = null; }
+                // Mostrar mensagem ao usuário
+                const container = ctx.closest('div');
+                if (container && !container.querySelector('.no-data-message')) {
+                    container.innerHTML += '<div class="no-data-message" style="color: rgba(0,206,209,0.7); padding: 20px; text-align: center; font-size: 14px;">⚠️ Nenhum dado disponível para exibir. Adicione sessões no histórico primeiro.</div>';
+                }
                 return;
             }
             if (chartBarrasInst) { chartBarrasInst.destroy(); }
             
-            const backgroundColors = sorted.map(s => getColorForArea(s[0]));
+            // Cores: extremos (máximo e mínimo) mais fortes, centro mais brando
+            const maxVal = Math.max(...sorted.map(s => s[1]));
+            const minVal = Math.min(...sorted.map(s => s[1]));
+            const backgroundColors = sorted.map((s, index) => {
+                const valor = s[1];
+                const corBase = getColorForArea(s[0]);
+                
+                // Se é máximo ou mínimo, usar cor forte
+                if (valor === maxVal || valor === minVal) {
+                    return corBase; // Cor original (forte)
+                }
+                
+                // Para valores intermediários, tornar a cor mais branda (adicionar transparência)
+                const r = parseInt(corBase.slice(1, 3), 16);
+                const g = parseInt(corBase.slice(3, 5), 16);
+                const b = parseInt(corBase.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, 0.4)`; // 40% de opacidade para centro
+            });
             
-            chartBarrasInst = new Chart(ctx, {
+            const borderColors = sorted.map((s, index) => {
+                const valor = s[1];
+                const corBase = getColorForArea(s[0]);
+                
+                // Bordas: extremos mais grossas e fortes, centro mais finas e brandas
+                if (valor === maxVal || valor === minVal) {
+                    return corBase; // Cor original (forte)
+                }
+                const r = parseInt(corBase.slice(1, 3), 16);
+                const g = parseInt(corBase.slice(3, 5), 16);
+                const b = parseInt(corBase.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, 0.6)`; // 60% de opacidade para bordas do centro
+            });
+            
+            const borderWidths = sorted.map(s => {
+                const valor = s[1];
+                return (valor === maxVal || valor === minVal) ? 2 : 1; // Extremos com borda mais grossa
+            });
+            
+            console.log('[CHART BARRAS] Criando gráfico com', sorted.length, 'áreas');
+            console.log('[CHART BARRAS] Chart disponível?', typeof Chart !== 'undefined');
+            
+            try {
+                chartBarrasInst = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: sorted.map(s => s[0]),
@@ -3662,13 +3709,14 @@
                         label: 'Performance Média (%)',
                         data: sorted.map(s => s[1]),
                         backgroundColor: backgroundColors,
-                        borderColor: backgroundColors,
-                        borderWidth: 1
+                        borderColor: borderColors,
+                        borderWidth: borderWidths
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
                     plugins: {
                         legend: { display: false },
                         title: {
@@ -3697,11 +3745,19 @@
                     }
                 }
             });
+            console.log('[CHART BARRAS] Gráfico criado com sucesso!');
+            } catch (err) {
+                console.error('[CHART BARRAS] ERRO ao criar gráfico:', err);
+                const container = ctx.closest('div');
+                if (container) {
+                    container.innerHTML += '<div style="color: #EF4444; padding: 20px; text-align: center;">⚠️ Erro ao renderizar gráfico: ' + err.message + '</div>';
+                }
+            }
         }
         
         // GRÁFICO 2: Evolução POR ÁREA
-        function renderChartLinha() {
-            const ctx = document.getElementById('chartLinha');
+        function renderChartLinha(canvasId = 'chartLinha') {
+            const ctx = document.getElementById(canvasId);
             if (!ctx) return;
             
             // AGRUPAR POR ÁREA!!!
@@ -3750,7 +3806,8 @@
                 data: { datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
                     plugins: {
                         legend: {
                             display: true,
@@ -3807,8 +3864,8 @@
         }
         
         // GRÁFICO 3: Radar POR ÁREA
-        function renderChartRadar() {
-            const ctx = document.getElementById('chartRadar');
+        function renderChartRadar(canvasId = 'chartRadar') {
+            const ctx = document.getElementById(canvasId);
             if (!ctx) return;
             
             // AGRUPAR POR ÁREA!!!
@@ -3864,7 +3921,8 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.3,
                     plugins: {
                         legend: { display: false },
                         title: {
@@ -3928,8 +3986,23 @@
             const dadosFile = document.getElementById('importDados').files[0];
             const historicoFile = document.getElementById('importHistorico').files[0];
             const anotacoesFile = document.getElementById('importAnotacoes').files[0];
+            const diarioFile = document.getElementById('importDiario').files[0];
             
-            if (!dadosFile && !historicoFile && !anotacoesFile) {
+            console.log('[IMPORT] ========== INÍCIO DA IMPORTAÇÃO ==========');
+            console.log('[IMPORT] Arquivos selecionados:', {
+                dados: dadosFile ? dadosFile.name + ' (' + dadosFile.size + ' bytes)' : 'não selecionado',
+                historico: historicoFile ? historicoFile.name + ' (' + historicoFile.size + ' bytes)' : 'não selecionado',
+                anotacoes: anotacoesFile ? anotacoesFile.name + ' (' + anotacoesFile.size + ' bytes)' : 'não selecionado',
+                diario: diarioFile ? diarioFile.name + ' (' + diarioFile.size + ' bytes)' : 'não selecionado'
+            });
+            console.log('[IMPORT] Verificação de arquivos:', {
+                dadosFile: !!dadosFile,
+                historicoFile: !!historicoFile,
+                anotacoesFile: !!anotacoesFile,
+                diarioFile: !!diarioFile
+            });
+            
+            if (!dadosFile && !historicoFile && !anotacoesFile && !diarioFile) {
                 mostrarNotificacaoFeedback('❌ Selecione arquivo para importar!', 'error');
                 return;
             }
@@ -3937,7 +4010,9 @@
             const promises = [];
             
             if (dadosFile) {
+                console.log('[IMPORT DADOS] Iniciando importação de', dadosFile.name);
                 promises.push(parseCSV(dadosFile).then(dadosCSV => {
+                    console.log('[IMPORT DADOS] CSV parseado,', dadosCSV.length, 'registros recebidos');
                     dados = dadosCSV.map(t => {
                         if (!t.id) t.id = Date.now() + Math.random();
                         t.area = normalizeArea(t.area, t.tema);
@@ -3953,12 +4028,18 @@
                         return t;
                     });
                     localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                    console.log('[IMPORT DADOS]', dados.length, 'dados salvos');
                     return 'dados';
+                }).catch(err => {
+                    console.error('[IMPORT DADOS] Erro ao importar:', err);
+                    throw err;
                 }));
             }
             
             if (historicoFile) {
+                console.log('[IMPORT HISTORICO] Iniciando importação de', historicoFile.name);
                 promises.push(parseCSV(historicoFile).then(historicoCSV => {
+                    console.log('[IMPORT HISTORICO] CSV parseado,', historicoCSV.length, 'registros recebidos');
                     historico = historicoCSV.map(h => {
                         if (!h.id) h.id = Date.now() + Math.random();
                         h.area = normalizeArea(h.area, h.tema);
@@ -3976,12 +4057,16 @@
                         return h;
                     });
                     localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                    console.log('[IMPORT HISTORICO]', historico.length, 'registros salvos');
                     return 'historico';
+                }).catch(err => {
+                    console.error('[IMPORT HISTORICO] Erro ao importar:', err);
+                    throw err;
                 }));
             }
             
             if (anotacoesFile) {
-                console.log('[IMPORT ANOTACOES] Arquivo selecionado:', anotacoesFile.name, 'tamanho:', anotacoesFile.size);
+                console.log('[IMPORT ANOTACOES] Iniciando importação de', anotacoesFile.name, 'tamanho:', anotacoesFile.size);
                 promises.push(parseCSVAnotacoes(anotacoesFile).then(anotacoesCSV => {
                     console.log('[IMPORT ANOTACOES] CSV parseado,', anotacoesCSV.length, 'anotações recebidas');
                     const anotacoesImportadas = anotacoesCSV.map(a => {
@@ -4012,21 +4097,97 @@
                 }));
             }
             
-            Promise.all(promises)
+            if (diarioFile) {
+                console.log('[IMPORT DIARIO] Iniciando importação de', diarioFile.name);
+                promises.push(parseCSVDiario(diarioFile).then(diarioCSV => {
+                    console.log('[IMPORT DIARIO] CSV parseado,', diarioCSV.length, 'entradas recebidas');
+                    
+                    // Carregar diário existente
+                    carregarDiario();
+                    
+                    // Mesclar entradas importadas com existentes
+                    const entradasExistentes = window.diario.entradas || [];
+                    const entradasImportadas = diarioCSV.map(e => {
+                        if (!e.id) e.id = Date.now() + Math.random();
+                        e.atencao = e.atencao === 'true' || e.atencao === true;
+                        return e;
+                    });
+                    
+                    // Mesclar: se ID existe, atualiza; se não, adiciona
+                    entradasImportadas.forEach(nova => {
+                        const existente = entradasExistentes.find(e => String(e.id) === String(nova.id));
+                        if (existente) {
+                            // Atualizar entrada existente
+                            Object.assign(existente, nova);
+                        } else {
+                            // Adicionar nova entrada
+                            entradasExistentes.push(nova);
+                        }
+                    });
+                    
+                    window.diario.entradas = entradasExistentes;
+                    salvarDiario();
+                    console.log(`[IMPORT DIARIO] ${entradasExistentes.length} entradas após mesclagem`);
+                    return 'diario';
+                }).catch(err => {
+                    console.error('[IMPORT DIARIO] Erro ao importar:', err);
+                    throw err;
+                }));
+            }
+            
+            console.log('[IMPORT] Total de promises criadas:', promises.length);
+            if (promises.length === 0) {
+                console.error('[IMPORT] ERRO: Nenhuma promise foi criada!');
+                mostrarNotificacaoFeedback('❌ Nenhum arquivo válido selecionado!', 'error');
+                return;
+            }
+            
+            console.log('[IMPORT] Executando Promise.allSettled com', promises.length, 'promises...');
+            Promise.allSettled(promises)
                 .then(results => {
+                    console.log('[IMPORT] Todas as promises finalizadas. Total de resultados:', results.length);
+                    console.log('[IMPORT] Resultados detalhados:', results);
+                    
                     // CORREÇÃO: Limpar histórico inválido após importação
                     limparHistoricoInvalido();
                     
-                    const msg = results.map(r => {
-                        if (r === 'dados') return 'Dados';
-                        if (r === 'historico') return 'Histórico';
-                        if (r === 'anotacoes') return 'Anotações';
-                        return r;
-                    }).join(' e ');
-                    mostrarNotificacaoFeedback(`✅ ${msg} importados com sucesso!`);
+                    const sucessos = [];
+                    const erros = [];
+                    
+                    results.forEach((result, index) => {
+                        if (result.status === 'fulfilled') {
+                            console.log(`[IMPORT] Promise ${index} sucesso:`, result.value);
+                            sucessos.push(result.value);
+                        } else {
+                            console.error(`[IMPORT] Promise ${index} falhou:`, result.reason);
+                            console.error(`[IMPORT] Erro completo:`, result.reason);
+                            if (result.reason?.stack) {
+                                console.error(`[IMPORT] Stack:`, result.reason.stack);
+                            }
+                            erros.push(result.reason?.message || result.reason?.toString() || 'Erro desconhecido');
+                        }
+                    });
+                    
+                    let msg = '';
+                    if (sucessos.length > 0) {
+                        msg = sucessos.map(r => {
+                            if (r === 'dados') return 'Dados';
+                            if (r === 'historico') return 'Histórico';
+                            if (r === 'anotacoes') return 'Anotações';
+                            if (r === 'diario') return 'Diário';
+                            return r;
+                        }).join(' e ');
+                        mostrarNotificacaoFeedback(`✅ ${msg} importados com sucesso!`);
+                    }
+                    
+                    if (erros.length > 0) {
+                        console.error('[IMPORT] Erros encontrados:', erros);
+                        mostrarNotificacaoFeedback(`⚠️ Alguns arquivos não puderam ser importados. Verifique o console.`, 'error');
+                    }
                     document.getElementById('importDados').value = '';
                     document.getElementById('importHistorico').value = '';
                     document.getElementById('importAnotacoes').value = '';
+                    document.getElementById('importDiario').value = '';
                     renderDados();
                     renderTarefas();
                     renderAgenda();
@@ -4034,24 +4195,38 @@
                     renderPendencias();
                     atualizarSelectsCaderno();
                     renderCaderno();
+                    if (sucessos.includes('diario')) {
+                        renderDiario();
+                    }
                     updateFeedbackSelect();
                     updateStats();
-                })
-                .catch(error => {
-                    mostrarNotificacaoFeedback(`❌ Erro: ${error.message}`, 'error');
                 });
         }
         
         function parseCSV(file) {
             return new Promise((resolve, reject) => {
+                if (!file) {
+                    reject(new Error('Arquivo não fornecido'));
+                    return;
+                }
+                console.log('[PARSE CSV] Lendo arquivo:', file.name, 'tamanho:', file.size);
                 const reader = new FileReader();
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.onerror = (err) => {
+                    console.error('[PARSE CSV] Erro ao ler arquivo:', err);
+                    reject(new Error('Erro ao ler arquivo: ' + (err.message || 'Erro desconhecido')));
+                };
                 reader.onload = (e) => {
                     try {
                         const text = e.target.result;
+                        console.log('[PARSE CSV] Arquivo lido, tamanho do texto:', text.length);
+                        if (!text || text.trim() === '') {
+                            reject(new Error('Arquivo está vazio'));
+                            return;
+                        }
                         const rows = parseCSVText(text);
+                        console.log('[PARSE CSV] Linhas parseadas:', rows.length);
                         if (rows.length < 2) {
-                            reject(new Error('Arquivo vazio ou inválido'));
+                            reject(new Error('Arquivo vazio ou inválido (menos de 2 linhas)'));
                             return;
                         }
                         const headers = rows[0];
@@ -4094,9 +4269,77 @@
                                 data: getVal(r, 'data'),
                                 temaId: getVal(r, 'temaid')
                             };
-                        }).filter(obj => obj.tema && obj.tema.trim() !== '');
+                        });
+                        const antesFiltro = data.length;
+                        const dataFiltrada = data.filter(obj => obj.tema && obj.tema.trim() !== '');
+                        console.log('[PARSE CSV] Registros antes do filtro:', antesFiltro, 'depois:', dataFiltrada.length);
+                        if (dataFiltrada.length === 0 && antesFiltro > 0) {
+                            console.warn('[PARSE CSV] ATENÇÃO: Todos os registros foram filtrados! Verifique se o campo "tema" existe no CSV.');
+                        }
+                        resolve(dataFiltrada);
+                    } catch (err) {
+                        console.error('[PARSE CSV] Erro no processamento:', err);
+                        console.error('[PARSE CSV] Stack:', err.stack);
+                        reject(err);
+                    }
+                };
+                console.log('[PARSE CSV] Iniciando leitura do arquivo...');
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // PARSER ESPECÍFICO PARA DIÁRIO
+        function parseCSVDiario(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo de diário'));
+                reader.onload = (e) => {
+                    try {
+                        const text = e.target.result;
+                        const rows = parseCSVText(text);
+                        if (rows.length < 2) {
+                            reject(new Error('Arquivo de diário vazio ou inválido'));
+                            return;
+                        }
+                        const headers = rows[0];
+                        const headersNormalizados = headers.map(h => 
+                            h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').replace(/[()]/g, '').replace(/\./g, '')
+                        );
+                        const headerMap = {};
+                        headersNormalizados.forEach((h, i) => { headerMap[h] = i; });
+                        const getVal = (r, ...possiveisNomes) => {
+                            for (const nome of possiveisNomes) {
+                                const idx = headerMap[nome];
+                                if (idx !== undefined && r[idx] !== undefined && r[idx] !== null && String(r[idx]).trim() !== '') {
+                                    return stripOuterQuotes(String(r[idx]));
+                                }
+                            }
+                            return '';
+                        };
+                        const data = rows.slice(1).map(r => {
+                            const entrada = {
+                                id: getVal(r, 'id') || Date.now() + Math.random(),
+                                data: getVal(r, 'data') || new Date().toISOString().split('T')[0],
+                                area: getVal(r, 'area', 'área'),
+                                tema: getVal(r, 'tema'),
+                                topico: getVal(r, 'topico', 'tópico', 'pergunta'),
+                                resposta: getVal(r, 'resposta'),
+                                atencao: getVal(r, 'atencao', 'atenção', 'atencao') === 'true' || getVal(r, 'atencao', 'atenção') === '1',
+                                criadoEm: getVal(r, 'criadoem', 'criad em', 'createdat'),
+                                ultimaAtualizacao: getVal(r, 'ultimaatualizacao', 'última atualização', 'updatedat') || new Date().toISOString().split('T')[0]
+                            };
+                            // Preservar quebras de linha
+                            if (entrada.resposta) {
+                                entrada.resposta = entrada.resposta.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+                            }
+                            return entrada;
+                        });
+                        console.log('[PARSE CSV] Dados processados:', data.length, 'registros');
                         resolve(data);
                     } catch (err) {
+                        console.error('[PARSE CSV] Erro no processamento:', err);
+                        console.error('[PARSE CSV] Stack:', err.stack);
                         reject(err);
                     }
                 };
@@ -4431,6 +4674,8 @@
             }
             // Novas seções consolidadas
             if (sectionId === 'analytics') {
+                // Garantir que a vista inicial seja renderizada
+                if (!vistaAnalytics) vistaAnalytics = 'resumo';
                 renderAnalytics();
             }
             if (sectionId === 'backup') {
@@ -7276,12 +7521,19 @@
             }
             
             let html = '';
-            datasOrdenadas.forEach(data => {
+            datasOrdenadas.forEach((data, idx) => {
+                const dataId = `diario-data-${data.replace(/-/g, '')}`;
                 html += `<div style="margin-bottom: 24px;">
-                    <h3 style="color: var(--turquesa-light); font-size: 15px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,206,209,0.2);">
-                        📅 ${formatarDataCompleta(data)}
-                    </h3>
-                    ${porData[data].map(e => renderEntradaDiario(e)).join('')}
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${dataId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                        <div class="area-header-left">
+                            <span class="area-header-title">📅 ${formatarDataCompleta(data)}</span>
+                            <span class="area-header-count">${porData[data].length} entrada${porData[data].length > 1 ? 's' : ''}</span>
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content collapsed" id="area-content-${dataId}">
+                        ${porData[data].map(e => renderEntradaDiario(e)).join('')}
+                    </div>
                 </div>`;
             });
             
@@ -7306,11 +7558,18 @@
             
             let html = '';
             temasOrdenados.forEach(temaKey => {
+                const temaId = `diario-tema-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
                 html += `<div style="margin-bottom: 24px;">
-                    <h3 style="color: var(--turquesa-light); font-size: 15px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,206,209,0.2);">
-                        📁 ${temaKey}
-                    </h3>
-                    ${porTema[temaKey].map(e => renderEntradaDiario(e)).join('')}
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                        <div class="area-header-left">
+                            <span class="area-header-title">📁 ${temaKey}</span>
+                            <span class="area-header-count">${porTema[temaKey].length} entrada${porTema[temaKey].length > 1 ? 's' : ''}</span>
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content collapsed" id="area-content-${temaId}">
+                        ${porTema[temaKey].map(e => renderEntradaDiario(e)).join('')}
+                    </div>
                 </div>`;
             });
             
@@ -7629,14 +7888,14 @@
                 
                 html += `
                     <div class="area-section" data-area="${area}">
-                        <div class="area-header" onclick="toggleAreaCaderno('${areaId}')">
+                        <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')">
                             <div class="area-header-left">
                                 <span class="area-header-title">📁 ${area}</span>
                                 <span class="area-header-count">${temasComConteudo}/${temas.length}</span>
                             </div>
                             <span class="area-header-toggle">▼</span>
                         </div>
-                        <div class="area-content" id="area-content-${areaId}">
+                        <div class="area-content collapsed" id="area-content-${areaId}">
                             <div class="tema-list">
                 `;
                 
@@ -7770,15 +8029,36 @@
                 }
             });
             
-            const btnAtivo = document.getElementById(`btnAnalytics${vista.charAt(0).toUpperCase() + vista.slice(1)}`);
-            if (btnAtivo) btnAtivo.classList.add('active');
+            // Mapear vista para ID do botão corretamente
+            const vistaMap = {
+                'resumo': 'Resumo',
+                'graficos': 'Graficos',
+                'detalhado': 'Detalhado',
+                'historico': 'Historico'
+            };
+            
+            const btnId = `btnAnalytics${vistaMap[vista] || vista.charAt(0).toUpperCase() + vista.slice(1)}`;
+            const btnAtivo = document.getElementById(btnId);
+            if (btnAtivo) {
+                btnAtivo.classList.add('active');
+            } else {
+                console.warn('[ANALYTICS] Botão não encontrado para vista:', vista, 'ID esperado:', btnId);
+            }
             
             renderAnalytics();
         }
         
         function renderAnalytics() {
             const container = document.getElementById('analyticsContainer');
-            if (!container) return;
+            if (!container) {
+                console.error('[ANALYTICS] Container não encontrado!');
+                return;
+            }
+            
+            // Garantir que vistaAnalytics tenha um valor válido
+            if (!vistaAnalytics) vistaAnalytics = 'resumo';
+            
+            console.log('[ANALYTICS] Renderizando vista:', vistaAnalytics);
             
             switch(vistaAnalytics) {
                 case 'resumo':
@@ -7793,31 +8073,69 @@
                 case 'historico':
                     renderAnalyticsHistorico(container);
                     break;
+                default:
+                    console.warn('[ANALYTICS] Vista desconhecida:', vistaAnalytics, '- usando resumo');
+                    vistaAnalytics = 'resumo';
+                    renderAnalyticsResumo(container);
+                    break;
             }
         }
         
         function renderAnalyticsResumo(container) {
-            // Calcular estatísticas
-            const totalTemas = dados.filter(t => t.status !== 'Suspenso').length;
-            const totalSessoes = historico.length;
-            const rendimentoMedio = historico.length > 0 
-                ? Math.round(historico.reduce((acc, h) => acc + (h.rendimento || 0), 0) / historico.length) 
-                : 0;
-            const tempoTotal = dados.reduce((acc, t) => acc + (t.tempo || 0), 0);
-            const horasTotal = Math.round(tempoTotal / 60);
+            // Filtrar histórico de temas suspensos (igual ao código antigo que funcionava)
+            const historicoAtivo = historico.filter(h => {
+                const tema = dados.find(t => String(t.id) === String(h.temaId));
+                return tema && tema.status !== 'Suspenso';
+            });
             
-            // Calcular questões e flashcards
-            let totalQuestoes = 0;
-            let totalFlashcards = 0;
-            historico.forEach(h => {
+            // Calcular estatísticas usando histórico ATIVO
+            const totalTemas = dados.filter(t => t.status !== 'Suspenso').length;
+            const totalSessoes = historicoAtivo.length;
+            const rendimentoMedio = historicoAtivo.length > 0 
+                ? Math.round((historicoAtivo.reduce((sum, h) => sum + (h.rendimento || 0), 0) / historicoAtivo.length) * 100)
+                : 0;
+            
+            // CORREÇÃO: Usar histórico para calcular tempo total, não dados
+            const totalMinutos = historicoAtivo.reduce((sum, h) => sum + (h.tempo || 0), 0);
+            const horasTotal = Math.round(totalMinutos / 60);
+            
+            // Calcular questões totais (somar acertos de todas as questões) - CÓDIGO IDÊNTICO AO ANTIGO
+            let totalQuestoesAcertos = 0;
+            let totalQuestoesTotal = 0;
+            let questoesEncontradas = 0;
+            historicoAtivo.forEach((h, idx) => {
                 if (h.questoes) {
-                    const match = String(h.questoes).match(/(\d+)/);
-                    if (match) totalQuestoes += parseInt(match[1]);
-                }
-                if (h.flashcards) {
-                    totalFlashcards += parseInt(h.flashcards) || 0;
+                    console.log(`[DEBUG RESUMO] Sessão ${idx}: questoes="${h.questoes}"`);
+                    const match = h.questoes.match(/(\d+)\/(\d+)/);
+                    if (match) {
+                        totalQuestoesAcertos += parseInt(match[1]);
+                        totalQuestoesTotal += parseInt(match[2]);
+                        questoesEncontradas++;
+                        console.log(`[DEBUG RESUMO] Match encontrado: ${match[1]}/${match[2]}`);
+                    } else {
+                        console.log(`[DEBUG RESUMO] Match NÃO encontrado para: "${h.questoes}"`);
+                    }
+                } else {
+                    console.log(`[DEBUG RESUMO] Sessão ${idx}: h.questoes é ${h.questoes} (tipo: ${typeof h.questoes})`);
                 }
             });
+            console.log(`[DEBUG RESUMO] Total de sessões com questões: ${questoesEncontradas}/${historicoAtivo.length}`);
+            
+            // Calcular flashcards totais - CÓDIGO IDÊNTICO AO ANTIGO
+            let flashcardsEncontrados = 0;
+            const totalFlashcards = historicoAtivo.reduce((sum, h, idx) => {
+                const val = parseInt(h.flashcards) || 0;
+                if (val > 0) {
+                    console.log(`[DEBUG RESUMO] Sessão ${idx}: flashcards=${h.flashcards} (valor: ${val})`);
+                    flashcardsEncontrados++;
+                }
+                return sum + val;
+            }, 0);
+            console.log(`[DEBUG RESUMO] Total de sessões com flashcards: ${flashcardsEncontrados}/${historicoAtivo.length}`);
+            
+            const totalQuestoes = totalQuestoesTotal > 0 
+                ? `${totalQuestoesAcertos}/${totalQuestoesTotal}` 
+                : '0';
             
             container.innerHTML = `
                 <div class="stats-grid">
@@ -7842,7 +8160,7 @@
                         <div class="stat-label">Questões Resolvidas</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${totalFlashcards}</div>
+                        <div class="stat-value">${totalFlashcards.toLocaleString()}</div>
                         <div class="stat-label">Flashcards Revisados</div>
                     </div>
                 </div>
@@ -7861,29 +8179,37 @@
         }
         
         function renderAnalyticsGraficos(container) {
+            // Destruir gráficos antigos se existirem ANTES de criar novos
+            if (chartBarrasInst) { chartBarrasInst.destroy(); chartBarrasInst = null; }
+            if (chartLinhaInst) { chartLinhaInst.destroy(); chartLinhaInst = null; }
+            if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
+            
+            // Criar HTML com canvas usando IDs ÚNICOS para evitar conflito com aba stats
             container.innerHTML = `
-                <div style="margin-bottom: 30px;">
-                    <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">📊 Performance por Área</h4>
-                    <canvas id="chartBarrasAnalytics" width="400" height="200"></canvas>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--turquesa-light); margin-bottom: 10px;">📊 Performance por Área</h4>
+                    <canvas id="chartBarrasAnalytics" width="400" height="150"></canvas>
                 </div>
-                <div style="margin-bottom: 30px;">
-                    <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">📈 Evolução Temporal</h4>
-                    <canvas id="chartLinhaAnalytics" width="400" height="200"></canvas>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--turquesa-light); margin-bottom: 10px;">📈 Evolução Temporal</h4>
+                    <canvas id="chartLinhaAnalytics" width="400" height="150"></canvas>
                 </div>
-                <div style="margin-bottom: 30px;">
-                    <h4 style="color: var(--turquesa-light); margin-bottom: 15px;">🎯 Radar de Competências</h4>
-                    <canvas id="chartRadarAnalytics" width="400" height="300"></canvas>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--turquesa-light); margin-bottom: 10px;">🎯 Radar de Competências</h4>
+                    <canvas id="chartRadarAnalytics" width="400" height="200"></canvas>
                 </div>
             `;
             
-            // Re-renderizar gráficos após inserir no DOM
-            setTimeout(() => {
-                renderCharts();
-            }, 100);
+            // Renderizar gráficos usando os IDs específicos da aba Analytics
+            requestAnimationFrame(() => {
+                renderChartBarras('chartBarrasAnalytics');
+                renderChartLinha('chartLinhaAnalytics');
+                renderChartRadar('chartRadarAnalytics');
+            });
         }
         
         function renderAnalyticsDetalhado(container) {
-            // Renderizar análises detalhadas
+            // Renderizar análises detalhadas com estrutura completa
             container.innerHTML = `
                 <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: var(--turquesa-light); font-size: 14px;">🔍 Análises por Área e Tema</span>
@@ -7891,28 +8217,111 @@
                         <span id="toggleAnalisesTempoText">⏱️ Mostrar Análises de Tempo</span>
                     </button>
                 </div>
-                <div id="analisesDetalhadas"></div>
+                <div id="analiseResultados" style="margin-top: 30px;">
+                    <!-- Resultados serão renderizados aqui por calcularAnalises() -->
+                </div>
+                <div id="analiseTempo" style="display: none; margin-top: 30px;">
+                    <!-- Análises de tempo serão renderizadas aqui -->
+                </div>
             `;
             
             // Chamar função de análises existente
             setTimeout(() => {
-                renderAnalises();
+                atualizarSelectsAnalise();
+                atualizarAnalises();
             }, 100);
         }
         
         function renderAnalyticsHistorico(container) {
-            // Renderizar histórico
+            // Renderizar histórico com estrutura completa da tabela
             container.innerHTML = `
                 <div style="margin-bottom: 15px;">
                     <span style="color: var(--turquesa-light); font-size: 14px;">📜 Histórico de Sessões</span>
                 </div>
-                <div id="historicoTabela" style="overflow-x: auto;"></div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tema</th>
+                                <th>Área</th>
+                                <th>Rend.</th>
+                                <th>Tempo</th>
+                                <th>Diretriz</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historicoTableBodyAnalytics">
+                            <!-- Conteúdo será preenchido por renderHistoricoAnalytics() -->
+                        </tbody>
+                    </table>
+                </div>
             `;
             
-            // Chamar função de histórico existente
-            setTimeout(() => {
-                renderHistorico();
-            }, 100);
+            // Chamar função de histórico específica para Analytics após DOM estar pronto
+            requestAnimationFrame(() => {
+                renderHistoricoAnalytics();
+            });
+        }
+        
+        function renderHistoricoAnalytics() {
+            const tbody = document.getElementById('historicoTableBodyAnalytics');
+            if (!tbody) {
+                console.warn('[RENDER HISTORICO ANALYTICS] Tbody não encontrado!');
+                return;
+            }
+            
+            console.log('[RENDER HISTORICO ANALYTICS] Total de registros no histórico:', historico.length);
+            
+            // Filtrar histórico inválido
+            const historicoFiltrado = historico.filter(h => {
+                if (!h.area || !h.tema) return false;
+                if (h.area.toLowerCase() === 'tema' || h.tema.toLowerCase() === 'area') return false;
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(h.area, h.tema);
+                if (!areaCorrigida || areaCorrigida.toLowerCase() === 'tema') return false;
+                if (!temaCorrigido || temaCorrigido.toLowerCase() === 'area') return false;
+                return true;
+            });
+            
+            console.log('[RENDER HISTORICO ANALYTICS] Registros após filtro:', historicoFiltrado.length);
+            
+            if (historicoFiltrado.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: rgba(0,206,209,0.5);">Nenhum registro encontrado</td></tr>';
+                return;
+            }
+            
+            const historicoOrdenado = [...historicoFiltrado].sort((a, b) => {
+                if (!a.data || a.data === '-') return 1;
+                if (!b.data || b.data === '-') return -1;
+                return new Date(b.data) - new Date(a.data);
+            });
+            
+            tbody.innerHTML = historicoOrdenado.map(h => {
+                const { area: areaCorrigida, tema: temaCorrigido } = fixAreaTema(h.area, h.tema);
+                const data = formatarDataBR(h.data);
+                const rend = h.rendimento ? Math.round(h.rendimento * 100) + '%' : '-';
+                const tempo = h.tempo ? h.tempo + ' min' : '-';
+                let rendColor = '#9CA3AF';
+                if (h.rendimento >= 0.8) rendColor = '#00FFE0';
+                else if (h.rendimento >= 0.5) rendColor = '#FFA366';
+                else if (h.rendimento > 0) rendColor = '#EF4444';
+                
+                // Unificar observações e sugestão em uma única coluna "Diretriz"
+                const diretriz = [
+                    h.observacoes && h.observacoes !== '-' ? h.observacoes : '',
+                    h.sugestao && h.sugestao !== '-' ? h.sugestao : ''
+                ].filter(s => s.trim() !== '').join(' ') || '-';
+                
+                return `
+                    <tr>
+                        <td style="color: ${!h.data || h.data === '-' ? '#EF4444' : 'rgba(0,206,209,0.6)'}; font-size: 11px;">${data}</td>
+                        <td style="color: var(--cobre-light); font-weight: 600;">${temaCorrigido || '-'}</td>
+                        <td style="color: rgba(0,206,209,0.8);">${areaCorrigida || '-'}</td>
+                        <td style="text-align: center; color: ${rendColor}; font-weight: 600;">${rend}</td>
+                        <td style="text-align: center; color: rgba(255,255,255,0.7);">${tempo}</td>
+                        <td style="color: rgba(255,255,255,0.7); font-size: 12px;">${diretriz}</td>
+                    </tr>
+                `;
+            }).join('');
         }
         
         function gerarRelatorioAnalytics() {
@@ -7937,11 +8346,31 @@
             }
             
             const totalSessoes = historicoFiltrado.length;
-            const rendMedio = Math.round(historicoFiltrado.reduce((a, h) => a + (h.rendimento || 0), 0) / totalSessoes);
+            const rendMedio = Math.round(historicoFiltrado.reduce((a, h) => a + (h.rendimento || 0), 0) / totalSessoes * 100);
             const tempoTotal = historicoFiltrado.reduce((a, h) => a + (h.tempo || 0), 0);
             
+            // Calcular questões totais (somar acertos de todas as questões) - CÓDIGO IDÊNTICO AO ANTIGO
+            let totalQuestoesAcertos = 0;
+            let totalQuestoesTotal = 0;
+            historicoFiltrado.forEach(h => {
+                if (h.questoes) {
+                    const match = h.questoes.match(/(\d+)\/(\d+)/);
+                    if (match) {
+                        totalQuestoesAcertos += parseInt(match[1]);
+                        totalQuestoesTotal += parseInt(match[2]);
+                    }
+                }
+            });
+            
+            // Calcular flashcards totais - CÓDIGO IDÊNTICO AO ANTIGO
+            const totalFlashcards = historicoFiltrado.reduce((sum, h) => sum + (parseInt(h.flashcards) || 0), 0);
+            
+            const totalQuestoes = totalQuestoesTotal > 0 
+                ? `${totalQuestoesAcertos}/${totalQuestoesTotal}` 
+                : '0';
+            
             container.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
                     <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
                         <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${totalSessoes}</div>
                         <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Sessões</div>
@@ -7953,6 +8382,14 @@
                     <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
                         <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${Math.round(tempoTotal/60)}h</div>
                         <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Tempo</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${totalQuestoes}</div>
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Questões</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: rgba(0,206,209,0.1); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #00FFE0;">${totalFlashcards.toLocaleString()}</div>
+                        <div style="font-size: 11px; color: rgba(0,206,209,0.7);">Flashcards</div>
                     </div>
                 </div>
             `;
@@ -8403,23 +8840,25 @@
         // ==================== INICIALIZAÇÃO ATUALIZADA ====================
         
         // Sobrescrever initApp para incluir novas renderizações
-        const initAppOriginal = initApp;
-        initApp = function() {
-            initAppOriginal();
+        if (typeof initApp !== 'undefined') {
+            const initAppOriginal = initApp;
+            initApp = function() {
+                initAppOriginal();
             
-            // Renderizar novas abas se estiverem ativas
-            setTimeout(() => {
-                if (document.getElementById('analyticsContainer')) {
-                    renderAnalytics();
-                }
-                if (document.getElementById('ajudaContainer')) {
-                    renderAjuda();
-                }
-                if (document.getElementById('cadernoAreasContainer')) {
-                    renderCadernoV2();
-                }
-            }, 500);
-        };
+                // Renderizar novas abas se estiverem ativas
+                setTimeout(() => {
+                    if (document.getElementById('analyticsContainer')) {
+                        renderAnalytics();
+                    }
+                    if (document.getElementById('ajudaContainer')) {
+                        renderAjuda();
+                    }
+                    if (document.getElementById('cadernoAreasContainer')) {
+                        renderCadernoV2();
+                    }
+                }, 500);
+            };
+        }
     </script>
 </body>
 </html>
