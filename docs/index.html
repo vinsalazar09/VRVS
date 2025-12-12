@@ -1340,7 +1340,8 @@
                     </div>
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label class="form-label">Tema</label>
-                        <input type="text" class="form-input" id="novaDiarioTema" placeholder="Ex: Menisco">
+                        <input type="text" class="form-input" id="novaDiarioTema" list="listTemasDiario" placeholder="Ex: Menisco">
+                        <datalist id="listTemasDiario"></datalist>
                     </div>
                 </div>
                 
@@ -1354,9 +1355,9 @@
                     <textarea class="form-textarea" id="novaDiarioResposta" rows="4" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..."></textarea>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                    <input type="checkbox" id="novaDiarioAtencao" style="width: 18px; height: 18px;">
-                    <label for="novaDiarioAtencao" style="color: var(--cobre-light); font-size: 13px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background: rgba(255,159,64,0.1); border-radius: 8px; border: 1px solid rgba(255,159,64,0.3);">
+                    <input type="checkbox" id="novaDiarioAtencao" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--cobre-main);">
+                    <label for="novaDiarioAtencao" style="color: var(--cobre-light); font-size: 13px; cursor: pointer; font-weight: 500;">
                         ⚠️ Marcar para revisitar amanhã
                     </label>
                 </div>
@@ -1528,9 +1529,7 @@
                         <div class="form-group">
                             <label class="form-label">Área de Conhecimento</label>
                             <input type="text" class="form-input" id="novaArea" list="listAreasFixas" placeholder="Ex: Ombro e Cotovelo" required>
-                            <datalist id="listAreasFixas">
-                                ${AREAS_FIXAS.map(area => `<option value="${area}">`).join('')}
-                            </datalist>
+                            <datalist id="listAreasFixas"></datalist>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tema Específico</label>
@@ -1609,7 +1608,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Duração (min)</label>
-                            <input type="number" class="form-input" id="feedbackTempo" min="0" placeholder="Minutos" required>
+                            <input type="number" class="form-input" id="feedbackTempo" min="0" placeholder="Minutos (opcional)">
                         </div>
                         <div class="form-group">
                             <label class="form-label">📊 Intervalos (opcional)</label>
@@ -6296,13 +6295,45 @@
             document.getElementById('novaDiarioAtencao').checked = false;
             
             // Popular datalist com áreas fixas
-            const datalist = document.getElementById('listAreasDiario');
-            if (datalist) {
-                datalist.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            const datalistAreas = document.getElementById('listAreasDiario');
+            if (datalistAreas) {
+                datalistAreas.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            }
+            
+            // Limpar datalist de temas
+            const datalistTemas = document.getElementById('listTemasDiario');
+            if (datalistTemas) {
+                datalistTemas.innerHTML = '';
+            }
+            
+            // Adicionar listener para atualizar temas quando área mudar
+            const areaInput = document.getElementById('novaDiarioArea');
+            if (areaInput) {
+                areaInput.oninput = function() {
+                    atualizarTemasDiario(this.value);
+                };
             }
             
             // Mostrar modal
             document.getElementById('modalNovaDiario').classList.add('active');
+        }
+        
+        function atualizarTemasDiario(areaSelecionada) {
+            const datalistTemas = document.getElementById('listTemasDiario');
+            if (!datalistTemas || !areaSelecionada) {
+                if (datalistTemas) datalistTemas.innerHTML = '';
+                return;
+            }
+            
+            // Filtrar temas da área selecionada
+            const temasDaArea = dados
+                .filter(t => t.area === areaSelecionada && t.status !== 'Suspenso')
+                .map(t => t.tema)
+                .filter((tema, index, self) => self.indexOf(tema) === index) // Remover duplicatas
+                .sort();
+            
+            // Popular datalist
+            datalistTemas.innerHTML = temasDaArea.map(tema => `<option value="${tema}">`).join('');
         }
         
         function fecharModalDiario() {
@@ -6548,10 +6579,21 @@
             document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
             document.getElementById('novaDiarioAtencao').checked = entrada.atencao || false;
             
-            // Popular datalist
-            const datalist = document.getElementById('listAreasDiario');
-            if (datalist) {
-                datalist.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            // Popular datalist de áreas
+            const datalistAreas = document.getElementById('listAreasDiario');
+            if (datalistAreas) {
+                datalistAreas.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+            }
+            
+            // Atualizar temas baseado na área da entrada
+            atualizarTemasDiario(entrada.area);
+            
+            // Adicionar listener para atualizar temas quando área mudar
+            const areaInput = document.getElementById('novaDiarioArea');
+            if (areaInput) {
+                areaInput.oninput = function() {
+                    atualizarTemasDiario(this.value);
+                };
             }
             
             document.getElementById('modalNovaDiario').classList.add('active');
