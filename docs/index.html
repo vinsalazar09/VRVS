@@ -300,6 +300,13 @@
             text-shadow: 0 0 30px rgba(255, 127, 80, 0.3);
         }
         
+        /* Garantir que botões dentro de card-title não herdem transparência */
+        .card-title button {
+            -webkit-text-fill-color: #FFFFFF !important;
+            background-clip: border-box !important;
+            -webkit-background-clip: border-box !important;
+        }
+        
         /* FORM ELEMENTS NEON */
         .form-group {
             margin-bottom: 20px;
