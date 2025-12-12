@@ -6311,8 +6311,59 @@
             }, 30000); // Salvar a cada 30 segundos
             
             // ==================== SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA ====================
-            const APP_VERSION = '5.2';
-            const SW_VERSION = 'vrvs-v5.2-diario-aprendizados-20251212';
+            const APP_VERSION = '5.3';
+            const SW_VERSION = 'vrvs-v5.3-refatoracao-completa-20251212';
+            
+            // Changelog das atualizações
+            const CHANGELOG = {
+                '5.3': {
+                    titulo: '🎉 Grande Refatoração - Interface Renovada!',
+                    data: '12 de Dezembro de 2025',
+                    mudancas: [
+                        {
+                            icone: '📊',
+                            titulo: '10 Abas Consolidadas',
+                            descricao: 'Reduzimos de 16 para 10 abas, organizando melhor a navegação. Agora é mais fácil encontrar o que precisa!'
+                        },
+                        {
+                            icone: '📓',
+                            titulo: 'Caderno V2 - Áreas Colapsáveis',
+                            descricao: 'O Caderno agora organiza temas por área, com áreas que podem ser expandidas/colapsadas. Visualização mais limpa e organizada!'
+                        },
+                        {
+                            icone: '🔥',
+                            titulo: 'Hot Topics em Destaque',
+                            descricao: 'Hot Topics agora aparecem em preview no Caderno, destacados com cor especial. Exporte todos em HTML para revisão!'
+                        },
+                        {
+                            icone: '📈',
+                            titulo: 'Analytics Unificado',
+                            descricao: 'Todas as análises em um só lugar: Resumo, Gráficos, Detalhado e Histórico. Navegue entre as vistas facilmente!'
+                        },
+                        {
+                            icone: '➕',
+                            titulo: 'Cadastro Integrado',
+                            descricao: 'Adicionar novo tema agora é mais rápido - tudo em um modal dentro da aba Dados!'
+                        },
+                        {
+                            icone: '📅',
+                            titulo: 'Agenda Unificada',
+                            descricao: 'Timeline e Pendências agora estão juntas. Use o toggle para alternar entre as vistas!'
+                        }
+                    ]
+                },
+                '5.2': {
+                    titulo: 'Diário de Aprendizados',
+                    data: '11 de Dezembro de 2025',
+                    mudancas: [
+                        {
+                            icone: '📔',
+                            titulo: 'Novo Sistema de Diário',
+                            descricao: 'Registre seus aprendizados e pontos esquecidos diariamente, organizados por data e tema!'
+                        }
+                    ]
+                }
+            };
             
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
@@ -6343,8 +6394,8 @@
                     // Limpar caches antigos ao iniciar
                     if ('caches' in window) {
                         caches.keys().then((cacheNames) => {
-                            cacheNames.forEach((cacheName) => {
-                                if (!cacheName.includes('v5.2') && cacheName.startsWith('vrvs-')) {
+                                cacheNames.forEach((cacheName) => {
+                                if (!cacheName.includes('v5.3') && cacheName.startsWith('vrvs-')) {
                                     console.log('🗑️ Removendo cache antigo:', cacheName);
                                     caches.delete(cacheName);
                                 }
@@ -6403,6 +6454,11 @@
             
             // Função para forçar atualização do app
             window.atualizarApp = function() {
+                // Salvar versão anterior para mostrar changelog após reload
+                const versaoAnterior = localStorage.getItem('vrvs_versao_anterior') || '5.0';
+                localStorage.setItem('vrvs_versao_anterior', APP_VERSION);
+                localStorage.setItem('vrvs_mostrar_changelog', 'true');
+                
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then((registrations) => {
                         registrations.forEach((registration) => {
@@ -6427,6 +6483,191 @@
                     window.location.reload(true);
                 }
             };
+            
+            // Verificar se deve mostrar changelog após atualização
+            function verificarChangelogAposAtualizacao() {
+                const mostrarChangelog = localStorage.getItem('vrvs_mostrar_changelog');
+                if (mostrarChangelog === 'true') {
+                    localStorage.removeItem('vrvs_mostrar_changelog');
+                    const versaoAnterior = localStorage.getItem('vrvs_versao_anterior') || '5.0';
+                    mostrarModalAtualizacao(APP_VERSION, versaoAnterior);
+                }
+            }
+            
+            // Mostrar modal de atualização
+            function mostrarModalAtualizacao(versaoAtual, versaoAnterior) {
+                const changelog = CHANGELOG[versaoAtual];
+                if (!changelog) return;
+                
+                const modal = document.getElementById('modalAtualizacao');
+                const titulo = document.getElementById('atualizacaoTitulo');
+                const conteudo = document.getElementById('atualizacaoConteudo');
+                
+                titulo.textContent = changelog.titulo;
+                
+                let html = `
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
+                            Versão ${versaoAtual} • ${changelog.data}
+                        </div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 20px;">
+                            O que mudou nesta versão:
+                        </div>
+                `;
+                
+                changelog.mudancas.forEach((mudanca, index) => {
+                    html += `
+                        <div style="margin-bottom: 20px; padding: 15px; background: rgba(0,206,209,0.05); border-radius: 8px; border-left: 3px solid var(--turquesa-main);">
+                            <div style="display: flex; align-items: start; gap: 12px;">
+                                <span style="font-size: 24px;">${mudanca.icone}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--cobre-light); margin-bottom: 5px; font-size: 14px;">
+                                        ${mudanca.titulo}
+                                    </div>
+                                    <div style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5;">
+                                        ${mudanca.descricao}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+                conteudo.innerHTML = html;
+                
+                modal.classList.add('active');
+            }
+            
+            function fecharModalAtualizacao() {
+                document.getElementById('modalAtualizacao').classList.remove('active');
+            }
+            
+            function iniciarTutorialAtualizacao() {
+                fecharModalAtualizacao();
+                setTimeout(() => {
+                    iniciarTutorialNovidades();
+                }, 300);
+            }
+            
+            // Tutorial específico das novidades
+            function iniciarTutorialNovidades() {
+                const passosNovidades = [
+                    {
+                        titulo: '📊 10 Abas Consolidadas',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">A navegação foi simplificada! Agora temos apenas <strong>10 abas</strong> organizadas em grupos:</p>
+                            <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="font-weight: 600; color: var(--turquesa-light); margin-bottom: 10px;">📚 ESTUDO (uso diário)</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">• 📋 Tarefa</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">• 📝 Feedback</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">• 📔 Diário</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 10px;">• 📓 Caderno</div>
+                                <div style="font-weight: 600; color: var(--cobre-light); margin-bottom: 10px;">📅 PLANEJAMENTO</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">• 📅 Agenda</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 10px;">• 📊 Dados</div>
+                                <div style="font-weight: 600; color: var(--turquesa-light); margin-bottom: 10px;">📈 ANÁLISE</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 10px;">• 📈 Análises</div>
+                            </div>
+                        `
+                    },
+                    {
+                        titulo: '📓 Caderno V2 - Áreas Colapsáveis',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">O <strong>Caderno</strong> foi completamente renovado!</p>
+                            <ul style="margin-left: 20px; line-height: 1.8; margin-bottom: 15px;">
+                                <li><strong>Áreas colapsáveis:</strong> Clique no cabeçalho da área para expandir/colapsar</li>
+                                <li><strong>Preview de Hot Topics:</strong> Veja seus Hot Topics destacados em cada tema</li>
+                                <li><strong>Visualização limpa:</strong> Apenas temas com conteúdo aparecem destacados</li>
+                                <li><strong>Edição rápida:</strong> Clique no ícone ✏️ para editar anotações</li>
+                            </ul>
+                            <div style="background: rgba(255,127,80,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--cobre-main);">
+                                <div style="font-size: 12px; color: var(--cobre-light);">
+                                    💡 <strong>Dica:</strong> Use Hot Topics para anotar os pontos que mais caem na prova!
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        titulo: '📈 Analytics Unificado',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">Todas as análises agora estão em um só lugar!</p>
+                            <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="font-weight: 600; color: var(--turquesa-light); margin-bottom: 10px;">4 Vistas Disponíveis:</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">📊 <strong>Resumo:</strong> Métricas principais em cards</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">📈 <strong>Gráficos:</strong> Visualizações de performance</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">🔍 <strong>Detalhado:</strong> Análises por área e tema</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px;">📜 <strong>Histórico:</strong> Todas as sessões registradas</div>
+                            </div>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.6);">Use os botões de sub-navegação para alternar entre as vistas!</p>
+                        `
+                    },
+                    {
+                        titulo: '➕ Cadastro Integrado',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">Adicionar novos temas ficou mais rápido!</p>
+                            <ol style="margin-left: 20px; line-height: 1.8; margin-bottom: 15px;">
+                                <li>Vá na aba <strong>📊 Dados</strong></li>
+                                <li>Clique no botão <strong>➕ Novo Tema</strong> no topo</li>
+                                <li>Preencha área, tema e prioridade</li>
+                                <li>Salve - pronto! Uma anotação vazia será criada automaticamente</li>
+                            </ol>
+                            <div style="background: rgba(0,206,209,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--turquesa-main);">
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">
+                                    ✨ Não precisa mais ir em uma aba separada para cadastrar!
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        titulo: '📅 Agenda Unificada',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">Timeline e Pendências agora estão juntas!</p>
+                            <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="font-weight: 600; color: var(--turquesa-light); margin-bottom: 10px;">Use o Toggle para alternar:</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">📅 <strong>Timeline:</strong> Veja seu cronograma completo</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px;">🔔 <strong>Atrasados:</strong> Veja apenas o que está pendente</div>
+                            </div>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.6);">Tudo em um só lugar, mais organizado!</p>
+                        `
+                    },
+                    {
+                        titulo: '🔥 Exportação Hot Topics HTML',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">Nova funcionalidade: exporte todos os seus Hot Topics em um arquivo HTML bonito!</p>
+                            <ol style="margin-left: 20px; line-height: 1.8; margin-bottom: 15px;">
+                                <li>Vá na aba <strong>📓 Caderno</strong></li>
+                                <li>Clique no botão <strong>🔥 Exportar HTML</strong> no topo</li>
+                                <li>Um arquivo HTML será baixado com todos os Hot Topics</li>
+                                <li>Abra no navegador para revisar ou imprimir</li>
+                            </ol>
+                            <div style="background: rgba(255,127,80,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--cobre-main);">
+                                <div style="font-size: 12px; color: var(--cobre-light);">
+                                    💡 Perfeito para revisão antes da prova!
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        titulo: '✅ Pronto para usar!',
+                        conteudo: `
+                            <p style="margin-bottom: 15px;">Essas são as principais mudanças da versão ${APP_VERSION}!</p>
+                            <p style="margin-bottom: 15px;">Explore as novas funcionalidades e aproveite a interface mais organizada.</p>
+                            <div style="background: rgba(0,206,209,0.1); padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8);">
+                                    💡 <strong>Dica:</strong> Se tiver dúvidas, use a aba <strong>❓ Ajuda</strong> para ver tutoriais e FAQ atualizados!
+                                </div>
+                            </div>
+                        `
+                    }
+                ];
+                
+                // Usar o sistema de tutorial existente, mas com passos diferentes
+                passosTutorial = passosNovidades;
+                passoAtual = 0;
+                mostrarPassoTutorial();
+                document.getElementById('tutorialModal').style.display = 'flex';
+            }
             
             // Splash Screen - Esconder após carregar
             setTimeout(() => {
@@ -7882,6 +8123,9 @@
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('agenda')" style="text-align: left;">❓ Como usar a agenda?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('backup')" style="text-align: left;">❓ Como fazer backup?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('hottopics')" style="text-align: left;">❓ O que são Hot Topics?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('caderno')" style="text-align: left;">❓ Como usar o Caderno V2?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('analytics')" style="text-align: left;">❓ Como usar Analytics?</button>
+                    <button class="btn btn-small" onclick="mostrarRespostaAjuda('exportar')" style="text-align: left;">❓ Como exportar Hot Topics em HTML?</button>
                 </div>
                 <div id="respostaFaqAjuda" style="margin-top: 20px;"></div>
             `;
@@ -7890,11 +8134,14 @@
         function mostrarRespostaAjuda(tipo) {
             const container = document.getElementById('respostaFaqAjuda');
             const respostas = {
-                'adicionar': 'Vá em <b>Dados</b> e clique no botão <b>➕ Novo Tema</b>. Preencha a área, tema e prioridade.',
-                'feedback': 'Vá em <b>Feedback</b>, selecione o tema, preencha data, performance e tempo, e clique em Salvar.',
-                'agenda': 'A <b>Agenda</b> mostra seus estudos programados. Use o toggle para ver <b>Timeline</b> (cronograma) ou <b>Atrasados</b> (pendências).',
-                'backup': 'Vá em <b>Backup</b> e clique nos botões para exportar seus dados em CSV. Para restaurar, use a seção Importar.',
-                'hottopics': '<b>Hot Topics</b> são os pontos mais importantes de cada tema - aqueles que caem com frequência na prova. Anote-os no <b>Caderno</b>.'
+                'adicionar': 'Vá em <b>Dados</b> e clique no botão <b>➕ Novo Tema</b> no topo. Preencha a área, tema e prioridade no modal que abrir.',
+                'feedback': 'Vá em <b>Feedback</b>, selecione o tema, preencha data, performance e tempo (opcional), e clique em Salvar.',
+                'agenda': 'A <b>Agenda</b> mostra seus estudos programados. Use o toggle no topo para alternar entre <b>Timeline</b> (cronograma completo) ou <b>Atrasados</b> (pendências).',
+                'backup': 'Vá em <b>Backup</b> e clique nos botões para exportar seus dados em CSV. Para restaurar, use a seção Importar na mesma aba.',
+                'hottopics': '<b>Hot Topics</b> são os pontos mais importantes de cada tema - aqueles que caem com frequência na prova. Anote-os no <b>Caderno</b> no campo destacado em laranja.',
+                'caderno': 'O <b>Caderno V2</b> organiza temas por área. Clique no cabeçalho da área para expandir/colapsar. Hot Topics aparecem destacados. Clique em ✏️ para editar.',
+                'analytics': '<b>Analytics</b> (agora "Análises") unifica todas as análises. Use os botões de sub-navegação para alternar entre Resumo, Gráficos, Detalhado e Histórico.',
+                'exportar': 'No <b>Caderno</b>, clique no botão <b>🔥 Exportar HTML</b> no topo. Um arquivo HTML será baixado com todos os seus Hot Topics organizados por área.'
             };
             
             container.innerHTML = `
@@ -7922,7 +8169,13 @@
             } else if (pergunta.includes('backup') || pergunta.includes('export') || pergunta.includes('salvar')) {
                 resposta = 'Para fazer backup, vá em <b>Backup</b> e exporte seus dados em CSV.';
             } else if (pergunta.includes('hot') || pergunta.includes('prova') || pergunta.includes('importante')) {
-                resposta = 'Use <b>Hot Topics</b> no <b>Caderno</b> para anotar os pontos mais importantes de cada tema.';
+                resposta = 'Use <b>Hot Topics</b> no <b>Caderno</b> para anotar os pontos mais importantes de cada tema. Você pode exportar todos em HTML!';
+            } else if (pergunta.includes('caderno') || pergunta.includes('anotação')) {
+                resposta = 'O <b>Caderno V2</b> organiza temas por área. Clique no cabeçalho da área para expandir/colapsar. Hot Topics aparecem destacados em laranja.';
+            } else if (pergunta.includes('analytics') || pergunta.includes('análise') || pergunta.includes('gráfico')) {
+                resposta = 'Vá em <b>Análises</b> e use os botões de sub-navegação para alternar entre Resumo, Gráficos, Detalhado e Histórico.';
+            } else if (pergunta.includes('export') || pergunta.includes('html')) {
+                resposta = 'No <b>Caderno</b>, clique no botão <b>🔥 Exportar HTML</b> no topo para baixar todos os Hot Topics em um arquivo HTML.';
             }
             
             container.innerHTML = `
