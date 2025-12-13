@@ -1740,6 +1740,64 @@
             text-align: center;
         }
         
+        /* ===== AGENDA ATRASADOS - ESTILOS ESPECIAIS ===== */
+        
+        .atrasados-area {
+            margin-bottom: 16px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .atrasados-area-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255,159,64,0.15);
+            border: 1px solid rgba(255,159,64,0.3);
+            border-left: 3px solid var(--cobre-main);
+            color: var(--cobre-light);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .atrasados-area-header:hover {
+            background: rgba(255,159,64,0.25);
+        }
+        
+        .atrasados-area-nome {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--cobre-light);
+        }
+        
+        .atrasados-area-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(255,127,80,0.3);
+            color: #FFE4C4;
+        }
+        
+        .atrasados-area-conteudo {
+            padding: 8px 10px 12px;
+            background: rgba(0,0,0,0.15);
+        }
+        
+        .atrasados-area-conteudo.collapsed {
+            display: none;
+        }
+        
+        .task-date-atraso {
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .task-tag-sessoes {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+        
         .tema-item-header {
             display: flex;
             justify-content: space-between;
