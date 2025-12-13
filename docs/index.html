@@ -236,6 +236,7 @@
         /* CONTENT SECTIONS */
         .content {
             padding: 20px 15px;
+            min-height: 50vh; /* CORREÇÃO: Ocupar pelo menos 50% da tela */
         }
         
         .section {
@@ -396,7 +397,7 @@
             /* OTIMIZAÇÃO: Reduzir espaços vazios no modal do Diário para mobile */
             #modalNovaDiario .modal-content {
                 padding: 16px; /* Reduzido de 30px para 16px */
-                max-height: 90vh; /* Aumentado de 80vh para 90vh */
+                max-height: 95vh; /* CORREÇÃO: Aumentado de 90vh para 95vh - quase tela toda */
             }
             
             #modalNovaDiario .modal-header {
@@ -416,6 +417,32 @@
             #modalNovaDiario .form-textarea {
                 min-height: 300px !important; /* Aumentado para mobile */
                 max-height: 60vh !important; /* Usar mais espaço da viewport */
+            }
+            
+            /* OTIMIZAÇÃO GERAL: Modais ocupam quase tela toda no mobile */
+            .modal-content {
+                max-height: 95vh !important; /* Quase tela toda no mobile */
+                padding: 16px; /* Reduzir padding para ganhar espaço */
+                margin: 10px; /* Margem mínima */
+            }
+            
+            /* Containers principais devem ocupar mais espaço no mobile */
+            #diarioContainer,
+            #cadernoContainer,
+            #tarefaContainer,
+            #agendaContainer {
+                min-height: 60vh; /* Ocupar pelo menos 60% da tela */
+            }
+            
+            /* Áreas expandidas ocupam mais espaço no mobile */
+            .area-content:not(.collapsed) {
+                max-height: 80vh !important; /* Aumentado de 70vh para mobile */
+                min-height: 50vh !important; /* Mínimo 50% da tela quando expandido */
+            }
+            
+            /* Reduzir paddings em cards para ganhar espaço */
+            .card {
+                padding: 16px; /* Reduzido de 24px para 16px */
             }
         }
         
@@ -873,6 +900,15 @@
             border-collapse: separate;
             border-spacing: 0 8px;
             font-size: 13px;
+            /* CORREÇÃO: Tabela não deve ter altura limitada - mostrar todo conteúdo */
+        }
+        
+        /* Container de tabela não deve limitar altura */
+        .data-table-container,
+        div[style*="overflow-x: auto"] {
+            max-height: none; /* Sem limite de altura */
+            overflow-x: auto; /* Scroll horizontal OK para tabelas */
+            overflow-y: visible; /* Mostrar todo conteúdo verticalmente */
         }
         
         .data-table th {
@@ -1064,7 +1100,7 @@
             padding: 30px;
             max-width: 500px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 80vh; /* Desktop: 80vh */
             overflow-y: auto;
             animation: modalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -1392,10 +1428,15 @@
             padding: 12px 0 0 0;
             overflow-y: auto; /* CORREÇÃO: Permite scroll vertical quando expandido */
             overflow-x: hidden; /* Evita scroll horizontal */
-            max-height: 60vh; /* CORREÇÃO: Limita altura para forçar scroll interno */
+            max-height: 70vh; /* CORREÇÃO: Aumentado de 60vh para ocupar mais espaço quando expandido */
             -webkit-overflow-scrolling: touch; /* CORREÇÃO: Scroll suave no iOS */
             overscroll-behavior: contain; /* CORREÇÃO: Evita scroll escapar para página externa */
             transition: max-height 0.3s ease, opacity 0.2s ease;
+        }
+        
+        /* Quando expandido (não collapsed), usar mais espaço */
+        .area-content:not(.collapsed) {
+            min-height: 40vh; /* Mínimo 40% da tela quando expandido */
         }
         
         .area-content.collapsed {
@@ -1403,6 +1444,7 @@
             opacity: 0;
             padding: 0;
             overflow: hidden; /* Quando colapsado, não precisa de scroll */
+            min-height: 0 !important; /* Remover min-height quando colapsado */
         }
         
         /* ===== GRÁFICO LINHA - TOGGLES ===== */
@@ -2502,7 +2544,7 @@
                     </div>
                     
                     <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
-                    <div id="diarioRevisarHoje" style="display: none; background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 12px; padding: 14px; margin-bottom: 20px;"></div>
+                    <div id="diarioRevisarHoje" style="display: none; background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 12px; padding: 14px; margin-bottom: 20px; max-height: none; overflow-y: visible;"></div>
                     
                     <!-- Container principal -->
                     <div id="diarioContainer"></div>
@@ -9042,9 +9084,13 @@
                     content.style.display = '';
                 }
                 
-                // Se está expandindo, calcular max-height
+                // Se está expandindo, usar max-height generoso ou remover limite
                 if (!content.classList.contains('collapsed')) {
-                    content.style.maxHeight = content.scrollHeight + 'px';
+                    // CORREÇÃO: Usar scrollHeight + margem OU valor generoso (70vh)
+                    const scrollHeight = content.scrollHeight;
+                    const viewportHeight = window.innerHeight;
+                    const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7); // 70% da viewport ou scrollHeight + margem
+                    content.style.maxHeight = maxHeightVH + 'px';
                 } else {
                     content.style.maxHeight = '0';
                 }
