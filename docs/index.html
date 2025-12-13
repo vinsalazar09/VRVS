@@ -346,8 +346,8 @@
         
         .form-textarea {
             resize: vertical;
-            min-height: 150px;
-            max-height: 400px;
+            min-height: 200px; /* CORREÇÃO: Aumentado de 150px para melhor uso do espaço */
+            max-height: 500px; /* CORREÇÃO: Aumentado de 400px para permitir mais conteúdo */
             overflow-y: auto;
             font-family: inherit;
             line-height: 1.6;
@@ -391,6 +391,31 @@
             .form-input:focus, .form-textarea:focus, .form-select:focus {
                 scroll-margin-top: 100px;
                 -webkit-scroll-margin-top: 100px;
+            }
+            
+            /* OTIMIZAÇÃO: Reduzir espaços vazios no modal do Diário para mobile */
+            #modalNovaDiario .modal-content {
+                padding: 16px; /* Reduzido de 30px para 16px */
+                max-height: 90vh; /* Aumentado de 80vh para 90vh */
+            }
+            
+            #modalNovaDiario .modal-header {
+                margin-bottom: 16px; /* Reduzido de 24px para 16px */
+            }
+            
+            #modalNovaDiario .form-group {
+                margin-bottom: 12px; /* Reduzido de 20px para 12px */
+            }
+            
+            #modalNovaDiario .form-label {
+                margin-bottom: 6px; /* Reduzido de 8px para 6px */
+                font-size: 11px; /* Ligeiramente menor para economizar espaço */
+            }
+            
+            /* Textarea do Diário: usar mais espaço vertical */
+            #modalNovaDiario .form-textarea {
+                min-height: 300px !important; /* Aumentado para mobile */
+                max-height: 60vh !important; /* Usar mais espaço da viewport */
             }
         }
         
@@ -1764,7 +1789,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">✅ Resposta</label>
-                    <textarea class="form-textarea" id="novaDiarioResposta" rows="6" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..." style="min-height: 150px; overflow-y: auto;"></textarea>
+                    <textarea class="form-textarea" id="novaDiarioResposta" rows="8" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..." style="min-height: 250px; overflow-y: auto;"></textarea>
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background: rgba(255,159,64,0.1); border-radius: 8px; border: 1px solid rgba(255,159,64,0.3);">
