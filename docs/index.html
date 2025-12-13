@@ -3785,9 +3785,19 @@
             if (!tema) return;
             
             // Filtrar caderno para mostrar apenas este tema
-            document.getElementById('cadernoFiltroArea').value = tema.area;
-            atualizarSelectTemaPorArea(); // Atualizar select de tema
-            document.getElementById('cadernoFiltroTema').value = String(temaId);
+            const filtroArea = document.getElementById('cadernoFiltroArea');
+            if (filtroArea) {
+                filtroArea.value = tema.area;
+                atualizarSelectTemaPorArea(); // Atualizar select de tema
+            }
+            
+            // Verificar se existe filtro de tema antes de usar (pode não existir)
+            setTimeout(() => {
+                const filtroTema = document.getElementById('cadernoFiltroTema');
+                if (filtroTema) {
+                    filtroTema.value = String(temaId);
+                }
+            }, 200);
             
             // Mostrar seção caderno
             showSection('caderno');
@@ -3802,7 +3812,7 @@
                         elemento.style.background = '';
                     }, 2000);
                 }
-            }, 100);
+            }, 300);
         }
         
         // Toggle mostrar/ocultar contexto do tema
@@ -3913,12 +3923,12 @@
                         const qtdDiario = contarDiarioProgramadoParaTema(t.area, t.tema);
                         if (qtdDiario > 0) {
                             return `
-                                <div class="tema-diario-bloco" style="background: rgba(0,206,209,0.1); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; padding: 12px; margin-top: 12px;">
-                                    <div style="font-size: 13px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
-                                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;">
-                                        Você tem <strong>${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
+                                <div class="tema-diario-bloco" style="background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
+                                    <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                                        Você tem <strong style="color: var(--cobre-light);">${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
                                     </div>
-                                    <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%;">
+                                    <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%; background: var(--cobre-main); color: white; border: none;">
                                         🔁 Abrir sessão do Diário
                                     </button>
                                 </div>
@@ -3926,29 +3936,6 @@
                         }
                         return '';
                     })()}
-                    
-                    <div class="campos-tempo ${camposTempoAtivo ? 'ativo' : ''}" data-tema-id="${t.id}">
-                        <div class="campo-tempo-row">
-                            <div class="campo-tempo-item">
-                                <label>❓ Tempo Questões (min)</label>
-                                <input type="number" min="0" placeholder="0" class="tempo-questoes" data-id="${t.id}">
-                            </div>
-                            <div class="campo-tempo-item">
-                                <label>❓ Qtd Questões</label>
-                                <input type="number" min="0" placeholder="0" class="quant-questoes" data-id="${t.id}">
-                            </div>
-                        </div>
-                        <div class="campo-tempo-row">
-                            <div class="campo-tempo-item">
-                                <label>🃏 Tempo Flashcards (min)</label>
-                                <input type="number" min="0" placeholder="0" class="tempo-flashcards" data-id="${t.id}">
-                            </div>
-                            <div class="campo-tempo-item">
-                                <label>🃏 Qtd Flashcards</label>
-                                <input type="number" min="0" placeholder="0" class="quant-flashcards" data-id="${t.id}">
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 `;
             }).join('');
@@ -6881,9 +6868,19 @@
             if (!tema) return;
             
             // Filtrar caderno para mostrar apenas este tema
-            document.getElementById('cadernoFiltroArea').value = tema.area;
-            atualizarSelectTemaPorArea(); // Atualizar select de tema
-            document.getElementById('cadernoFiltroTema').value = String(temaId);
+            const filtroArea = document.getElementById('cadernoFiltroArea');
+            if (filtroArea) {
+                filtroArea.value = tema.area;
+                atualizarSelectTemaPorArea(); // Atualizar select de tema
+            }
+            
+            // Verificar se existe filtro de tema antes de usar (pode não existir)
+            setTimeout(() => {
+                const filtroTema = document.getElementById('cadernoFiltroTema');
+                if (filtroTema) {
+                    filtroTema.value = String(temaId);
+                }
+            }, 200);
             
             // Mostrar seção caderno
             showSection('caderno');
@@ -6898,7 +6895,7 @@
                         elemento.style.background = '';
                     }, 2000);
                 }
-            }, 100);
+            }, 300);
         }
         
         function atualizarSelectsLembrete() {
