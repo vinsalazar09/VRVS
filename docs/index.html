@@ -1698,6 +1698,48 @@
             border-left: 3px solid var(--cobre-main);
         }
         
+        .tema-item-conteudo {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 16px;
+        }
+        
+        .tema-item-conteudo.collapsed {
+            display: none;
+            max-height: 0;
+        }
+        
+        .tema-item-conteudo:not(.collapsed) {
+            display: block;
+            padding: 12px 16px;
+        }
+        
+        .hottopics-label,
+        .conteudo-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--turquesa-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .hottopics-text,
+        .conteudo-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+        
+        .conteudo-vazio {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+            padding: 12px 0;
+            text-align: center;
+        }
+        
         .tema-item-header {
             display: flex;
             justify-content: space-between;
@@ -3755,7 +3797,13 @@
         
         // Abrir sessão do Diário filtrada por tema
         function abrirSessaoDiarioParaTema(area, tema) {
-            // Ajustar filtros do Diário
+            // Guardar filtros específicos da sessão chamada pela aba Tarefas
+            window.filtrosSessaoDiario = {
+                area: area || null,
+                tema: tema || null
+            };
+            
+            // Ajustar filtros do Diário na UI (opcional, para visual)
             const filtroArea = document.getElementById('filtroDiarioArea');
             if (filtroArea) filtroArea.value = area || '';
             
@@ -8489,10 +8537,10 @@
             return window.diario.entradas.filter(e => {
                 if (!e.srs || !e.srs.ativo) return false;
                 const due = e.srs.proximaRevisao || hoje;
-                const venceHoje = due <= hoje;
-                const bateArea = !filtros.area || e.area === filtros.area;
-                // Usar apenas filtro de área (OPÇÃO B - filtro de tema não existe)
-                return venceHoje && bateArea;
+                if (due > hoje) return false;
+                if (filtros.area && e.area !== filtros.area) return false;
+                if (filtros.tema && e.tema !== filtros.tema) return false;
+                return true;
             });
         }
         
@@ -9043,14 +9091,27 @@
                 return;
             }
             
-            // Coletar filtros atuais da UI (mesmo esquema da lista)
-            const filtroArea = document.getElementById('filtroDiarioArea')?.value || '';
-            // Usar apenas filtro de área (OPÇÃO B - filtro de tema não existe)
-            
-            const filtros = {
-                area: filtroArea || null,
-                tema: null // Não usar filtro de tema por enquanto
+            // Filtros padrão (usados quando o usuário entra pela aba Diário)
+            let filtros = {
+                area: null,
+                tema: null
             };
+            
+            // Se houver filtros de sessão vindos da aba Tarefas, eles têm prioridade
+            if (window.filtrosSessaoDiario) {
+                filtros.area = window.filtrosSessaoDiario.area || null;
+                filtros.tema = window.filtrosSessaoDiario.tema || null;
+            } else {
+                // Caso contrário, use o filtro de área atual da UI (filtroDiarioArea)
+                const filtroAreaSelect = document.getElementById('filtroDiarioArea');
+                filtros.area = filtroAreaSelect && filtroAreaSelect.value ? filtroAreaSelect.value : null;
+                // Não precisa de filtro de tema na UI por enquanto (mantém simples)
+                filtros.tema = null;
+            }
+            
+            // Guardar tipo
+            sessaoDiario = sessaoDiario || {};
+            sessaoDiario.tipo = tipo;
             
             let entradas = [];
             if (tipo === 'programado') {
@@ -9059,14 +9120,10 @@
                 entradas = getEntradasTreinoLivreDiario(filtros);
             }
             
-            sessaoDiario = {
-                tipo: tipo,
-                filaIds: entradas.map(e => e.id),
-                indiceAtual: 0
-            };
+            sessaoDiario.filaIds = entradas.map(e => e.id);
+            sessaoDiario.indiceAtual = 0;
             
-            if (sessaoDiario.filaIds.length === 0) {
-                // Nenhum card
+            if (!sessaoDiario.filaIds.length) {
                 renderSessaoDiario(null);
             } else {
                 renderSessaoDiario(getEntradaAtualSessao());
@@ -9088,6 +9145,9 @@
             
             // Se nenhum card na fila
             if (!entradaAtual) {
+                // Limpar filtros da sessão quando terminar
+                window.filtrosSessaoDiario = null;
+                
                 const tipo = sessaoDiario.tipo || modoSessaoDiario;
                 if (tipo === 'programado') {
                     container.innerHTML = `
@@ -9587,50 +9647,51 @@
                     if (temHotTopics) itemClass += ' has-hottopics';
                     else if (temConteudo) itemClass += ' has-content';
                     
+                    const temaIdStr = String(tema.temaId);
+                    const conteudoId = `tema-conteudo-${temaIdStr}`;
+                    
+                    const hotTopicsPreview = temHotTopics
+                        ? (tema.hotTopics.length > 200 
+                            ? tema.hotTopics.substring(0, 200) + '...' 
+                            : tema.hotTopics)
+                        : '';
+                    
+                    const conteudoPreview = temConteudo
+                        ? (tema.conteudo.length > 300 
+                            ? tema.conteudo.substring(0, 300) + '...' 
+                            : tema.conteudo)
+                        : '';
+                    
                     html += `
-                        <div class="${itemClass}" data-tema-id="${tema.temaId}">
-                            <div class="tema-item-header">
+                        <div class="${itemClass}" data-tema-id="${temaIdStr}">
+                            <div class="tema-item-header" onclick="toggleTemaCaderno('${temaIdStr}')">
                                 <span class="tema-item-name">📝 ${tema.tema}</span>
                                 <div class="tema-item-actions">
                                     ${tema.ultimaAtualizacao ? `<span class="tema-item-date">${formatarData(tema.ultimaAtualizacao)}</span>` : ''}
-                                    <button class="tema-item-btn" onclick="editarAnotacaoModal(${tema.temaId})" title="Editar">✏️</button>
+                                    <button class="tema-item-btn" onclick="event.stopPropagation(); editarAnotacaoModal(${tema.temaId})" title="Editar">✏️</button>
                                 </div>
                             </div>
+                            <div id="${conteudoId}" class="tema-item-conteudo collapsed">
+                                ${temHotTopics ? `
+                                    <div class="hottopics-preview">
+                                        <div class="hottopics-label">🔥 Hot Topics</div>
+                                        <div class="hottopics-text">${escapeHtmlCaderno(hotTopicsPreview).replace(/\n/g, '<br>')}</div>
+                                    </div>
+                                ` : ''}
+                                ${temConteudo ? `
+                                    <div class="conteudo-preview">
+                                        <div class="conteudo-label">🧾 Anotações</div>
+                                        <div class="conteudo-text">${escapeHtmlCaderno(conteudoPreview).replace(/\n/g, '<br>')}</div>
+                                    </div>
+                                ` : ''}
+                                ${!temHotTopics && !temConteudo ? `
+                                    <div class="conteudo-vazio">
+                                        <em>Sem conteúdo registrado para este tema.</em>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
                     `;
-                    
-                    // Hot Topics (se existir)
-                    if (temHotTopics) {
-                        const hotTopicsPreview = tema.hotTopics.length > 200 
-                            ? tema.hotTopics.substring(0, 200) + '...' 
-                            : tema.hotTopics;
-                        html += `
-                            <div class="hottopics-preview">
-                                <span class="hottopics-badge">🔥 Hot Topics</span>
-                                <div class="hottopics-content">${escapeHtmlCaderno(hotTopicsPreview)}</div>
-                            </div>
-                        `;
-                    }
-                    
-                    // Conteúdo (se existir e não tiver hot topics)
-                    if (temConteudo && !temHotTopics) {
-                        const conteudoPreview = tema.conteudo.length > 150 
-                            ? tema.conteudo.substring(0, 150) + '...' 
-                            : tema.conteudo;
-                        html += `
-                            <div class="conteudo-preview">${escapeHtmlCaderno(conteudoPreview)}</div>
-                        `;
-                    }
-                    
-                    // Se não tem nada
-                    if (!temHotTopics && !temConteudo) {
-                        html += `
-                            <div class="tema-item-empty" onclick="editarAnotacaoModal(${tema.temaId})">
-                                Toque para adicionar anotações
-                            </div>
-                        `;
-                    }
-                    
-                    html += `</div>`; // fecha tema-item
                 });
                 
                 html += `
@@ -9641,6 +9702,25 @@
             });
             
             container.innerHTML = html;
+        }
+        
+        function toggleTemaCaderno(temaId) {
+            const conteudo = document.getElementById(`tema-conteudo-${temaId}`);
+            if (!conteudo) return;
+            
+            const isCollapsed = conteudo.classList.contains('collapsed');
+            if (isCollapsed) {
+                conteudo.classList.remove('collapsed');
+                conteudo.style.display = 'block';
+                const scrollHeight = conteudo.scrollHeight || 0;
+                const viewportHeight = window.innerHeight || 800;
+                const maxHeight = Math.min(scrollHeight + 32, viewportHeight * 0.7);
+                conteudo.style.maxHeight = maxHeight + 'px';
+            } else {
+                conteudo.classList.add('collapsed');
+                conteudo.style.maxHeight = '0px';
+                conteudo.style.display = 'none';
+            }
         }
         
         function toggleAreaCaderno(areaId) {
@@ -9697,10 +9777,75 @@
         
         function renderAgendaUnificada() {
             if (vistaAgenda === 'atrasados') {
-                renderPendencias();
+                renderAgendaAtrasados();
             } else {
                 renderAgenda();
             }
+        }
+        
+        function renderAgendaAtrasados() {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const hojeStr = hoje.toISOString().split('T')[0];
+            
+            const container = document.getElementById('agendaContainer');
+            if (!container) return;
+            
+            const atrasados = dados
+                .filter(t => {
+                    if (!t || !t.agenda || t.status === 'Concluído') return false;
+                    if (!dataValida || typeof dataValida !== 'function') {
+                        return t.agenda < hojeStr;
+                    }
+                    if (!dataValida(t.agenda)) return false;
+                    return t.agenda < hojeStr;
+                })
+                .sort((a, b) => a.agenda.localeCompare(b.agenda));
+            
+            if (!atrasados.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <div>Nenhuma atividade atrasada na Agenda.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = atrasados.map(t => {
+                const sugestao = obterSugestaoTema ? obterSugestaoTema(t) : '';
+                const rendPct = Math.round((t.rendimento || 0) * 100);
+                const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
+                const dataFormatada = formatarDataBR ? formatarDataBR(t.agenda) : t.agenda;
+                const tipo = calcularTipoRevisao ? calcularTipoRevisao(t) : '';
+                const diasAtraso = Math.floor((hoje - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="task-item priority-${t.prioridade || 3}">
+                        <div class="task-header">
+                            <div class="task-name">${t.tema}</div>
+                            <div class="task-meta">
+                                <span class="task-date-atraso">📅 ${dataFormatada} • ⚠️ ${diasAtraso} dias atrasado</span>
+                            </div>
+                        </div>
+                        <div class="task-body">
+                            <div class="task-tags">
+                                <span class="task-tag-area">📚 ${t.area || ''}</span>
+                                <span class="task-tag-rendimento" style="color: ${rendColor};">
+                                    📊 ${rendPct}%
+                                </span>
+                                ${tipo ? `<span class="task-tag-tipo">${tipo}</span>` : ''}
+                            </div>
+                            ${sugestao ? `
+                            <div class="task-suggestion">
+                                <div class="task-suggestion-label">Diretriz</div>
+                                <div class="task-suggestion-text">${sugestao}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
         
         // ==================== ANÁLISES ====================
