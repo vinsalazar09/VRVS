@@ -5013,9 +5013,10 @@
         // ==================== ANÁLISES DETALHADAS ====================
         
         function atualizarSelectsAnalise() {
-            // Atualizar select de áreas
+            // Atualizar select de áreas (incluindo AREAS_FIXAS + áreas dos dados)
             const areaSelect = document.getElementById('analiseFiltroArea');
-            const areas = [...new Set(dados.filter(t => t.status !== 'Suspenso').map(t => t.area))].sort();
+            const areasDados = dados.filter(t => t.status !== 'Suspenso').map(t => t.area).filter(a => a);
+            const areas = [...new Set([...AREAS_FIXAS, ...areasDados])].sort();
             areaSelect.innerHTML = '<option value="">Todas as áreas</option>';
             areas.forEach(area => {
                 areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
@@ -6126,7 +6127,9 @@
             const selectTema = document.getElementById('cadernoFiltroTema');
             
             if (selectArea) {
-                const areas = [...new Set(dados.map(t => t.area))].sort();
+                // Incluir AREAS_FIXAS + áreas dos dados
+                const areasDados = dados.map(t => t.area).filter(a => a);
+                const areas = [...new Set([...AREAS_FIXAS, ...areasDados])].sort();
                 selectArea.innerHTML = '<option value="">Todas as áreas</option>';
                 areas.forEach(area => {
                     const option = document.createElement('option');
