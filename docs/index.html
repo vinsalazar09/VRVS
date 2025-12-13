@@ -1832,9 +1832,10 @@
                 <form id="modalCadastroForm" onsubmit="salvarNovoTemaModal(event)">
                     <div class="form-group">
                         <label class="form-label">Área de Conhecimento</label>
-                        <select class="form-select" id="modalNovaArea" required>
+                        <select class="form-select" id="modalNovaArea" required onchange="handleModalNovaAreaChange(this)">
                             <option value="">Selecione...</option>
                         </select>
+                        <input type="text" class="form-input" id="modalNovaAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tema Específico</label>
@@ -2998,6 +2999,11 @@
         // Função para gerenciar adição de nova área na edição
         function handleEditAreaChange(select) {
             handleAreaChange(select, 'editAreaInput');
+        }
+        
+        // Função para gerenciar adição de nova área no modal de dados
+        function handleModalNovaAreaChange(select) {
+            handleAreaChange(select, 'modalNovaAreaInput');
         }
         
         // Função genérica para gerenciar adição de nova área
@@ -8010,6 +8016,14 @@
             AREAS_FIXAS.forEach(area => {
                 selectArea.innerHTML += `<option value="${area}">${area}</option>`;
             });
+            selectArea.innerHTML += '<option value="__NOVA_AREA__">➕ Adicionar Nova Área...</option>';
+            
+            // Garantir que input está escondido ao abrir modal
+            const modalNovaAreaInput = document.getElementById('modalNovaAreaInput');
+            if (modalNovaAreaInput) {
+                modalNovaAreaInput.style.display = 'none';
+                modalNovaAreaInput.required = false;
+            }
             
             // Limpar campos
             document.getElementById('modalNovoTema').value = '';
@@ -8026,7 +8040,21 @@
         function salvarNovoTemaModal(event) {
             event.preventDefault();
             
-            const area = document.getElementById('modalNovaArea').value;
+            // Pegar área do input se estiver visível, senão do select
+            const modalNovaAreaInput = document.getElementById('modalNovaAreaInput');
+            let area = '';
+            if (modalNovaAreaInput && modalNovaAreaInput.style.display !== 'none' && modalNovaAreaInput.value.trim()) {
+                area = modalNovaAreaInput.value.trim();
+            } else {
+                area = document.getElementById('modalNovaArea').value.trim();
+            }
+            
+            // Validar que não é a opção especial
+            if (area === '__NOVA_AREA__' || !area) {
+                mostrarNotificacaoFeedback('⚠️ Selecione ou adicione uma área válida!', 'error');
+                return;
+            }
+            
             const tema = document.getElementById('modalNovoTema').value.trim();
             const prioridade = parseInt(document.getElementById('modalNovaPrioridade').value) || 3;
             const dataInicio = document.getElementById('modalNovaDataInicio').value;
