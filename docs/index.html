@@ -6206,6 +6206,31 @@
             document.getElementById('modalTempoFlashcards').value = '';
             document.getElementById('modalQuantFlashcards').value = '';
             
+            // CORREÇÃO: Tentar ler valores dos campos de tempo da tarefa ativa (se houver)
+            const temaAtivo = document.getElementById('feedbackTema').value;
+            if (temaAtivo) {
+                const camposTempo = document.querySelector(`.campos-tempo[data-tema-id="${temaAtivo}"]`);
+                if (camposTempo) {
+                    const tempoQuestoesInput = camposTempo.querySelector('.tempo-questoes');
+                    const quantQuestoesInput = camposTempo.querySelector('.quant-questoes');
+                    const tempoFlashcardsInput = camposTempo.querySelector('.tempo-flashcards');
+                    const quantFlashcardsInput = camposTempo.querySelector('.quant-flashcards');
+                    
+                    if (tempoQuestoesInput && tempoQuestoesInput.value) {
+                        document.getElementById('modalTempoQuestoes').value = tempoQuestoesInput.value;
+                    }
+                    if (quantQuestoesInput && quantQuestoesInput.value) {
+                        document.getElementById('modalQuantQuestoes').value = quantQuestoesInput.value;
+                    }
+                    if (tempoFlashcardsInput && tempoFlashcardsInput.value) {
+                        document.getElementById('modalTempoFlashcards').value = tempoFlashcardsInput.value;
+                    }
+                    if (quantFlashcardsInput && quantFlashcardsInput.value) {
+                        document.getElementById('modalQuantFlashcards').value = quantFlashcardsInput.value;
+                    }
+                }
+            }
+            
             // Mostrar modal
             document.getElementById('encerrarSessaoModal').classList.add('active');
         }
@@ -7294,7 +7319,7 @@
             
             // ==================== SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA ====================
             const APP_VERSION = '5.3';
-            const SW_VERSION = 'vrvs-v5.3-refatoracao-completa-20251212';
+            const SW_VERSION = 'vrvs-v5.3-sincronizacao-completa-20251212-2250';
             
             // Changelog das atualizações
             const CHANGELOG = {
@@ -8355,7 +8380,7 @@
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content collapsed" id="area-content-${temaId}">
+                    <div class="area-content" id="area-content-${temaId}" style="display: none;">
                         ${porTema[temaKey].map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
