@@ -818,6 +818,50 @@
         .task-header {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .task-meta {
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .task-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .task-tag-area,
+        .task-tag-rendimento,
+        .task-tag-tipo,
+        .task-tag-sessoes {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(0, 206, 209, 0.1);
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+        }
+        
+        .task-tag-area {
+            color: var(--turquesa-light);
+        }
+        
+        .task-tag-rendimento {
+            /* Cor já definida inline, mas garantir fallback */
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .task-tag-tipo {
+            color: var(--cobre-light);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
         }
