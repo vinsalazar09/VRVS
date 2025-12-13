@@ -371,9 +371,6 @@
                 0 0 20px rgba(255, 127, 80, 0.3),
                 inset 0 0 20px rgba(255, 127, 80, 0.05);
             background: rgba(10, 26, 31, 0.8);
-            /* Garantir que cursor não fica travado */
-            transform: none !important;
-            -webkit-transform: none !important;
         }
         
         .form-textarea {
@@ -852,7 +849,11 @@
         
         .task-meta {
             font-size: 12px;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9) !important;
+        }
+        
+        .task-meta * {
+            color: rgba(255,255,255,0.9) !important;
         }
         
         .task-tags {
@@ -870,21 +871,25 @@
             padding: 4px 8px;
             border-radius: 6px;
             background: rgba(0, 206, 209, 0.1);
-            color: rgba(255,255,255,0.9);
+            color: rgba(255,255,255,0.9) !important;
             font-weight: 600;
         }
         
         .task-tag-area {
-            color: var(--turquesa-light);
+            color: var(--turquesa-light) !important;
         }
         
         .task-tag-rendimento {
             /* Cor já definida inline, mas garantir fallback */
-            color: rgba(255,255,255,0.9);
+            color: rgba(255,255,255,0.9) !important;
         }
         
         .task-tag-tipo {
-            color: var(--cobre-light);
+            color: var(--cobre-light) !important;
+        }
+        
+        .task-tag-sessoes {
+            color: rgba(255,255,255,0.9) !important;
         }
         
         .task-header {
@@ -964,7 +969,7 @@
         
         .task-detail-item {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9) !important;
             font-weight: 600;
             padding: 4px 8px;
             background: rgba(0, 206, 209, 0.1);
@@ -976,7 +981,7 @@
                 rgba(0, 206, 209, 0.2),
                 rgba(13, 148, 136, 0.1)
             );
-            color: var(--turquesa-light);
+            color: var(--turquesa-light) !important;
             padding: 8px 14px;
             border-radius: 10px;
             font-size: 11px;
