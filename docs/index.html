@@ -9307,23 +9307,58 @@
         }
         
         function renderAnalyticsDetalhado(container) {
-            // Renderizar análises detalhadas com estrutura completa
+            // CORREÇÃO: Incluir todos os elementos HTML necessários (filtros, selects)
             container.innerHTML = `
                 <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--turquesa-light); font-size: 14px;">🔍 Análises por Área e Tema</span>
+                    <span style="color: var(--turquesa-light); font-size: 14px; font-weight: 600;">🔍 Análises por Área e Tema</span>
                     <button class="btn btn-small" onclick="toggleAnalisesTempo()" style="font-size: 11px;">
                         <span id="toggleAnalisesTempoText">⏱️ Mostrar Análises de Tempo</span>
                     </button>
                 </div>
-                <div id="analiseResultados" style="margin-top: 30px;">
+                
+                <!-- FILTROS -->
+                <div style="margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">Filtrar por Área</label>
+                        <select class="form-select" id="analiseFiltroArea" onchange="atualizarSelectTemaAnalise(); atualizarAnalises();">
+                            <option value="">Todas as áreas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">Filtrar por Tema</label>
+                        <select class="form-select" id="analiseFiltroTema" onchange="calcularAnalises()">
+                            <option value="">Todos os temas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">Período</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <input type="date" class="form-input" id="analiseDataInicio" onchange="atualizarAnalises()">
+                            <input type="date" class="form-input" id="analiseDataFim" onchange="atualizarAnalises()">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <button class="btn btn-small" onclick="filtrarAnaliseSemanaAtual()">📅 Semana Atual</button>
+                        <button class="btn btn-small" onclick="filtrarAnaliseMesAtual()">📆 Mês Atual</button>
+                        <button class="btn btn-small" onclick="limparFiltrosAnalise()">🗑️ Limpar Filtros</button>
+                    </div>
+                </div>
+                
+                <!-- RESULTADOS -->
+                <div id="analiseResultados" style="margin-top: 20px;">
                     <!-- Resultados serão renderizados aqui por calcularAnalises() -->
                 </div>
-                <div id="analiseTempo" style="display: none; margin-top: 30px;">
+                
+                <!-- ANÁLISES DE TEMPO (toggle) -->
+                <div id="analiseTempo" style="display: none; margin-top: 20px;">
                     <!-- Análises de tempo serão renderizadas aqui -->
                 </div>
             `;
             
-            // Chamar função de análises existente
+            // Popular selects e calcular análises
             setTimeout(() => {
                 atualizarSelectsAnalise();
                 atualizarAnalises();
