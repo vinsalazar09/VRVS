@@ -168,7 +168,13 @@ Você trabalha na pasta `/Users/viniciussalazar/Desktop/Teot/`
 **PASSO 5:** **ORGANIZAR E LIMPAR AUTOMATICAMENTE:**
    - ✅ Organizar `DIARIO/CURSOR/` (minha pasta)
    - ✅ Verificar se há arquivos desorganizados em outras pastas
-   - ✅ Limpar arquivos temporários se houver
+   - ✅ **LIMPEZA AUTOMÁTICA DE TEMPORÁRIOS** (executar protocolo completo):
+     - ✅ Identificar arquivos `.md` criados na sessão
+     - ✅ Verificar se são cópias de arquivos permanentes em `docs/` ou `DIARIO/CURSOR/`
+     - ✅ Deletar cópias temporárias do Desktop
+     - ✅ Deletar documentos de comunicação intermediária (ex: "ENVIAR_PARA_OPUS.md", "RESPOSTA_*.md")
+     - ✅ Manter apenas documentos importantes em pastas corretas
+     - ✅ Verificar protocolo completo em `DIARIO/CURSOR/PROTOCOLO_LIMPEZA_TEMPORARIOS.md`
    - ✅ Verificar se há pontas soltas ou documentos faltando
    - ✅ Criar backups se necessário antes de modificar arquivos críticos
 

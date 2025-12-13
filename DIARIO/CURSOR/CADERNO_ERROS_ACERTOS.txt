@@ -18,6 +18,9 @@
 
 **CHAT INICIADO:** 2025-12-11 (Quinta-feira) 18:30
 
+**CHAT INICIADO:** 2025-12-12 (Sexta-feira) ~22:06
+**CHAT ENCERRADO:** 2025-12-12 (Sexta-feira) ~22:06
+
 ═══════════════════════════════════════════════════════════════
 ✅ ACERTOS E SOLUÇÕES BEM SUCEDIDAS
 ═══════════════════════════════════════════════════════════════
@@ -302,6 +305,31 @@
   - **Código Atual:** `<input type="text" id="novaDiarioArea" list="listAreasDiario">`
   - **Código Necessário:** `<select id="novaDiarioArea"><option value="">Selecione...</option>...</select>`
   - **Prevenção:** Para campos com opções pré-definidas no mobile, SEMPRE usar `<select>` em vez de `<input list="...">`. Datalist não funciona bem no iOS.
+
+**2025-12-12 (22:06):**
+- ✅ **ERRO CRÍTICO RESOLVIDO:** `SyntaxError: Cannot declare a const variable twice: 'areasExistentes'`
+  - **Causa:** Declaração duplicada de `const areasExistentes` na função `atualizarTodosSelectsArea()` (linhas 8142 e 8169)
+  - **Impacto:** Aplicação não abria - erro crítico que impedia uso completo
+  - **Solução:** Removida segunda declaração, usando `areasCompletas` já criada anteriormente
+  - **Lição:** Sempre verificar declarações de variáveis antes de adicionar novas, especialmente em funções grandes
+  - **Prevenção:** Usar busca por nome da variável antes de declarar novamente
+
+- ✅ **CORREÇÃO:** Botão "➕ Nova Área" duplicado na aba Dados
+  - **Causa:** Botão foi adicionado em dois lugares diferentes durante implementação
+  - **Solução:** Removido botão duplicado, mantido apenas um ao lado de "+ NOVO TEMA"
+  - **Lição:** Verificar visualmente antes de considerar implementação completa
+
+- ✅ **MELHORIA:** Integração completa de nova área em todas as abas
+  - **Problema:** Nova área criada não aparecia automaticamente em todos os selects da plataforma
+  - **Solução:** 
+    - Adicionada atualização manual dos selects do Diário (`novaDiarioArea` e `filtroDiarioArea`)
+    - Corrigidas funções `atualizarSelectsAnalise()` e `atualizarSelectsCaderno()` para incluir `AREAS_FIXAS` + áreas criadas
+  - **Lição:** Quando adicionar funcionalidade, verificar TODOS os lugares onde ela deve aparecer. Integração completa é crítica.
+
+- 📝 **PENDÊNCIA DOCUMENTADA:** Logo não aparece no MacBook
+  - **Status:** Pendente (baixa prioridade)
+  - **Documentação:** `DIARIO/CURSOR/PENDENCIA_LOGO_MACBOOK.md`
+  - **Observação:** Funciona no iPhone, não afeta funcionalidade. Todas as tentativas técnicas documentadas.
 
 ═══════════════════════════════════════════════════════════════
 
