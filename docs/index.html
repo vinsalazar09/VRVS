@@ -3788,31 +3788,28 @@
             const filtroArea = document.getElementById('cadernoFiltroArea');
             if (filtroArea) {
                 filtroArea.value = tema.area;
-                atualizarSelectTemaPorArea(); // Atualizar select de tema
             }
             
-            // Verificar se existe filtro de tema antes de usar (pode não existir)
-            setTimeout(() => {
-                const filtroTema = document.getElementById('cadernoFiltroTema');
-                if (filtroTema) {
-                    filtroTema.value = String(temaId);
-                }
-            }, 200);
-            
-            // Mostrar seção caderno
+            // Mostrar seção caderno primeiro
             showSection('caderno');
             
-            // Scroll para anotação
+            // Renderizar caderno filtrado diretamente (sem depender de elemento inexistente)
             setTimeout(() => {
-                const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
-                if (elemento) {
-                    elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    elemento.style.background = 'rgba(0,206,209,0.2)';
-                    setTimeout(() => {
-                        elemento.style.background = '';
-                    }, 2000);
-                }
-            }, 300);
+                // Usar renderCadernoV2() que é a função atual do Caderno
+                renderCadernoV2();
+                
+                // Scroll para anotação após renderizar
+                setTimeout(() => {
+                    const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
+                    if (elemento) {
+                        elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        elemento.style.background = 'rgba(0,206,209,0.2)';
+                        setTimeout(() => {
+                            elemento.style.background = '';
+                        }, 2000);
+                    }
+                }, 200);
+            }, 100);
         }
         
         // Toggle mostrar/ocultar contexto do tema
@@ -6867,35 +6864,31 @@
             const tema = dados.find(t => String(t.id) === String(temaId));
             if (!tema) return;
             
-            // Filtrar caderno para mostrar apenas este tema
+            // Filtrar caderno para mostrar apenas a área do tema
             const filtroArea = document.getElementById('cadernoFiltroArea');
             if (filtroArea) {
                 filtroArea.value = tema.area;
-                atualizarSelectTemaPorArea(); // Atualizar select de tema
             }
             
-            // Verificar se existe filtro de tema antes de usar (pode não existir)
-            setTimeout(() => {
-                const filtroTema = document.getElementById('cadernoFiltroTema');
-                if (filtroTema) {
-                    filtroTema.value = String(temaId);
-                }
-            }, 200);
-            
-            // Mostrar seção caderno
+            // Mostrar seção caderno primeiro
             showSection('caderno');
             
-            // Scroll para anotação
+            // Renderizar caderno filtrado (renderCadernoV2 não depende de cadernoFiltroTema)
             setTimeout(() => {
-                const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
-                if (elemento) {
-                    elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    elemento.style.background = 'rgba(0,206,209,0.2)';
-                    setTimeout(() => {
-                        elemento.style.background = '';
-                    }, 2000);
-                }
-            }, 300);
+                renderCadernoV2();
+                
+                // Scroll para anotação após renderizar
+                setTimeout(() => {
+                    const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
+                    if (elemento) {
+                        elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        elemento.style.background = 'rgba(0,206,209,0.2)';
+                        setTimeout(() => {
+                            elemento.style.background = '';
+                        }, 2000);
+                    }
+                }, 300);
+            }, 100);
         }
         
         function atualizarSelectsLembrete() {
