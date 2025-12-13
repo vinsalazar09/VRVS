@@ -1375,6 +1375,82 @@
             padding: 0;
         }
         
+        /* ===== GRÁFICO LINHA - TOGGLES ===== */
+        
+        .chart-toggles {
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        
+        .chart-toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .chart-toggle-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-toggle-label input {
+            margin: 0;
+        }
+        
+        .chart-toggle-label input:checked + span {
+            color: var(--turquesa-light);
+        }
+        
+        /* ===== CONTEXTO DO TEMA ===== */
+        
+        .contexto-container {
+            background: rgba(0, 206, 209, 0.05);
+            border: 1px solid rgba(0, 206, 209, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .contexto-secao {
+            margin-bottom: 16px;
+        }
+        
+        .contexto-secao:last-child {
+            margin-bottom: 0;
+        }
+        
+        .contexto-secao h4 {
+            color: var(--turquesa-light);
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .contexto-item {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            padding: 4px 0;
+            cursor: pointer;
+        }
+        
+        .contexto-item:hover {
+            color: var(--cobre-light);
+        }
+        
+        .contexto-vazio {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+            font-size: 12px;
+        }
+        
         /* ===== CADERNO - LISTA DE TEMAS ===== */
         
         .tema-list {
@@ -2146,6 +2222,7 @@
                         <canvas id="chartBarras" width="400" height="200"></canvas>
                     </div>
                     <div style="margin-bottom: 30px;">
+                        <div id="chartLinhaControles" class="chart-toggles"></div>
                         <canvas id="chartLinha" width="400" height="200"></canvas>
                     </div>
                     <div style="margin-bottom: 30px;">
@@ -3287,6 +3364,156 @@
             // Isso estava causando múltiplos listeners e travamentos
         };
         
+        // ==================== CONTEXTO DO TEMA (Fase 4.1) ====================
+        
+        // Buscar contexto relacionado a um tema (Diário ⚠️, Hot Topics, Anotações)
+        function buscarContextoTema(area, tema) {
+            const contexto = {
+                atencao: [], // Entradas do Diário com ⚠️
+                hotTopics: [],
+                anotacoes: []
+            };
+            
+            // 1. Buscar itens ⚠️ do Diário
+            if (window.diario && window.diario.entradas) {
+                contexto.atencao = window.diario.entradas.filter(e => 
+                    e.area === area && 
+                    e.tema === tema && 
+                    e.atencao === true
+                );
+            }
+            
+            // 2. Buscar Hot Topics e Anotações do Caderno
+            const anotacoesTema = anotacoes.filter(a => 
+                a.area === area && 
+                a.tema === tema
+            );
+            
+            anotacoesTema.forEach(anot => {
+                if (anot.hotTopics && anot.hotTopics.trim()) {
+                    contexto.hotTopics.push({
+                        texto: anot.hotTopics.trim()
+                    });
+                }
+                if (anot.conteudo && anot.conteudo.trim()) {
+                    contexto.anotacoes.push(anot);
+                }
+            });
+            
+            return contexto;
+        }
+        
+        // Renderizar contexto do tema em container
+        function renderContextoTema(contexto, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let html = '';
+            
+            // Render seção Atenção (⚠️)
+            if (contexto.atencao.length > 0) {
+                html += `
+                    <div class="contexto-secao">
+                        <h4>⚠️ PONTOS DE ATENÇÃO (Diário)</h4>
+                        ${contexto.atencao.map(item => `
+                            <div class="contexto-item" onclick="navegarParaEntradaDiario('${item.id}')">
+                                • ${item.topico}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Render Hot Topics
+            if (contexto.hotTopics.length > 0) {
+                html += `
+                    <div class="contexto-secao">
+                        <h4>📌 HOT TOPICS</h4>
+                        ${contexto.hotTopics.map(ht => `
+                            <div class="contexto-item">• ${ht.texto.substring(0, 100)}${ht.texto.length > 100 ? '...' : ''}</div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Render Anotações
+            if (contexto.anotacoes.length > 0) {
+                html += `
+                    <div class="contexto-secao">
+                        <h4>📝 ANOTAÇÕES (Caderno)</h4>
+                        <div class="contexto-item">
+                            ${contexto.anotacoes.length} anotação(ões) disponível(eis)
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Se não tiver nada
+            if (!html) {
+                html = '<div class="contexto-vazio">Nenhum contexto adicional disponível</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // Navegar para entrada específica do Diário
+        function navegarParaEntradaDiario(entradaId) {
+            // Mostrar seção Diário
+            showSection('diario');
+            
+            // Filtrar para mostrar apenas a entrada específica
+            setTimeout(() => {
+                // Tentar encontrar e destacar a entrada
+                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                if (entrada) {
+                    // Filtrar Diário para mostrar apenas esta entrada
+                    const container = document.getElementById('diarioContainer');
+                    if (container) {
+                        // Renderizar apenas esta entrada destacada
+                        container.innerHTML = `
+                            <div style="background: rgba(0,206,209,0.2); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 2px solid var(--turquesa-main);">
+                                <div style="font-size: 12px; color: var(--turquesa-light); margin-bottom: 8px;">
+                                    📍 Entrada destacada
+                                </div>
+                                ${renderEntradaDiario(entrada)}
+                            </div>
+                            <button onclick="renderDiario()" class="btn btn-small" style="margin-bottom: 16px;">
+                                ← Voltar para todas as entradas
+                            </button>
+                        `;
+                    }
+                }
+            }, 300);
+        }
+        
+        // Toggle mostrar/ocultar contexto do tema
+        function toggleContextoTema(temaId) {
+            const containerId = `contexto-tema-${temaId}`;
+            const container = document.getElementById(containerId);
+            const botao = document.querySelector(`[onclick="toggleContextoTema('${temaId}')"]`);
+            
+            if (!container) return;
+            
+            if (container.style.display === 'none' || !container.style.display) {
+                // Mostrar contexto
+                container.style.display = 'block';
+                if (botao) botao.textContent = '👁️ OCULTAR CONTEXTO';
+                
+                // Buscar e renderizar contexto se ainda não foi renderizado
+                if (!container.innerHTML || container.innerHTML.trim() === '') {
+                    const tema = dados.find(t => String(t.id) === String(temaId));
+                    if (tema) {
+                        const contexto = buscarContextoTema(tema.area, tema.tema);
+                        renderContextoTema(contexto, containerId);
+                    }
+                }
+            } else {
+                // Ocultar contexto
+                container.style.display = 'none';
+                if (botao) botao.textContent = '👁️ MOSTRAR CONTEXTO';
+            }
+        }
+        
         function renderTarefas() {
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
@@ -3356,6 +3583,12 @@
                         <div class="task-suggestion-text">${sugestao}</div>
                     </div>
                     ` : ''}
+                    
+                    <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%;">
+                        👁️ MOSTRAR CONTEXTO
+                    </button>
+                    
+                    <div id="contexto-tema-${t.id}" class="contexto-container" style="display: none; margin-top: 12px;"></div>
                     
                     <div class="campos-tempo ${camposTempoAtivo ? 'ativo' : ''}" data-tema-id="${t.id}">
                         <div class="campo-tempo-row">
@@ -3907,6 +4140,7 @@
             document.getElementById('statFlashcards').textContent = totalFlashcards.toLocaleString();
             
             renderChartBarras();
+            renderChartLinhaControles(); // Renderizar controles antes do gráfico
             renderChartLinha();
             renderChartRadar();
         }
@@ -3932,6 +4166,23 @@
         let chartLinhaInst = null;
         let chartRadarInst = null;
         
+        // Estado de áreas visíveis no gráfico de linha
+        let areasVisiveisLinha = new Set();
+        
+        // ==================== AGRUPAMENTO PARA GRÁFICOS ====================
+        // Mapeamento de agrupamento (apenas para visualização nos gráficos)
+        // NÃO altera os dados originais
+        const AGRUPAMENTO_GRAFICOS = {
+            'Trauma MMSS': 'Trauma Adulto',
+            'Trauma MMII': 'Trauma Adulto',
+            'Trauma Coluna': 'Trauma Adulto'
+            // Todas as outras mantêm o nome original
+        };
+        
+        function agruparParaGrafico(area) {
+            return AGRUPAMENTO_GRAFICOS[area] || area;
+        }
+        
         // GRÁFICO 1: Performance média POR ÁREA
         function renderChartBarras(canvasId = 'chartBarras') {
             const ctx = document.getElementById(canvasId);
@@ -3954,11 +4205,14 @@
                 // CORREÇÃO: Filtrar "Tema" que é erro de importação
                 if (areaNormalizada.toLowerCase() === 'tema') return;
                 
-                if (!areaStats[areaNormalizada]) {
-                    areaStats[areaNormalizada] = { total: 0, count: 0 };
+                // AGRUPAR PARA GRÁFICO (apenas visualização, não altera dados originais)
+                const areaAgrupada = agruparParaGrafico(areaNormalizada);
+                
+                if (!areaStats[areaAgrupada]) {
+                    areaStats[areaAgrupada] = { total: 0, count: 0 };
                 }
-                areaStats[areaNormalizada].total += h.rendimento * 100;
-                areaStats[areaNormalizada].count += 1;
+                areaStats[areaAgrupada].total += h.rendimento * 100;
+                areaStats[areaAgrupada].count += 1;
             });
             
             const areaRendimento = [];
@@ -4079,10 +4333,93 @@
             }
         }
         
+        // Renderizar controles de toggle para gráfico de linha
+        function renderChartLinhaControles() {
+            const container = document.getElementById('chartLinhaControles');
+            if (!container) return;
+            
+            // Obter todas as áreas únicas (agrupadas) do histórico
+            const areasUnicas = new Set();
+            historico.forEach(h => {
+                const tema = dados.find(t => String(t.id) === String(h.temaId));
+                if (tema && tema.status === 'Suspenso') return;
+                
+                const { area } = fixAreaTema(h.area, h.tema);
+                if (!area || area.toLowerCase() === 'tema') return;
+                
+                const areaAgrupada = agruparParaGrafico(area);
+                areasUnicas.add(areaAgrupada);
+            });
+            
+            const areas = Array.from(areasUnicas).sort();
+            
+            // Inicializar todas como visíveis se ainda não foi inicializado
+            if (areasVisiveisLinha.size === 0) {
+                areas.forEach(a => areasVisiveisLinha.add(a));
+            }
+            
+            // Renderizar controles
+            let html = `
+                <div style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+                    <button class="btn btn-small" onclick="toggleTodasAreasLinha(true)">✅ Todas</button>
+                    <button class="btn btn-small" onclick="toggleTodasAreasLinha(false)">❌ Nenhuma</button>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            `;
+            
+            areas.forEach(area => {
+                html += `
+                    <label class="chart-toggle-label">
+                        <input type="checkbox" 
+                               ${areasVisiveisLinha.has(area) ? 'checked' : ''}
+                               onchange="toggleAreaLinha('${area.replace(/'/g, "\\'")}')">
+                        <span>${area}</span>
+                    </label>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // Toggle de área individual no gráfico de linha
+        function toggleAreaLinha(area) {
+            if (areasVisiveisLinha.has(area)) {
+                areasVisiveisLinha.delete(area);
+            } else {
+                areasVisiveisLinha.add(area);
+            }
+            renderChartLinha(); // Re-renderizar gráfico
+        }
+        
+        // Toggle todas as áreas (mostrar/ocultar todas)
+        function toggleTodasAreasLinha(mostrar) {
+            const areasUnicas = new Set();
+            historico.forEach(h => {
+                const tema = dados.find(t => String(t.id) === String(h.temaId));
+                if (tema && tema.status === 'Suspenso') return;
+                
+                const { area } = fixAreaTema(h.area, h.tema);
+                if (!area || area.toLowerCase() === 'tema') return;
+                
+                const areaAgrupada = agruparParaGrafico(area);
+                areasUnicas.add(areaAgrupada);
+            });
+            
+            areasVisiveisLinha = mostrar ? new Set(Array.from(areasUnicas)) : new Set();
+            renderChartLinhaControles(); // Atualizar checkboxes
+            renderChartLinha(); // Re-renderizar gráfico
+        }
+        
         // GRÁFICO 2: Evolução POR ÁREA
         function renderChartLinha(canvasId = 'chartLinha') {
             const ctx = document.getElementById(canvasId);
             if (!ctx) return;
+            
+            // Renderizar controles se ainda não foram renderizados
+            if (document.getElementById('chartLinhaControles') && !document.getElementById('chartLinhaControles').innerHTML) {
+                renderChartLinhaControles();
+            }
             
             // AGRUPAR POR ÁREA!!!
             const areasSessoes = {};
@@ -4096,28 +4433,33 @@
                 // CORREÇÃO: Filtrar "Tema" que é erro de importação
                 if (area.toLowerCase() === 'tema') return;
                 
-                if (!areasSessoes[area]) {
-                    areasSessoes[area] = [];
+                // AGRUPAR PARA GRÁFICO (apenas visualização, não altera dados originais)
+                const areaAgrupada = agruparParaGrafico(area);
+                
+                if (!areasSessoes[areaAgrupada]) {
+                    areasSessoes[areaAgrupada] = [];
                 }
-                areasSessoes[area].push({
+                areasSessoes[areaAgrupada].push({
                     rendimento: (h.rendimento || 0) * 100,
-                    sessao: areasSessoes[area].length + 1
+                    sessao: areasSessoes[areaAgrupada].length + 1
                 });
             });
             
-            const datasets = Object.entries(areasSessoes).map(([area, sessoes]) => {
-                const color = getColorForArea(area);
-                return {
-                    label: area,
-                    data: sessoes.map(s => ({ x: s.sessao, y: s.rendimento })),
-                    borderColor: color,
-                    backgroundColor: color + '33',
-                    tension: 0.3,
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                };
-            });
+            const datasets = Object.entries(areasSessoes)
+                .filter(([area]) => areasVisiveisLinha.has(area)) // FILTRAR POR ÁREAS VISÍVEIS
+                .map(([area, sessoes]) => {
+                    const color = getColorForArea(area);
+                    return {
+                        label: area,
+                        data: sessoes.map(s => ({ x: s.sessao, y: s.rendimento })),
+                        borderColor: color,
+                        backgroundColor: color + '33',
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    };
+                });
             
             if (datasets.length === 0) {
                 if (chartLinhaInst) { chartLinhaInst.destroy(); chartLinhaInst = null; }
@@ -4205,11 +4547,14 @@
                 // CORREÇÃO: Filtrar "Tema" que é erro de importação
                 if (area.toLowerCase() === 'tema') return;
                 
-                if (!areaStats[area]) {
-                    areaStats[area] = { total: 0, count: 0 };
+                // AGRUPAR PARA GRÁFICO (apenas visualização, não altera dados originais)
+                const areaAgrupada = agruparParaGrafico(area);
+                
+                if (!areaStats[areaAgrupada]) {
+                    areaStats[areaAgrupada] = { total: 0, count: 0 };
                 }
-                areaStats[area].total += h.rendimento * 100;
-                areaStats[area].count += 1;
+                areaStats[areaAgrupada].total += h.rendimento * 100;
+                areaStats[areaAgrupada].count += 1;
             });
             
             const areas = [];
@@ -4233,7 +4578,7 @@
                         label: 'Performance Média',
                         data: rendimentos,
                         borderColor: '#FFA500',
-                        backgroundColor: 'rgba(255, 165, 0, 0.8)',
+                        backgroundColor: 'rgba(255, 165, 0, 0.15)',
                         borderWidth: 2,
                         pointRadius: 5,
                         pointHoverRadius: 8,
@@ -7981,7 +8326,7 @@
                             <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 4px;">
                                 ${entrada.area} • ${entrada.tema}
                             </div>
-                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px;">
                                 ❓ ${entrada.topico}
                             </div>
                         </div>
@@ -7991,7 +8336,7 @@
                         </div>
                     </div>
                     ${mostrarResposta && entrada.resposta ? `
-                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); display: block; white-space: pre-wrap;">
                             ✅ ${entrada.resposta.replace(/\n/g, '<br>')}
                         </div>
                     ` : mostrarResposta ? `
@@ -8002,7 +8347,7 @@
                         <button onclick="toggleRespostaIndividual(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
                             👁️ Ver Resposta
                         </button>
-                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); display: block; white-space: pre-wrap;">
                             ✅ ${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}
                         </div>
                     `}
