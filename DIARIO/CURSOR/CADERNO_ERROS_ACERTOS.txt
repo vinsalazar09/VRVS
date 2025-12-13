@@ -333,5 +333,22 @@
   - **Documentação:** `DIARIO/CURSOR/PENDENCIA_LOGO_MACBOOK.md`
   - **Observação:** Funciona no iPhone, não afeta funcionalidade. Todas as tentativas técnicas documentadas.
 
+**2025-12-13:**
+- ✅ **PRINCÍPIO FUNDAMENTAL ESTABELECIDO: Organização Visual da Plataforma**
+  - **Contexto:** Correção geral para eliminar espaço morto em toda a plataforma
+  - **Problema Identificado:** Quando usuário expandia áreas/temas colapsáveis, conteúdo ficava confinado numa "caixinha" pequena enquanto sobrava muito espaço vazio na tela
+  - **Solução Aplicada:**
+    1. Aumentar `max-height` de áreas expandidas (60vh → 70vh desktop, 80vh mobile)
+    2. Adicionar `min-height` quando expandido (40vh desktop, 50vh mobile)
+    3. Modais ocupam quase tela toda no mobile (95vh)
+    4. Containers principais com `min-height: 60vh` no mobile
+    5. Tabelas sem limite de altura
+    6. Função `toggleAreaCaderno` ajustada para usar 70% viewport ou scrollHeight + margem
+  - **Resultado:** ✅ Conteúdo expandido ocupa espaço útil na tela, menos espaço morto, melhor aproveitamento no iPhone
+  - **Documentação Criada:** `docs/PRINCIPIO_ORGANIZACAO_VISUAL_PLATAFORMA.md` - REGRA OBRIGATÓRIA
+  - **Lição:** **ESPAÇO NA TELA = ESPAÇO ÚTIL** - Quando algo está ABERTO/EXPANDIDO, deve OCUPAR A TELA de forma útil, não ficar numa caixinha minúscula
+  - **Prevenção:** SEMPRE aplicar padrões deste documento em novas funcionalidades. NUNCA criar elementos expandidos com altura limitada pequena. SEMPRE usar valores em `vh` para responsividade. SEMPRE testar no iPhone Safari.
+  - **Commit:** `ec2a4d7` - feat: Eliminar espaço morto em toda a plataforma (VRVS v5.3)
+
 ═══════════════════════════════════════════════════════════════
 
