@@ -2509,7 +2509,7 @@
                     <div class="sub-nav">
                         <button class="sub-nav-btn active" id="btnAnalyticsResumo" onclick="setVistaAnalytics('resumo')">📊 Resumo</button>
                         <button class="sub-nav-btn" id="btnAnalyticsGraficos" onclick="setVistaAnalytics('graficos')">📈 Gráficos</button>
-                        <button class="sub-nav-btn" id="btnAnalyticsDetalhado" onclick="setVistaAnalytics('detalhado')">🔍 Detalhado</button>
+                        <!-- Detalhado temporariamente removido - precisa reimplementação -->
                         <button class="sub-nav-btn" id="btnAnalyticsHistorico" onclick="setVistaAnalytics('historico')">📜 Histórico</button>
                     </div>
                     
@@ -9107,9 +9107,10 @@
                 case 'graficos':
                     renderAnalyticsGraficos(container);
                     break;
-                case 'detalhado':
-                    renderAnalyticsDetalhado(container);
-                    break;
+                // case 'detalhado':
+                //     renderAnalyticsDetalhado(container);
+                //     break;
+                // Temporariamente removido - precisa reimplementação (campos h.questoes/flashcards não existem)
                 case 'historico':
                     renderAnalyticsHistorico(container);
                     break;

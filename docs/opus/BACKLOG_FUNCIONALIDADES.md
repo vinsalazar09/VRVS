@@ -19,6 +19,13 @@
 
 ## ⏳ Pendente (Próxima Sprint)
 
+### Prioridade Média
+- [ ] **Reimplementar Análises Detalhado**
+  - Função atual quebrada (campos `h.questoes`, `h.flashcards` não existem)
+  - Precisa redesenhar lógica de filtros
+  - Verificar estrutura real do histórico antes de implementar
+  - Temporariamente removido em 13/12/2025
+
 ### Prioridade Baixa
 - [ ] **Inserir Imagens nas Anotações (4.2)**
   - Opção A modificada (Base64 com limites)
