@@ -3969,65 +3969,74 @@
                             </div>
                             <div class="area-content collapsed" id="area-content-${temaId}">
                                 ${tarefasDoTema.map((t, index) => {
-                const sugestao = obterSugestaoTema(t);
-                const rendPct = Math.round((t.rendimento || 0) * 100);
-                const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
-                const tipo = calcularTipoRevisao(t);
-                const isHoje = t.agenda === hojeStr;
-                const camposTempoAtivo = window.camposTempoVisiveis || false;
-                const dataFormatada = formatarDataBR(t.agenda);
+                                    const sugestao = obterSugestaoTema(t);
+                                    const rendPct = Math.round((t.rendimento || 0) * 100);
+                                    const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
+                                    const tipo = calcularTipoRevisao(t);
+                                    const isHoje = t.agenda === hojeStr;
+                                    const dataFormatada = formatarDataBR(t.agenda);
+                                    
+                                    return `
+                                        <div class="task-item priority-${t.prioridade || 3}">
+                                            <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
+                                            
+                                            <div class="task-details">
+                                                <div class="task-detail-item">📚 ${t.area}</div>
+                                                <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
+                                            </div>
+                                            
+                                            <div class="task-details">
+                                                <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
+                                                <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
+                                                <div class="task-detail-item">📅 ${dataFormatada}</div>
+                                            </div>
+                                            
+                                            ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
+                                            
+                                            ${sugestao ? `
+                                            <div class="task-suggestion">
+                                                <div class="task-suggestion-label">Diretriz</div>
+                                                <div class="task-suggestion-text">${sugestao}</div>
+                                            </div>
+                                            ` : ''}
+                                            
+                                            <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0,206,209,0.25)'" onmouseout="this.style.background='rgba(0,206,209,0.15)'">
+                                                👁️ MOSTRAR CONTEXTO
+                                            </button>
+                                            
+                                            <div id="contexto-tema-${t.id}" class="contexto-container" style="display: none; margin-top: 12px;"></div>
+                                            
+                                            ${(() => {
+                                                const qtdDiario = contarDiarioProgramadoParaTema(t.area, t.tema);
+                                                if (qtdDiario > 0) {
+                                                    return `
+                                                        <div class="tema-diario-bloco" style="background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
+                                                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
+                                                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                                                                Você tem <strong style="color: var(--cobre-light);">${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
+                                                            </div>
+                                                            <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%; background: var(--cobre-main); color: white; border: none;">
+                                                                🔁 Abrir sessão do Diário
+                                                            </button>
+                                                        </div>
+                                                    `;
+                                                }
+                                                return '';
+                                            })()}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
                 
-                // Padronizar layout: primeira linha (área e prioridade), segunda linha (rendimento, sessões e data)
-                return `
-                <div class="task-item priority-${t.prioridade || 3}">
-                    <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
-                    
-                    <div class="task-details">
-                        <div class="task-detail-item">📚 ${t.area}</div>
-                        <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
+                html += `
                     </div>
-                    
-                    <div class="task-details">
-                        <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
-                        <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
-                        <div class="task-detail-item">📅 ${dataFormatada}</div>
-                    </div>
-                    
-                    ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
-                    
-                    ${sugestao ? `
-                    <div class="task-suggestion">
-                        <div class="task-suggestion-label">Diretriz</div>
-                        <div class="task-suggestion-text">${sugestao}</div>
-                    </div>
-                    ` : ''}
-                    
-                    <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0,206,209,0.25)'" onmouseout="this.style.background='rgba(0,206,209,0.15)'">
-                        👁️ MOSTRAR CONTEXTO
-                    </button>
-                    
-                    <div id="contexto-tema-${t.id}" class="contexto-container" style="display: none; margin-top: 12px;"></div>
-                    
-                    ${(() => {
-                        const qtdDiario = contarDiarioProgramadoParaTema(t.area, t.tema);
-                        if (qtdDiario > 0) {
-                            return `
-                                <div class="tema-diario-bloco" style="background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
-                                    <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
-                                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
-                                        Você tem <strong style="color: var(--cobre-light);">${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
-                                    </div>
-                                    <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%; background: var(--cobre-main); color: white; border: none;">
-                                        🔁 Abrir sessão do Diário
-                                    </button>
-                                </div>
-                            `;
-                        }
-                        return '';
-                    })()}
-                </div>
-                `;
-            }).join('');
+                </div>`;
+            });
+            
+            container.innerHTML = html;
         }
         
         function renderAgenda() {
