@@ -8349,11 +8349,20 @@
             if (revisarHoje) {
                 if (entradasRevisar.length > 0) {
                     revisarHoje.style.display = 'block';
+                    const revisarId = 'diario-revisar-hoje';
                     revisarHoje.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h3 style="color: var(--cobre-main); font-size: 14px; font-weight: 600;">⚠️ Revisar Hoje</h3>
+                        <div class="area-section" style="margin-bottom: 0;">
+                            <div class="area-header collapsed" onclick="toggleAreaCaderno('${revisarId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                                <div class="area-header-left">
+                                    <span class="area-header-title">⚠️ Revisar Hoje</span>
+                                    <span class="area-header-count">${entradasRevisar.length} entrada${entradasRevisar.length > 1 ? 's' : ''}</span>
+                                </div>
+                                <span class="area-header-toggle">▼</span>
+                            </div>
+                            <div class="area-content collapsed" id="area-content-${revisarId}">
+                                ${entradasRevisar.map(e => renderEntradaDiario(e)).join('')}
+                            </div>
                         </div>
-                        ${entradasRevisar.map(e => renderEntradaDiario(e)).join('')}
                     `;
                 } else {
                     revisarHoje.style.display = 'none';
@@ -8406,36 +8415,58 @@
         }
         
         function renderDiarioPorTema(entradas, container) {
-            // Agrupar por tema
-            const porTema = {};
+            // CORREÇÃO: Agrupar primeiro por ÁREA, depois por TEMA dentro de cada área
+            const porArea = {};
             entradas.forEach(e => {
-                const temaKey = `${e.area} - ${e.tema}`;
-                if (!porTema[temaKey]) porTema[temaKey] = [];
-                porTema[temaKey].push(e);
+                if (!porArea[e.area]) porArea[e.area] = {};
+                const temaKey = e.tema;
+                if (!porArea[e.area][temaKey]) porArea[e.area][temaKey] = [];
+                porArea[e.area][temaKey].push(e);
             });
             
-            const temasOrdenados = Object.keys(porTema).sort();
+            const areasOrdenadas = Object.keys(porArea).sort();
             
-            if (temasOrdenados.length === 0) {
+            if (areasOrdenadas.length === 0) {
                 container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma entrada encontrada</div></div>';
                 return;
             }
             
             let html = '';
-            temasOrdenados.forEach(temaKey => {
-                const temaId = `diario-tema-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            areasOrdenadas.forEach(area => {
+                const areaId = `diario-area-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const temasDaArea = Object.keys(porArea[area]).sort();
+                const totalEntradasArea = temasDaArea.reduce((sum, tema) => sum + porArea[area][tema].length, 0);
+                
+                // Box da ÁREA (colapsável)
                 html += `<div style="margin-bottom: 24px;">
-                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
                         <div class="area-header-left">
-                            <span class="area-header-title">📁 ${temaKey}</span>
-                            <span class="area-header-count">${porTema[temaKey].length} entrada${porTema[temaKey].length > 1 ? 's' : ''}</span>
+                            <span class="area-header-title">📁 ${area}</span>
+                            <span class="area-header-count">${totalEntradasArea} entrada${totalEntradasArea > 1 ? 's' : ''}</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content collapsed" id="area-content-${temaId}">
-                        ${porTema[temaKey].map(e => renderEntradaDiario(e)).join('')}
-                    </div>
-                </div>`;
+                    <div class="area-content collapsed" id="area-content-${areaId}">`;
+                
+                // Temas dentro da área (também colapsáveis)
+                temasDaArea.forEach(tema => {
+                    const temaId = `diario-tema-${area.replace(/[^a-zA-Z0-9]/g, '-')}-${tema.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                    html += `
+                        <div style="margin-bottom: 16px; margin-left: 12px;">
+                            <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
+                                <div class="area-header-left">
+                                    <span class="area-header-title">📄 ${tema}</span>
+                                    <span class="area-header-count">${porArea[area][tema].length} entrada${porArea[area][tema].length > 1 ? 's' : ''}</span>
+                                </div>
+                                <span class="area-header-toggle">▼</span>
+                            </div>
+                            <div class="area-content collapsed" id="area-content-${temaId}">
+                                ${porArea[area][tema].map(e => renderEntradaDiario(e)).join('')}
+                            </div>
+                        </div>`;
+                });
+                
+                html += `</div></div>`;
             });
             
             container.innerHTML = html;
