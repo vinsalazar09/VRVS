@@ -4197,7 +4197,8 @@
         }
         
         let chartBarrasInst = null;
-        let chartLinhaInst = null;
+        let chartLinhaInst = null; // Instância para gráfico Stats
+        let chartLinhaAnalyticsInst = null; // Instância separada para gráfico Analytics
         let chartRadarInst = null;
         
         // Estado de áreas visíveis no gráfico de linha
@@ -4520,18 +4521,20 @@
                     };
                 });
             
-            // CORREÇÃO: Sempre renderizar, mesmo com datasets vazio (permite reativar depois)
+            // CORREÇÃO: Usar instância separada para Analytics vs Stats
+            let instanciaAtual = canvasId === 'chartLinhaAnalytics' ? chartLinhaAnalyticsInst : chartLinhaInst;
+            
             // Destruir instância anterior se existir
-            if (chartLinhaInst) { 
+            if (instanciaAtual) { 
                 try {
-                    chartLinhaInst.destroy(); 
+                    instanciaAtual.destroy(); 
                 } catch(e) {
                     console.warn('[CHART LINHA] Erro ao destruir gráfico anterior:', e);
                 }
             }
             
             // Criar novo gráfico sempre (mesmo vazio, para permitir reativar)
-            chartLinhaInst = new Chart(ctx, {
+            const novaInstancia = new Chart(ctx, {
                 type: 'line',
                 data: { datasets: datasets.length > 0 ? datasets : [] },
                 options: {
@@ -4591,6 +4594,13 @@
                     }
                 }
             });
+            
+            // Salvar na instância correta
+            if (canvasId === 'chartLinhaAnalytics') {
+                chartLinhaAnalyticsInst = novaInstancia;
+            } else {
+                chartLinhaInst = novaInstancia;
+            }
         }
         
         // GRÁFICO 3: Radar POR ÁREA
@@ -9151,8 +9161,16 @@
         
         function renderAnalyticsGraficos(container) {
             // Destruir gráficos antigos se existirem ANTES de criar novos
+            // CORREÇÃO: Destruir apenas instâncias Analytics, não Stats
             if (chartBarrasInst) { chartBarrasInst.destroy(); chartBarrasInst = null; }
-            if (chartLinhaInst) { chartLinhaInst.destroy(); chartLinhaInst = null; }
+            if (chartLinhaAnalyticsInst) { 
+                try {
+                    chartLinhaAnalyticsInst.destroy(); 
+                } catch(e) {
+                    console.warn('[ANALYTICS] Erro ao destruir gráfico linha:', e);
+                }
+                chartLinhaAnalyticsInst = null; 
+            }
             if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
             
             // Criar HTML com abas colapsáveis para gráficos
