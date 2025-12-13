@@ -6,14 +6,16 @@
 **Versão Atual:** v5.3  
 **Tipo:** PWA (Progressive Web App) - 100% client-side  
 **Tecnologias:** HTML, CSS, JavaScript puro (sem frameworks)  
-**Armazenamento:** localStorage
+**Armazenamento:** localStorage  
+**Repositório:** Cursor local + Desktop
 
 ## Sobre o Usuário
 
 **Nome:** Vini  
 **Perfil:** Residente R3 de Ortopedia (HSPM-SP)  
 **Objetivo:** Preparação para TEOT 2026 (prova de título)  
-**Dispositivo Principal:** iPhone (Safari)
+**Dispositivo Principal:** iPhone (Safari)  
+**Dispositivo Secundário:** MacBook (Safari/Chrome)
 
 ## Propósito da Plataforma
 
@@ -27,11 +29,14 @@ Sistema de gestão de estudos com:
 
 ## Arquitetura de Dados (localStorage)
 
-- `vrvs_dados` - Temas cadastrados
-- `vrvs_historico` - Sessões de estudo
-- `vrvs_anotacoes` - Anotações do Caderno
-- `vrvs_diario` - Entradas do Diário
-- `vrvs_config` - Configurações
+```javascript
+// Chaves do localStorage
+'vrvs_dados'      // Array de temas cadastrados
+'vrvs_historico'  // Array de sessões de estudo
+'vrvs_anotacoes'  // Array de anotações do Caderno
+'vrvs_diario'     // Array de entradas do Diário
+'vrvs_config'     // Objeto de configurações
+```
 
 ## Áreas de Estudo (13 áreas)
 
@@ -54,5 +59,24 @@ Sistema de gestão de estudos com:
 - **Cor primária:** Turquesa (#00CED1)
 - **Cor secundária:** Cobre/Âmbar (#FF7F50)
 - **Background:** Gradiente escuro (#0a1a1f → #1a2f35)
-- **Fonte:** System fonts
+- **Fonte:** System fonts (-apple-system, BlinkMacSystemFont)
+- **Border radius:** 12px (padrão)
+
+## Fluxo de Trabalho com IAs
+
+```
+┌─────────┐    Análise/Decisões    ┌─────────┐
+│  VINI   │ ◄─────────────────────►│  OPUS   │
+└─────────┘                        └─────────┘
+     │                                  │
+     │ Execução                         │ Documentos .md
+     ▼                                  ▼
+┌─────────┐                        ┌─────────┐
+│ CURSOR  │ ◄──────────────────────│  DOCS   │
+└─────────┘    Instruções          └─────────┘
+```
+
+- **Opus:** Planejamento, arquitetura, revisão, decisões
+- **Cursor:** Implementação, debugging, código
+- **Vini:** Validação, testes, direção do projeto
 

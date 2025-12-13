@@ -13,32 +13,32 @@
 - [x] Correção datalist → select (iOS)
 - [x] Campo data no Diário
 - [x] Normalização de áreas duplicadas
-- [x] Correção Análises Detalhado (filtros e resultados)
-- [x] Gráficos responsivos (adaptam à orientação iPhone)
-- [x] Formatação resposta Diário corrigida
+- [x] Scroll funcionando no Diário (iOS)
+
+## ❌ Removido (Decisão de produto)
+
+- [x] ~~Análises Detalhado~~ - Removido temporariamente (funções quebradas)
 
 ## ⏳ Pendente (Próxima Sprint)
 
-### Prioridade Média
-- [ ] **Reimplementar Análises Detalhado**
-  - Função atual quebrada (campos `h.questoes`, `h.flashcards` não existem)
-  - Precisa redesenhar lógica de filtros
-  - Verificar estrutura real do histórico antes de implementar
-  - Temporariamente removido em 13/12/2025
-
 ### Prioridade Baixa
-- [ ] **Inserir Imagens nas Anotações (4.2)**
+- [ ] **Inserir Imagens nas Anotações**
   - Opção A modificada (Base64 com limites)
   - Apenas Diário inicialmente
-  - Limites: 600px, quality 0.5, max 150KB
+  - Limites: 600px largura, quality 0.5, max 150KB
   - Máximo 2 imagens por anotação
-  - Avisos de storage em 60%, 80%, 90%
+  - Avisos de storage: 60%, 80%, 90%
 
-## 💡 Ideias Futuras
+### Prioridade Média
+- [ ] **Reimplementar Análises Detalhado**
+  - Redesenhar lógica de filtros
+  - Verificar estrutura real do histórico
+  - Garantir compatibilidade com dados existentes
 
-- [ ] Obsidian melhorado (ver IDEIAS_FUTURAS.md)
+## 💡 Ideias Futuras (ver IDEIAS_FUTURAS.md)
+
+- [ ] Obsidian melhorado (graph view, links bidirecionais)
 - [ ] Modo escuro/claro toggle
-- [ ] Sincronização cloud (Firebase?)
-- [ ] Compartilhamento de temas
-- [ ] Gamificação (streaks, achievements)
+- [ ] Sincronização cloud
+- [ ] Gamificação
 

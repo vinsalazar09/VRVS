@@ -3,7 +3,8 @@
 ## Sprint 1: Dezembro 2025 (v5.0 → v5.3)
 
 **Período:** 12-13 de Dezembro de 2025  
-**Foco:** Refatoração completa + correções críticas
+**Foco:** Refatoração completa + correções críticas  
+**Colaboradores:** Vini + Opus (planejamento) + Cursor (execução)
 
 ### Entregas
 
@@ -26,8 +27,7 @@
 - Campo data no Diário
 - Áreas fechadas por padrão
 - Formatação do Diário
-- Diário colapsável por área/tema
-- "Revisar Hoje" colapsável
+- Scroll no Diário (iOS)
 
 **Fase 4 - Novas Funcionalidades:**
 - Botão "Mostrar Contexto" nas tarefas
@@ -42,17 +42,28 @@
 - Botões "Todas"/"Nenhuma" removidos (não funcionavam)
 
 **Fase 6 - Correções Finais:**
-- Análises Detalhado corrigido (filtros e resultados)
-- Formatação resposta Diário (emoji ✅ restaurado)
-- Organização visual melhorada
+- Scroll no Diário funcionando (iOS)
+- Remoção temporária de Análises Detalhado
 
-### Pendências para Próxima Sprint
-- Inserir imagens (4.2) - baixa prioridade
+### Decisões Importantes
+
+1. **Remover "Detalhado"** - Funções dependiam de campos inexistentes
+2. **Adiar imagens** - Complexidade alta, prioridade baixa
+3. **Criar pasta opus/** - Melhor organização para continuidade
 
 ### Lições Aprendidas
+
 - Refatoração grande = muitos bugs de incompatibilidade de IDs
-- iOS Safari tem limitações específicas (datalist, cursor)
+- iOS Safari tem limitações específicas (datalist, cursor, scroll)
 - Documentação de contexto é essencial para continuidade
-- Investigar antes de corrigir (REGRA 9)
-- Instâncias compartilhadas causam conflitos
+- Instruções para Cursor devem ser completas e específicas
+- Validar sempre no dispositivo real (iPhone)
+
+### Métricas
+
+- Bugs identificados: 10
+- Bugs resolvidos: 10
+- Features novas: 5
+- Abas removidas: 7 (16 → 9)
+- Tempo total: ~2 dias
 

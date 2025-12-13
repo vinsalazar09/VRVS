@@ -5,7 +5,7 @@ Esta pasta contém documentos para comunicação com o Opus (Claude) em futuros 
 ## 📋 Como Usar
 
 Ao iniciar um novo chat com Opus sobre o projeto VRVS:
-1. Arraste todos os arquivos .md desta pasta para o chat
+1. Criar projeto no Claude com estes arquivos
 2. Opus terá contexto completo do projeto
 3. Continue de onde parou
 
