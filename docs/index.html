@@ -1549,13 +1549,9 @@
                 <input type="hidden" id="editId">
                 <div class="form-group">
                     <label class="form-label">Área</label>
-                    <div style="display: flex; gap: 8px; align-items: flex-end;">
-                        <select class="form-select" id="editArea" required onchange="handleEditAreaChange(this)" style="flex: 1;">
-                            <option value="">Selecione...</option>
-                        </select>
-                        <button type="button" class="btn" onclick="abrirInputNovaArea('editArea', 'editAreaInput')" style="background: var(--cobre-main); color: white; padding: 10px 16px; white-space: nowrap; font-size: 13px;">➕ Nova Área</button>
-                    </div>
-                    <input type="text" class="form-input" id="editAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
+                    <select class="form-select" id="editArea" required>
+                        <option value="">Selecione...</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Tema</label>
@@ -1668,13 +1664,9 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label class="form-label">Área</label>
-                        <div style="display: flex; gap: 8px; align-items: flex-end;">
-                            <select class="form-select" id="novaDiarioArea" onchange="atualizarTemasDiario(this.value)" style="flex: 1;">
-                                <option value="">Selecione...</option>
-                            </select>
-                            <button type="button" class="btn" onclick="abrirInputNovaArea('novaDiarioArea', 'novaDiarioAreaInput')" style="background: var(--cobre-main); color: white; padding: 10px 16px; white-space: nowrap; font-size: 13px;">➕ Nova Área</button>
-                        </div>
-                        <input type="text" class="form-input" id="novaDiarioAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
+                        <select class="form-select" id="novaDiarioArea" onchange="atualizarTemasDiario(this.value)">
+                            <option value="">Selecione...</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label class="form-label">Tema</label>
@@ -1827,6 +1819,28 @@
         </div>
     </div>
     
+    <!-- MODAL NOVA ÁREA -->
+    <div id="modalNovaArea" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">➕ NOVA ÁREA</h2>
+                <button class="modal-close" onclick="fecharModalNovaArea()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <form id="formNovaArea" onsubmit="salvarNovaArea(event)">
+                    <div class="form-group">
+                        <label class="form-label">Nome da Área</label>
+                        <input type="text" class="form-input" id="inputNovaAreaNome" placeholder="Ex: Nova Área de Estudo" required autofocus>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn" style="flex: 1; background: var(--cobre-main);">✅ ADICIONAR</button>
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalNovaArea()" style="flex: 1;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <!-- MODAL CADASTRO DE TEMA -->
     <div id="modalCadastro" class="modal">
         <div class="modal-content" style="max-width: 500px;">
@@ -1837,16 +1851,12 @@
             
             <div class="modal-body" style="padding: 20px;">
                 <form id="modalCadastroForm" onsubmit="salvarNovoTemaModal(event)">
-                        <div class="form-group">
-                            <label class="form-label">Área de Conhecimento</label>
-                            <div style="display: flex; gap: 8px; align-items: flex-end;">
-                                <select class="form-select" id="modalNovaArea" required onchange="handleModalNovaAreaChange(this)" style="flex: 1;">
-                                    <option value="">Selecione...</option>
-                                </select>
-                                <button type="button" class="btn" onclick="abrirInputNovaArea('modalNovaArea', 'modalNovaAreaInput')" style="background: var(--cobre-main); color: white; padding: 10px 16px; white-space: nowrap; font-size: 13px;">➕ Nova Área</button>
-                            </div>
-                            <input type="text" class="form-input" id="modalNovaAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Área de Conhecimento</label>
+                        <select class="form-select" id="modalNovaArea" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Tema Específico</label>
                         <input type="text" class="form-input" id="modalNovoTema" placeholder="Ex: Sd manguito rotador" required>
@@ -1896,7 +1906,10 @@
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <span>📊 BANCO DE DADOS</span>
-                        <button class="btn btn-small" onclick="abrirModalCadastro()" style="background: var(--cobre-main);">➕ Novo Tema</button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button class="btn btn-small" onclick="abrirModalNovaArea()" style="background: var(--cobre-main);">➕ Nova Área</button>
+                            <button class="btn btn-small" onclick="abrirModalCadastro()" style="background: var(--cobre-main);">➕ Novo Tema</button>
+                        </div>
                     </div>
                     <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-small" onclick="salvarDadosManualmente()" style="background: rgba(0, 206, 209, 0.15); color: rgba(0, 206, 209, 0.8); border: 1px solid rgba(0, 206, 209, 0.3); font-weight: 500;">
@@ -1979,13 +1992,9 @@
                     <form id="cadastroForm">
                         <div class="form-group">
                             <label class="form-label">Área de Conhecimento</label>
-                            <div style="display: flex; gap: 8px; align-items: flex-end;">
-                                <select class="form-select" id="novaArea" required onchange="handleNovaAreaChange(this)" style="flex: 1;">
-                                    <option value="">Selecione...</option>
-                                </select>
-                                <button type="button" class="btn" onclick="abrirInputNovaArea('novaArea', 'novaAreaInput')" style="background: var(--cobre-main); color: white; padding: 10px 16px; white-space: nowrap; font-size: 13px;">➕ Nova Área</button>
-                            </div>
-                            <input type="text" class="form-input" id="novaAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
+                            <select class="form-select" id="novaArea" required>
+                                <option value="">Selecione...</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tema Específico</label>
@@ -2044,13 +2053,9 @@
                     <form id="feedbackForm">
                         <div class="form-group">
                             <label class="form-label">Área</label>
-                            <div style="display: flex; gap: 8px; align-items: flex-end;">
-                                <select class="form-select" id="feedbackArea" onchange="updateFeedbackTemaSelect()" style="flex: 1;">
-                                    <option value="">Selecione a área...</option>
-                                </select>
-                                <button type="button" class="btn" onclick="abrirInputNovaArea('feedbackArea', 'feedbackAreaInput')" style="background: var(--cobre-main); color: white; padding: 10px 16px; white-space: nowrap; font-size: 13px;">➕ Nova Área</button>
-                            </div>
-                            <input type="text" class="form-input" id="feedbackAreaInput" placeholder="Digite a nova área..." style="display: none; margin-top: 8px;">
+                            <select class="form-select" id="feedbackArea" onchange="updateFeedbackTemaSelect()">
+                                <option value="">Selecione a área...</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Módulo Estudado</label>
@@ -7710,11 +7715,12 @@
                 dataInput.value = hoje;
             }
             
-            // Popular select de áreas com AREAS_FIXAS
+            // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
             const areaSelect = document.getElementById('novaDiarioArea');
             if (areaSelect) {
+                const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])].sort();
                 areaSelect.innerHTML = '<option value="">Selecione...</option>';
-                AREAS_FIXAS.forEach(area => {
+                areasExistentes.forEach(area => {
                     const option = document.createElement('option');
                     option.value = area;
                     option.textContent = area;
@@ -8077,23 +8083,108 @@
         
         // ==================== NOVAS FUNÇÕES - REFATORAÇÃO v2.0 ====================
         
+        // ==================== MODAL NOVA ÁREA ====================
+        
+        function abrirModalNovaArea() {
+            document.getElementById('inputNovaAreaNome').value = '';
+            document.getElementById('modalNovaArea').classList.add('active');
+        }
+        
+        function fecharModalNovaArea() {
+            document.getElementById('modalNovaArea').classList.remove('active');
+        }
+        
+        function salvarNovaArea(event) {
+            event.preventDefault();
+            const nomeArea = document.getElementById('inputNovaAreaNome').value.trim();
+            
+            if (!nomeArea) {
+                mostrarNotificacaoFeedback('⚠️ Digite um nome para a área!', 'error');
+                return;
+            }
+            
+            // Normalizar área
+            const areaNormalizada = normalizarArea(nomeArea);
+            
+            // Verificar se já existe
+            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])];
+            if (areasExistentes.includes(areaNormalizada)) {
+                mostrarNotificacaoFeedback(`⚠️ A área "${areaNormalizada}" já existe!`, 'error');
+                return;
+            }
+            
+            // Atualizar TODOS os selects de área na plataforma
+            atualizarTodosSelectsArea(areaNormalizada);
+            
+            // Fechar modal e mostrar sucesso
+            fecharModalNovaArea();
+            mostrarNotificacaoFeedback(`✅ Área "${areaNormalizada}" adicionada com sucesso! Agora está disponível em todas as abas.`);
+        }
+        
+        // Função centralizada para atualizar TODOS os selects de área
+        function atualizarTodosSelectsArea(novaArea) {
+            // Lista de todos os selects que precisam ser atualizados
+            const selectsArea = [
+                'modalNovaArea',      // Modal cadastro tema
+                'editArea',           // Modal edição tema
+                'novaArea',           // Formulário cadastro (aba Dados)
+                'feedbackArea',       // Formulário Feedback
+                'novaDiarioArea',     // Formulário Diário
+                'analiseFiltroArea',  // Filtro Análises
+                'filtroDiarioArea',   // Filtro Diário
+                'cadernoFiltroArea'   // Filtro Caderno
+            ];
+            
+            // Obter todas as áreas existentes (fixas + dos dados)
+            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])];
+            const areasCompletas = [...new Set([...areasExistentes, novaArea])].sort();
+            
+            // Atualizar cada select
+            selectsArea.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                
+                const valorAtual = select.value; // Preservar valor selecionado
+                const primeiroOption = select.options[0]?.value === '' ? '<option value="">Selecione...</option>' : 
+                                      (select.options[0]?.value === 'Todas as áreas' ? '<option value="">Todas as áreas</option>' : '');
+                
+                select.innerHTML = primeiroOption + 
+                    areasCompletas.map(a => `<option value="${a}">${a}</option>`).join('');
+                
+                // Restaurar valor selecionado se ainda existir
+                if (valorAtual && areasCompletas.includes(valorAtual)) {
+                    select.value = valorAtual;
+                }
+            });
+            
+            // Chamar funções específicas que dependem de áreas
+            updateFeedbackSelect();
+            atualizarSelectsAnalise();
+            atualizarSelectsCaderno();
+            
+            // Atualizar select de temas do Diário se área foi selecionada
+            const diarioArea = document.getElementById('novaDiarioArea');
+            if (diarioArea && diarioArea.value) {
+                atualizarTemasDiario(diarioArea.value);
+            }
+            
+            // Trigger change events para atualizar dependências
+            selectsArea.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select && select.value) {
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+        
         // ==================== MODAL CADASTRO ====================
         
         function abrirModalCadastro() {
-            // Popular select de áreas com AREAS_FIXAS
+            // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
+            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])].sort();
             const selectArea = document.getElementById('modalNovaArea');
-            selectArea.innerHTML = '<option value="">Selecione...</option>';
-            AREAS_FIXAS.forEach(area => {
-                selectArea.innerHTML += `<option value="${area}">${area}</option>`;
-            });
-            selectArea.innerHTML += '<option value="__NOVA_AREA__">➕ Adicionar Nova Área...</option>';
-            
-            // Garantir que input está escondido ao abrir modal
-            const modalNovaAreaInput = document.getElementById('modalNovaAreaInput');
-            if (modalNovaAreaInput) {
-                modalNovaAreaInput.style.display = 'none';
-                modalNovaAreaInput.required = false;
-            }
+            selectArea.innerHTML = '<option value="">Selecione...</option>' +
+                areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
             
             // Limpar campos
             document.getElementById('modalNovoTema').value = '';
