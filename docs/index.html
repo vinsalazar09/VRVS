@@ -277,6 +277,34 @@
             overflow: visible;
             transition: all 0.3s ease;
             pointer-events: auto;
+            /* CORREÇÃO: Garantir que texto dentro dos cards seja visível */
+            color: var(--text-light);
+        }
+        
+        /* CORREÇÃO: Garantir que todos os elementos dentro dos cards herdem cor clara */
+        .card * {
+            color: inherit;
+        }
+        
+        /* Exceções: elementos que devem manter suas cores específicas */
+        .card-title {
+            color: transparent; /* Mantém gradiente */
+        }
+        
+        .stat-value {
+            color: transparent; /* Mantém gradiente */
+        }
+        
+        .stat-label {
+            color: rgba(0, 206, 209, 0.8); /* Mantém cor específica */
+        }
+        
+        .form-label {
+            color: var(--turquesa-light); /* Mantém cor específica */
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            color: var(--text-light); /* Mantém cor específica */
         }
         
         .card:hover {
@@ -2821,33 +2849,33 @@
                     
                     <!-- Wrapper da LISTA (conteúdo atual) -->
                     <div id="diarioListaWrapper">
-                        <!-- Toggle de Modo -->
-                        <div class="diario-modos" style="margin-bottom: 16px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; width: fit-content;">
-                            <button class="modo-btn active" id="modoRecall" onclick="setModoDiario('recall')" style="background: var(--cobre-main); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
-                                🧠 Recall
-                            </button>
-                            <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
-                                📖 Respostas
-                            </button>
-                        </div>
-                        
-                        <!-- Filtros -->
-                        <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-                            <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
-                                <option value="data">📅 Por Data</option>
-                                <option value="tema">📁 Por Tema</option>
-                            </select>
-                            <select class="form-select form-select-sm" id="filtroDiarioArea" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
-                                <option value="">Todas as áreas</option>
-                            </select>
-                            <input type="date" class="form-input form-input-sm" id="filtroDiarioData" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
-                        </div>
-                        
-                        <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
+                    <!-- Toggle de Modo -->
+                    <div class="diario-modos" style="margin-bottom: 16px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; width: fit-content;">
+                        <button class="modo-btn active" id="modoRecall" onclick="setModoDiario('recall')" style="background: var(--cobre-main); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            🧠 Recall
+                        </button>
+                        <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            📖 Respostas
+                        </button>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                            <option value="data">📅 Por Data</option>
+                            <option value="tema">📁 Por Tema</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="filtroDiarioArea" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                            <option value="">Todas as áreas</option>
+                        </select>
+                        <input type="date" class="form-input form-input-sm" id="filtroDiarioData" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                    </div>
+                    
+                    <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
                         <div id="diarioRevisarHoje" style="display: none; background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 12px; padding: 14px; margin-bottom: 20px; max-height: none; overflow-y: visible;"></div>
-                        
-                        <!-- Container principal -->
-                        <div id="diarioContainer"></div>
+                    
+                    <!-- Container principal -->
+                    <div id="diarioContainer"></div>
                     </div>
                     
                     <!-- Wrapper da SESSÃO -->
@@ -3880,8 +3908,8 @@
                     }
                 }
             }, 300);
-        }
-        
+            }
+            
         // ==================== SRS - INTEGRAÇÃO COM TAREFAS ====================
         
         // Contar quantos cards do Diário estão programados para hoje dentro de um tema
@@ -3989,14 +4017,14 @@
         
         // Helper: Renderizar card de tema (reutilizável)
         function renderCardTemaHTML(t, hojeStr) {
-            const sugestao = obterSugestaoTema(t);
-            const rendPct = Math.round((t.rendimento || 0) * 100);
-            const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
-            const tipo = calcularTipoRevisao(t);
-            const isHoje = t.agenda === hojeStr;
-            const dataFormatada = formatarDataBR(t.agenda);
-            
-            return `
+                const sugestao = obterSugestaoTema(t);
+                const rendPct = Math.round((t.rendimento || 0) * 100);
+                const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
+                const tipo = calcularTipoRevisao(t);
+                const isHoje = t.agenda === hojeStr;
+                const dataFormatada = formatarDataBR(t.agenda);
+                
+                return `
                 <div class="task-item priority-${t.prioridade || 3}" style="margin-bottom: 12px;">
                     <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
                     
@@ -4034,16 +4062,16 @@
                                     <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
                                     <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
                                         Você tem <strong style="color: var(--cobre-light);">${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
-                                    </div>
+                            </div>
                                     <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%; background: var(--cobre-main); color: white; border: none;">
                                         🔁 Abrir sessão do Diário
                                     </button>
-                                </div>
+                            </div>
                             `;
                         }
                         return '';
                     })()}
-                </div>
+                        </div>
             `;
         }
         
@@ -4110,11 +4138,11 @@
                         <div class="missoes-area-header" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 10px 0; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,206,209,0.2);">
                             <span class="missoes-area-nome" style="font-size: 15px; font-weight: 600; color: var(--turquesa-light);">📁 ${area}</span>
                             <span class="missoes-area-badge" style="font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0,206,209,0.2); color: rgba(255,255,255,0.9);">${totalTarefas} tarefa${totalTarefas > 1 ? 's' : ''}</span>
-                        </div>
+                            </div>
                         <div class="missoes-area-temas" id="area-content-${areaId}">
                             ${temas.map(t => renderCardTemaHTML(t, hojeStr)).join('')}
-                        </div>
                     </div>
+                </div>
                 `;
             });
             
@@ -5010,18 +5038,18 @@
             const datasets = Object.entries(areasSessoes)
                 .filter(([area]) => areasVisiveisLinha.has(area)) // FILTRAR POR ÁREAS VISÍVEIS
                 .map(([area, sessoes]) => {
-                    const color = getColorForArea(area);
-                    return {
-                        label: area,
-                        data: sessoes.map(s => ({ x: s.sessao, y: s.rendimento })),
-                        borderColor: color,
-                        backgroundColor: color + '33',
-                        tension: 0.3,
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    };
-                });
+                const color = getColorForArea(area);
+                return {
+                    label: area,
+                    data: sessoes.map(s => ({ x: s.sessao, y: s.rendimento })),
+                    borderColor: color,
+                    backgroundColor: color + '33',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                };
+            });
             
             // CORREÇÃO: Usar instância separada para Analytics vs Stats
             let instanciaAtual = canvasId === 'chartLinhaAnalytics' ? chartLinhaAnalyticsInst : chartLinhaInst;
@@ -7067,15 +7095,15 @@
                 renderCadernoV2();
                 
                 // Scroll para anotação após renderizar
-                setTimeout(() => {
-                    const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
-                    if (elemento) {
-                        elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        elemento.style.background = 'rgba(0,206,209,0.2)';
-                        setTimeout(() => {
-                            elemento.style.background = '';
-                        }, 2000);
-                    }
+            setTimeout(() => {
+                const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
+                if (elemento) {
+                    elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    elemento.style.background = 'rgba(0,206,209,0.2)';
+                    setTimeout(() => {
+                        elemento.style.background = '';
+                    }, 2000);
+                }
                 }, 300);
             }, 100);
         }
@@ -8974,11 +9002,11 @@
                                 <div class="area-header-left">
                                     <span class="area-header-title">⚠️ Revisar Hoje</span>
                                     <span class="area-header-count">${entradasRevisar.length} entrada${entradasRevisar.length > 1 ? 's' : ''}</span>
-                                </div>
+                        </div>
                                 <span class="area-header-toggle">▼</span>
                             </div>
                             <div class="area-content collapsed" id="area-content-${revisarId}">
-                                ${entradasRevisar.map(e => renderEntradaDiario(e)).join('')}
+                        ${entradasRevisar.map(e => renderEntradaDiario(e)).join('')}
                             </div>
                         </div>
                     `;
@@ -9075,13 +9103,13 @@
                                 <div class="area-header-left">
                                     <span class="area-header-title">📄 ${tema}</span>
                                     <span class="area-header-count">${porArea[area][tema].length} entrada${porArea[area][tema].length > 1 ? 's' : ''}</span>
-                                </div>
-                                <span class="area-header-toggle">▼</span>
-                            </div>
-                            <div class="area-content collapsed" id="area-content-${temaId}">
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content collapsed" id="area-content-${temaId}">
                                 ${porArea[area][tema].map(e => renderEntradaDiario(e)).join('')}
-                            </div>
-                        </div>`;
+                    </div>
+                </div>`;
                 });
                 
                 html += `</div></div>`;
@@ -9817,10 +9845,10 @@
                             </div>
                             <div id="${conteudoId}" class="tema-item-conteudo collapsed">
                                 ${temHotTopics ? `
-                                    <div class="hottopics-preview">
+                            <div class="hottopics-preview">
                                         <div class="hottopics-label">🔥 Hot Topics</div>
                                         <div class="hottopics-text">${escapeHtmlCaderno(hotTopicsPreview).replace(/\n/g, '<br>')}</div>
-                                    </div>
+                            </div>
                                 ` : ''}
                                 ${temConteudo ? `
                                     <div class="conteudo-preview">
@@ -9834,8 +9862,8 @@
                                     </div>
                                 ` : ''}
                             </div>
-                        </div>
-                    `;
+                            </div>
+                        `;
                 });
                 
                 html += `
@@ -10249,8 +10277,8 @@
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-analytics-barras">
-                        <canvas id="chartBarrasAnalytics" width="400" height="150"></canvas>
-                    </div>
+                    <canvas id="chartBarrasAnalytics" width="400" height="150"></canvas>
+                </div>
                 </div>
                 
                 <div class="area-section" style="margin-bottom: 20px;">
@@ -10262,8 +10290,8 @@
                     </div>
                     <div class="area-content collapsed" id="area-content-analytics-linha">
                         <div id="chartLinhaControlesAnalytics" class="chart-toggles"></div>
-                        <canvas id="chartLinhaAnalytics" width="400" height="150"></canvas>
-                    </div>
+                    <canvas id="chartLinhaAnalytics" width="400" height="150"></canvas>
+                </div>
                 </div>
                 
                 <div class="area-section" style="margin-bottom: 20px;">
@@ -10274,7 +10302,7 @@
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-analytics-radar">
-                        <canvas id="chartRadarAnalytics" width="400" height="200"></canvas>
+                    <canvas id="chartRadarAnalytics" width="400" height="200"></canvas>
                     </div>
                 </div>
             `;
