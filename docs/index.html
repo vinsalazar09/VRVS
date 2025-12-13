@@ -4515,9 +4515,11 @@
             }
             
             if (chartLinhaInst) { chartLinhaInst.destroy(); }
+            
+            // CORREÇÃO: Garantir que sempre renderiza, mesmo com datasets vazio
             chartLinhaInst = new Chart(ctx, {
                 type: 'line',
-                data: { datasets },
+                data: { datasets: datasets.length > 0 ? datasets : [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
@@ -8344,7 +8346,7 @@
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content" id="area-content-${dataId}" style="display: none;">
+                    <div class="area-content collapsed" id="area-content-${dataId}">
                         ${porData[data].map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
@@ -8380,7 +8382,7 @@
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content" id="area-content-${temaId}" style="display: none;">
+                    <div class="area-content collapsed" id="area-content-${temaId}">
                         ${porTema[temaKey].map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
