@@ -4438,9 +4438,23 @@
             } else {
                 areasVisiveisLinha.add(area);
             }
-            // CORREÇÃO: Atualizar controles e re-renderizar gráfico
+            // CORREÇÃO: Detectar qual canvas está ativo e atualizar ambos
+            const canvasStats = document.getElementById('chartLinha');
+            const canvasAnalytics = document.getElementById('chartLinhaAnalytics');
+            
+            // Atualizar controles de ambos se existirem
             renderChartLinhaControles();
-            renderChartLinha(); // Re-renderizar gráfico
+            if (canvasAnalytics) {
+                renderChartLinhaControlesAnalytics();
+            }
+            
+            // Re-renderizar gráficos ativos
+            if (canvasStats) {
+                renderChartLinha('chartLinha');
+            }
+            if (canvasAnalytics) {
+                renderChartLinha('chartLinhaAnalytics');
+            }
         }
         
         // Toggle todas as áreas (mostrar/ocultar todas)
@@ -4458,8 +4472,24 @@
             });
             
             areasVisiveisLinha = mostrar ? new Set(Array.from(areasUnicas)) : new Set();
-            renderChartLinhaControles(); // Atualizar checkboxes
-            renderChartLinha(); // Re-renderizar gráfico
+            
+            // CORREÇÃO: Detectar qual canvas está ativo e atualizar ambos
+            const canvasStats = document.getElementById('chartLinha');
+            const canvasAnalytics = document.getElementById('chartLinhaAnalytics');
+            
+            // Atualizar controles de ambos se existirem
+            renderChartLinhaControles();
+            if (canvasAnalytics) {
+                renderChartLinhaControlesAnalytics();
+            }
+            
+            // Re-renderizar gráficos ativos
+            if (canvasStats) {
+                renderChartLinha('chartLinha');
+            }
+            if (canvasAnalytics) {
+                renderChartLinha('chartLinhaAnalytics');
+            }
         }
         
         // GRÁFICO 2: Evolução POR ÁREA
@@ -4539,7 +4569,7 @@
                 data: { datasets: datasets.length > 0 ? datasets : [] },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false, // CORREÇÃO: Permite adaptar à orientação do iPhone (portrait/landscape)
                     aspectRatio: 2,
                     plugins: {
                         legend: {
@@ -8435,8 +8465,9 @@
                         </div>
                     </div>
                     ${mostrarResposta && entrada.resposta ? `
-                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); white-space: pre-wrap;">
-                            ${entrada.resposta.replace(/\n/g, '<br>')}
+                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                            <span style="font-size: 13px;">✅</span><br>
+                            <span style="white-space: pre-wrap;">${entrada.resposta.replace(/\n/g, '<br>')}</span>
                         </div>
                     ` : mostrarResposta ? `
                         <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
@@ -8446,8 +8477,9 @@
                         <button onclick="toggleRespostaIndividual(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
                             👁️ Ver Resposta
                         </button>
-                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); white-space: pre-wrap;">
-                            ${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}
+                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                            <span style="font-size: 13px;">✅</span><br>
+                            <span style="white-space: pre-wrap;">${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}</span>
                         </div>
                     `}
                 </div>
