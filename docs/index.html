@@ -4437,6 +4437,8 @@
             } else {
                 areasVisiveisLinha.add(area);
             }
+            // CORREÇÃO: Atualizar controles e re-renderizar gráfico
+            renderChartLinhaControles();
             renderChartLinha(); // Re-renderizar gráfico
         }
         
@@ -4462,11 +4464,20 @@
         // GRÁFICO 2: Evolução POR ÁREA
         function renderChartLinha(canvasId = 'chartLinha') {
             const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
+            if (!ctx) {
+                console.warn('[CHART LINHA] Canvas não encontrado! ID:', canvasId);
+                return;
+            }
             
-            // Renderizar controles se ainda não foram renderizados
-            if (document.getElementById('chartLinhaControles') && !document.getElementById('chartLinhaControles').innerHTML) {
-                renderChartLinhaControles();
+            // CORREÇÃO: Renderizar controles se ainda não foram renderizados (para ambos: principal e Analytics)
+            const controlesId = canvasId === 'chartLinhaAnalytics' ? 'chartLinhaControlesAnalytics' : 'chartLinhaControles';
+            const controlesEl = document.getElementById(controlesId);
+            if (controlesEl && !controlesEl.innerHTML) {
+                if (canvasId === 'chartLinhaAnalytics') {
+                    renderChartLinhaControlesAnalytics();
+                } else {
+                    renderChartLinhaControles();
+                }
             }
             
             // AGRUPAR POR ÁREA!!!
@@ -4510,7 +4521,16 @@
                 });
             
             // CORREÇÃO: Sempre renderizar, mesmo com datasets vazio (permite reativar depois)
-            if (chartLinhaInst) { chartLinhaInst.destroy(); }
+            // Destruir instância anterior se existir
+            if (chartLinhaInst) { 
+                try {
+                    chartLinhaInst.destroy(); 
+                } catch(e) {
+                    console.warn('[CHART LINHA] Erro ao destruir gráfico anterior:', e);
+                }
+            }
+            
+            // Criar novo gráfico sempre (mesmo vazio, para permitir reativar)
             chartLinhaInst = new Chart(ctx, {
                 type: 'line',
                 data: { datasets: datasets.length > 0 ? datasets : [] },
@@ -8405,8 +8425,8 @@
                         </div>
                     </div>
                     ${mostrarResposta && entrada.resposta ? `
-                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); display: block; white-space: pre-wrap;">
-                            ✅ ${entrada.resposta.replace(/\n/g, '<br>')}
+                        <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); white-space: pre-wrap;">
+                            ${entrada.resposta.replace(/\n/g, '<br>')}
                         </div>
                     ` : mostrarResposta ? `
                         <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
@@ -8416,8 +8436,8 @@
                         <button onclick="toggleRespostaIndividual(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
                             👁️ Ver Resposta
                         </button>
-                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); display: block; white-space: pre-wrap;">
-                            ✅ ${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}
+                        <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9); white-space: pre-wrap;">
+                            ${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}
                         </div>
                     `}
                 </div>
@@ -9138,38 +9158,38 @@
             // Criar HTML com abas colapsáveis para gráficos
             container.innerHTML = `
                 <div class="area-section" style="margin-bottom: 20px;">
-                    <div class="area-header" onclick="toggleAreaCaderno('analytics-barras')" style="cursor: pointer;">
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('analytics-barras')" style="cursor: pointer;">
                         <div class="area-header-left">
                             <span class="area-header-title">📊 Performance por Área</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content" id="area-content-analytics-barras">
+                    <div class="area-content collapsed" id="area-content-analytics-barras">
                         <canvas id="chartBarrasAnalytics" width="400" height="150"></canvas>
                     </div>
                 </div>
                 
                 <div class="area-section" style="margin-bottom: 20px;">
-                    <div class="area-header" onclick="toggleAreaCaderno('analytics-linha')" style="cursor: pointer;">
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('analytics-linha')" style="cursor: pointer;">
                         <div class="area-header-left">
                             <span class="area-header-title">📈 Evolução Temporal</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content" id="area-content-analytics-linha">
+                    <div class="area-content collapsed" id="area-content-analytics-linha">
                         <div id="chartLinhaControlesAnalytics" class="chart-toggles"></div>
                         <canvas id="chartLinhaAnalytics" width="400" height="150"></canvas>
                     </div>
                 </div>
                 
                 <div class="area-section" style="margin-bottom: 20px;">
-                    <div class="area-header" onclick="toggleAreaCaderno('analytics-radar')" style="cursor: pointer;">
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('analytics-radar')" style="cursor: pointer;">
                         <div class="area-header-left">
                             <span class="area-header-title">🎯 Radar de Competências</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
-                    <div class="area-content" id="area-content-analytics-radar">
+                    <div class="area-content collapsed" id="area-content-analytics-radar">
                         <canvas id="chartRadarAnalytics" width="400" height="200"></canvas>
                     </div>
                 </div>
