@@ -3051,55 +3051,6 @@
                 areaInput.required = false;
             }
         }
-            const novaAreaInput = document.getElementById('novaAreaInput');
-            if (!novaAreaInput) return;
-            
-            if (select.value === '__NOVA_AREA__') {
-                // Mostrar input e esconder select
-                select.style.display = 'none';
-                novaAreaInput.style.display = 'block';
-                novaAreaInput.value = '';
-                novaAreaInput.focus();
-                novaAreaInput.required = true;
-                
-                // Quando perder foco ou pressionar Enter, voltar para select
-                novaAreaInput.onblur = function() {
-                    const valorDigitado = novaAreaInput.value.trim();
-                    if (valorDigitado) {
-                        // Normalizar e adicionar ao select se não existir
-                        const areaNormalizada = normalizarArea(valorDigitado);
-                        select.value = areaNormalizada;
-                        
-                        // Se não está nas áreas fixas, adicionar como opção temporária
-                        const opcoes = Array.from(select.options).map(opt => opt.value);
-                        if (!opcoes.includes(areaNormalizada) && areaNormalizada !== '__NOVA_AREA__') {
-                            // Adicionar antes da opção "__NOVA_AREA__"
-                            const novaOpcao = document.createElement('option');
-                            novaOpcao.value = areaNormalizada;
-                            novaOpcao.textContent = areaNormalizada;
-                            select.insertBefore(novaOpcao, select.lastElementChild);
-                        }
-                    }
-                    
-                    // Voltar para select
-                    select.style.display = 'block';
-                    novaAreaInput.style.display = 'none';
-                    novaAreaInput.required = false;
-                    novaAreaInput.onblur = null;
-                };
-                
-                novaAreaInput.onkeypress = function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        novaAreaInput.blur();
-                    }
-                };
-            } else {
-                // Esconder input se selecionar outra opção
-                novaAreaInput.style.display = 'none';
-                novaAreaInput.required = false;
-            }
-        }
 
         // ==================== RENDERIZAÇÃO DE COMPONENTES ====================
         
