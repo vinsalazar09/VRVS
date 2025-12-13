@@ -4407,12 +4407,8 @@
                 areas.forEach(a => areasVisiveisLinha.add(a));
             }
             
-            // Renderizar controles
+            // Renderizar controles (botões TODAS/NENHUMA removidos - não funcionavam)
             let html = `
-                <div style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
-                    <button class="btn btn-small" onclick="toggleTodasAreasLinha(true)">✅ Todas</button>
-                    <button class="btn btn-small" onclick="toggleTodasAreasLinha(false)">❌ Nenhuma</button>
-                </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             `;
             
