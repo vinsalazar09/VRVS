@@ -387,19 +387,16 @@
             -webkit-user-select: text;
             user-select: text;
             caret-color: var(--cobre-main);
-            /* Forçar cursor a aparecer dentro do elemento */
-            position: relative;
+            /* Remover qualquer transform que possa causar cursor fora de posição */
+            transform: none;
+            -webkit-transform: none;
         }
         
         .form-input:focus, .form-textarea:focus {
-            position: relative;
-            z-index: 1000;
-            /* Forçar aceleração hardware para corrigir renderização do cursor */
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            /* Garantir que elemento está visível e focado */
-            will-change: transform;
+            /* Manter apenas propriedades essenciais - sem transform que causa cursor travado */
             -webkit-tap-highlight-color: rgba(255, 127, 80, 0.3);
+            /* Garantir que cursor aparece dentro do elemento */
+            outline-offset: 0;
         }
         
         /* CORREÇÃO: Ajustar viewport quando teclado aparece no mobile */
