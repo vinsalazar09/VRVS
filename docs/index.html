@@ -7397,7 +7397,7 @@
                         {
                             icone: '📈',
                             titulo: 'Análises Unificado',
-                            descricao: 'Todas as análises em um só lugar: Resumo, Gráficos, Detalhado e Histórico. Navegue entre as vistas facilmente!'
+                            descricao: 'Todas as análises em um só lugar: Resumo, Gráficos e Histórico. Navegue entre as vistas facilmente!'
                         },
                         {
                             icone: '➕',
@@ -7655,7 +7655,7 @@
                                 <div style="font-weight: 600; color: var(--turquesa-light); margin-bottom: 10px;">4 Vistas Disponíveis:</div>
                                 <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">📊 <strong>Resumo:</strong> Métricas principais em cards</div>
                                 <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">📈 <strong>Gráficos:</strong> Visualizações de performance</div>
-                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px; margin-bottom: 5px;">🔍 <strong>Detalhado:</strong> Análises por área e tema</div>
+                                <!-- Detalhado temporariamente removido -->
                                 <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-left: 10px;">📜 <strong>Histórico:</strong> Todas as sessões registradas</div>
                             </div>
                             <p style="font-size: 12px; color: rgba(255,255,255,0.6);">Use os botões de sub-navegação para alternar entre as vistas!</p>
@@ -9740,7 +9740,7 @@
                 'backup': 'Vá em <b>Backup</b> e clique nos botões para exportar seus dados em CSV. Para restaurar, use a seção Importar na mesma aba.',
                 'hottopics': '<b>Hot Topics</b> são os pontos mais importantes de cada tema - aqueles que caem com frequência na prova. Anote-os no <b>Caderno</b> no campo destacado em laranja.',
                 'caderno': 'O <b>Caderno V2</b> organiza temas por área. Clique no cabeçalho da área para expandir/colapsar. Hot Topics aparecem destacados. Clique em ✏️ para editar.',
-                'analytics': '<b>Análises</b> unifica todas as análises em um só lugar. Use os botões de sub-navegação para alternar entre Resumo, Gráficos, Detalhado e Histórico.',
+                'analytics': '<b>Análises</b> unifica todas as análises em um só lugar. Use os botões de sub-navegação para alternar entre Resumo, Gráficos e Histórico.',
                 'exportar': 'No <b>Caderno</b>, clique no botão <b>🔥 Exportar HTML</b> no topo. Um arquivo HTML será baixado com todos os seus Hot Topics organizados por área.'
             };
             
@@ -9773,7 +9773,7 @@
             } else if (pergunta.includes('caderno') || pergunta.includes('anotação')) {
                 resposta = 'O <b>Caderno V2</b> organiza temas por área. Clique no cabeçalho da área para expandir/colapsar. Hot Topics aparecem destacados em laranja.';
             } else if (pergunta.includes('analytics') || pergunta.includes('análise') || pergunta.includes('gráfico')) {
-                resposta = 'Vá em <b>Análises</b> e use os botões de sub-navegação para alternar entre Resumo, Gráficos, Detalhado e Histórico.';
+                resposta = 'Vá em <b>Análises</b> e use os botões de sub-navegação para alternar entre Resumo, Gráficos e Histórico.';
             } else if (pergunta.includes('export') || pergunta.includes('html')) {
                 resposta = 'No <b>Caderno</b>, clique no botão <b>🔥 Exportar HTML</b> no topo para baixar todos os Hot Topics em um arquivo HTML.';
             }
