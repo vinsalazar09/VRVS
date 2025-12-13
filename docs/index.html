@@ -1365,7 +1365,11 @@
         
         .area-content {
             padding: 12px 0 0 0;
-            overflow: hidden;
+            overflow-y: auto; /* CORREÇÃO: Permite scroll vertical quando expandido */
+            overflow-x: hidden; /* Evita scroll horizontal */
+            max-height: 60vh; /* CORREÇÃO: Limita altura para forçar scroll interno */
+            -webkit-overflow-scrolling: touch; /* CORREÇÃO: Scroll suave no iOS */
+            overscroll-behavior: contain; /* CORREÇÃO: Evita scroll escapar para página externa */
             transition: max-height 0.3s ease, opacity 0.2s ease;
         }
         
@@ -1373,6 +1377,7 @@
             max-height: 0 !important;
             opacity: 0;
             padding: 0;
+            overflow: hidden; /* Quando colapsado, não precisa de scroll */
         }
         
         /* ===== GRÁFICO LINHA - TOGGLES ===== */
