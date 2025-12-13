@@ -8165,16 +8165,14 @@
             atualizarSelectsAnalise(); // Atualiza analiseFiltroArea
             atualizarSelectsCaderno(); // Atualiza cadernoFiltroArea
             
-            // Atualizar selects do Diário manualmente
-            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a), novaArea])].sort();
-            
+            // Atualizar selects do Diário manualmente (usando areasCompletas já criada acima)
             // Atualizar select de área do formulário de nova entrada do Diário
             const novaDiarioArea = document.getElementById('novaDiarioArea');
             if (novaDiarioArea) {
                 const valorAtual = novaDiarioArea.value;
                 novaDiarioArea.innerHTML = '<option value="">Selecione...</option>' + 
-                    areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
-                if (valorAtual && areasExistentes.includes(valorAtual)) {
+                    areasCompletas.map(a => `<option value="${a}">${a}</option>`).join('');
+                if (valorAtual && areasCompletas.includes(valorAtual)) {
                     novaDiarioArea.value = valorAtual;
                     atualizarTemasDiario(valorAtual);
                 }
@@ -8185,8 +8183,8 @@
             if (filtroDiarioArea) {
                 const valorAtual = filtroDiarioArea.value;
                 filtroDiarioArea.innerHTML = '<option value="">Todas as áreas</option>' + 
-                    areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
-                if (valorAtual && areasExistentes.includes(valorAtual)) {
+                    areasCompletas.map(a => `<option value="${a}">${a}</option>`).join('');
+                if (valorAtual && areasCompletas.includes(valorAtual)) {
                     filtroDiarioArea.value = valorAtual;
                 }
             }
