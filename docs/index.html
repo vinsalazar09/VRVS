@@ -3392,7 +3392,8 @@
             anotacoesTema.forEach(anot => {
                 if (anot.hotTopics && anot.hotTopics.trim()) {
                     contexto.hotTopics.push({
-                        texto: anot.hotTopics.trim()
+                        texto: anot.hotTopics.trim(),
+                        temaId: anot.temaId // Incluir temaId para navegação
                     });
                 }
                 if (anot.conteudo && anot.conteudo.trim()) {
@@ -3424,25 +3425,28 @@
                 `;
             }
             
-            // Render Hot Topics
+            // Render Hot Topics (com link para Caderno)
             if (contexto.hotTopics.length > 0) {
+                // Usar temaId do primeiro hotTopic (já incluído na busca)
+                const temaId = contexto.hotTopics[0]?.temaId || contexto.anotacoes[0]?.temaId || null;
                 html += `
                     <div class="contexto-secao">
                         <h4>📌 HOT TOPICS</h4>
                         ${contexto.hotTopics.map(ht => `
-                            <div class="contexto-item">• ${ht.texto.substring(0, 100)}${ht.texto.length > 100 ? '...' : ''}</div>
+                            <div class="contexto-item" ${temaId ? `onclick="navegarParaCadernoTema('${temaId}')"` : ''} style="${temaId ? 'cursor: pointer;' : ''}">• ${ht.texto.substring(0, 100)}${ht.texto.length > 100 ? '...' : ''}</div>
                         `).join('')}
                     </div>
                 `;
             }
             
-            // Render Anotações
+            // Render Anotações (com link para Caderno)
             if (contexto.anotacoes.length > 0) {
+                const temaId = contexto.anotacoes[0].temaId;
                 html += `
                     <div class="contexto-secao">
                         <h4>📝 ANOTAÇÕES (Caderno)</h4>
-                        <div class="contexto-item">
-                            ${contexto.anotacoes.length} anotação(ões) disponível(eis)
+                        <div class="contexto-item" onclick="navegarParaCadernoTema('${temaId}')" style="cursor: pointer;">
+                            ${contexto.anotacoes.length} anotação(ões) disponível(eis) → Clique para ver
                         </div>
                     </div>
                 `;
@@ -3484,6 +3488,36 @@
                     }
                 }
             }, 300);
+        }
+        
+        // Navegar para tema específico no Caderno
+        function navegarParaCadernoTema(temaId) {
+            // Criar anotação se não existir
+            obterOuCriarAnotacao(temaId);
+            
+            // Encontrar o tema
+            const tema = dados.find(t => String(t.id) === String(temaId));
+            if (!tema) return;
+            
+            // Filtrar caderno para mostrar apenas este tema
+            document.getElementById('cadernoFiltroArea').value = tema.area;
+            atualizarSelectTemaPorArea(); // Atualizar select de tema
+            document.getElementById('cadernoFiltroTema').value = String(temaId);
+            
+            // Mostrar seção caderno
+            showSection('caderno');
+            
+            // Scroll para anotação
+            setTimeout(() => {
+                const elemento = document.querySelector(`[data-tema-id="${temaId}"]`);
+                if (elemento) {
+                    elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    elemento.style.background = 'rgba(0,206,209,0.2)';
+                    setTimeout(() => {
+                        elemento.style.background = '';
+                    }, 2000);
+                }
+            }, 100);
         }
         
         // Toggle mostrar/ocultar contexto do tema
@@ -3584,7 +3618,7 @@
                     </div>
                     ` : ''}
                     
-                    <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%;">
+                    <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0,206,209,0.25)'" onmouseout="this.style.background='rgba(0,206,209,0.15)'">
                         👁️ MOSTRAR CONTEXTO
                     </button>
                     
@@ -4333,10 +4367,24 @@
             }
         }
         
-        // Renderizar controles de toggle para gráfico de linha
+        // Renderizar controles de toggle para gráfico de linha (versão principal)
         function renderChartLinhaControles() {
             const container = document.getElementById('chartLinhaControles');
             if (!container) return;
+            
+            renderChartLinhaControlesInterno(container);
+        }
+        
+        // Renderizar controles de toggle para gráfico de linha (versão Analytics)
+        function renderChartLinhaControlesAnalytics() {
+            const container = document.getElementById('chartLinhaControlesAnalytics');
+            if (!container) return;
+            
+            renderChartLinhaControlesInterno(container);
+        }
+        
+        // Função interna compartilhada para renderizar controles
+        function renderChartLinhaControlesInterno(container) {
             
             // Obter todas as áreas únicas (agrupadas) do histórico
             const areasUnicas = new Set();
@@ -9059,19 +9107,43 @@
             if (chartLinhaInst) { chartLinhaInst.destroy(); chartLinhaInst = null; }
             if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
             
-            // Criar HTML com canvas usando IDs ÚNICOS para evitar conflito com aba stats
+            // Criar HTML com abas colapsáveis para gráficos
             container.innerHTML = `
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: var(--turquesa-light); margin-bottom: 10px;">📊 Performance por Área</h4>
-                    <canvas id="chartBarrasAnalytics" width="400" height="150"></canvas>
+                <div class="area-section" style="margin-bottom: 20px;">
+                    <div class="area-header" onclick="toggleAreaCaderno('analytics-barras')" style="cursor: pointer;">
+                        <div class="area-header-left">
+                            <span class="area-header-title">📊 Performance por Área</span>
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content" id="area-content-analytics-barras">
+                        <canvas id="chartBarrasAnalytics" width="400" height="150"></canvas>
+                    </div>
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: var(--turquesa-light); margin-bottom: 10px;">📈 Evolução Temporal</h4>
-                    <canvas id="chartLinhaAnalytics" width="400" height="150"></canvas>
+                
+                <div class="area-section" style="margin-bottom: 20px;">
+                    <div class="area-header" onclick="toggleAreaCaderno('analytics-linha')" style="cursor: pointer;">
+                        <div class="area-header-left">
+                            <span class="area-header-title">📈 Evolução Temporal</span>
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content" id="area-content-analytics-linha">
+                        <div id="chartLinhaControlesAnalytics" class="chart-toggles"></div>
+                        <canvas id="chartLinhaAnalytics" width="400" height="150"></canvas>
+                    </div>
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: var(--turquesa-light); margin-bottom: 10px;">🎯 Radar de Competências</h4>
-                    <canvas id="chartRadarAnalytics" width="400" height="200"></canvas>
+                
+                <div class="area-section" style="margin-bottom: 20px;">
+                    <div class="area-header" onclick="toggleAreaCaderno('analytics-radar')" style="cursor: pointer;">
+                        <div class="area-header-left">
+                            <span class="area-header-title">🎯 Radar de Competências</span>
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content" id="area-content-analytics-radar">
+                        <canvas id="chartRadarAnalytics" width="400" height="200"></canvas>
+                    </div>
                 </div>
             `;
             
@@ -9096,7 +9168,11 @@
                 
                 console.log('[ANALYTICS GRAFICOS] Renderizando gráficos...');
                 renderChartBarras('chartBarrasAnalytics');
+                
+                // Renderizar controles de toggle para gráfico de linha (Analytics)
+                renderChartLinhaControlesAnalytics();
                 renderChartLinha('chartLinhaAnalytics');
+                
                 renderChartRadar('chartRadarAnalytics');
             };
             
