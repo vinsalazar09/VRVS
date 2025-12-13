@@ -350,5 +350,50 @@
   - **Prevenção:** SEMPRE aplicar padrões deste documento em novas funcionalidades. NUNCA criar elementos expandidos com altura limitada pequena. SEMPRE usar valores em `vh` para responsividade. SEMPRE testar no iPhone Safari.
   - **Commit:** `ec2a4d7` - feat: Eliminar espaço morto em toda a plataforma (VRVS v5.3)
 
+**2025-12-13:**
+- ✅ **PROBLEMA RECORRENTE RESOLVIDO:** Textos em preto aparecendo em fundo escuro (3ª ocorrência)
+  - **Causa:** CSS de `.task-detail-item`, `.task-tipo`, `.task-tag-*` e `.task-meta` estava sendo sobrescrito por outros estilos ou não tinha especificidade suficiente
+  - **Sintoma:** Textos "📚 área" e "Questões/flashcards" apareciam em preto nos cards da aba Tarefas, tornando-se ilegíveis
+  - **Solução:** Adicionado `!important` em todas as cores dessas classes para garantir que não sejam sobrescritas:
+    - `.task-detail-item { color: rgba(255, 255, 255, 0.9) !important; }`
+    - `.task-tipo { color: var(--turquesa-light) !important; }`
+    - `.task-tag-area { color: var(--turquesa-light) !important; }`
+    - `.task-tag-rendimento { color: rgba(255,255,255,0.9) !important; }`
+    - `.task-tag-tipo { color: var(--cobre-light) !important; }`
+    - `.task-tag-sessoes { color: rgba(255,255,255,0.9) !important; }`
+    - `.task-meta { color: rgba(255,255,255,0.9) !important; }`
+    - `.task-meta * { color: rgba(255,255,255,0.9) !important; }`
+  - **Lição:** Quando problema de cor persiste após múltiplas tentativas, usar `!important` para garantir especificidade máxima. Problema recorrente indica que outros estilos estão sobrescrevendo.
+  - **Prevenção:** SEMPRE usar `!important` em cores críticas de elementos que aparecem em fundo escuro. Verificar especificidade CSS antes de assumir que estilo está aplicado.
+  - **Commit:** `6c0d64c` - fix: Forçar cores claras em task-detail-item e task-tipo com !important
+  - **Status:** ✅ Resolvido - Cores forçadas com !important garantem visibilidade
+
+- ✅ **AJUSTES IMPLEMENTADOS:** Correções visuais na aba Tarefas e Agenda → Atrasados
+  - **Ação 1:** Revertida estrutura de colapso em múltiplos níveis na aba Tarefas (Missões do Dia)
+    - Removido colapso intermediário por tema
+    - Cards de tema agora aparecem diretamente dentro das áreas
+    - Estrutura simplificada: Área (opcional colapsável) → Cards de tema sempre visíveis
+  - **Ação 2:** Implementada Opção B para Agenda → Atrasados
+    - Agrupamento por área com blocos colapsáveis
+    - Cores específicas para atrasados (âmbar/laranja)
+    - Ordenação: primeiro por número de sessões (crescente), depois por data (mais antigo primeiro)
+    - Todas as áreas começam abertas por padrão
+  - **Ação 3:** Correção de cores (eliminar texto preto)
+    - Varredura completa no CSS
+    - Substituição de cores pretas por cores claras compatíveis com tema escuro
+    - Aplicação de `!important` onde necessário
+  - **Funções Criadas/Modificadas:**
+    - `renderCardTemaHTML(t, hojeStr)` - Helper para renderizar card de tema
+    - `renderAgendaAtrasados()` - Nova função para renderizar atrasados agrupados por área
+    - `obterNumeroSessoesTema(t)` - Helper para obter número de sessões
+    - `renderCardTemaAtrasadoHTML(t)` - Helper para renderizar card de tema atrasado
+    - `toggleAtrasadosArea(areaId)` - Função para colapso de áreas atrasadas
+  - **CSS Adicionado:**
+    - `.atrasados-area`, `.atrasados-area-header`, `.atrasados-area-nome`, `.atrasados-area-badge`, `.atrasados-area-conteudo`
+    - Cores específicas para indicar atraso (rgba(255,159,64,...))
+  - **Lição:** Quando usuário pede "reverter" ou "manter estrutura antiga", significa simplificar, não complicar. Estrutura antiga funcionava melhor.
+  - **Prevenção:** SEMPRE manter estrutura simples quando possível. Colapso em múltiplos níveis piora UX. Agrupar por área é suficiente.
+  - **Status:** ✅ Implementado e testado
+
 ═══════════════════════════════════════════════════════════════
 
