@@ -3912,16 +3912,63 @@
                 return;
             }
             
-            // Ordenar: mais recente primeiro, depois menos sessões (menos sessões em cima)
+            // Ordenar: menos sessões primeiro (menos sessões em cima)
             tarefas.sort((a, b) => {
-                // Primeiro por data (mais recente primeiro)
-                const diffData = new Date(b.agenda) - new Date(a.agenda);
-                if (diffData !== 0) return diffData;
-                // Depois por menos sessões primeiro (menos sessões em cima)
-                return (a.sessoes || 0) - (b.sessoes || 0);
+                // Primeiro por menos sessões (menos sessões primeiro)
+                const diffSessoes = (a.sessoes || 0) - (b.sessoes || 0);
+                if (diffSessoes !== 0) return diffSessoes;
+                // Depois por data (mais recente primeiro)
+                return new Date(b.agenda) - new Date(a.agenda);
             });
             
-            container.innerHTML = tarefas.map((t, index) => {
+            // Agrupar por área e depois por tema
+            const porArea = {};
+            tarefas.forEach(t => {
+                if (!porArea[t.area]) porArea[t.area] = {};
+                if (!porArea[t.area][t.tema]) porArea[t.area][t.tema] = [];
+                porArea[t.area][t.tema].push(t);
+            });
+            
+            const areasOrdenadas = Object.keys(porArea).sort();
+            
+            if (areasOrdenadas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div>Nenhuma missão pendente</div></div>';
+                return;
+            }
+            
+            let html = '';
+            areasOrdenadas.forEach(area => {
+                const areaId = `tarefas-area-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const temasDaArea = Object.keys(porArea[area]).sort();
+                const totalTarefasArea = temasDaArea.reduce((sum, tema) => sum + porArea[area][tema].length, 0);
+                
+                // Box da ÁREA (colapsável)
+                html += `<div style="margin-bottom: 24px;">
+                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                        <div class="area-header-left">
+                            <span class="area-header-title">📁 ${area}</span>
+                            <span class="area-header-count">${totalTarefasArea} tarefa${totalTarefasArea > 1 ? 's' : ''}</span>
+                        </div>
+                        <span class="area-header-toggle">▼</span>
+                    </div>
+                    <div class="area-content collapsed" id="area-content-${areaId}">`;
+                
+                // Temas dentro da área (também colapsáveis)
+                temasDaArea.forEach(tema => {
+                    const temaId = `tarefas-tema-${area.replace(/[^a-zA-Z0-9]/g, '-')}-${tema.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                    const tarefasDoTema = porArea[area][tema];
+                    
+                    html += `
+                        <div style="margin-bottom: 16px; margin-left: 12px;">
+                            <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
+                                <div class="area-header-left">
+                                    <span class="area-header-title">📄 ${tema}</span>
+                                    <span class="area-header-count">${tarefasDoTema.length} tarefa${tarefasDoTema.length > 1 ? 's' : ''}</span>
+                                </div>
+                                <span class="area-header-toggle">▼</span>
+                            </div>
+                            <div class="area-content collapsed" id="area-content-${temaId}">
+                                ${tarefasDoTema.map((t, index) => {
                 const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
@@ -4009,7 +4056,13 @@
                     if (!dataValida(t.agenda) || !dataValida(dataInicio) || !dataValida(dataFim)) return false;
                     return t.agenda >= dataInicio && t.agenda <= dataFim;
                 })
-                .sort((a, b) => a.agenda.localeCompare(b.agenda));
+                .sort((a, b) => {
+                    // Primeiro por menos sessões (menos sessões primeiro)
+                    const diffSessoes = (a.sessoes || 0) - (b.sessoes || 0);
+                    if (diffSessoes !== 0) return diffSessoes;
+                    // Depois por data (mais próximo primeiro)
+                    return a.agenda.localeCompare(b.agenda);
+                });
             
             const container = document.getElementById('agendaContainer');
             if (agendadas.length === 0) {
@@ -9800,7 +9853,13 @@
                     if (!dataValida(t.agenda)) return false;
                     return t.agenda < hojeStr;
                 })
-                .sort((a, b) => a.agenda.localeCompare(b.agenda));
+                .sort((a, b) => {
+                    // Primeiro por menos sessões (menos sessões primeiro)
+                    const diffSessoes = (a.sessoes || 0) - (b.sessoes || 0);
+                    if (diffSessoes !== 0) return diffSessoes;
+                    // Depois por data (mais atrasado primeiro)
+                    return a.agenda.localeCompare(b.agenda);
+                });
             
             if (!atrasados.length) {
                 container.innerHTML = `
