@@ -4509,14 +4509,8 @@
                     };
                 });
             
-            if (datasets.length === 0) {
-                if (chartLinhaInst) { chartLinhaInst.destroy(); chartLinhaInst = null; }
-                return;
-            }
-            
+            // CORREÇÃO: Sempre renderizar, mesmo com datasets vazio (permite reativar depois)
             if (chartLinhaInst) { chartLinhaInst.destroy(); }
-            
-            // CORREÇÃO: Garantir que sempre renderiza, mesmo com datasets vazio
             chartLinhaInst = new Chart(ctx, {
                 type: 'line',
                 data: { datasets: datasets.length > 0 ? datasets : [] },
@@ -8924,9 +8918,16 @@
                 header.classList.toggle('collapsed');
                 content.classList.toggle('collapsed');
                 
+                // CORREÇÃO: Remover display: none inline se existir
+                if (content.style.display === 'none') {
+                    content.style.display = '';
+                }
+                
                 // Se está expandindo, calcular max-height
                 if (!content.classList.contains('collapsed')) {
                     content.style.maxHeight = content.scrollHeight + 'px';
+                } else {
+                    content.style.maxHeight = '0';
                 }
             }
         }
