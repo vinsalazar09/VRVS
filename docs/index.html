@@ -8158,14 +8158,34 @@
             });
             
             // Chamar funções específicas que dependem de áreas
-            updateFeedbackSelect();
-            atualizarSelectsAnalise();
-            atualizarSelectsCaderno();
+            updateFeedbackSelect(); // Atualiza feedbackArea
+            atualizarSelectsAnalise(); // Atualiza analiseFiltroArea
+            atualizarSelectsCaderno(); // Atualiza cadernoFiltroArea
             
-            // Atualizar select de temas do Diário se área foi selecionada
-            const diarioArea = document.getElementById('novaDiarioArea');
-            if (diarioArea && diarioArea.value) {
-                atualizarTemasDiario(diarioArea.value);
+            // Atualizar selects do Diário manualmente
+            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a), novaArea])].sort();
+            
+            // Atualizar select de área do formulário de nova entrada do Diário
+            const novaDiarioArea = document.getElementById('novaDiarioArea');
+            if (novaDiarioArea) {
+                const valorAtual = novaDiarioArea.value;
+                novaDiarioArea.innerHTML = '<option value="">Selecione...</option>' + 
+                    areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
+                if (valorAtual && areasExistentes.includes(valorAtual)) {
+                    novaDiarioArea.value = valorAtual;
+                    atualizarTemasDiario(valorAtual);
+                }
+            }
+            
+            // Atualizar filtro de área do Diário
+            const filtroDiarioArea = document.getElementById('filtroDiarioArea');
+            if (filtroDiarioArea) {
+                const valorAtual = filtroDiarioArea.value;
+                filtroDiarioArea.innerHTML = '<option value="">Todas as áreas</option>' + 
+                    areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
+                if (valorAtual && areasExistentes.includes(valorAtual)) {
+                    filtroDiarioArea.value = valorAtual;
+                }
             }
             
             // Trigger change events para atualizar dependências
