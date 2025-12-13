@@ -3885,6 +3885,66 @@
             }
         }
         
+        // Helper: Renderizar card de tema (reutilizável)
+        function renderCardTemaHTML(t, hojeStr) {
+            const sugestao = obterSugestaoTema(t);
+            const rendPct = Math.round((t.rendimento || 0) * 100);
+            const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
+            const tipo = calcularTipoRevisao(t);
+            const isHoje = t.agenda === hojeStr;
+            const dataFormatada = formatarDataBR(t.agenda);
+            
+            return `
+                <div class="task-item priority-${t.prioridade || 3}" style="margin-bottom: 12px;">
+                    <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
+                    
+                    <div class="task-details">
+                        <div class="task-detail-item">📚 ${t.area}</div>
+                        <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
+                    </div>
+                    
+                    <div class="task-details">
+                        <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
+                        <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
+                        <div class="task-detail-item">📅 ${dataFormatada}</div>
+                    </div>
+                    
+                    ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
+                    
+                    ${sugestao ? `
+                    <div class="task-suggestion">
+                        <div class="task-suggestion-label">Diretriz</div>
+                        <div class="task-suggestion-text">${sugestao}</div>
+                    </div>
+                    ` : ''}
+                    
+                    <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0,206,209,0.25)'" onmouseout="this.style.background='rgba(0,206,209,0.15)'">
+                        👁️ MOSTRAR CONTEXTO
+                    </button>
+                    
+                    <div id="contexto-tema-${t.id}" class="contexto-container" style="display: none; margin-top: 12px;"></div>
+                    
+                    ${(() => {
+                        const qtdDiario = contarDiarioProgramadoParaTema(t.area, t.tema);
+                        if (qtdDiario > 0) {
+                            return `
+                                <div class="tema-diario-bloco" style="background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
+                                    <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                                        Você tem <strong style="color: var(--cobre-light);">${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
+                                    </div>
+                                    <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%; background: var(--cobre-main); color: white; border: none;">
+                                        🔁 Abrir sessão do Diário
+                                    </button>
+                                </div>
+                            `;
+                        }
+                        return '';
+                    })()}
+                </div>
+            `;
+        }
+        
         function renderTarefas() {
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
@@ -3921,12 +3981,12 @@
                 return new Date(b.agenda) - new Date(a.agenda);
             });
             
-            // Agrupar por área e depois por tema
+            // Agrupar por área (sem colapso intermediário de tema)
             const porArea = {};
             tarefas.forEach(t => {
-                if (!porArea[t.area]) porArea[t.area] = {};
-                if (!porArea[t.area][t.tema]) porArea[t.area][t.tema] = [];
-                porArea[t.area][t.tema].push(t);
+                const area = t.area || 'Outros';
+                if (!porArea[area]) porArea[area] = [];
+                porArea[area].push(t);
             });
             
             const areasOrdenadas = Object.keys(porArea).sort();
@@ -3938,102 +3998,22 @@
             
             let html = '';
             areasOrdenadas.forEach(area => {
-                const areaId = `tarefas-area-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                const temasDaArea = Object.keys(porArea[area]).sort();
-                const totalTarefasArea = temasDaArea.reduce((sum, tema) => sum + porArea[area][tema].length, 0);
+                const areaId = `missoes-area-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const temas = porArea[area];
+                const totalTarefas = temas.length;
                 
-                // Box da ÁREA (colapsável)
-                html += `<div style="margin-bottom: 24px;">
-                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
-                        <div class="area-header-left">
-                            <span class="area-header-title">📁 ${area}</span>
-                            <span class="area-header-count">${totalTarefasArea} tarefa${totalTarefasArea > 1 ? 's' : ''}</span>
-                        </div>
-                        <span class="area-header-toggle">▼</span>
-                    </div>
-                    <div class="area-content collapsed" id="area-content-${areaId}">`;
-                
-                // Temas dentro da área (também colapsáveis)
-                temasDaArea.forEach(tema => {
-                    const temaId = `tarefas-tema-${area.replace(/[^a-zA-Z0-9]/g, '-')}-${tema.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                    const tarefasDoTema = porArea[area][tema];
-                    
-                    html += `
-                        <div style="margin-bottom: 16px; margin-left: 12px;">
-                            <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
-                                <div class="area-header-left">
-                                    <span class="area-header-title">📄 ${tema}</span>
-                                    <span class="area-header-count">${tarefasDoTema.length} tarefa${tarefasDoTema.length > 1 ? 's' : ''}</span>
-                                </div>
-                                <span class="area-header-toggle">▼</span>
-                            </div>
-                            <div class="area-content collapsed" id="area-content-${temaId}">
-                                ${tarefasDoTema.map((t, index) => {
-                                    const sugestao = obterSugestaoTema(t);
-                                    const rendPct = Math.round((t.rendimento || 0) * 100);
-                                    const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
-                                    const tipo = calcularTipoRevisao(t);
-                                    const isHoje = t.agenda === hojeStr;
-                                    const dataFormatada = formatarDataBR(t.agenda);
-                                    
-                                    return `
-                                        <div class="task-item priority-${t.prioridade || 3}">
-                                            <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
-                                            
-                                            <div class="task-details">
-                                                <div class="task-detail-item">📚 ${t.area}</div>
-                                                <div class="task-detail-item">⭐ Prior: ${t.prioridade || 3}</div>
-                                            </div>
-                                            
-                                            <div class="task-details">
-                                                <div class="task-detail-item" style="color: ${rendColor};">📊 ${rendPct}%</div>
-                                                <div class="task-detail-item">📢 ${t.sessoes || 0} sessões</div>
-                                                <div class="task-detail-item">📅 ${dataFormatada}</div>
-                                            </div>
-                                            
-                                            ${tipo ? `<div class="task-tipo">${tipo}</div>` : ''}
-                                            
-                                            ${sugestao ? `
-                                            <div class="task-suggestion">
-                                                <div class="task-suggestion-label">Diretriz</div>
-                                                <div class="task-suggestion-text">${sugestao}</div>
-                                            </div>
-                                            ` : ''}
-                                            
-                                            <button onclick="toggleContextoTema('${t.id}')" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0,206,209,0.25)'" onmouseout="this.style.background='rgba(0,206,209,0.15)'">
-                                                👁️ MOSTRAR CONTEXTO
-                                            </button>
-                                            
-                                            <div id="contexto-tema-${t.id}" class="contexto-container" style="display: none; margin-top: 12px;"></div>
-                                            
-                                            ${(() => {
-                                                const qtdDiario = contarDiarioProgramadoParaTema(t.area, t.tema);
-                                                if (qtdDiario > 0) {
-                                                    return `
-                                                        <div class="tema-diario-bloco" style="background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 10px; padding: 12px; margin-top: 12px;">
-                                                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 6px;">📔 Diário de Aprendizados</div>
-                                                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
-                                                                Você tem <strong style="color: var(--cobre-light);">${qtdDiario} tópico${qtdDiario > 1 ? 's' : ''} deste tema</strong> para revisar hoje.
-                                                            </div>
-                                                            <button class="btn btn-small" onclick="abrirSessaoDiarioParaTema('${t.area}', '${t.tema}')" style="width: 100%; background: var(--cobre-main); color: white; border: none;">
-                                                                🔁 Abrir sessão do Diário
-                                                            </button>
-                                                        </div>
-                                                    `;
-                                                }
-                                                return '';
-                                            })()}
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
-                
+                // Header da área (colapsável leve, opcional)
                 html += `
+                    <div class="missoes-area" style="margin-bottom: 20px;">
+                        <div class="missoes-area-header" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 10px 0; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,206,209,0.2);">
+                            <span class="missoes-area-nome" style="font-size: 15px; font-weight: 600; color: var(--turquesa-light);">📁 ${area}</span>
+                            <span class="missoes-area-badge" style="font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0,206,209,0.2); color: rgba(255,255,255,0.9);">${totalTarefas} tarefa${totalTarefas > 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="missoes-area-temas" id="area-content-${areaId}">
+                            ${temas.map(t => renderCardTemaHTML(t, hojeStr)).join('')}
+                        </div>
                     </div>
-                </div>`;
+                `;
             });
             
             container.innerHTML = html;
@@ -9845,30 +9825,87 @@
             }
         }
         
+        // Helper: Obter número de sessões de um tema
+        function obterNumeroSessoesTema(t) {
+            if (typeof t.totalSessoes === 'number') return t.totalSessoes;
+            if (typeof t.sessoes === 'number') return t.sessoes;
+            return 0;
+        }
+        
+        // Helper: Renderizar card de tema atrasado
+        function renderCardTemaAtrasadoHTML(t) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const diasAtraso = Math.floor((hoje - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
+            const sugestao = obterSugestaoTema ? obterSugestaoTema(t) : '';
+            const rendPct = Math.round((t.rendimento || 0) * 100);
+            const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
+            const dataFormatada = formatarDataBR ? formatarDataBR(t.agenda) : t.agenda;
+            const tipo = calcularTipoRevisao ? calcularTipoRevisao(t) : '';
+            const numSessoes = obterNumeroSessoesTema(t);
+            
+            return `
+                <div class="task-item priority-${t.prioridade || 3}" style="margin-bottom: 12px;">
+                    <div class="task-header">
+                        <div class="task-name">${t.tema}</div>
+                        <div class="task-meta">
+                            <span class="task-date-atraso" style="font-size: 12px; color: rgba(255,255,255,0.8);">
+                                📅 ${dataFormatada} • ⚠️ ${diasAtraso} dias atrasado
+                            </span>
+                        </div>
+                    </div>
+                    <div class="task-body">
+                        <div class="task-tags">
+                            <span class="task-tag-area">📚 ${t.area || ''}</span>
+                            <span class="task-tag-rendimento" style="color: ${rendColor};">
+                                📊 ${rendPct}%
+                            </span>
+                            <span class="task-tag-sessoes" style="color: rgba(255,255,255,0.7);">
+                                📢 ${numSessoes} sessões
+                            </span>
+                            ${tipo ? `<span class="task-tag-tipo">${tipo}</span>` : ''}
+                        </div>
+                        ${sugestao ? `
+                        <div class="task-suggestion">
+                            <div class="task-suggestion-label">Diretriz</div>
+                            <div class="task-suggestion-text">${sugestao}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Função para colapso leve por área em Atrasados
+        function toggleAtrasadosArea(areaId) {
+            const conteudo = document.getElementById(`atrasados-conteudo-${areaId}`);
+            if (!conteudo) return;
+            
+            const isCollapsed = conteudo.classList.contains('collapsed');
+            if (isCollapsed) {
+                conteudo.classList.remove('collapsed');
+                conteudo.style.display = 'block';
+            } else {
+                conteudo.classList.add('collapsed');
+                conteudo.style.display = 'none';
+            }
+        }
+        
         function renderAgendaAtrasados() {
+            const container = document.getElementById('agendaContainer');
+            if (!container) return;
+            
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
             const hojeStr = hoje.toISOString().split('T')[0];
             
-            const container = document.getElementById('agendaContainer');
-            if (!container) return;
-            
-            const atrasados = dados
-                .filter(t => {
-                    if (!t || !t.agenda || t.status === 'Concluído') return false;
-                    if (!dataValida || typeof dataValida !== 'function') {
-                        return t.agenda < hojeStr;
-                    }
-                    if (!dataValida(t.agenda)) return false;
-                    return t.agenda < hojeStr;
-                })
-                .sort((a, b) => {
-                    // Primeiro por menos sessões (menos sessões primeiro)
-                    const diffSessoes = (a.sessoes || 0) - (b.sessoes || 0);
-                    if (diffSessoes !== 0) return diffSessoes;
-                    // Depois por data (mais atrasado primeiro)
-                    return a.agenda.localeCompare(b.agenda);
-                });
+            // 1) Filtrar apenas temas atrasados e não concluídos
+            const atrasados = dados.filter(t => {
+                if (!t || !t.agenda) return false;
+                if (t.status === 'Concluído') return false;
+                if (typeof dataValida === 'function' && !dataValida(t.agenda)) return false;
+                return t.agenda < hojeStr;
+            });
             
             if (!atrasados.length) {
                 container.innerHTML = `
@@ -9880,40 +9917,46 @@
                 return;
             }
             
-            container.innerHTML = atrasados.map(t => {
-                const sugestao = obterSugestaoTema ? obterSugestaoTema(t) : '';
-                const rendPct = Math.round((t.rendimento || 0) * 100);
-                const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
-                const dataFormatada = formatarDataBR ? formatarDataBR(t.agenda) : t.agenda;
-                const tipo = calcularTipoRevisao ? calcularTipoRevisao(t) : '';
-                const diasAtraso = Math.floor((hoje - new Date(t.agenda)) / (1000 * 60 * 60 * 24));
+            // 2) Agrupar atrasados por área
+            const porArea = {};
+            atrasados.forEach(t => {
+                const area = t.area || 'Outros';
+                if (!porArea[area]) porArea[area] = [];
+                porArea[area].push(t);
+            });
+            
+            // 3) Gerar HTML
+            let html = '';
+            Object.keys(porArea).sort().forEach(area => {
+                const temas = porArea[area];
                 
-                return `
-                    <div class="task-item priority-${t.prioridade || 3}">
-                        <div class="task-header">
-                            <div class="task-name">${t.tema}</div>
-                            <div class="task-meta">
-                                <span class="task-date-atraso">📅 ${dataFormatada} • ⚠️ ${diasAtraso} dias atrasado</span>
-                            </div>
+                // Ordenar temas desta área:
+                // 1) por número de sessões (crescente)
+                // 2) em caso de empate, por data (mais antigo primeiro)
+                temas.sort((a, b) => {
+                    const sa = obterNumeroSessoesTema(a);
+                    const sb = obterNumeroSessoesTema(b);
+                    if (sa !== sb) return sa - sb;
+                    return a.agenda.localeCompare(b.agenda);
+                });
+                
+                const areaId = area.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+                const totalTemas = temas.length;
+                
+                html += `
+                    <div class="atrasados-area" id="atrasados-area-${areaId}" style="margin-bottom: 16px; border-radius: 10px; overflow: hidden;">
+                        <div class="atrasados-area-header" onclick="toggleAtrasadosArea('${areaId}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,159,64,0.15); border: 1px solid rgba(255,159,64,0.3); border-left: 3px solid var(--cobre-main); color: var(--cobre-light); cursor: pointer;">
+                            <span class="atrasados-area-nome" style="font-weight: 600; font-size: 14px;">📁 ${area}</span>
+                            <span class="atrasados-area-badge" style="font-size: 12px; padding: 2px 8px; border-radius: 999px; background: rgba(255,127,80,0.3); color: #FFE4C4;">${totalTemas} atrasado${totalTemas > 1 ? 's' : ''}</span>
                         </div>
-                        <div class="task-body">
-                            <div class="task-tags">
-                                <span class="task-tag-area">📚 ${t.area || ''}</span>
-                                <span class="task-tag-rendimento" style="color: ${rendColor};">
-                                    📊 ${rendPct}%
-                                </span>
-                                ${tipo ? `<span class="task-tag-tipo">${tipo}</span>` : ''}
-                            </div>
-                            ${sugestao ? `
-                            <div class="task-suggestion">
-                                <div class="task-suggestion-label">Diretriz</div>
-                                <div class="task-suggestion-text">${sugestao}</div>
-                            </div>
-                            ` : ''}
+                        <div class="atrasados-area-conteudo" id="atrasados-conteudo-${areaId}" style="padding: 8px 10px 12px; background: rgba(0,0,0,0.15);">
+                            ${temas.map(renderCardTemaAtrasadoHTML).join('')}
                         </div>
                     </div>
                 `;
-            }).join('');
+            });
+            
+            container.innerHTML = html;
         }
         
         // ==================== ANÁLISES ====================
