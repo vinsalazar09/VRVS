@@ -438,10 +438,32 @@
                 font-size: 11px; /* Ligeiramente menor para economizar espaço */
             }
             
+            /* CORREÇÃO UX: Inputs do modal Diário (iOS) */
+            #modalNovaDiario input,
+            #modalNovaDiario textarea,
+            #modalNovaDiario select {
+                box-sizing: border-box;
+                padding: 12px 14px;
+                text-indent: 0;
+                caret-color: var(--cobre-main);
+                -webkit-appearance: none;
+                appearance: none;
+                outline-offset: 0;
+            }
+            
             /* Textarea do Diário: usar mais espaço vertical */
             #modalNovaDiario .form-textarea {
                 min-height: 300px !important; /* Aumentado para mobile */
                 max-height: 60vh !important; /* Usar mais espaço da viewport */
+            }
+            
+            /* Campo Tópico/Pergunta: textarea com altura adequada */
+            #novaDiarioTopico {
+                min-height: 80px;
+                max-height: 150px;
+                line-height: 1.5;
+                font-size: 15px;
+                -webkit-overflow-scrolling: touch;
             }
             
             /* OTIMIZAÇÃO GERAL: Modais ocupam quase tela toda no mobile */
@@ -2150,7 +2172,11 @@
                 
                 <div class="form-group">
                     <label class="form-label">❓ Tópico / Pergunta</label>
-                    <input type="text" class="form-input" id="novaDiarioTopico" placeholder="Ex: Classificação de FAIRBANKS">
+                    <textarea id="novaDiarioTopico" 
+                        class="form-textarea" 
+                        rows="3" 
+                        style="min-height: 80px; resize: vertical; overflow-y: auto;"
+                        placeholder="Ex: Em que nível se encerra o cone medular?"></textarea>
                 </div>
                 
                 <div class="form-group">
