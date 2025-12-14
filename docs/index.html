@@ -451,19 +451,26 @@
                 outline-offset: 0;
             }
             
-            /* Textarea do Diário: usar mais espaço vertical */
-            #modalNovaDiario .form-textarea {
-                min-height: 300px !important; /* Aumentado para mobile */
-                max-height: 60vh !important; /* Usar mais espaço da viewport */
+            /* Campo Tópico/Pergunta: textarea com altura adequada */
+            /* NOTA: Regra específica para #novaDiarioTopico deve ficar DEPOIS de .form-textarea para sobrescrever min-height/max-height */
+            #novaDiarioTopico {
+                min-height: 96px;
+                max-height: 220px;
+                line-height: 1.4;
+                font-size: 15px;
+                padding: 12px 14px;
+                box-sizing: border-box;
+                -webkit-overflow-scrolling: touch;
+                caret-color: var(--cobre-main);
+                direction: ltr;
+                text-align: left;
+                text-indent: 0;
             }
             
-            /* Campo Tópico/Pergunta: textarea com altura adequada */
-            #novaDiarioTopico {
-                min-height: 80px;
-                max-height: 150px;
-                line-height: 1.5;
-                font-size: 15px;
-                -webkit-overflow-scrolling: touch;
+            /* Campo Resposta: altura maior separada */
+            #novaDiarioResposta {
+                min-height: 200px;
+                max-height: 400px;
             }
             
             /* OTIMIZAÇÃO GERAL: Modais ocupam quase tela toda no mobile */
@@ -8849,6 +8856,12 @@
             renderDiario();
         }
         
+        // Auto-resize para textarea do Tópico
+        function autoResizeTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 4) + 'px';
+        }
+        
         function abrirNovaEntradaDiario() {
             // Limpar campos
             document.getElementById('novaDiarioId').value = '';
@@ -8861,6 +8874,18 @@
             const dataInput = document.getElementById('novaDiarioData');
             if (dataInput) {
                 dataInput.value = hoje;
+            }
+            
+            // Configurar auto-resize no campo Tópico
+            const topicoInput = document.getElementById('novaDiarioTopico');
+            if (topicoInput) {
+                autoResizeTextarea(topicoInput);
+                // Remover listener antigo se existir e adicionar novo
+                topicoInput.removeEventListener('input', topicoInput._autoResizeHandler);
+                topicoInput._autoResizeHandler = function() {
+                    autoResizeTextarea(this);
+                };
+                topicoInput.addEventListener('input', topicoInput._autoResizeHandler);
             }
             
             // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
