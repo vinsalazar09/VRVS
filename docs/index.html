@@ -3011,7 +3011,12 @@
             <div id="diario" class="section">
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>📔 DIÁRIO DE APRENDIZADOS</span>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span>📔 DIÁRIO DE APRENDIZADOS</span>
+                            <div id="vrvs3p-chip-diario" class="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p()" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.4); font-size: 12px; opacity: 0.85; cursor: pointer; transition: all 0.2s ease;">
+                                🧠 <span id="vrvs3p-chip-text">Carregando...</span>
+                            </div>
+                        </div>
                         <button onclick="abrirNovaEntradaDiario()" id="btnNovaDiario" style="background: #FF9F40 !important; color: #FFFFFF !important; border: 2px solid #FFB84D !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 700 !important; cursor: pointer !important; min-width: 90px !important; box-shadow: 0 2px 8px rgba(255, 159, 64, 0.4) !important; transition: all 0.2s ease; display: inline-block !important; position: relative !important; z-index: 10 !important; -webkit-tap-highlight-color: rgba(255, 159, 64, 0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; opacity: 1 !important; visibility: visible !important;">+ Nova</button>
                     </div>
                     
@@ -4416,7 +4421,7 @@
         }
         
         // Helper: Renderizar card de tema (reutilizável)
-        function renderCardTemaHTML(t, hojeStr) {
+        function renderCardTemaHTML(t, hojeStr, contagemDiarioPorTema = {}) {
                 const sugestao = obterSugestaoTema(t);
                 const rendPct = Math.round((t.rendimento || 0) * 100);
                 const rendColor = rendPct >= 80 ? '#00FFE0' : rendPct >= 50 ? '#FFA366' : '#EF4444';
@@ -4424,9 +4429,15 @@
                 const isHoje = t.agenda === hojeStr;
                 const dataFormatada = formatarDataBR(t.agenda);
                 
+                // Contagem de diário ativo para este tema
+                const qtdAtivos = contagemDiarioPorTema[`${t.area}|${t.tema}`] || 0;
+                
                 return `
                 <div class="task-item priority-${t.prioridade || 3}" style="margin-bottom: 12px;">
-                    <div class="task-name">${t.tema} ${isHoje ? '🎯' : ''}</div>
+                    <div class="task-name" style="display: flex; align-items: center; gap: 8px;">
+                        <span>${t.tema} ${isHoje ? '🎯' : ''}</span>
+                        ${qtdAtivos > 0 ? `<span class="vrvs3p-pill-tema" title="Tópicos ativos no Diário" style="margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.5); opacity: 0.9; color: rgba(255,255,255,0.9);">🧠 ${qtdAtivos}</span>` : ''}
+                    </div>
                     
                     <div class="task-details">
                         <div class="task-detail-item">📚 ${t.area}</div>
@@ -4482,6 +4493,16 @@
             
             const container = document.getElementById('tarefasContainer');
             let html = '';
+            
+            // ===== CALCULAR CONTAGEM DE DIÁRIO ATIVO POR TEMA (uma vez só) =====
+            const contagemDiarioPorTema = {};
+            if (window.diario && Array.isArray(window.diario.entradas)) {
+                window.diario.entradas.forEach(e => {
+                    if (!e.srs || !e.srs.ativo) return;
+                    const chave = `${e.area}|${e.tema}`;
+                    contagemDiarioPorTema[chave] = (contagemDiarioPorTema[chave] || 0) + 1;
+                });
+            }
             
             // ===== BOX "REVISÕES DO DIA" =====
             // Contar tópicos do Diário programados para hoje
@@ -4570,7 +4591,7 @@
                             <span class="missoes-area-badge" style="font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0,206,209,0.2); color: rgba(255,255,255,0.9);">${totalTarefas} tarefa${totalTarefas > 1 ? 's' : ''}</span>
                             </div>
                         <div class="missoes-area-temas" id="area-content-${areaId}">
-                            ${temas.map(t => renderCardTemaHTML(t, hojeStr)).join('')}
+                            ${temas.map(t => renderCardTemaHTML(t, hojeStr, contagemDiarioPorTema)).join('')}
                     </div>
                 </div>
                 `;
@@ -6413,6 +6434,12 @@
                 atualizarSelectsAnalise();
                 atualizarAnalises();
             }
+            if (sectionId === 'diario') {
+                // Atualizar chip VRVS 3P quando abrir aba Diário
+                setTimeout(() => {
+                    atualizarChipVrvs3p();
+                }, 50);
+            }
             // Novas seções consolidadas
             if (sectionId === 'analytics') {
                 // Garantir que a vista inicial seja renderizada
@@ -6586,6 +6613,96 @@
         }
         
         function calcularAnalises() {
+            // Calcular métricas VRVS 3P primeiro (se diário disponível)
+            let htmlVrvs3p = '';
+            if (window.diario && Array.isArray(window.diario.entradas)) {
+                const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
+                const faixa = stats.retencaoGlobal !== null ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
+                const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats.totalAtivos);
+                
+                htmlVrvs3p = `
+                    <section id="painel-vrvs3p" class="vrvs3p-card" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+                        <h3 style="color: var(--turquesa-light); margin-bottom: 20px; font-size: 18px; font-weight: 600;">🧠 Saúde do Diário VRVS 3P</h3>
+                        
+                        ${stats.totalAtivos > 0 ? `
+                            <div class="vrvs3p-saude-bloco">
+                                <div class="vrvs3p-progress-wrapper" style="margin-bottom: 20px;">
+                                    <div class="vrvs3p-progress-bar" style="width: 100%; height: 24px; background: rgba(5,25,30,0.8); border-radius: 12px; overflow: hidden; position: relative;">
+                                        <div class="vrvs3p-progress-fill vrvs3p-progress-fill--${faixa}" style="width: ${stats.retencaoGlobalPct}%; height: 100%; background: ${faixa === 'alta' ? 'linear-gradient(90deg, #22c55e, #16a34a)' : faixa === 'media' ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 'linear-gradient(90deg, #dc3545, #b91c1c)'}; transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <div class="vrvs3p-progress-label" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                        <span class="vrvs3p-progress-percent" style="font-size: 16px; font-weight: 600; color: var(--turquesa-light);">${stats.retencaoGlobalPct}%</span>
+                                        <span class="vrvs3p-progress-status" style="font-size: 13px; color: rgba(255,255,255,0.7);">• ${faixa === 'alta' ? 'Alta' : faixa === 'media' ? 'Média' : 'Baixa'}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="vrvs3p-contagem-linha" style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13px; color: rgba(255,255,255,0.8);">
+                                    <span><strong style="color: var(--turquesa-light);">${stats.totalAtivos}</strong> tópicos ativos</span>
+                                    <span>• <strong style="color: var(--cobre-light);">${stats.totalHoje}</strong> para revisar hoje</span>
+                                    <span>• <strong style="color: ${stats.totalAtrasadas > 0 ? '#dc3545' : 'rgba(255,255,255,0.8)'}">${stats.totalAtrasadas}</strong> atrasados</span>
+                                </div>
+                                
+                                <div class="vrvs3p-mensagem" style="padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border-left: 3px solid var(--turquesa-light); font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 20px;">
+                                    ${mensagem}
+                                </div>
+                            </div>
+                            
+                            ${stats.porArea.length > 0 ? `
+                                <div class="vrvs3p-subpainel" style="margin-top: 24px;">
+                                    <h4 style="color: var(--turquesa-light); margin-bottom: 16px; font-size: 15px; font-weight: 600;">📊 Retenção por área</h4>
+                                    <ul class="vrvs3p-area-lista" style="list-style: none; padding: 0; margin: 0;">
+                                        ${stats.porArea.map(item => {
+                                            const faixaArea = classificarFaixaRetencao(item.retencao);
+                                            const corBarra = faixaArea === 'alta' ? '#22c55e' : faixaArea === 'media' ? '#f59e0b' : '#dc3545';
+                                            const emoji = faixaArea === 'alta' ? '🟢' : faixaArea === 'media' ? '🟡' : '🔴';
+                                            return `
+                                                <li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(0,206,209,0.1);">
+                                                    <span style="flex: 0 0 140px; font-size: 13px; color: rgba(255,255,255,0.9);">${item.area}</span>
+                                                    <div style="flex: 1; height: 20px; background: rgba(5,25,30,0.8); border-radius: 10px; overflow: hidden; position: relative;">
+                                                        <div style="width: ${item.retencaoPct}%; height: 100%; background: ${corBarra}; transition: width 0.3s ease;"></div>
+                                                    </div>
+                                                    <span style="flex: 0 0 50px; text-align: right; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9);">${item.retencaoPct}%</span>
+                                                    <span style="flex: 0 0 30px; text-align: center; font-size: 14px;">${emoji}</span>
+                                                </li>
+                                            `;
+                                        }).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="vrvs3p-maturidade" style="margin-top: 24px;">
+                                <h4 style="color: var(--turquesa-light); margin-bottom: 16px; font-size: 15px; font-weight: 600;">📈 Maturidade dos tópicos</h4>
+                                <div class="vrvs3p-maturidade-barra" style="display: flex; height: 32px; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+                                    ${stats.maturidade.novos > 0 ? `<div style="flex: ${stats.maturidade.novos}; background: linear-gradient(90deg, #dc3545, #b91c1c); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">${stats.maturidade.novos}</div>` : ''}
+                                    ${stats.maturidade.fixando > 0 ? `<div style="flex: ${stats.maturidade.fixando}; background: linear-gradient(90deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">${stats.maturidade.fixando}</div>` : ''}
+                                    ${stats.maturidade.maduros > 0 ? `<div style="flex: ${stats.maturidade.maduros}; background: linear-gradient(90deg, #22c55e, #16a34a); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">${stats.maturidade.maduros}</div>` : ''}
+                                    ${stats.maturidade.consolidados > 0 ? `<div style="flex: ${stats.maturidade.consolidados}; background: linear-gradient(90deg, #059669, #047857); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">${stats.maturidade.consolidados}</div>` : ''}
+                                </div>
+                                <div class="vrvs3p-maturidade-legenda" style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: rgba(255,255,255,0.7);">
+                                    ${stats.maturidade.novos > 0 ? `<span>🔴 ${stats.maturidade.novos} novos</span>` : ''}
+                                    ${stats.maturidade.fixando > 0 ? `<span>🟡 ${stats.maturidade.fixando} fixando</span>` : ''}
+                                    ${stats.maturidade.maduros > 0 ? `<span>🟢 ${stats.maturidade.maduros} maduros</span>` : ''}
+                                    ${stats.maturidade.consolidados > 0 ? `<span>💎 ${stats.maturidade.consolidados} consolidados</span>` : ''}
+                                </div>
+                                <p style="margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.5); font-style: italic;">
+                                    🎯 Meta: migrar tópicos para estágios mais altos ao longo das semanas.
+                                </p>
+                            </div>
+                            
+                            <p class="vrvs3p-disclaimer" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(0,206,209,0.2); font-size: 11px; color: rgba(255,255,255,0.5); font-style: italic; text-align: center;">
+                                Estimativa baseada no modelo VRVS 3P. Não é nota — é um mapa para orientar seu esforço.
+                            </p>
+                        ` : `
+                            <div style="text-align: center; padding: 40px 20px;">
+                                <div style="font-size: 48px; margin-bottom: 16px;">📔</div>
+                                <div style="font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">Nenhum tópico ativo</div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.6);">Cadastre entradas pelo Diário e marque "Incluir nas revisões programadas"</div>
+                            </div>
+                        `}
+                    </section>
+                `;
+            }
+            
             const areaFiltro = document.getElementById('analiseFiltroArea').value;
             const temaFiltro = document.getElementById('analiseFiltroTema').value;
             const dataInicio = document.getElementById('analiseDataInicio').value;
@@ -6831,7 +6948,8 @@
             
             // Detalhamento por tema quando filtrado por tema específico (não mostrar, já está no resumo geral)
             
-            document.getElementById('analiseResultados').innerHTML = html;
+            // Inserir painel VRVS 3P no topo dos resultados
+            document.getElementById('analiseResultados').innerHTML = htmlVrvs3p + html;
             
             // Se análises de tempo estão visíveis, recalcular
             if (window.analisesTempoVisiveis) {
@@ -9140,6 +9258,35 @@
         const VRVS3P_STAGE_INTERVALS = [1, 2, 4, 7, 12, 20, 35, 60, 90, 135, 200];
         const VRVS3P_MAX_STAGE = VRVS3P_STAGE_INTERVALS.length - 1; // 10
         
+        // Retenção estimada por estágio (0-10, 0-based como código atual)
+        const VRVS3P_RETENCAO_POR_ESTAGIO = [
+            0.40, // índice 0 = estágio 0 (novo)
+            0.55, // índice 1 = estágio 1
+            0.65, // índice 2 = estágio 2
+            0.72, // índice 3 = estágio 3
+            0.78, // índice 4 = estágio 4
+            0.83, // índice 5 = estágio 5
+            0.88, // índice 6 = estágio 6
+            0.92, // índice 7 = estágio 7
+            0.95, // índice 8 = estágio 8
+            0.97, // índice 9 = estágio 9
+            0.98  // índice 10 = estágio 10 (máximo)
+        ];
+        
+        // Obter retenção estimada por estágio (mantém compatibilidade 0-based)
+        function obterRetencaoPorEstagio(estagio) {
+            const estagioClamped = Math.min(Math.max(estagio || 0, 0), 10);
+            return VRVS3P_RETENCAO_POR_ESTAGIO[estagioClamped];
+        }
+        
+        // Classificar faixa de retenção (para cores)
+        function classificarFaixaRetencao(pct) {
+            // pct em 0-1
+            if (pct < 0.65) return 'baixa';    // vermelho
+            if (pct < 0.80) return 'media';    // âmbar
+            return 'alta';                     // verde (>= 0.80)
+        }
+        
         // Mapear repeticoes antigas para estágio inicial (migração)
         function mapearRepeticoesParaEstagio(repeticoes) {
             const r = repeticoes || 0;
@@ -9274,7 +9421,6 @@
             });
             
             if (migradas > 0) {
-                console.log(`[VRVS 3P] Migradas ${migradas} entradas para VRVS_FSRS3_v1`);
                 salvarDiario(); // Salvar após migração
             }
         }
@@ -9390,10 +9536,13 @@
                     window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
                     inicializarSrsEmTodasEntradas(); // Seguro mesmo vazio
                 }
+                // Atualizar chip VRVS 3P após carregar
+                atualizarChipVrvs3p();
             } catch (e) {
                 console.error('[DIÁRIO] Erro ao carregar:', e);
                 window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
                 inicializarSrsEmTodasEntradas(); // Seguro mesmo em erro
+                atualizarChipVrvs3p();
             }
         }
         
@@ -9550,19 +9699,8 @@
                 const entradaId = document.getElementById('novaDiarioId')?.value;
                 const veioDaSessao = window.editandoDaSessao === true;
                 
-                // DEBUG: Log detalhado antes de ler valores
                 const areaSelect = document.getElementById('novaDiarioArea');
                 const temaSelect = document.getElementById('novaDiarioTema');
-                console.log('[DEBUG VRVS3P-SALVAR] inicial', {
-                    vindoDaSessao: veioDaSessao,
-                    entradaEmEdicao: entradaId,
-                    areaCampo: areaSelect?.value || '',
-                    temaCampo: temaSelect?.value || '',
-                    areaDisabled: areaSelect?.disabled || false,
-                    temaDisabled: temaSelect?.disabled || false,
-                    areaOptions: Array.from(areaSelect?.options || []).map(opt => opt.value),
-                    temaOptions: Array.from(temaSelect?.options || []).map(opt => opt.value)
-                });
                 
                 // Se for edição e veio da sessão, usar valores originais da entrada para área/tema
                 let area, tema;
@@ -9572,18 +9710,15 @@
                         // Usar valores originais da entrada (campos estão desabilitados)
                         area = entradaOriginal.area || '';
                         tema = entradaOriginal.tema || '';
-                        console.log('[DEBUG VRVS3P-SALVAR] Usando valores originais (sessão):', { area, tema });
                     } else {
                         // Fallback: ler dos campos mesmo desabilitados
                         area = areaSelect?.value.trim() || '';
                         tema = temaSelect?.value.trim() || '';
-                        console.warn('[DEBUG VRVS3P-SALVAR] Entrada não encontrada, usando campos:', { area, tema });
                     }
                 } else {
                     // Edição normal ou nova entrada: ler dos campos
                     area = areaSelect?.value.trim() || '';
                     tema = temaSelect?.value.trim() || '';
-                    console.log('[DEBUG VRVS3P-SALVAR] Lendo dos campos (lista/nova):', { area, tema });
                 }
                 
                 const topico = document.getElementById('novaDiarioTopico')?.value.trim();
@@ -9592,32 +9727,8 @@
                 const dataInput = document.getElementById('novaDiarioData');
                 const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
                 
-                // DEBUG: Log antes da validação
-                console.log('[DEBUG VRVS3P-SALVAR] validacao', {
-                    editandoId: entradaId,
-                    area,
-                    tema,
-                    topico: topico ? topico.substring(0, 50) + '...' : '',
-                    resposta: resposta ? resposta.substring(0, 50) + '...' : '',
-                    editandoDaSessao: veioDaSessao,
-                    areaVazio: !area,
-                    temaVazio: !tema,
-                    topicoVazio: !topico
-                });
-                
                 // Validação: área e tema são obrigatórios
                 if (!area || !tema || !topico) {
-                    console.error('[DEBUG VRVS3P-SALVAR] Validação falhou:', { 
-                        area, 
-                        tema, 
-                        topico, 
-                        veioDaSessao, 
-                        entradaId,
-                        areaSelectValue: areaSelect?.value,
-                        temaSelectValue: temaSelect?.value,
-                        areaSelectDisabled: areaSelect?.disabled,
-                        temaSelectDisabled: temaSelect?.disabled
-                    });
                     mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
                     // SEMPRE limpar flag e fechar modal mesmo em erro
                     window.editandoDaSessao = false;
@@ -9724,11 +9835,12 @@
                         // Edição normal: renderizar lista completa
                         renderDiario();
                     }
+                    // Atualizar chip VRVS 3P após salvar
+                    atualizarChipVrvs3p();
                     mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
                 }, 50);
             } catch (error) {
                 console.error('[DIÁRIO] Erro ao salvar entrada:', error);
-                console.error('[DEBUG VRVS3P-SALVAR] Stack trace:', error.stack);
                 mostrarNotificacaoFeedback('⚠️ Erro ao salvar entrada. Verifique o console.', 'error');
                 // SEMPRE limpar flag e fechar modal mesmo em erro
                 window.editandoDaSessao = false;
@@ -9743,9 +9855,44 @@
             }, 300);
         }
         
+        // Atualizar chip VRVS 3P no Diário
+        function atualizarChipVrvs3p() {
+            const chip = document.getElementById('vrvs3p-chip-diario');
+            const chipText = document.getElementById('vrvs3p-chip-text');
+            if (!chip || !chipText) return;
+            
+            if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                chipText.textContent = 'Nenhum tópico ativo';
+                return;
+            }
+            
+            const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
+            if (stats.totalAtivos === 0) {
+                chipText.textContent = 'Nenhum tópico ativo';
+            } else {
+                chipText.textContent = `${stats.totalAtivos} ativos · ${stats.totalHoje} hoje · ${stats.totalAtrasadas} atrasados`;
+            }
+        }
+        
+        // Navegar para painel VRVS 3P
+        function irParaPainelVrvs3p() {
+            showSection('analises');
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const painel = document.getElementById('painel-vrvs3p');
+                    if (painel) {
+                        painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            });
+        }
+        
         function renderDiario() {
             const container = document.getElementById('diarioContainer');
             if (!container) return;
+            
+            // Atualizar chip VRVS 3P
+            atualizarChipVrvs3p();
             
             if (!window.diario || !window.diario.entradas || window.diario.entradas.length === 0) {
                 container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma entrada no diário ainda</div><div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5);">Clique em "+ Nova" para adicionar</div></div>';
@@ -10006,16 +10153,6 @@
                 window.editandoDaSessao = false;
             }
             
-            // DEBUG: Log ao abrir edição
-            console.log('[DEBUG VRVS3P-SALVAR] inicial', {
-                vindoDaSessao: veioDaSessao,
-                entradaEmEdicao: entradaId,
-                areaEntrada: entrada.area,
-                temaEntrada: entrada.tema,
-                flagGlobal: window.editandoDaSessao,
-                origem: veioDaSessao ? 'SESSÃO' : 'LISTA'
-            });
-            
             document.getElementById('novaDiarioId').value = entrada.id;
             const dataInput = document.getElementById('novaDiarioData');
             if (dataInput) {
@@ -10065,20 +10202,11 @@
                     if (temaExiste) {
                         temaSelect.value = entrada.tema || '';
                     } else {
-                        console.warn('[DEBUG VRVS3P] Tema não encontrado nas options, tentando novamente:', entrada.tema);
                         // Tentar novamente após mais um delay (mobile pode ser mais lento)
                         setTimeout(() => {
                             temaSelect.value = entrada.tema || '';
                         }, 100);
                     }
-                    
-                    // DEBUG: Log após setar tema
-                    console.log('[DEBUG VRVS3P] Tema setado:', {
-                        temaEntrada: entrada.tema,
-                        temaSelectValue: temaSelect.value,
-                        temaExiste: temaExiste,
-                        veioDaSessao: veioDaSessao
-                    });
                     
                     // Se veio da sessão, desabilitar tema também (mas valor já está setado)
                     if (veioDaSessao) {
@@ -10293,6 +10421,8 @@
             if (sessaoDiario.tipo === 'programado') {
                 registrarRespostaSrsDiario(entradaAtual, qualidade);
                 salvarDiario(); // já existe; apenas reutilizar
+                // Atualizar chip VRVS 3P após registrar resposta
+                atualizarChipVrvs3p();
             }
             
             // Avançar na fila
@@ -10322,6 +10452,8 @@
             
             entradaAtual.srs.ativo = false;
             salvarDiario();
+            // Atualizar chip VRVS 3P após desativar
+            atualizarChipVrvs3p();
             
             // Remover da fila atual
             sessaoDiario.filaIds.splice(sessaoDiario.indiceAtual, 1);
