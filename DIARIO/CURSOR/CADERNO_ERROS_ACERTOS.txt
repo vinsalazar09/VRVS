@@ -395,5 +395,47 @@
   - **Prevenção:** SEMPRE manter estrutura simples quando possível. Colapso em múltiplos níveis piora UX. Agrupar por área é suficiente.
   - **Status:** ✅ Implementado e testado
 
+**2025-12-13 (Continuação - PROTOCOLO PATCH LIMPO):**
+- ✅ **PROTOCOLO INTERNO CRIADO:** PROTOCOLO_PATCH_LIMPO_VRVS.md
+  - **Objetivo:** Garantir patches mínimos, cirúrgicos e tecnicamente justificados
+  - **Regras críticas:**
+    - Diagnóstico antes de solução
+    - Remover conflitos antes de adicionar regras
+    - `!important` é último recurso
+    - Não adicionar `transform` sem evidência clara
+    - Manter design system e semântica
+  - **Proibido:** Blocos gigantes de `!important`, hacks sem necessidade, alterar múltiplas abas de uma vez
+  - **Commit:** `74cdcc7`, `aa60d21`, `575e649`
+  - **Status:** ✅ Protocolo ativo e sendo seguido
+
+- ✅ **CORREÇÃO UX MODAL DIÁRIO:** Campo Tópico e cursor iOS
+  - **Problema:** Campo Tópico muito pequeno + cursor piscando fora do box no iOS
+  - **Solução (PROTOCOLO PATCH LIMPO):**
+    1. Removida regra conflitante: `#modalNovaDiario .form-textarea { min-height: 300px !important; }`
+    2. Definida regra completa para `#novaDiarioTopico` com todas as propriedades necessárias
+    3. Adicionada função `autoResizeTextarea()` para expandir conforme digita
+    4. Adicionada regra separada para `#novaDiarioResposta`
+  - **NÃO FEITO (conforme protocolo):**
+    - ❌ Bloco gigante de `!important`
+    - ❌ `transform: translateZ(0)` no modal
+    - ❌ `position: relative`, `left: 0` sem evidência
+  - **Commit:** `37870a8`
+  - **Lição:** Seguir PROTOCOLO PATCH LIMPO garante soluções limpas. Remover conflitos primeiro, depois definir regras específicas.
+  - **Status:** ✅ Resolvido seguindo protocolo rigorosamente
+
+- ✅ **BUG CRÍTICO RESOLVIDO:** Checkbox "revisar amanhã" invisível no iPhone
+  - **Problema:** Checkbox não aparecia no iPhone Safari (texto sim, checkbox não)
+  - **Causa:** Style inline dependia do estilo nativo do iOS, que não funcionava dentro do box âmbar
+  - **Solução (PROTOCOLO PATCH LIMPO):**
+    1. Removidos styles inline do checkbox e container
+    2. Criadas classes CSS limpas: `.diario-atencao-container`, `.diario-atencao-checkbox`, `.diario-atencao-label`
+    3. Checkbox agora tem borda própria (`border: 2px solid var(--cobre-main)`) visível em qualquer plataforma
+    4. Estado `:checked` com `box-shadow` para feedback visual
+  - **Varredura de remendos:** Verificados estilos inline multi-linha - todos completos e corretos. Nenhum remendo similar encontrado.
+  - **Garantias:** Lógica JS não alterada, estrutura de dados preservada, apenas visual corrigido
+  - **Commit:** `2d208f9`
+  - **Lição:** Remover styles inline quebrados e criar CSS limpo é mais eficaz que adicionar hacks. Checkbox precisa de borda própria para ser visível em iOS.
+  - **Status:** ✅ Resolvido - Checkbox visível e funcional
+
 ═══════════════════════════════════════════════════════════════
 
