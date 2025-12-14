@@ -9516,6 +9516,20 @@
                 const entradaId = document.getElementById('novaDiarioId')?.value;
                 const veioDaSessao = window.editandoDaSessao === true;
                 
+                // DEBUG: Log detalhado antes de ler valores
+                const areaSelect = document.getElementById('novaDiarioArea');
+                const temaSelect = document.getElementById('novaDiarioTema');
+                console.log('[DEBUG VRVS3P-SALVAR] inicial', {
+                    vindoDaSessao: veioDaSessao,
+                    entradaEmEdicao: entradaId,
+                    areaCampo: areaSelect?.value || '',
+                    temaCampo: temaSelect?.value || '',
+                    areaDisabled: areaSelect?.disabled || false,
+                    temaDisabled: temaSelect?.disabled || false,
+                    areaOptions: Array.from(areaSelect?.options || []).map(opt => opt.value),
+                    temaOptions: Array.from(temaSelect?.options || []).map(opt => opt.value)
+                });
+                
                 // Se for edição e veio da sessão, usar valores originais da entrada para área/tema
                 let area, tema;
                 if (entradaId && veioDaSessao) {
@@ -9524,15 +9538,18 @@
                         // Usar valores originais da entrada (campos estão desabilitados)
                         area = entradaOriginal.area || '';
                         tema = entradaOriginal.tema || '';
+                        console.log('[DEBUG VRVS3P-SALVAR] Usando valores originais (sessão):', { area, tema });
                     } else {
                         // Fallback: ler dos campos mesmo desabilitados
-                        area = document.getElementById('novaDiarioArea')?.value.trim() || '';
-                        tema = document.getElementById('novaDiarioTema')?.value.trim() || '';
+                        area = areaSelect?.value.trim() || '';
+                        tema = temaSelect?.value.trim() || '';
+                        console.warn('[DEBUG VRVS3P-SALVAR] Entrada não encontrada, usando campos:', { area, tema });
                     }
                 } else {
                     // Edição normal ou nova entrada: ler dos campos
-                    area = document.getElementById('novaDiarioArea')?.value.trim() || '';
-                    tema = document.getElementById('novaDiarioTema')?.value.trim() || '';
+                    area = areaSelect?.value.trim() || '';
+                    tema = temaSelect?.value.trim() || '';
+                    console.log('[DEBUG VRVS3P-SALVAR] Lendo dos campos (lista/nova):', { area, tema });
                 }
                 
                 const topico = document.getElementById('novaDiarioTopico')?.value.trim();
@@ -9542,19 +9559,34 @@
                 const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
                 
                 // DEBUG: Log antes da validação
-                console.log('[DEBUG VRVS3P] salvarDiario()', {
+                console.log('[DEBUG VRVS3P-SALVAR] validacao', {
                     editandoId: entradaId,
                     area,
                     tema,
                     topico: topico ? topico.substring(0, 50) + '...' : '',
                     resposta: resposta ? resposta.substring(0, 50) + '...' : '',
-                    editandoDaSessao: veioDaSessao
+                    editandoDaSessao: veioDaSessao,
+                    areaVazio: !area,
+                    temaVazio: !tema,
+                    topicoVazio: !topico
                 });
                 
                 // Validação: área e tema são obrigatórios
                 if (!area || !tema || !topico) {
-                    console.error('[DEBUG VRVS3P] Validação falhou:', { area, tema, topico, veioDaSessao, entradaId });
+                    console.error('[DEBUG VRVS3P-SALVAR] Validação falhou:', { 
+                        area, 
+                        tema, 
+                        topico, 
+                        veioDaSessao, 
+                        entradaId,
+                        areaSelectValue: areaSelect?.value,
+                        temaSelectValue: temaSelect?.value,
+                        areaSelectDisabled: areaSelect?.disabled,
+                        temaSelectDisabled: temaSelect?.disabled
+                    });
                     mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
+                    // SEMPRE limpar flag e fechar modal mesmo em erro
+                    window.editandoDaSessao = false;
                     return;
                 }
                 
@@ -9662,9 +9694,11 @@
                 }, 50);
             } catch (error) {
                 console.error('[DIÁRIO] Erro ao salvar entrada:', error);
+                console.error('[DEBUG VRVS3P-SALVAR] Stack trace:', error.stack);
                 mostrarNotificacaoFeedback('⚠️ Erro ao salvar entrada. Verifique o console.', 'error');
-                // Limpar flag em caso de erro também
+                // SEMPRE limpar flag e fechar modal mesmo em erro
                 window.editandoDaSessao = false;
+                fecharModalDiario();
             }
         }
         
@@ -9914,7 +9948,8 @@
                 tema: entradaAtual.tema
             });
             
-            // Marcar flag para indicar que veio da sessão
+            // CRÍTICO: Marcar flag ANTES de chamar editarEntradaDiario
+            // Isso garante que a função sabe que veio da sessão
             window.editandoDaSessao = true;
             
             // Usar função existente de edição
@@ -9923,10 +9958,29 @@
         
         function editarEntradaDiario(entradaId) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-            if (!entrada) return;
+            if (!entrada) {
+                console.error('[DEBUG VRVS3P] Entrada não encontrada:', entradaId);
+                return;
+            }
             
-            // Verificar se veio da sessão (desabilitar área/tema)
+            // CRÍTICO: Verificar flag ANTES de qualquer coisa
+            // Se não foi setada explicitamente por editarEntradaSessaoDiario(), assumir que veio da Lista
             const veioDaSessao = window.editandoDaSessao === true;
+            
+            // Se não veio da sessão, garantir que flag está false (pode ter ficado true de edição anterior)
+            if (!veioDaSessao) {
+                window.editandoDaSessao = false;
+            }
+            
+            // DEBUG: Log ao abrir edição
+            console.log('[DEBUG VRVS3P-SALVAR] inicial', {
+                vindoDaSessao: veioDaSessao,
+                entradaEmEdicao: entradaId,
+                areaEntrada: entrada.area,
+                temaEntrada: entrada.tema,
+                flagGlobal: window.editandoDaSessao,
+                origem: veioDaSessao ? 'SESSÃO' : 'LISTA'
+            });
             
             document.getElementById('novaDiarioId').value = entrada.id;
             const dataInput = document.getElementById('novaDiarioData');
@@ -9971,8 +10025,26 @@
             setTimeout(() => {
                 const temaSelect = document.getElementById('novaDiarioTema');
                 if (temaSelect) {
-                    // CRÍTICO: Setar valor ANTES de desabilitar
-                    temaSelect.value = entrada.tema || '';
+                    // Verificar se tema existe nas options antes de setar
+                    const temaExiste = Array.from(temaSelect.options).some(opt => opt.value === entrada.tema);
+                    
+                    if (temaExiste) {
+                        temaSelect.value = entrada.tema || '';
+                    } else {
+                        console.warn('[DEBUG VRVS3P] Tema não encontrado nas options, tentando novamente:', entrada.tema);
+                        // Tentar novamente após mais um delay (mobile pode ser mais lento)
+                        setTimeout(() => {
+                            temaSelect.value = entrada.tema || '';
+                        }, 100);
+                    }
+                    
+                    // DEBUG: Log após setar tema
+                    console.log('[DEBUG VRVS3P] Tema setado:', {
+                        temaEntrada: entrada.tema,
+                        temaSelectValue: temaSelect.value,
+                        temaExiste: temaExiste,
+                        veioDaSessao: veioDaSessao
+                    });
                     
                     // Se veio da sessão, desabilitar tema também (mas valor já está setado)
                     if (veioDaSessao) {
@@ -9983,7 +10055,7 @@
                         temaSelect.title = '';
                     }
                 }
-            }, 100); // Aumentado para 100ms para garantir que temas foram populados
+            }, 150); // Aumentado para 150ms para garantir que temas foram populados (mobile pode ser mais lento)
             
             document.getElementById('novaDiarioTopico').value = entrada.topico;
             document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
