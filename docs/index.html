@@ -6429,16 +6429,18 @@
             }
             if (sectionId === 'diario') {
                 renderDiario();
-            }
-            if (sectionId === 'analises') {
-                atualizarSelectsAnalise();
-                atualizarAnalises();
-            }
-            if (sectionId === 'diario') {
                 // Atualizar chip VRVS 3P quando abrir aba Diário
                 setTimeout(() => {
                     atualizarChipVrvs3p();
                 }, 50);
+            }
+            if (sectionId === 'analises') {
+                atualizarSelectsAnalise();
+                // Garantir que diário está carregado antes de calcular análises
+                if (!window.diario) {
+                    carregarDiario();
+                }
+                atualizarAnalises();
             }
             // Novas seções consolidadas
             if (sectionId === 'analytics') {
@@ -6613,14 +6615,24 @@
         }
         
         function calcularAnalises() {
-            // Calcular métricas VRVS 3P primeiro (se diário disponível)
+            // Calcular métricas VRVS 3P primeiro (garantir que diário está carregado)
             let htmlVrvs3p = '';
-            if (window.diario && Array.isArray(window.diario.entradas)) {
-                const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
-                const faixa = stats.retencaoGlobal !== null ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
-                const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats.totalAtivos);
-                
-                htmlVrvs3p = `
+            
+            // Garantir que window.diario existe (se não, inicializar vazio)
+            if (!window.diario) {
+                window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+            }
+            if (!Array.isArray(window.diario.entradas)) {
+                window.diario.entradas = [];
+            }
+            
+            // Sempre calcular estatísticas (mesmo se vazio)
+            const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
+            const faixa = stats.retencaoGlobal !== null ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
+            const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats.totalAtivos);
+            
+            // Sempre renderizar painel (mesmo se vazio)
+            htmlVrvs3p = `
                     <section id="painel-vrvs3p" class="vrvs3p-card" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; padding: 20px; margin-bottom: 30px;">
                         <h3 style="color: var(--turquesa-light); margin-bottom: 20px; font-size: 18px; font-weight: 600;">🧠 Saúde do Diário VRVS 3P</h3>
                         
@@ -6701,7 +6713,6 @@
                         `}
                     </section>
                 `;
-            }
             
             const areaFiltro = document.getElementById('analiseFiltroArea').value;
             const temaFiltro = document.getElementById('analiseFiltroTema').value;
@@ -6729,9 +6740,12 @@
                 return true;
             });
             
+            // Sempre inserir painel VRVS 3P, mesmo se não houver histórico
+            const resultadosContainer = document.getElementById('analiseResultados');
+            if (!resultadosContainer) return;
+            
             if (historicoFiltrado.length === 0) {
-                document.getElementById('analiseResultados').innerHTML = 
-                    '<div class="empty-state"><div class="empty-icon">📊</div><div>Nenhum dado encontrado para os filtros selecionados</div></div>';
+                resultadosContainer.innerHTML = htmlVrvs3p + '<div class="empty-state"><div class="empty-icon">📊</div><div>Nenhum dado encontrado para os filtros selecionados</div></div>';
                 return;
             }
             
@@ -9861,9 +9875,12 @@
             const chipText = document.getElementById('vrvs3p-chip-text');
             if (!chip || !chipText) return;
             
-            if (!window.diario || !Array.isArray(window.diario.entradas)) {
-                chipText.textContent = 'Nenhum tópico ativo';
-                return;
+            // Garantir que window.diario existe (se não, inicializar vazio)
+            if (!window.diario) {
+                window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+            }
+            if (!Array.isArray(window.diario.entradas)) {
+                window.diario.entradas = [];
             }
             
             const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
