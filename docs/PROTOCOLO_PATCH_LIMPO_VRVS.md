@@ -36,21 +36,41 @@ Esse protocolo também vale por padrão para qualquer tarefa de refino/bugfix em
 
 ## 3. Regras de Ouro
 
+### ⚠️ REGRA CRÍTICA: Remover conflitos antes de adicionar regras
+
+**Sempre que identificar um conflito CSS/JS:**
+
+1. **PRIMEIRO:** Identificar qual regra está causando o conflito
+2. **SEGUNDO:** Remover ou ajustar a regra conflitante
+3. **TERCEIRO:** Só então adicionar regras novas se realmente necessário
+
+**Exemplo prático:**
+- ❌ ERRADO: Adicionar `#novaDiarioTopico { min-height: 80px !important; }` quando já existe `#modalNovaDiario .form-textarea { min-height: 300px !important; }`
+- ✅ CORRETO: Remover ou ajustar `#modalNovaDiario .form-textarea` para não afetar `#novaDiarioTopico`, ou usar especificidade maior sem `!important`
+
+## 3. Regras de Ouro (continuação)
+
 ### 3.1. Diagnóstico antes de solução
 
 Antes de sugerir qualquer mudança:
 
-1. **Mostrar o diagnóstico**:
+1. **Mostrar o diagnóstico completo**:
 
    - Quais regras CSS/JS/HTML estão afetando o elemento?
 
    - Onde há conflitos (especificidade, `!important`, media queries)?
 
-   - Se possível, apontar a **causa raiz provável**.
+   - **Identificar a causa raiz provável** - não apenas sintomas.
 
-2. Só depois propor a correção.
+   - **Verificar se há regras conflitantes que podem ser REMOVIDAS** em vez de adicionar novas.
+
+2. **Priorizar remover conflitos** em vez de adicionar regras novas.
+
+3. Só depois propor a correção mínima.
 
 **Proibido:** já sair colando bloco gigante de CSS/JS sem explicar o motivo.
+
+**Proibido:** adicionar propriedades "por tentar" sem evidência clara de necessidade (ex: `position: relative`, `left: 0`, `transform: translateZ(0)`).
 
 ---
 
@@ -96,9 +116,17 @@ Regras:
 
 - `transform`, `translateZ(0)` e hacks similares podem quebrar caret em iOS.
 
-- Só usar se o usuário pedir explicitamente **efeito visual específico** ou se o diagnóstico mostrar que é realmente necessário.
+- **REGRA RÍGIDA:** NÃO adicionar `transform: translateZ(0)`, `will-change: transform`, ou qualquer hack de aceleração hardware em containers de inputs/textarea "por tentar" ou "para melhorar performance".
 
-- Se for usar, explicar claramente o impacto.
+- Só usar se o usuário pedir explicitamente **efeito visual específico** ou se o diagnóstico mostrar evidência clara de que é realmente necessário (ex: problema de renderização específico documentado).
+
+- **Se não há evidência clara, NÃO adicionar.** Prefira remover conflitos existentes primeiro.
+
+- Se for usar, explicar claramente o impacto e por que é necessário.
+
+**Exemplo do erro que NÃO deve repetir:**
+- ❌ **ERRADO:** Sugerir adicionar `transform: translateZ(0)` no `.modal-content` "para melhorar renderização" sem evidência clara
+- ✅ **CORRETO:** Remover conflitos de CSS primeiro, só adicionar transform se houver evidência específica de necessidade
 
 ---
 
@@ -132,13 +160,29 @@ Sempre que for aplicar um patch:
 
    - etc.
 
-4. **Propor solução mínima**, por exemplo:
+4. **Propor solução mínima**, sempre priorizando:
 
-   - "Remover esta regra…"
+   - **REMOVER regras conflitantes** em vez de adicionar novas
+
+   - **AJUSTAR especificidade** em vez de usar `!important`
+
+   - **CORRIGIR a causa raiz** em vez de adicionar hacks
+
+   Exemplos corretos:
+
+   - "Remover esta regra X que está em conflito…"
+
+   - "Ajustar especificidade desta regra para não conflitar…"
 
    - "Substituir a função `renderAgendaAtrasados()` por esta versão completa…"
 
-   - "Definir este seletor específico assim…"
+   Exemplos ERRADOS (evitar):
+
+   - "Adicionar `position: relative` e `left: 0` para forçar posição…" (sem evidência)
+
+   - "Adicionar `transform: translateZ(0)` para melhorar renderização…" (hack sem necessidade)
+
+   - "Adicionar mais `!important` para sobrescrever…" (prefira remover conflito)
 
 5. **Deixar o patch bem delimitado**, com instruções do tipo:
 
@@ -158,11 +202,13 @@ Quando o PROTOCOLO PATCH LIMPO estiver ativo, **NÃO FAZER**:
 
 1. Jogar blocos grandes com `!important` em ids sem real necessidade.
 
-2. Adicionar `transform: translateZ(0)` ou hacks de aceleração em containers de inputs/textarea só "por tentar".
+2. Adicionar `transform: translateZ(0)`, `will-change`, `position: relative`, `left: 0`, ou qualquer hack "por tentar" sem evidência clara de necessidade.
 
-3. Alterar múltiplas abas/telas de uma vez quando o usuário pediu só uma (ex: pediu Agenda → Atrasados, não mexer em Tarefas).
+3. **Adicionar propriedades sem evidência:** Se não há evidência clara de que uma propriedade resolve o problema, NÃO adicionar. Prefira remover conflitos existentes primeiro.
 
-4. Mudar sem avisar:
+4. Alterar múltiplas abas/telas de uma vez quando o usuário pediu só uma (ex: pediu Agenda → Atrasados, não mexer em Tarefas).
+
+5. Mudar sem avisar:
 
    - hierarquia HTML importante,
 
@@ -170,11 +216,13 @@ Quando o PROTOCOLO PATCH LIMPO estiver ativo, **NÃO FAZER**:
 
    - comportamento de funções globais.
 
-5. Responder "Pronto, corrigido" sem:
+6. Responder "Pronto, corrigido" sem:
 
    - explicar o que mudou,
 
    - nem listar o que testar.
+
+7. **Ignorar conflitos existentes:** Se identificar uma regra conflitante (ex: `min-height: 300px !important` sobrescrevendo `min-height: 80px`), REMOVER ou ajustar a regra conflitante primeiro, não adicionar mais regras em cima.
 
 ---
 
