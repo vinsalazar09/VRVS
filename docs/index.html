@@ -6631,6 +6631,8 @@
             const faixa = stats.retencaoGlobal !== null ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
             const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats.totalAtivos);
             
+            console.log('[VRVS3P] Calculando painel em calcularAnalises(), stats:', stats);
+            
             // Sempre renderizar painel (mesmo se vazio)
             htmlVrvs3p = `
                     <section id="painel-vrvs3p" class="vrvs3p-card" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; padding: 20px; margin-bottom: 30px;">
