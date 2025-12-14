@@ -549,29 +549,44 @@
         
         /* ==================== SRS - ESTILOS DIÁRIO ==================== */
         
-        /* Chip VRVS 3P no Diário - garantir layout compacto */
+        /* Chip VRVS 3P no Diário - pill discreto e legível */
         #vrvs3p-chip-diario {
-            display: inline-flex !important;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: rgba(5, 25, 30, 0.96);
+            padding: 6px 14px;
+            background: rgba(0, 206, 209, 0.15);
             border: 1px solid rgba(0, 206, 209, 0.4);
-            font-size: 12px;
-            color: rgba(255,255,255,0.9);
+            border-radius: 20px;
             cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
             flex-shrink: 0;
-            width: auto !important;
-            max-width: none !important;
+            width: auto;
+            max-width: none;
         }
         
         #vrvs3p-chip-diario:hover {
-            background: rgba(5, 25, 30, 1);
+            background: rgba(0, 206, 209, 0.25);
             border-color: rgba(0, 206, 209, 0.6);
-            box-shadow: 0 0 8px rgba(0, 206, 209, 0.3);
+        }
+        
+        #vrvs3p-chip-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.2;
+        }
+        
+        /* Responsivo chip */
+        @media (max-width: 400px) {
+            #vrvs3p-chip-diario {
+                padding: 4px 10px;
+            }
+            
+            #vrvs3p-chip-text {
+                font-size: 11px;
+            }
         }
         
         /* Tabs Lista/Sessão */
@@ -1787,10 +1802,13 @@
         
         /* ===== PAINEL VRVS 3P COLAPSÁVEL ===== */
         
+        /* ===== PAINEL VRVS 3P COLAPSÁVEL - REFINADO ===== */
+        
         .vrvs3p-card {
-            background: rgba(0,206,209,0.05);
-            border: 1px solid rgba(0,206,209,0.2);
-            border-radius: 12px;
+            background: rgba(10, 26, 31, 0.95);
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 16px;
+            padding: 20px;
             margin-bottom: 20px;
             overflow: hidden;
             transition: all 0.2s ease;
@@ -1801,25 +1819,33 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 16px;
+            padding: 0;
             background: transparent;
             border: none;
             cursor: pointer;
             text-align: left;
             transition: background 0.2s ease;
+            margin-bottom: 0;
         }
         
         .vrvs3p-header:hover {
-            background: rgba(0,206,209,0.05);
+            opacity: 0.9;
         }
         
         .vrvs3p-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--turquesa-light);
+            font-size: 18px;
+            font-weight: 700;
+            color: #00CED1;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+        
+        .vrvs3p-header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
         
         .vrvs3p-summary {
@@ -1828,21 +1854,22 @@
         }
         
         .vrvs3p-caret {
-            font-size: 14px;
-            color: var(--turquesa-light);
-            transition: transform 0.2s ease;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            transition: transform 0.3s ease;
             flex-shrink: 0;
+            padding: 4px 8px;
         }
         
         .vrvs3p-body {
-            padding: 0 16px 16px 16px;
+            padding-top: 20px;
             transition: max-height 0.3s ease, opacity 0.2s ease;
             overflow: hidden;
         }
         
         .vrvs3p-card.vrvs3p-collapsed .vrvs3p-body {
             max-height: 0;
-            padding: 0 16px;
+            padding-top: 0;
             opacity: 0;
             overflow: hidden;
         }
@@ -1854,6 +1881,142 @@
         
         .vrvs3p-card.vrvs3p-collapsed .vrvs3p-caret {
             transform: rotate(-90deg);
+        }
+        
+        /* Barra de retenção */
+        .vrvs3p-barra-container {
+            margin-bottom: 16px;
+        }
+        
+        .vrvs3p-barra-track {
+            width: 100%;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 7px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .vrvs3p-barra-fill {
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.5s ease, background-color 0.3s ease;
+        }
+        
+        .vrvs3p-barra-fill.baixa { background: #dc3545; }
+        .vrvs3p-barra-fill.media { background: #f59e0b; }
+        .vrvs3p-barra-fill.alta  { background: #22c55e; }
+        
+        .vrvs3p-barra-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        
+        .vrvs3p-barra-percent {
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        
+        .vrvs3p-barra-status {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+        }
+        
+        /* Métricas */
+        .vrvs3p-metricas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 20px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .vrvs3p-metrica {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .vrvs3p-metrica-valor {
+            font-weight: 700;
+            color: #00CED1;
+        }
+        
+        .vrvs3p-metrica-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Mensagem pedagógica */
+        .vrvs3p-mensagem-box {
+            background: rgba(0, 206, 209, 0.1);
+            border: 1px solid rgba(0, 206, 209, 0.2);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+        
+        .vrvs3p-mensagem-box.baixa {
+            background: rgba(220, 53, 69, 0.1);
+            border-color: rgba(220, 53, 69, 0.3);
+        }
+        
+        .vrvs3p-mensagem-box.media {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        
+        .vrvs3p-mensagem-box.alta {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+        
+        .vrvs3p-mensagem-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .vrvs3p-mensagem-emoji {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        /* Disclaimer */
+        .vrvs3p-disclaimer {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+            margin-top: 8px;
+        }
+        
+        /* Responsivo */
+        @media (max-width: 480px) {
+            .vrvs3p-card {
+                padding: 16px;
+            }
+            
+            .vrvs3p-title {
+                font-size: 16px;
+            }
+            
+            .vrvs3p-metricas {
+                font-size: 13px;
+                gap: 6px 16px;
+            }
+            
+            .vrvs3p-mensagem-box {
+                padding: 12px 14px;
+            }
+            
+            .vrvs3p-mensagem-text {
+                font-size: 13px;
+            }
         }
         
         .area-content {
@@ -9568,16 +9731,16 @@
         // Mensagem pedagógica baseada em retenção global
         function mensagemRetencao(retencaoGlobal, totalAtivos) {
             if (totalAtivos === 0) {
-                return '✨ Nenhum tópico ativo ainda. Adicione entradas ao Diário e marque "Incluir nas revisões programadas" para começar.';
+                return '✨ Nenhum tópico ativo ainda. Crie entradas no Diário com VRVS 3P marcado.';
             }
             
             const pct = retencaoGlobal * 100;
             if (pct >= 80) {
                 return '🎯 Excelente! Seus tópicos estão bem consolidados. Continue no ritmo.';
             } else if (pct >= 65) {
-                return '⚡ Alguns tópicos precisam de atenção. 10 minutos de revisão hoje fazem diferença.';
+                return '⚡ Alguns tópicos precisam de atenção. Priorize os que estão para hoje.';
             } else {
-                return '📚 Hora de revisar! Muitos tópicos estão esfriando. Foque nas áreas em vermelho.';
+                return '📚 Hora de revisar! Muitos tópicos estão esfriando. Faça uma sessão hoje.';
             }
         }
         
@@ -10124,9 +10287,12 @@
             const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
             let resumo = '';
             if (stats.totalAtivos === 0) {
-                resumo = 'Nenhum tópico ativo';
+                resumo = 'Nenhum ativo';
             } else {
-                resumo = `VRVS 3P: ${stats.totalAtivos} ativos · ${stats.totalHoje} hoje · ${stats.totalAtrasadas} atrasados`;
+                resumo = `${stats.totalAtivos} ativos · ${stats.totalHoje} hoje`;
+                if (stats.totalAtrasadas > 0) {
+                    resumo += ` · ${stats.totalAtrasadas} ⚠️`;
+                }
             }
             chipText.textContent = resumo;
         }
