@@ -6444,6 +6444,10 @@
             }
             // Novas seções consolidadas
             if (sectionId === 'analytics') {
+                // Garantir que diário está carregado antes de renderizar Analytics
+                if (!window.diario) {
+                    carregarDiario();
+                }
                 // Garantir que a vista inicial seja renderizada
                 if (!vistaAnalytics) vistaAnalytics = 'resumo';
                 renderAnalytics();
@@ -6965,7 +6969,6 @@
             // Detalhamento por tema quando filtrado por tema específico (não mostrar, já está no resumo geral)
             
             // Inserir painel VRVS 3P no topo dos resultados
-            console.log('[VRVS3P] Inserindo painel em analiseResultados, htmlVrvs3p length:', htmlVrvs3p.length);
             document.getElementById('analiseResultados').innerHTML = htmlVrvs3p + html;
             
             // Se análises de tempo estão visíveis, recalcular
@@ -11415,13 +11418,24 @@
             const mensagemVrvs3p = mensagemRetencao(statsVrvs3p.retencaoGlobal || 0, statsVrvs3p.totalAtivos);
             
             // Montar painel VRVS 3P (versão simplificada para Resumo)
+            // SEMPRE renderizar painel (mesmo se vazio)
             if (statsVrvs3p.totalAtivos > 0) {
+                const corBarra = faixaVrvs3p === 'alta' ? '#22c55e' : faixaVrvs3p === 'media' ? '#f59e0b' : '#dc3545';
                 htmlVrvs3p = `
                     <section id="painel-vrvs3p" class="vrvs3p-card" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: block;">
                         <h3 style="color: var(--turquesa-light); margin-bottom: 12px; font-size: 16px; font-weight: 600;">🧠 Saúde do Diário VRVS 3P</h3>
+                        ${statsVrvs3p.retencaoGlobalPct !== null ? `
+                            <div style="margin-bottom: 12px;">
+                                <div style="width: 100%; height: 20px; background: rgba(5,25,30,0.8); border-radius: 10px; overflow: hidden; position: relative;">
+                                    <div style="width: ${statsVrvs3p.retencaoGlobalPct}%; height: 100%; background: ${corBarra}; transition: width 0.3s ease;"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                                    <span style="font-size: 14px; font-weight: 600; color: var(--turquesa-light);">${statsVrvs3p.retencaoGlobalPct}%</span>
+                                    <span style="font-size: 12px; color: rgba(255,255,255,0.7);">${faixaVrvs3p === 'alta' ? 'Alta' : faixaVrvs3p === 'media' ? 'Média' : 'Baixa'}</span>
+                                </div>
+                            </div>
+                        ` : ''}
                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: rgba(255,255,255,0.9);">
-                            ${statsVrvs3p.retencaoGlobalPct !== null ? `<span style="font-weight: 600; color: var(--turquesa-light);">${statsVrvs3p.retencaoGlobalPct}%</span>` : ''}
-                            <span>•</span>
                             <span><strong style="color: var(--turquesa-light);">${statsVrvs3p.totalAtivos}</strong> ativos</span>
                             <span>•</span>
                             <span><strong style="color: var(--cobre-light);">${statsVrvs3p.totalHoje}</strong> hoje</span>
@@ -11438,9 +11452,6 @@
                     </section>
                 `;
             }
-            
-            console.log('[VRVS3P] htmlVrvs3p length:', htmlVrvs3p.length);
-            console.log('[VRVS3P] Stats:', statsVrvs3p);
             
             container.innerHTML = htmlVrvs3p + `
                 <div class="stats-grid">
