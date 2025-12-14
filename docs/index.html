@@ -549,6 +549,31 @@
         
         /* ==================== SRS - ESTILOS DIÁRIO ==================== */
         
+        /* Chip VRVS 3P no Diário - garantir layout compacto */
+        #vrvs3p-chip-diario {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(5, 25, 30, 0.96);
+            border: 1px solid rgba(0, 206, 209, 0.4);
+            font-size: 12px;
+            color: rgba(255,255,255,0.9);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+            width: auto !important;
+            max-width: none !important;
+        }
+        
+        #vrvs3p-chip-diario:hover {
+            background: rgba(5, 25, 30, 1);
+            border-color: rgba(0, 206, 209, 0.6);
+            box-shadow: 0 0 8px rgba(0, 206, 209, 0.3);
+        }
+        
         /* Tabs Lista/Sessão */
         .diario-tabs {
             display: flex;
@@ -3011,9 +3036,9 @@
             <div id="diario" class="section">
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 0 0 auto;">
                             <span>📔 DIÁRIO DE APRENDIZADOS</span>
-                            <div id="vrvs3p-chip-diario" class="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p()" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.4); font-size: 12px; color: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
+                            <div id="vrvs3p-chip-diario" class="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p(); event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.4); font-size: 12px; color: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; flex-shrink: 0;">
                                 🧠 <span id="vrvs3p-chip-text" style="color: rgba(255,255,255,0.9);">Carregando...</span>
                             </div>
                         </div>
@@ -10042,16 +10067,40 @@
             // Garantir que está na sub-aba Resumo
             setTimeout(() => {
                 setVistaAnalytics('resumo');
-                // Scroll até o painel após renderizar
+                // Scroll até o painel após renderizar e expandir se estiver colapsado
                 setTimeout(() => {
                     const painel = document.getElementById('painel-vrvs3p');
                     if (painel) {
+                        // Se estiver colapsado, expandir antes de fazer scroll
+                        if (painel.classList.contains('vrvs3p-collapsed')) {
+                            togglePainelVrvs3p();
+                        }
                         painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     } else {
                         console.warn('[VRVS3P] Painel não encontrado após navegação');
                     }
                 }, 200);
             }, 100);
+        }
+        
+        // Toggle do painel VRVS 3P (colapsável)
+        function togglePainelVrvs3p() {
+            const painel = document.getElementById('painel-vrvs3p');
+            const body = painel ? painel.querySelector('.vrvs3p-body') : null;
+            const caret = painel ? painel.querySelector('.vrvs3p-caret') : null;
+            
+            if (painel && body) {
+                painel.classList.toggle('vrvs3p-collapsed');
+                
+                // Rotacionar caret
+                if (caret) {
+                    if (painel.classList.contains('vrvs3p-collapsed')) {
+                        caret.style.transform = 'rotate(-90deg)';
+                    } else {
+                        caret.style.transform = 'rotate(0deg)';
+                    }
+                }
+            }
         }
         
         function renderDiario() {
