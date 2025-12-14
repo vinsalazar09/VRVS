@@ -4320,6 +4320,7 @@
                 }
                 
                 // 6. Após render, expandir e scrollar
+                // TAREFA 1 FIX: Aumentar timeout para garantir DOM totalmente renderizado
                 setTimeout(() => {
                     const temaIdClean = temaIdStr;
                     
@@ -4334,28 +4335,56 @@
                         }
                     }
                     
-                    // Expandir tema
-                    const temaConteudo = document.getElementById(`tema-conteudo-${temaIdClean}`);
-                    if (temaConteudo && temaConteudo.classList.contains('collapsed')) {
-                        if (typeof toggleTemaCaderno === 'function') {
-                            toggleTemaCaderno(temaIdClean);
+                    // Expandir tema - TAREFA 1 FIX: Garantir que CSS seja aplicado corretamente
+                    setTimeout(() => {
+                        const temaConteudo = document.getElementById(`tema-conteudo-${temaIdClean}`);
+                        if (temaConteudo) {
+                            // Forçar expansão manual para garantir CSS correto
+                            if (temaConteudo.classList.contains('collapsed')) {
+                                temaConteudo.classList.remove('collapsed');
+                                temaConteudo.style.display = 'block';
+                                
+                                // TAREFA 1 FIX: Forçar altura completa sem limitação
+                                // Aguardar um frame para scrollHeight estar correto
+                                requestAnimationFrame(() => {
+                                    const scrollHeight = temaConteudo.scrollHeight || 0;
+                                    temaConteudo.style.maxHeight = Math.max(scrollHeight + 100, 9999) + 'px';
+                                    temaConteudo.style.overflow = 'visible';
+                                    
+                                    // Garantir que CSS de texto completo seja aplicado
+                                    const hottopicsText = temaConteudo.querySelector('.hottopics-text');
+                                    const conteudoText = temaConteudo.querySelector('.conteudo-text');
+                                    if (hottopicsText) {
+                                        hottopicsText.style.whiteSpace = 'pre-wrap';
+                                        hottopicsText.style.wordWrap = 'break-word';
+                                        hottopicsText.style.overflow = 'visible';
+                                    }
+                                    if (conteudoText) {
+                                        conteudoText.style.whiteSpace = 'pre-wrap';
+                                        conteudoText.style.wordWrap = 'break-word';
+                                        conteudoText.style.overflow = 'visible';
+                                    }
+                                    
+                                    // Scroll e highlight após garantir conteúdo completo
+                                    setTimeout(() => {
+                                        const elemento = document.querySelector(`[data-tema-id="${temaIdClean}"]`) || temaConteudo;
+                                        if (elemento) {
+                                            elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            
+                                            const originalBg = elemento.style.background;
+                                            elemento.style.background = 'rgba(0, 206, 209, 0.22)';
+                                            elemento.style.transition = 'background 0.3s ease';
+                                            setTimeout(() => {
+                                                elemento.style.background = originalBg || '';
+                                            }, 2000);
+                                        }
+                                    }, 100);
+                                });
+                            }
                         }
-                    }
-                    
-                    // Scroll e highlight
-                    const elemento = document.querySelector(`[data-tema-id="${temaIdClean}"]`) || temaConteudo;
-                    if (elemento) {
-                        elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        
-                        const originalBg = elemento.style.background;
-                        elemento.style.background = 'rgba(0, 206, 209, 0.22)';
-                        elemento.style.transition = 'background 0.3s ease';
-                        setTimeout(() => {
-                            elemento.style.background = originalBg || '';
-                        }, 2000);
-                    }
-                }, 200);
-            }, 100);
+                    }, 150); // Aumentado de 0 para 150ms para garantir área expandida primeiro
+                }, 300); // Aumentado de 200ms para 300ms para garantir renderização completa
+            }, 200); // Aumentado de 100ms para 200ms para garantir showSection completou
         }
         
         // Toggle mostrar/ocultar contexto do tema
