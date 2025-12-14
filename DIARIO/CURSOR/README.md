@@ -1,33 +1,39 @@
-# 📖 Pasta CURSOR - Regras e Estrutura
+# 📖 Pasta CURSOR - Documentação Técnica
 
-Esta pasta é específica do **Cursor AI** e contém apenas **4 tipos de arquivos**:
+**Esta pasta contém documentação técnica para consulta do Cursor AI.**
 
-## 📁 Arquivos Permitidos
+## 🚨 IMPORTANTE
 
-1. **`00_LEIA_PRIMEIRO_SEMPRE.txt`** - Código de conduta (LEMA PRIMEIRO)
-   - Deve ser lido sempre ao iniciar um chat
-   - Contém protocolos e regras fundamentais
+- **`00_LEIA_PRIMEIRO_SEMPRE.txt`** - LEIA PRIMEIRO! Protocolos e regras fundamentais
+- **`INDICE_RAPIDO.md`** - Índice rápido para consulta
+- **`README_ORGANIZACAO.md`** - Estrutura completa e organização
 
-2. **`RESUMO_SESSAO_*.txt`** - Resumos de cada sessão
-   - Um arquivo por sessão
-   - Formato: `RESUMO_SESSAO_YYYYMMDD.txt` ou `RESUMO_SESSAO_YYYYMMDD_HHMM.txt`
+## 📁 ESTRUTURA PRINCIPAL
 
-3. **`CADERNO_ERROS_ACERTOS.txt`** - Histórico de erros e acertos
-   - Um único arquivo que cresce ao longo do tempo
-   - Sempre adicionar ao final, nunca sobrescrever
+### 🔴 Crítico
+- `00_LEIA_PRIMEIRO_SEMPRE.txt` - Protocolos fundamentais
 
-4. **`README.md`** - Este arquivo (documentação da pasta)
+### 📋 Registros Técnicos
+- `REGISTRO_TECNICO_*.md` - Problemas complexos resolvidos
 
-## ❌ O QUE NÃO FAZER
+### 📖 Caderno de Erros e Acertos
+- `CADERNO_ERROS_ACERTOS.txt` - Registro cronológico único
 
-- ❌ NÃO criar documentos de análise aqui → use `docs/`
-- ❌ NÃO criar documentos técnicos aqui → use `docs/`
-- ❌ NÃO criar qualquer outro documento aqui → use pastas apropriadas
-- ❌ NÃO encher esta pasta de documentos
+### 🔍 Análises
+- `ANALISE_*.md` - Análises antes de implementar
 
-## 📋 Regras Importantes
+### 📊 Relatórios
+- `RELATORIO_*.md`, `RESUMO_*.md` - Relatórios e resumos
 
-- **Sempre adicionar ao final**, nunca sobrescrever completamente
-- **Proteger contra sobrescrita** - verificar se arquivo existe antes de criar
-- **Manter organização** - apenas os 4 tipos de arquivos permitidos
+### 🔧 Protocolos
+- `PROTOCOLO_*.md`, `WORKFLOW_*.md` - Protocolos e workflows
+
+### 🗑️ Arquivados
+- `_ARQUIVADOS/` - Arquivos antigos (não deletados)
+
+## 📝 CONSULTA RÁPIDA
+
+**Problema específico?** → `INDICE_RAPIDO.md`  
+**Estrutura completa?** → `README_ORGANIZACAO.md`  
+**Regras fundamentais?** → `00_LEIA_PRIMEIRO_SEMPRE.txt`
 
