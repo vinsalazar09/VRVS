@@ -719,43 +719,54 @@
         
         /* ==================== FIM SRS ESTILOS ==================== */
         
-        /* Botões de qualidade da sessão do Diário - cores específicas */
+        /* Botões de qualidade da sessão do Diário - estilo VRVS (fundo escuro + glow) */
+        /* Base neutra dos três botões */
+        .diario-sessao-botoes-qualidade button {
+            background: rgba(5, 25, 30, 0.96);
+            border-radius: 8px;
+            border-width: 1px;
+            border-style: solid;
+            color: #ffffff;
+            box-shadow: none;
+        }
+        
+        /* ESQUECI – borda/glow vermelho */
         .diario-sessao-botoes-qualidade .btn-esqueci,
         .diario-sessao-botoes-qualidade .btn-danger {
-            background: #dc3545 !important;
-            color: #fff !important;
-            border: none !important;
+            border-color: rgba(220, 53, 69, 0.85);
+            box-shadow: 0 0 12px rgba(220, 53, 69, 0.35);
         }
         
-        .diario-sessao-botoes-qualidade .btn-esqueci:hover,
-        .diario-sessao-botoes-qualidade .btn-danger:hover {
-            background: #c82333 !important;
+        .diario-sessao-botoes-qualidade .btn-esqueci:active,
+        .diario-sessao-botoes-qualidade .btn-danger:active {
+            transform: scale(0.97);
+            box-shadow: 0 0 16px rgba(220, 53, 69, 0.5);
         }
         
-        /* Botão Lembrei - âmbar */
+        /* LEMBREI – borda/glow âmbar */
         .diario-sessao-botoes-qualidade .btn-lembrei,
         .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso):not(.btn-esqueci):not(.btn-facil) {
-            background: #f59e0b !important;
-            color: #fff !important;
-            border: none !important;
+            border-color: rgba(245, 158, 11, 0.85);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
         }
         
-        .diario-sessao-botoes-qualidade .btn-lembrei:hover,
-        .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso):not(.btn-esqueci):not(.btn-facil):hover {
-            background: #d97706 !important;
+        .diario-sessao-botoes-qualidade .btn-lembrei:active,
+        .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso):not(.btn-esqueci):not(.btn-facil):active {
+            transform: scale(0.97);
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
         }
         
-        /* Botão Fácil - verde */
+        /* FÁCIL – borda/glow verde */
         .diario-sessao-botoes-qualidade .btn-facil,
         .diario-sessao-botoes-qualidade .btn-sucesso {
-            background: #22c55e !important;
-            color: #fff !important;
-            border: none !important;
+            border-color: rgba(34, 197, 94, 0.85);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
         }
         
-        .diario-sessao-botoes-qualidade .btn-facil:hover,
-        .diario-sessao-botoes-qualidade .btn-sucesso:hover {
-            background: #16a34a !important;
+        .diario-sessao-botoes-qualidade .btn-facil:active,
+        .diario-sessao-botoes-qualidade .btn-sucesso:active {
+            transform: scale(0.97);
+            box-shadow: 0 0 16px rgba(34, 197, 94, 0.5);
         }
         
         /* Manter outros usos de btn-danger e btn-sucesso */
@@ -2323,8 +2334,8 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn" onclick="salvarEntradaDiario()" style="flex: 1;">💾 SALVAR</button>
-                    <button class="btn btn-secondary" onclick="salvarEContinuarDiario()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
+                    <button type="button" class="btn" onclick="salvarEntradaDiario()" style="flex: 1;">💾 SALVAR</button>
+                    <button type="button" class="btn btn-secondary" onclick="salvarEContinuarDiario()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
                 </div>
             </div>
         </div>
@@ -3137,6 +3148,18 @@
                             <input type="file" class="form-input" id="importDiario" accept=".csv">
                         </div>
                         <button class="btn" onclick="importarArquivos()">📥 PROCESSAR IMPORTAÇÃO</button>
+                        
+                        <div style="border-top: 1px solid rgba(0,206,209,0.3); margin-top: 20px; padding-top: 20px;">
+                            <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR BACKUP COMPLETO (JSON)</h3>
+                            <div class="form-group">
+                                <label class="form-label">Arquivo Backup Completo VRVS (.json)</label>
+                                <input type="file" class="form-input" id="importBackupJSON" accept=".json">
+                            </div>
+                            <button class="btn" onclick="importarBackupJSON()" style="background: var(--turquesa-main);">📥 RESTAURAR BACKUP COMPLETO</button>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                                ⚠️ Esta operação substitui TODOS os dados atuais pelos do backup. Faça backup antes de restaurar!
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Reset -->
@@ -3193,11 +3216,14 @@
         
         function fazerBackupCompleto() {
             const backup = {
+                schemaVersion: 'VRVS_BACKUP_v1',
                 timestamp: new Date().toISOString(),
                 dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
                 historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
                 anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
-                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]')
+                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
+                diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
+                config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
             };
             
             const backupKey = `vrvs_backup_${Date.now()}`;
@@ -3215,6 +3241,148 @@
             
             console.log(`[BACKUP] Backup criado: ${backupKey}`);
             return backupKey;
+        }
+        
+        // Exportar backup completo em JSON (download)
+        function exportarBackupJSON() {
+            try {
+                const backup = {
+                    schemaVersion: 'VRVS_BACKUP_v1',
+                    createdAt: new Date().toISOString(),
+                    vrvs_dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
+                    vrvs_historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
+                    vrvs_anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
+                    vrvs_lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
+                    vrvs_diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
+                    vrvs_config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
+                };
+                
+                // Contar itens para preview
+                const totalDados = backup.vrvs_dados.length;
+                const totalHistorico = backup.vrvs_historico.length;
+                const totalAnotacoes = backup.vrvs_anotacoes.length;
+                const totalLembretes = backup.vrvs_lembretes.length;
+                const totalDiario = backup.vrvs_diario.entradas?.length || 0;
+                
+                const jsonStr = JSON.stringify(backup, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const hoje = new Date().toISOString().split('T')[0];
+                const hora = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+                a.download = `vrvs_backup_${hoje}_${hora}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                mostrarNotificacaoFeedback(`✅ Backup completo exportado! (${totalDados} temas, ${totalHistorico} sessões, ${totalAnotacoes} anotações, ${totalLembretes} lembretes, ${totalDiario} entradas do Diário)`);
+            } catch (error) {
+                console.error('[BACKUP] Erro ao exportar JSON:', error);
+                mostrarNotificacaoFeedback('⚠️ Erro ao exportar backup. Verifique o console.', 'error');
+            }
+        }
+        
+        // Importar backup completo em JSON
+        function importarBackupJSON() {
+            const fileInput = document.getElementById('importBackupJSON');
+            const file = fileInput?.files[0];
+            
+            if (!file) {
+                mostrarNotificacaoFeedback('⚠️ Selecione um arquivo de backup JSON!', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onerror = () => {
+                mostrarNotificacaoFeedback('❌ Erro ao ler arquivo!', 'error');
+            };
+            
+            reader.onload = (e) => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    // Validar schemaVersion
+                    if (!backup.schemaVersion || backup.schemaVersion !== 'VRVS_BACKUP_v1') {
+                        mostrarNotificacaoFeedback('⚠️ Arquivo não é um backup VRVS válido (schemaVersion incorreto)', 'error');
+                        return;
+                    }
+                    
+                    // Mostrar preview antes de restaurar
+                    const totalDados = backup.vrvs_dados?.length || 0;
+                    const totalHistorico = backup.vrvs_historico?.length || 0;
+                    const totalAnotacoes = backup.vrvs_anotacoes?.length || 0;
+                    const totalLembretes = backup.vrvs_lembretes?.length || 0;
+                    const totalDiario = backup.vrvs_diario?.entradas?.length || 0;
+                    
+                    const confirmacao = confirm(
+                        `Este backup contém:\n` +
+                        `• ${totalDados} temas\n` +
+                        `• ${totalHistorico} sessões\n` +
+                        `• ${totalAnotacoes} anotações\n` +
+                        `• ${totalLembretes} lembretes\n` +
+                        `• ${totalDiario} entradas do Diário\n\n` +
+                        `⚠️ ATENÇÃO: Esta operação substituirá TODOS os dados atuais!\n\n` +
+                        `Deseja continuar?`
+                    );
+                    
+                    if (!confirmacao) return;
+                    
+                    // Fazer backup antes de restaurar
+                    fazerBackupCompleto();
+                    
+                    // Restaurar dados
+                    if (backup.vrvs_dados) {
+                        localStorage.setItem('vrvs_dados', JSON.stringify(backup.vrvs_dados));
+                        dados = backup.vrvs_dados;
+                    }
+                    
+                    if (backup.vrvs_historico) {
+                        localStorage.setItem('vrvs_historico', JSON.stringify(backup.vrvs_historico));
+                        historico = backup.vrvs_historico;
+                    }
+                    
+                    if (backup.vrvs_anotacoes) {
+                        localStorage.setItem('vrvs_anotacoes', JSON.stringify(backup.vrvs_anotacoes));
+                        anotacoes = backup.vrvs_anotacoes;
+                    }
+                    
+                    if (backup.vrvs_lembretes) {
+                        localStorage.setItem('vrvs_lembretes', JSON.stringify(backup.vrvs_lembretes));
+                    }
+                    
+                    // CRÍTICO: Restaurar Diário com SRS completo
+                    if (backup.vrvs_diario) {
+                        localStorage.setItem('vrvs_diario', JSON.stringify(backup.vrvs_diario));
+                        window.diario = backup.vrvs_diario;
+                        
+                        // Migrar SRS se necessário (mas não resetar se já está completo)
+                        migrarSRSParaVRVS3P();
+                    }
+                    
+                    if (backup.vrvs_config) {
+                        localStorage.setItem('vrvs_config', JSON.stringify(backup.vrvs_config));
+                    }
+                    
+                    // Re-renderizar tudo
+                    renderDados();
+                    renderTarefas();
+                    renderAgenda();
+                    renderHistorico();
+                    renderPendencias();
+                    renderCaderno();
+                    renderDiario();
+                    updateStats();
+                    
+                    mostrarNotificacaoFeedback('✅ Backup restaurado com sucesso! Todos os dados foram atualizados.');
+                } catch (error) {
+                    console.error('[BACKUP] Erro ao importar JSON:', error);
+                    mostrarNotificacaoFeedback('⚠️ Erro ao importar backup. Verifique se o arquivo é válido.', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
         }
         
         function validarAntesDeSalvar(tipo, dados) {
@@ -9236,11 +9404,26 @@
         }
         
         function abrirNovaEntradaDiario() {
+            // Limpar flag de edição da sessão
+            window.editandoDaSessao = false;
+            
             // Limpar campos
             document.getElementById('novaDiarioId').value = '';
             document.getElementById('novaDiarioTopico').value = '';
             document.getElementById('novaDiarioResposta').value = '';
             document.getElementById('novaDiarioAtencao').checked = false;
+            
+            // Reabilitar selects (caso tenham sido desabilitados)
+            const areaSelect = document.getElementById('novaDiarioArea');
+            const temaSelect = document.getElementById('novaDiarioTema');
+            if (areaSelect) {
+                areaSelect.disabled = false;
+                areaSelect.title = '';
+            }
+            if (temaSelect) {
+                temaSelect.disabled = false;
+                temaSelect.title = '';
+            }
             
             // Definir data padrão (hoje)
             const hoje = new Date().toISOString().split('T')[0];
@@ -9262,7 +9445,6 @@
             }
             
             // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
-            const areaSelect = document.getElementById('novaDiarioArea');
             if (areaSelect) {
                 const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])].sort();
                 areaSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -9276,7 +9458,6 @@
             }
             
             // Limpar select de temas
-            const temaSelect = document.getElementById('novaDiarioTema');
             if (temaSelect) {
                 temaSelect.innerHTML = '<option value="">Selecione uma área primeiro</option>';
             }
@@ -9313,62 +9494,91 @@
         
         function fecharModalDiario() {
             document.getElementById('modalNovaDiario').classList.remove('active');
+            
+            // Limpar flag de edição da sessão e reabilitar selects
+            if (window.editandoDaSessao) {
+                window.editandoDaSessao = false;
+                const areaSelect = document.getElementById('novaDiarioArea');
+                const temaSelect = document.getElementById('novaDiarioTema');
+                if (areaSelect) {
+                    areaSelect.disabled = false;
+                    areaSelect.title = '';
+                }
+                if (temaSelect) {
+                    temaSelect.disabled = false;
+                    temaSelect.title = '';
+                }
+            }
         }
         
         function salvarEntradaDiario() {
-            const area = document.getElementById('novaDiarioArea').value.trim();
-            const tema = document.getElementById('novaDiarioTema').value.trim();
-            const topico = document.getElementById('novaDiarioTopico').value.trim();
-            const resposta = document.getElementById('novaDiarioResposta').value.trim();
-            const atencao = document.getElementById('novaDiarioAtencao').checked;
-            const dataInput = document.getElementById('novaDiarioData');
-            const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
-            
-            if (!area || !tema || !topico) {
-                mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
-                return;
-            }
-            
-            const entradaId = document.getElementById('novaDiarioId').value;
-            const hoje = new Date().toISOString().split('T')[0];
+            try {
+                const area = document.getElementById('novaDiarioArea')?.value.trim();
+                const tema = document.getElementById('novaDiarioTema')?.value.trim();
+                const topico = document.getElementById('novaDiarioTopico')?.value.trim();
+                const resposta = document.getElementById('novaDiarioResposta')?.value.trim();
+                const atencao = document.getElementById('novaDiarioAtencao')?.checked || false;
+                const dataInput = document.getElementById('novaDiarioData');
+                const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
+                
+                if (!area || !tema || !topico) {
+                    mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
+                    return;
+                }
+                
+                const entradaId = document.getElementById('novaDiarioId')?.value;
+                const hoje = new Date().toISOString().split('T')[0];
             
             if (entradaId) {
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
                 if (entrada) {
-                    entrada.area = area;
-                    entrada.tema = tema;
-                    entrada.topico = topico;
-                    entrada.resposta = resposta;
-                    entrada.atencao = atencao;
-                    entrada.data = data; // Usar data do campo
-                    entrada.ultimaAtualizacao = hoje;
+                    // Verificar se veio da sessão
+                    const veioDaSessao = window.editandoDaSessao === true;
                     
-                    // Gerenciar SRS conforme checkbox
-                    if (atencao) {
-                        // Se marcado e não tem SRS, criar; se já tem, garantir que está ativo
-                        if (!entrada.srs) {
-                            entrada.srs = inicializarSrsVRVS3P(hoje);
-                        } else {
-                            entrada.srs.ativo = true;
-                            // Garantir campos VRVS 3P se não existirem
-                            if (!entrada.srs.engine || entrada.srs.engine !== 'VRVS_FSRS3_v1') {
-                                // Migrar se necessário (será feito na próxima carga, mas garantir aqui também)
-                                if (!entrada.srs.engine) {
-                                    const estagio = mapearRepeticoesParaEstagio(entrada.srs.repeticoes || 0);
-                                    entrada.srs.estagio = estagio;
-                                    entrada.srs.intervalo = VRVS3P_STAGE_INTERVALS[estagio];
-                                    entrada.srs.engine = 'VRVS_FSRS3_v1';
-                                    if (typeof entrada.srs.facilidade !== 'number') entrada.srs.facilidade = 2.3;
-                                    if (!Array.isArray(entrada.srs.historicoRespostas)) entrada.srs.historicoRespostas = [];
-                                    if (!entrada.srs.ultimaRevisaoData) entrada.srs.ultimaRevisaoData = hoje;
+                    // Se veio da sessão, só atualizar topico e resposta (área/tema desabilitados)
+                    if (veioDaSessao) {
+                        entrada.topico = topico;
+                        entrada.resposta = resposta;
+                        entrada.ultimaAtualizacao = hoje;
+                        // NÃO mexer em área, tema, atencao, data
+                        // NÃO resetar SRS (manter estágio, intervalo, proximaRevisao, historicoRespostas)
+                    } else {
+                        // Edição normal da Lista: atualizar tudo
+                        entrada.area = area;
+                        entrada.tema = tema;
+                        entrada.topico = topico;
+                        entrada.resposta = resposta;
+                        entrada.atencao = atencao;
+                        entrada.data = data; // Usar data do campo
+                        entrada.ultimaAtualizacao = hoje;
+                        
+                        // Gerenciar SRS conforme checkbox
+                        if (atencao) {
+                            // Se marcado e não tem SRS, criar; se já tem, garantir que está ativo
+                            if (!entrada.srs) {
+                                entrada.srs = inicializarSrsVRVS3P(hoje);
+                            } else {
+                                entrada.srs.ativo = true;
+                                // Garantir campos VRVS 3P se não existirem
+                                if (!entrada.srs.engine || entrada.srs.engine !== 'VRVS_FSRS3_v1') {
+                                    // Migrar se necessário (será feito na próxima carga, mas garantir aqui também)
+                                    if (!entrada.srs.engine) {
+                                        const estagio = mapearRepeticoesParaEstagio(entrada.srs.repeticoes || 0);
+                                        entrada.srs.estagio = estagio;
+                                        entrada.srs.intervalo = VRVS3P_STAGE_INTERVALS[estagio];
+                                        entrada.srs.engine = 'VRVS_FSRS3_v1';
+                                        if (typeof entrada.srs.facilidade !== 'number') entrada.srs.facilidade = 2.3;
+                                        if (!Array.isArray(entrada.srs.historicoRespostas)) entrada.srs.historicoRespostas = [];
+                                        if (!entrada.srs.ultimaRevisaoData) entrada.srs.ultimaRevisaoData = hoje;
+                                    }
                                 }
                             }
-                        }
-                    } else {
-                        // Se desmarcado, desativar SRS (mas não deletar para manter histórico)
-                        if (entrada.srs) {
-                            entrada.srs.ativo = false;
+                        } else {
+                            // Se desmarcado, desativar SRS (mas não deletar para manter histórico)
+                            if (entrada.srs) {
+                                entrada.srs.ativo = false;
+                            }
                         }
                     }
                 }
@@ -9397,10 +9607,37 @@
                 window.diario.entradas.push(novaEntrada);
             }
             
-            salvarDiario();
-            fecharModalDiario();
-            renderDiario();
-            mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
+                salvarDiario();
+                
+                // Verificar se veio da sessão
+                const veioDaSessao = window.editandoDaSessao === true;
+                
+                // Limpar flag
+                window.editandoDaSessao = false;
+                
+                // Fechar modal antes de renderizar (evita conflito visual)
+                fecharModalDiario();
+                
+                // Pequeno delay para garantir que modal fechou antes de renderizar (especialmente mobile)
+                setTimeout(() => {
+                    if (veioDaSessao) {
+                        // Se veio da sessão, re-renderizar apenas o card atual da sessão
+                        const entradaAtual = getEntradaAtualSessao();
+                        if (entradaAtual) {
+                            renderSessaoDiario(entradaAtual);
+                        }
+                    } else {
+                        // Edição normal: renderizar lista completa
+                        renderDiario();
+                    }
+                    mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
+                }, 50);
+            } catch (error) {
+                console.error('[DIÁRIO] Erro ao salvar entrada:', error);
+                mostrarNotificacaoFeedback('⚠️ Erro ao salvar entrada. Verifique o console.', 'error');
+                // Limpar flag em caso de erro também
+                window.editandoDaSessao = false;
+            }
         }
         
         function salvarEContinuarDiario() {
@@ -9450,9 +9687,16 @@
                 entradasFiltradas = entradasFiltradas.filter(e => e.data === filtroData);
             }
             
-            // Separar entradas que precisam revisão (com ⚠️)
-            const hoje = new Date().toISOString().split('T')[0];
-            const entradasRevisar = entradasFiltradas.filter(e => e.atencao);
+            // Separar entradas que precisam revisão (com ⚠️ ou SRS ativo com proximaRevisao <= hoje)
+            const hoje = hojeStr();
+            const entradasRevisar = entradasFiltradas.filter(e => {
+                // Entrada marcada com atenção OU tem SRS ativo programado para hoje
+                if (e.atencao) return true;
+                if (e.srs && e.srs.ativo && e.srs.proximaRevisao) {
+                    return e.srs.proximaRevisao <= hoje;
+                }
+                return false;
+            });
             
             // Renderizar seção "Revisar Hoje"
             const revisarHoje = document.getElementById('diarioRevisarHoje');
@@ -9630,15 +9874,31 @@
             }
         }
         
+        // Editar entrada a partir da sessão (desabilita área/tema)
+        function editarEntradaSessaoDiario() {
+            const entradaAtual = getEntradaAtualSessao();
+            if (!entradaAtual) return;
+            
+            // Marcar flag para indicar que veio da sessão
+            window.editandoDaSessao = true;
+            
+            // Usar função existente de edição
+            editarEntradaDiario(entradaAtual.id);
+        }
+        
         function editarEntradaDiario(entradaId) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
             if (!entrada) return;
+            
+            // Verificar se veio da sessão (desabilitar área/tema)
+            const veioDaSessao = window.editandoDaSessao === true;
             
             document.getElementById('novaDiarioId').value = entrada.id;
             const dataInput = document.getElementById('novaDiarioData');
             if (dataInput) {
                 dataInput.value = entrada.data || new Date().toISOString().split('T')[0];
             }
+            
             // Popular select de áreas
             const areaSelect = document.getElementById('novaDiarioArea');
             if (areaSelect) {
@@ -9650,6 +9910,15 @@
                     areaSelect.appendChild(option);
                 });
                 areaSelect.value = entrada.area; // Selecionar área da entrada
+                
+                // Se veio da sessão, desabilitar área/tema
+                if (veioDaSessao) {
+                    areaSelect.disabled = true;
+                    areaSelect.title = 'Editar área/tema apenas pela Lista';
+                } else {
+                    areaSelect.disabled = false;
+                    areaSelect.title = '';
+                }
             }
             
             // Atualizar temas baseado na área selecionada
@@ -9660,6 +9929,15 @@
                 const temaSelect = document.getElementById('novaDiarioTema');
                 if (temaSelect) {
                     temaSelect.value = entrada.tema;
+                    
+                    // Se veio da sessão, desabilitar tema também
+                    if (veioDaSessao) {
+                        temaSelect.disabled = true;
+                        temaSelect.title = 'Editar área/tema apenas pela Lista';
+                    } else {
+                        temaSelect.disabled = false;
+                        temaSelect.title = '';
+                    }
                 }
             }, 50);
             
@@ -9817,7 +10095,10 @@
                 <div class="diario-sessao-card">
                     <div class="diario-sessao-meta">
                         <span>${entradaAtual.area} • ${entradaAtual.tema}</span>
-                        <span>${indice} / ${total}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span>${indice} / ${total}</span>
+                            <button onclick="editarEntradaSessaoDiario()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
+                        </div>
                     </div>
                     <div class="diario-sessao-topico">
                         ❓ ${entradaAtual.topico}
