@@ -11702,7 +11702,7 @@
             const faixaVrvs3p = statsVrvs3p.retencaoGlobal !== null ? classificarFaixaRetencao(statsVrvs3p.retencaoGlobal) : 'nenhum';
             const mensagemVrvs3p = mensagemRetencao(statsVrvs3p.retencaoGlobal || 0, statsVrvs3p.totalAtivos);
             
-            // Montar painel VRVS 3P colapsável (versão simplificada para Resumo)
+            // Montar painel VRVS 3P colapsável (versão refinada para Resumo)
             // SEMPRE renderizar painel (mesmo se vazio)
             const faixaTexto = faixaVrvs3p === 'alta' ? 'Alta' : faixaVrvs3p === 'media' ? 'Média' : 'Baixa';
             const resumoHeader = statsVrvs3p.totalAtivos > 0 && statsVrvs3p.retencaoGlobalPct !== null
@@ -11712,53 +11712,71 @@
                 : 'Nenhum tópico ativo ainda';
             
             if (statsVrvs3p.totalAtivos > 0) {
-                const corBarra = faixaVrvs3p === 'alta' ? '#22c55e' : faixaVrvs3p === 'media' ? '#f59e0b' : '#dc3545';
+                const classeBarra = faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa';
+                const classeMensagem = faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa';
                 htmlVrvs3p = `
-                    <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; margin-bottom: 20px; overflow: hidden;">
-                        <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: transparent; border: none; cursor: pointer; text-align: left;">
-                            <span class="vrvs3p-title" style="font-size: 16px; font-weight: 600; color: var(--turquesa-light); display: flex; align-items: center; gap: 8px;">🧠 Diário VRVS 3P (revisões programadas)</span>
-                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                <span class="vrvs3p-summary" style="font-size: 13px; color: rgba(255,255,255,0.8);">${resumoHeader}</span>
-                                <span class="vrvs3p-caret" style="font-size: 14px; color: var(--turquesa-light); transition: transform 0.2s ease;">▾</span>
+                    <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed">
+                        <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()">
+                            <span class="vrvs3p-title">🧠 SAÚDE DO DIÁRIO VRVS 3P</span>
+                            <div class="vrvs3p-header-right">
+                                <span class="vrvs3p-summary">${resumoHeader}</span>
+                                <span class="vrvs3p-caret">▾</span>
                             </div>
                         </button>
-                        <div class="vrvs3p-body" style="padding: 0 16px 16px 16px;">
+                        <div class="vrvs3p-body">
                             ${statsVrvs3p.retencaoGlobalPct !== null ? `
-                                <div style="margin-bottom: 12px;">
-                                    <div style="width: 100%; height: 20px; background: rgba(5,25,30,0.8); border-radius: 10px; overflow: hidden; position: relative;">
-                                        <div style="width: ${statsVrvs3p.retencaoGlobalPct}%; height: 100%; background: ${corBarra}; transition: width 0.3s ease;"></div>
+                                <div class="vrvs3p-barra-container">
+                                    <div class="vrvs3p-barra-track">
+                                        <div class="vrvs3p-barra-fill ${classeBarra}" style="width: ${statsVrvs3p.retencaoGlobalPct}%;"></div>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-                                        <span style="font-size: 14px; font-weight: 600; color: var(--turquesa-light);">${statsVrvs3p.retencaoGlobalPct}%</span>
-                                        <span style="font-size: 12px; color: rgba(255,255,255,0.7);">${faixaTexto}</span>
+                                    <div class="vrvs3p-barra-label">
+                                        <span class="vrvs3p-barra-percent">${statsVrvs3p.retencaoGlobalPct}%</span>
+                                        <span class="vrvs3p-barra-status">${faixaTexto}</span>
                                     </div>
                                 </div>
                             ` : ''}
-                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 12px;">
-                                <span><strong style="color: var(--turquesa-light);">${statsVrvs3p.totalAtivos}</strong> ativos</span>
-                                <span>•</span>
-                                <span><strong style="color: var(--cobre-light);">${statsVrvs3p.totalHoje}</strong> hoje</span>
-                                <span>•</span>
-                                <span><strong style="color: ${statsVrvs3p.totalAtrasadas > 0 ? '#dc3545' : 'rgba(255,255,255,0.8)'}">${statsVrvs3p.totalAtrasadas}</strong> atrasados</span>
+                            <div class="vrvs3p-metricas">
+                                <div class="vrvs3p-metrica">
+                                    <span class="vrvs3p-metrica-valor">${statsVrvs3p.totalAtivos}</span>
+                                    <span class="vrvs3p-metrica-label">ativos</span>
+                                </div>
+                                <div class="vrvs3p-metrica">
+                                    <span class="vrvs3p-metrica-valor">${statsVrvs3p.totalHoje}</span>
+                                    <span class="vrvs3p-metrica-label">para hoje</span>
+                                </div>
+                                <div class="vrvs3p-metrica">
+                                    <span class="vrvs3p-metrica-valor" style="color: ${statsVrvs3p.totalAtrasadas > 0 ? '#dc3545' : 'rgba(255,255,255,0.8)'}">${statsVrvs3p.totalAtrasadas}</span>
+                                    <span class="vrvs3p-metrica-label">atrasados</span>
+                                </div>
                             </div>
-                            <div style="padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border-left: 3px solid var(--turquesa-light); font-size: 13px; color: rgba(255,255,255,0.9);">
-                                ${mensagemVrvs3p}
+                            <div class="vrvs3p-mensagem-box ${classeMensagem}">
+                                <div class="vrvs3p-mensagem-text">
+                                    <span class="vrvs3p-mensagem-emoji">${mensagemVrvs3p.match(/^[^\s]+/)?.[0] || '✨'}</span>
+                                    <span>${mensagemVrvs3p.replace(/^[^\s]+\s/, '')}</span>
+                                </div>
                             </div>
+                            <div class="vrvs3p-disclaimer">Estimativa VRVS 3P · Não é nota, é mapa de esforço</div>
                         </div>
                     </section>
                 `;
             } else {
                 htmlVrvs3p = `
-                    <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; margin-bottom: 20px; overflow: hidden;">
-                        <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: transparent; border: none; cursor: pointer; text-align: left;">
-                            <span class="vrvs3p-title" style="font-size: 16px; font-weight: 600; color: var(--turquesa-light); display: flex; align-items: center; gap: 8px;">🧠 Diário VRVS 3P (revisões programadas)</span>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span class="vrvs3p-summary" style="font-size: 13px; color: rgba(255,255,255,0.7);">Nenhum tópico ativo ainda</span>
-                                <span class="vrvs3p-caret" style="font-size: 14px; color: var(--turquesa-light); transition: transform 0.2s ease;">▾</span>
+                    <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed">
+                        <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()">
+                            <span class="vrvs3p-title">🧠 SAÚDE DO DIÁRIO VRVS 3P</span>
+                            <div class="vrvs3p-header-right">
+                                <span class="vrvs3p-summary">Nenhum tópico ativo ainda</span>
+                                <span class="vrvs3p-caret">▾</span>
                             </div>
                         </button>
-                        <div class="vrvs3p-body" style="padding: 0 16px 16px 16px;">
-                            <div style="font-size: 13px; color: rgba(255,255,255,0.7);">Nenhum tópico ativo ainda</div>
+                        <div class="vrvs3p-body">
+                            <div class="vrvs3p-mensagem-box">
+                                <div class="vrvs3p-mensagem-text">
+                                    <span class="vrvs3p-mensagem-emoji">✨</span>
+                                    <span>Nenhum tópico ativo ainda. Crie entradas no Diário com VRVS 3P marcado.</span>
+                                </div>
+                            </div>
+                            <div class="vrvs3p-disclaimer">Estimativa VRVS 3P · Não é nota, é mapa de esforço</div>
                         </div>
                     </section>
                 `;
