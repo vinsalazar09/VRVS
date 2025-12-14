@@ -23,6 +23,8 @@
 
 **CHAT INICIADO:** 2025-12-12 (Sexta-feira) 22:08
 
+**CHAT INICIADO:** 2025-12-13 (Sábado) - Atualização do protocolo de início
+
 ═══════════════════════════════════════════════════════════════
 ✅ ACERTOS E SOLUÇÕES BEM SUCEDIDAS
 ═══════════════════════════════════════════════════════════════
@@ -436,6 +438,24 @@
   - **Commit:** `2d208f9`
   - **Lição:** Remover styles inline quebrados e criar CSS limpo é mais eficaz que adicionar hacks. Checkbox precisa de borda própria para ser visível em iOS.
   - **Status:** ✅ Resolvido - Checkbox visível e funcional
+
+**2025-12-13:**
+- ❌ **ERRO CRÍTICO:** Não reconheci gatilho "ativar protocolo de inicio do chat" e modifiquei código incorretamente
+  - **Causa Raiz:** Gatilhos do protocolo eram muito restritivos. Protocolo esperava apenas "INICIANDO CHAT" mas usuário disse "ativar protocolo de inicio do chat". Não reconheci como gatilho válido e assumi que era sobre código.
+  - **O que fiz de errado:** Modifiquei `index.html` criando função `ativarProtocoloInicioChat()` e forçando tutorial a aparecer sempre. Isso estava COMPLETAMENTE ERRADO.
+  - **O que deveria ter feito:** Executar os 8 passos do protocolo automaticamente (ler documentos, me contextualizar). Protocolo é sobre EU me contextualizar, NÃO sobre modificar código.
+  - **Impacto:** Usuário frustrado, tempo perdido, código modificado incorretamente (já revertido).
+  - **Solução Implementada:** 
+    1. Expandidos gatilhos no protocolo para incluir variações:
+       - "ativar protocolo de inicio/início"
+       - "protocolo de inicio/início do chat"
+       - Qualquer frase contendo "protocolo" + ("inicio"/"início"/"chat")
+       - Qualquer frase contendo "ativar" + "protocolo"
+    2. Adicionada regra crítica: "Se detectar QUALQUER gatilho, execute AUTOMATICAMENTE os 8 passos SEM PERGUNTAR"
+    3. Deixado explícito: "Este protocolo é sobre VOCÊ SE CONTEXTUALIZAR, NÃO SOBRE MODIFICAR CÓDIGO"
+  - **Lição:** SEMPRE reconhecer variações de gatilhos. Se há dúvida, executar protocolo primeiro. É melhor executar e ajustar do que não executar e fazer merda.
+  - **Prevenção:** Gatilhos expandidos, regras mais claras, aviso explícito sobre não modificar código durante protocolo.
+  - **Arquivos:** `DIARIO/CURSOR/00_LEIA_PRIMEIRO_SEMPRE.txt` atualizado com gatilhos expandidos
 
 ═══════════════════════════════════════════════════════════════
 
