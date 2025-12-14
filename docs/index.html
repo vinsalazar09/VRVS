@@ -9513,31 +9513,59 @@
         
         function salvarEntradaDiario() {
             try {
-                const area = document.getElementById('novaDiarioArea')?.value.trim();
-                const tema = document.getElementById('novaDiarioTema')?.value.trim();
+                const entradaId = document.getElementById('novaDiarioId')?.value;
+                const veioDaSessao = window.editandoDaSessao === true;
+                
+                // Se for edição e veio da sessão, usar valores originais da entrada para área/tema
+                let area, tema;
+                if (entradaId && veioDaSessao) {
+                    const entradaOriginal = window.diario.entradas.find(e => String(e.id) === entradaId);
+                    if (entradaOriginal) {
+                        // Usar valores originais da entrada (campos estão desabilitados)
+                        area = entradaOriginal.area || '';
+                        tema = entradaOriginal.tema || '';
+                    } else {
+                        // Fallback: ler dos campos mesmo desabilitados
+                        area = document.getElementById('novaDiarioArea')?.value.trim() || '';
+                        tema = document.getElementById('novaDiarioTema')?.value.trim() || '';
+                    }
+                } else {
+                    // Edição normal ou nova entrada: ler dos campos
+                    area = document.getElementById('novaDiarioArea')?.value.trim() || '';
+                    tema = document.getElementById('novaDiarioTema')?.value.trim() || '';
+                }
+                
                 const topico = document.getElementById('novaDiarioTopico')?.value.trim();
                 const resposta = document.getElementById('novaDiarioResposta')?.value.trim();
                 const atencao = document.getElementById('novaDiarioAtencao')?.checked || false;
                 const dataInput = document.getElementById('novaDiarioData');
                 const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
                 
+                // DEBUG: Log antes da validação
+                console.log('[DEBUG VRVS3P] salvarDiario()', {
+                    editandoId: entradaId,
+                    area,
+                    tema,
+                    topico: topico ? topico.substring(0, 50) + '...' : '',
+                    resposta: resposta ? resposta.substring(0, 50) + '...' : '',
+                    editandoDaSessao: veioDaSessao
+                });
+                
+                // Validação: área e tema são obrigatórios
                 if (!area || !tema || !topico) {
+                    console.error('[DEBUG VRVS3P] Validação falhou:', { area, tema, topico, veioDaSessao, entradaId });
                     mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
                     return;
                 }
                 
-                const entradaId = document.getElementById('novaDiarioId')?.value;
                 const hoje = new Date().toISOString().split('T')[0];
             
             if (entradaId) {
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
                 if (entrada) {
-                    // Verificar se veio da sessão
-                    const veioDaSessao = window.editandoDaSessao === true;
-                    
                     // Se veio da sessão, só atualizar topico e resposta (área/tema desabilitados)
-                    if (veioDaSessao) {
+                    if (veioDaSessao === true) {
                         entrada.topico = topico;
                         entrada.resposta = resposta;
                         entrada.ultimaAtualizacao = hoje;
@@ -9609,8 +9637,8 @@
             
                 salvarDiario();
                 
-                // Verificar se veio da sessão
-                const veioDaSessao = window.editandoDaSessao === true;
+                // Verificar se veio da sessão (já declarado acima, apenas usar)
+                const veioDaSessaoFlag = veioDaSessao;
                 
                 // Limpar flag
                 window.editandoDaSessao = false;
@@ -9620,7 +9648,7 @@
                 
                 // Pequeno delay para garantir que modal fechou antes de renderizar (especialmente mobile)
                 setTimeout(() => {
-                    if (veioDaSessao) {
+                    if (veioDaSessaoFlag) {
                         // Se veio da sessão, re-renderizar apenas o card atual da sessão
                         const entradaAtual = getEntradaAtualSessao();
                         if (entradaAtual) {
@@ -9879,6 +9907,13 @@
             const entradaAtual = getEntradaAtualSessao();
             if (!entradaAtual) return;
             
+            // DEBUG: Log ao abrir edição da sessão
+            console.log('[DEBUG VRVS3P] abrir edição da sessão', {
+                id: entradaAtual.id,
+                area: entradaAtual.area,
+                tema: entradaAtual.tema
+            });
+            
             // Marcar flag para indicar que veio da sessão
             window.editandoDaSessao = true;
             
@@ -9899,19 +9934,25 @@
                 dataInput.value = entrada.data || new Date().toISOString().split('T')[0];
             }
             
-            // Popular select de áreas
+            // Popular select de áreas com TODAS as áreas existentes (AREAS_FIXAS + áreas dos dados + área da entrada)
             const areaSelect = document.getElementById('novaDiarioArea');
             if (areaSelect) {
+                // Coletar todas as áreas: AREAS_FIXAS + áreas dos dados + área da entrada atual
+                const areasDosDados = [...new Set(dados.map(t => t.area).filter(a => a))];
+                const areasExistentes = [...new Set([...AREAS_FIXAS, ...areasDosDados, entrada.area].filter(a => a))].sort();
+                
                 areaSelect.innerHTML = '<option value="">Selecione...</option>';
-                AREAS_FIXAS.forEach(area => {
+                areasExistentes.forEach(area => {
                     const option = document.createElement('option');
                     option.value = area;
                     option.textContent = area;
                     areaSelect.appendChild(option);
                 });
-                areaSelect.value = entrada.area; // Selecionar área da entrada
                 
-                // Se veio da sessão, desabilitar área/tema
+                // CRÍTICO: Setar valor ANTES de desabilitar
+                areaSelect.value = entrada.area || '';
+                
+                // Se veio da sessão, desabilitar área/tema (mas valor já está setado)
                 if (veioDaSessao) {
                     areaSelect.disabled = true;
                     areaSelect.title = 'Editar área/tema apenas pela Lista';
@@ -9922,15 +9963,18 @@
             }
             
             // Atualizar temas baseado na área selecionada
-            atualizarTemasDiario(entrada.area);
+            if (entrada.area) {
+                atualizarTemasDiario(entrada.area);
+            }
             
-            // Selecionar tema após popular select
+            // Selecionar tema após popular select (com timeout maior para garantir que temas foram populados)
             setTimeout(() => {
                 const temaSelect = document.getElementById('novaDiarioTema');
                 if (temaSelect) {
-                    temaSelect.value = entrada.tema;
+                    // CRÍTICO: Setar valor ANTES de desabilitar
+                    temaSelect.value = entrada.tema || '';
                     
-                    // Se veio da sessão, desabilitar tema também
+                    // Se veio da sessão, desabilitar tema também (mas valor já está setado)
                     if (veioDaSessao) {
                         temaSelect.disabled = true;
                         temaSelect.title = 'Editar área/tema apenas pela Lista';
@@ -9939,7 +9983,7 @@
                         temaSelect.title = '';
                     }
                 }
-            }, 50);
+            }, 100); // Aumentado para 100ms para garantir que temas foram populados
             
             document.getElementById('novaDiarioTopico').value = entrada.topico;
             document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
