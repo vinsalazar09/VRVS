@@ -1937,7 +1937,7 @@
         
         .tema-item-conteudo {
             max-height: 0;
-            overflow: hidden;
+            overflow: hidden; /* Apenas quando colapsado */
             transition: max-height 0.3s ease-out;
             padding: 0 16px;
         }
@@ -1945,11 +1945,15 @@
         .tema-item-conteudo.collapsed {
             display: none;
             max-height: 0;
+            overflow: hidden; /* Quando colapsado, esconder */
         }
         
+        /* TAREFA 1: Quando expandido, permitir conteúdo completo sem truncamento */
         .tema-item-conteudo:not(.collapsed) {
             display: block;
             padding: 12px 16px;
+            overflow: visible; /* Permitir conteúdo completo visível */
+            max-height: none !important; /* Remover qualquer limite de altura quando expandido */
         }
         
         .hottopics-label,
@@ -1962,11 +1966,15 @@
             margin-bottom: 8px;
         }
         
+        /* TAREFA 1: Garantir que texto aparece completo sem truncamento */
         .hottopics-text,
         .conteudo-text {
             font-size: 13px;
             color: rgba(255, 255, 255, 0.8);
             line-height: 1.6;
+            white-space: pre-wrap; /* Preservar quebras de linha */
+            word-wrap: break-word; /* Quebrar palavras longas */
+            overflow: visible; /* Garantir que conteúdo não é cortado */
         }
         
         .conteudo-vazio {
@@ -2100,23 +2108,20 @@
         
         /* ===== CADERNO - CONTEÚDO PREVIEW ===== */
         
+        /* TAREFA 1: Remover truncamento - conteúdo completo sempre visível no Caderno */
         .conteudo-preview {
             font-size: 13px;
             color: rgba(255, 255, 255, 0.7);
-            line-height: 1.4;
-            max-height: 60px;
-            overflow: hidden;
-            position: relative;
+            line-height: 1.5;
+            /* Removido max-height e overflow: hidden para mostrar conteúdo completo */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            position: relative; /* Mantido para compatibilidade, mas sem ::after que cortava */
         }
         
+        /* TAREFA 1: Remover efeito de fade que cortava conteúdo */
         .conteudo-preview::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 20px;
-            background: linear-gradient(transparent, rgba(20, 35, 45, 0.9));
+            display: none; /* Desabilitar pseudo-elemento que criava fade e cortava conteúdo */
         }
         
         /* ===== CADERNO - PLACEHOLDER VAZIO ===== */
@@ -10685,17 +10690,10 @@
                     const temaIdStr = String(tema.temaId);
                     const conteudoId = `tema-conteudo-${temaIdStr}`;
                     
-                    const hotTopicsPreview = temHotTopics
-                        ? (tema.hotTopics.length > 200 
-                            ? tema.hotTopics.substring(0, 200) + '...' 
-                            : tema.hotTopics)
-                        : '';
-                    
-                    const conteudoPreview = temConteudo
-                        ? (tema.conteudo.length > 300 
-                            ? tema.conteudo.substring(0, 300) + '...' 
-                            : tema.conteudo)
-                        : '';
+                    // TAREFA 1: Remover truncamento - usar texto completo sempre
+                    // No Caderno, o objetivo é ver o conteúdo completo, não preview
+                    const hotTopicsCompleto = temHotTopics ? tema.hotTopics : '';
+                    const conteudoCompleto = temConteudo ? tema.conteudo : '';
                     
                     html += `
                         <div class="${itemClass}" data-tema-id="${temaIdStr}">
@@ -10710,13 +10708,13 @@
                                 ${temHotTopics ? `
                             <div class="hottopics-preview">
                                         <div class="hottopics-label">🔥 Hot Topics</div>
-                                        <div class="hottopics-text">${escapeHtmlCaderno(hotTopicsPreview).replace(/\n/g, '<br>')}</div>
+                                        <div class="hottopics-text">${escapeHtmlCaderno(hotTopicsCompleto).replace(/\n/g, '<br>')}</div>
                             </div>
                                 ` : ''}
                                 ${temConteudo ? `
                                     <div class="conteudo-preview">
                                         <div class="conteudo-label">🧾 Anotações</div>
-                                        <div class="conteudo-text">${escapeHtmlCaderno(conteudoPreview).replace(/\n/g, '<br>')}</div>
+                                        <div class="conteudo-text">${escapeHtmlCaderno(conteudoCompleto).replace(/\n/g, '<br>')}</div>
                                     </div>
                                 ` : ''}
                                 ${!temHotTopics && !temConteudo ? `
@@ -10747,10 +10745,12 @@
             if (isCollapsed) {
                 conteudo.classList.remove('collapsed');
                 conteudo.style.display = 'block';
+                // TAREFA 1: Remover limitação de altura - permitir conteúdo completo
+                // Usar scrollHeight real ou valor muito alto para não limitar
                 const scrollHeight = conteudo.scrollHeight || 0;
-                const viewportHeight = window.innerHeight || 800;
-                const maxHeight = Math.min(scrollHeight + 32, viewportHeight * 0.7);
-                conteudo.style.maxHeight = maxHeight + 'px';
+                // Usar valor muito alto (9999px) para garantir que conteúdo completo seja visível
+                conteudo.style.maxHeight = Math.max(scrollHeight + 100, 9999) + 'px';
+                conteudo.style.overflow = 'visible'; // Garantir que conteúdo não é cortado
             } else {
                 conteudo.classList.add('collapsed');
                 conteudo.style.maxHeight = '0px';
