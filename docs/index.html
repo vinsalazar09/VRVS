@@ -3013,8 +3013,8 @@
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <span>📔 DIÁRIO DE APRENDIZADOS</span>
-                            <div id="vrvs3p-chip-diario" class="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p()" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.4); font-size: 12px; opacity: 0.85; cursor: pointer; transition: all 0.2s ease;">
-                                🧠 <span id="vrvs3p-chip-text">Carregando...</span>
+                            <div id="vrvs3p-chip-diario" class="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p()" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.4); font-size: 12px; color: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
+                                🧠 <span id="vrvs3p-chip-text" style="color: rgba(255,255,255,0.9);">Carregando...</span>
                             </div>
                         </div>
                         <button onclick="abrirNovaEntradaDiario()" id="btnNovaDiario" style="background: #FF9F40 !important; color: #FFFFFF !important; border: 2px solid #FFB84D !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 700 !important; cursor: pointer !important; min-width: 90px !important; box-shadow: 0 2px 8px rgba(255, 159, 64, 0.4) !important; transition: all 0.2s ease; display: inline-block !important; position: relative !important; z-index: 10 !important; -webkit-tap-highlight-color: rgba(255, 159, 64, 0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; opacity: 1 !important; visibility: visible !important;">+ Nova</button>
@@ -9884,24 +9884,33 @@
             }
             
             const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
+            let resumo = '';
             if (stats.totalAtivos === 0) {
-                chipText.textContent = 'Nenhum tópico ativo';
+                resumo = 'Nenhum tópico ativo';
             } else {
-                chipText.textContent = `${stats.totalAtivos} ativos · ${stats.totalHoje} hoje · ${stats.totalAtrasadas} atrasados`;
+                resumo = `VRVS 3P: ${stats.totalAtivos} ativos · ${stats.totalHoje} hoje · ${stats.totalAtrasadas} atrasados`;
             }
+            chipText.textContent = resumo;
+            console.log('[VRVS3P] Chip atualizado:', resumo);
         }
         
         // Navegar para painel VRVS 3P
         function irParaPainelVrvs3p() {
-            showSection('analises');
-            requestAnimationFrame(() => {
+            // Ir para aba Analytics (não analises)
+            showSection('analytics');
+            // Garantir que está na sub-aba Resumo
+            setTimeout(() => {
+                setVistaAnalytics('resumo');
+                // Scroll até o painel após renderizar
                 setTimeout(() => {
                     const painel = document.getElementById('painel-vrvs3p');
                     if (painel) {
                         painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        console.warn('[VRVS3P] Painel não encontrado após navegação');
                     }
-                }, 100);
-            });
+                }, 200);
+            }, 100);
         }
         
         function renderDiario() {
@@ -11253,7 +11262,48 @@
                 ? `${totalQuestoesAcertos}/${totalQuestoesTotal}` 
                 : '0';
             
-            container.innerHTML = `
+            // Calcular métricas VRVS 3P para o painel
+            let htmlVrvs3p = '';
+            if (!window.diario) {
+                window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+            }
+            if (!Array.isArray(window.diario.entradas)) {
+                window.diario.entradas = [];
+            }
+            
+            const statsVrvs3p = calcularEstatisticasVrvs3p(window.diario, hojeStr());
+            const faixaVrvs3p = statsVrvs3p.retencaoGlobal !== null ? classificarFaixaRetencao(statsVrvs3p.retencaoGlobal) : 'nenhum';
+            const mensagemVrvs3p = mensagemRetencao(statsVrvs3p.retencaoGlobal || 0, statsVrvs3p.totalAtivos);
+            
+            // Montar painel VRVS 3P (versão simplificada para Resumo)
+            if (statsVrvs3p.totalAtivos > 0) {
+                htmlVrvs3p = `
+                    <section id="painel-vrvs3p" class="vrvs3p-card" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: block;">
+                        <h3 style="color: var(--turquesa-light); margin-bottom: 12px; font-size: 16px; font-weight: 600;">🧠 Saúde do Diário VRVS 3P</h3>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: rgba(255,255,255,0.9);">
+                            ${statsVrvs3p.retencaoGlobalPct !== null ? `<span style="font-weight: 600; color: var(--turquesa-light);">${statsVrvs3p.retencaoGlobalPct}%</span>` : ''}
+                            <span>•</span>
+                            <span><strong style="color: var(--turquesa-light);">${statsVrvs3p.totalAtivos}</strong> ativos</span>
+                            <span>•</span>
+                            <span><strong style="color: var(--cobre-light);">${statsVrvs3p.totalHoje}</strong> hoje</span>
+                            <span>•</span>
+                            <span><strong style="color: ${statsVrvs3p.totalAtrasadas > 0 ? '#dc3545' : 'rgba(255,255,255,0.8)'}">${statsVrvs3p.totalAtrasadas}</strong> atrasados</span>
+                        </div>
+                    </section>
+                `;
+            } else {
+                htmlVrvs3p = `
+                    <section id="painel-vrvs3p" class="vrvs3p-card" style="background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: block;">
+                        <h3 style="color: var(--turquesa-light); margin-bottom: 8px; font-size: 16px; font-weight: 600;">🧠 Saúde do Diário VRVS 3P</h3>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">Nenhum tópico ativo ainda</div>
+                    </section>
+                `;
+            }
+            
+            console.log('[VRVS3P] htmlVrvs3p length:', htmlVrvs3p.length);
+            console.log('[VRVS3P] Stats:', statsVrvs3p);
+            
+            container.innerHTML = htmlVrvs3p + `
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value">${totalTemas}</div>
