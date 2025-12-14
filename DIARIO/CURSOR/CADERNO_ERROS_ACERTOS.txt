@@ -457,5 +457,46 @@
   - **Prevenção:** Gatilhos expandidos, regras mais claras, aviso explícito sobre não modificar código durante protocolo.
   - **Arquivos:** `DIARIO/CURSOR/00_LEIA_PRIMEIRO_SEMPRE.txt` atualizado com gatilhos expandidos
 
+**2025-01-XX (Rodada Final VRVS 3P - TAREFA 1):**
+- ✅ **PROBLEMA RESOLVIDO:** Anotações truncadas APENAS ao navegar Tarefas → Caderno
+  - **Sintoma:** Hot Topics e Anotações apareciam truncados com "..." APENAS quando navegava de Tarefas → Caderno via link "Anotações (CADERNO)". Ao abrir Caderno diretamente funcionava perfeitamente.
+  - **Causa Raiz:** Problema de timing na função `navegarParaCadernoTema()`:
+    1. Timeouts muito curtos (100ms, 200ms) não garantiam DOM totalmente renderizado
+    2. CSS de texto completo não era aplicado quando expandido via navegação
+    3. `scrollHeight` calculado antes do conteúdo estar totalmente medido
+    4. Race condition: `showSection('caderno')` já chama `renderCadernoV2()`, mas função de navegação também chama após timeout curto
+  - **O que estava errado no meu comportamento:**
+    1. **Foco apenas no CSS, ignorando timing:** Removi truncamento manual e ajustei CSS, mas assumi que isso resolveria tudo. Ignorei que navegação tem fluxo diferente com timing crítico.
+    2. **Não testei o fluxo específico:** Testei apenas abrindo Caderno diretamente. Não testei o fluxo específico mencionado pelo usuário (Tarefas → Caderno).
+    3. **Timeouts genéricos:** Usei timeouts padrão sem considerar que navegação precisa de mais tempo e que mobile pode ser mais lento.
+  - **Solução Implementada:**
+    1. **Timeouts aumentados e sequenciais:**
+       - 100ms → 200ms antes de renderizar novamente (garante `showSection()` completou)
+       - 200ms → 300ms antes de expandir (garante `renderCadernoV2()` completou)
+       - Adicionado 150ms entre expandir área e tema (expansão sequencial)
+    2. **requestAnimationFrame para garantir DOM pronto:**
+       - Usa `requestAnimationFrame` antes de calcular `scrollHeight`
+       - Garante que navegador completou layout antes de manipular DOM
+    3. **Aplicar CSS diretamente nos elementos:**
+       - Força aplicação de `white-space: pre-wrap`, `word-wrap: break-word`, `overflow: visible`
+       - CSS inline tem prioridade sobre CSS de classe
+       - Funciona independente de ordem de carregamento
+  - **Lição:** 
+    1. **Sempre testar TODOS os fluxos de navegação** - Cada fluxo tem timing diferente
+    2. **Timing é crítico em navegação dinâmica** - Aumentar timeouts para navegação, usar `requestAnimationFrame` quando necessário
+    3. **CSS pode não ser aplicado no timing certo** - Aplicar CSS diretamente (inline) quando timing é crítico
+    4. **Race conditions em navegação** - Aguardar renderização completa antes de manipular DOM
+    5. **Mobile pode ser mais lento** - Aumentar timeouts para garantir funcionamento em mobile
+  - **Prevenção:** 
+    - Identificar TODOS os fluxos que levam à tela problemática
+    - Testar cada fluxo especificamente
+    - Verificar timing de renderização em cada fluxo
+    - Considerar race conditions entre funções
+    - Usar `requestAnimationFrame` quando timing é crítico
+    - Aplicar CSS diretamente se necessário
+    - Testar em mobile (pode ser mais lento)
+  - **Commits:** `6ffeb0d`, `22a5606`
+  - **Arquivos:** `DIARIO/CURSOR/REGISTRO_TECNICO_TRUNCAMENTO_CADERNO.md` (registro técnico completo)
+
 ═══════════════════════════════════════════════════════════════
 
