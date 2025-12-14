@@ -669,10 +669,29 @@
         /* Botões de qualidade */
         .diario-sessao-botoes-qualidade {
             display: flex;
-            gap: 10px;
+            flex-direction: row;
             justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: nowrap;
             margin: 20px 0;
-            flex-wrap: wrap;
+        }
+        
+        /* Botões individuais - mesmo tamanho */
+        .diario-sessao-botoes-qualidade button {
+            flex: 1;
+            max-width: 110px;
+            min-width: 90px;
+            padding: 12px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         
         /* Links secundários */
@@ -700,34 +719,41 @@
         
         /* ==================== FIM SRS ESTILOS ==================== */
         
-        /* Botões de qualidade da sessão do Diário */
+        /* Botões de qualidade da sessão do Diário - cores específicas */
+        .diario-sessao-botoes-qualidade .btn-esqueci,
         .diario-sessao-botoes-qualidade .btn-danger {
             background: #dc3545 !important;
             color: #fff !important;
             border: none !important;
         }
         
+        .diario-sessao-botoes-qualidade .btn-esqueci:hover,
         .diario-sessao-botoes-qualidade .btn-danger:hover {
             background: #c82333 !important;
         }
         
         /* Botão Lembrei - âmbar */
-        .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso) {
+        .diario-sessao-botoes-qualidade .btn-lembrei,
+        .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso):not(.btn-esqueci):not(.btn-facil) {
             background: #f59e0b !important;
             color: #fff !important;
             border: none !important;
         }
         
-        .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso):hover {
+        .diario-sessao-botoes-qualidade .btn-lembrei:hover,
+        .diario-sessao-botoes-qualidade .btn:not(.btn-danger):not(.btn-sucesso):not(.btn-esqueci):not(.btn-facil):hover {
             background: #d97706 !important;
         }
         
+        /* Botão Fácil - verde */
+        .diario-sessao-botoes-qualidade .btn-facil,
         .diario-sessao-botoes-qualidade .btn-sucesso {
             background: #22c55e !important;
             color: #fff !important;
             border: none !important;
         }
         
+        .diario-sessao-botoes-qualidade .btn-facil:hover,
         .diario-sessao-botoes-qualidade .btn-sucesso:hover {
             background: #16a34a !important;
         }
@@ -2292,7 +2318,7 @@
                         class="diario-atencao-checkbox"
                     >
                     <label for="novaDiarioAtencao" class="diario-atencao-label">
-                        ⚠️ Marcar para revisitar amanhã
+                        📅 Incluir nas revisões programadas (VRVS 3P)
                     </label>
                 </div>
                 
@@ -8897,22 +8923,210 @@
             return d.toISOString().split('T')[0];
         }
         
-        // Inicializar SRS em uma entrada
+        function diffEmDias(data1, data2) {
+            // data1 e data2 em 'YYYY-MM-DD'
+            // retornar data2 - data1 em dias
+            const d1 = new Date(data1);
+            const d2 = new Date(data2);
+            const diffTime = d2 - d1;
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        }
+        
+        // ==================== VRVS 3P - CONSTANTES E FUNÇÕES AUXILIARES ====================
+        
+        // Intervalos de estágio VRVS 3P (em dias)
+        const VRVS3P_STAGE_INTERVALS = [1, 2, 4, 7, 12, 20, 35, 60, 90, 135, 200];
+        const VRVS3P_MAX_STAGE = VRVS3P_STAGE_INTERVALS.length - 1; // 10
+        
+        // Mapear repeticoes antigas para estágio inicial (migração)
+        function mapearRepeticoesParaEstagio(repeticoes) {
+            const r = repeticoes || 0;
+            if (r <= 0) return 0;
+            if (r === 1) return 1;
+            if (r === 2) return 2;
+            if (r === 3) return 3;
+            if (r === 4) return 4;
+            return 5; // 5+ vai pro estágio 5
+        }
+        
+        // Normalizar qualidade de resposta (blindar entrada)
+        function normalizarQualidade(qualidade) {
+            if (typeof qualidade === 'number') {
+                if (qualidade === 0) return 'esqueci';
+                if (qualidade === 1) return 'lembrei';
+                if (qualidade === 2) return 'facil';
+            }
+            if (typeof qualidade === 'string') {
+                const q = qualidade.toLowerCase();
+                if (q === 'esqueci' || q === 'lembrei' || q === 'facil') return q;
+            }
+            // fallback seguro: trata como 'esqueci'
+            return 'esqueci';
+        }
+        
+        // Inicializar SRS VRVS 3P para nova entrada
+        function inicializarSrsVRVS3P(hojeStr) {
+            const hoje = hojeStr || hojeStr();
+            const intervalo = VRVS3P_STAGE_INTERVALS[0]; // 1 dia
+            
+            return {
+                engine: 'VRVS_FSRS3_v1',
+                ativo: true,
+                estagio: 0,
+                intervalo: intervalo,
+                ultimaRevisaoData: hoje,
+                proximaRevisao: addDias(hoje, intervalo),
+                ultimaResposta: null,
+                repeticoes: 0,
+                facilidade: 2.3,
+                historicoRespostas: []
+            };
+        }
+        
+        // Atualizar SRS VRVS 3P após resposta
+        function atualizarSRS_VRVS3P(entrada, resposta) {
+            if (!entrada || !entrada.srs || !entrada.srs.ativo) return;
+            
+            const srs = entrada.srs;
+            const hoje = hojeStr();
+            let estagio = srs.estagio ?? 0;
+            
+            // Transições de estágio conforme resposta
+            if (resposta === 'esqueci') {
+                if (estagio <= 1) {
+                    estagio = 0;
+                } else {
+                    estagio = estagio - 2;
+                }
+            } else if (resposta === 'lembrei') {
+                estagio = Math.min(estagio + 1, VRVS3P_MAX_STAGE);
+            } else if (resposta === 'facil') {
+                estagio = Math.min(estagio + 2, VRVS3P_MAX_STAGE);
+            } else {
+                // resposta inválida → não faz nada
+                return;
+            }
+            
+            const intervalo = VRVS3P_STAGE_INTERVALS[estagio];
+            
+            // Atualizar campos do SRS
+            srs.estagio = estagio;
+            srs.intervalo = intervalo;
+            srs.ultimaResposta = resposta;
+            srs.ultimaRevisaoData = hoje;
+            srs.proximaRevisao = addDias(hoje, intervalo);
+            srs.repeticoes = (srs.repeticoes || 0) + 1;
+            
+            // Atualizar facilidade (opcional, para futuro)
+            const fAtual = srs.facilidade ?? 2.3;
+            let fNova = fAtual;
+            if (resposta === 'esqueci') fNova = fAtual - 0.15;
+            if (resposta === 'facil') fNova = fAtual + 0.05;
+            srs.facilidade = Math.max(1.3, Math.min(fNova, 3.0));
+            
+            // Garantir que engine está definido
+            if (!srs.engine) {
+                srs.engine = 'VRVS_FSRS3_v1';
+            }
+        }
+        
+        // Migrar SRS antigo para VRVS 3P (idempotente)
+        function migrarSRSParaVRVS3P() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) return;
+            
+            let migradas = 0;
+            window.diario.entradas.forEach(entrada => {
+                const srs = entrada.srs;
+                if (!srs) return;
+                
+                // Se já está na nova versão, não mexe
+                if (srs.engine === 'VRVS_FSRS3_v1' && typeof srs.estagio === 'number') {
+                    return;
+                }
+                
+                // Migrar: mapear repeticoes → estagio
+                const estagio = mapearRepeticoesParaEstagio(srs.repeticoes || 0);
+                srs.estagio = estagio;
+                srs.intervalo = VRVS3P_STAGE_INTERVALS[estagio];
+                srs.engine = 'VRVS_FSRS3_v1';
+                
+                // Garantir facilidade default
+                if (typeof srs.facilidade !== 'number') {
+                    srs.facilidade = 2.3;
+                }
+                
+                // Se não tem ultimaRevisaoData, usar proximaRevisao como referência
+                if (!srs.ultimaRevisaoData && srs.proximaRevisao) {
+                    // Estimar data da última revisão baseado no intervalo atual
+                    const hoje = hojeStr();
+                    const intervaloAtual = srs.intervalo || VRVS3P_STAGE_INTERVALS[estagio];
+                    srs.ultimaRevisaoData = addDias(srs.proximaRevisao, -intervaloAtual);
+                }
+                
+                // Garantir historicoRespostas existe
+                if (!Array.isArray(srs.historicoRespostas)) {
+                    srs.historicoRespostas = [];
+                }
+                
+                migradas++;
+            });
+            
+            if (migradas > 0) {
+                console.log(`[VRVS 3P] Migradas ${migradas} entradas para VRVS_FSRS3_v1`);
+                salvarDiario(); // Salvar após migração
+            }
+        }
+        
+        // Estimar retenção teórica (para Painel de Retenção - Fase 4)
+        function estimarRetencao(intervalo, diasDesdeRevisao) {
+            // k calibrado pro VRVS 3P (pode ajustar depois)
+            const k = 0.1625; // -ln(0.85)
+            const x = diasDesdeRevisao / Math.max(intervalo, 1);
+            const r = Math.exp(-k * x);
+            return Math.max(0, Math.min(1, r));
+        }
+        
+        // Classificar status de revisão (em-dia / pendente / atrasado)
+        function classificarStatusRevisao(entrada, hojeStr) {
+            if (!entrada.srs || !entrada.srs.ativo) return 'inativo';
+            
+            const hoje = hojeStr || hojeStr();
+            const proximaRevisao = entrada.srs.proximaRevisao;
+            if (!proximaRevisao) return 'inativo';
+            
+            const diff = diffEmDias(proximaRevisao, hoje); // hoje - proximaRevisao
+            
+            if (diff < 0) return 'em-dia';        // ainda não venceu
+            if (diff <= entrada.srs.intervalo) return 'pendente'; // leve atraso
+            return 'atrasado';                    // muito atrasado
+        }
+        
+        // ==================== FIM VRVS 3P AUXILIARES ====================
+        
+        // Inicializar SRS em uma entrada (compatibilidade + VRVS 3P)
         function inicializarSrsEntrada(entrada) {
             const hoje = hojeStr();
             if (!entrada.srs) {
-                entrada.srs = {
-                    ativo: true,
-                    proximaRevisao: hoje,
-                    repeticoes: 0,
-                    ultimaResposta: null
-                };
+                // Nova entrada: usar VRVS 3P padrão
+                entrada.srs = inicializarSrsVRVS3P(hoje);
             } else {
-                // Garantir campos básicos
+                // Entrada existente: garantir campos básicos e compatibilidade
                 if (typeof entrada.srs.ativo !== 'boolean') entrada.srs.ativo = true;
                 if (!entrada.srs.proximaRevisao) entrada.srs.proximaRevisao = hoje;
                 if (typeof entrada.srs.repeticoes !== 'number') entrada.srs.repeticoes = 0;
                 if (!('ultimaResposta' in entrada.srs)) entrada.srs.ultimaResposta = null;
+                
+                // Garantir campos VRVS 3P se não existirem (será migrado depois se necessário)
+                if (!entrada.srs.engine) {
+                    // Se não tem engine, ainda não foi migrado - será migrado em migrarSRSParaVRVS3P()
+                } else if (entrada.srs.engine === 'VRVS_FSRS3_v1') {
+                    // Já migrado: garantir campos VRVS 3P
+                    if (typeof entrada.srs.estagio !== 'number') entrada.srs.estagio = 0;
+                    if (typeof entrada.srs.intervalo !== 'number') entrada.srs.intervalo = VRVS3P_STAGE_INTERVALS[0];
+                    if (!entrada.srs.ultimaRevisaoData) entrada.srs.ultimaRevisaoData = hoje;
+                    if (typeof entrada.srs.facilidade !== 'number') entrada.srs.facilidade = 2.3;
+                    if (!Array.isArray(entrada.srs.historicoRespostas)) entrada.srs.historicoRespostas = [];
+                }
             }
         }
         
@@ -8946,37 +9160,13 @@
             });
         }
         
-        // Função de agendamento com 3 botões (Esqueci / Lembrei / Fácil)
+        // Função de agendamento com 3 botões (Esqueci / Lembrei / Fácil) - VRVS 3P
         function registrarRespostaSrsDiario(entrada, qualidade) {
             if (!entrada || !entrada.srs || !entrada.srs.ativo) return;
-            const srs = entrada.srs;
-            const hoje = hojeStr();
             
-            // Atualiza repeticoes conforme a qualidade
-            if (qualidade === 'esqueci') {
-                srs.repeticoes = 0;
-            } else if (qualidade === 'lembrei') {
-                srs.repeticoes = (srs.repeticoes || 0) + 1;
-            } else if (qualidade === 'facil') {
-                srs.repeticoes = (srs.repeticoes || 0) + 2;
-            }
-            
-            const reps = srs.repeticoes || 0;
-            let dias;
-            
-            if (qualidade === 'esqueci') {
-                dias = 1;
-            } else {
-                if (reps <= 0) dias = 1;
-                else if (reps === 1) dias = 1;
-                else if (reps === 2) dias = 3;
-                else if (reps === 3) dias = 7;
-                else if (reps === 4) dias = 14;
-                else dias = 30; // teto
-            }
-            
-            srs.ultimaResposta = qualidade;
-            srs.proximaRevisao = addDias(hoje, dias);
+            // Normalizar qualidade e atualizar usando VRVS 3P
+            const resposta = normalizarQualidade(qualidade);
+            atualizarSRS_VRVS3P(entrada, resposta);
         }
         
         // ==================== FIM SRS ====================
@@ -8989,6 +9179,7 @@
                     if (diario.entradas && Array.isArray(diario.entradas)) {
                         window.diario = diario;
                         inicializarSrsEmTodasEntradas(); // Inicializar SRS em entradas existentes
+                        migrarSRSParaVRVS3P(); // Migrar para VRVS 3P se necessário
                     } else {
                         window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
                         inicializarSrsEmTodasEntradas(); // Seguro mesmo vazio
@@ -9145,7 +9336,6 @@
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
                 if (entrada) {
-                    inicializarSrsEntrada(entrada); // Garantir que SRS está inicializado
                     entrada.area = area;
                     entrada.tema = tema;
                     entrada.topico = topico;
@@ -9153,6 +9343,34 @@
                     entrada.atencao = atencao;
                     entrada.data = data; // Usar data do campo
                     entrada.ultimaAtualizacao = hoje;
+                    
+                    // Gerenciar SRS conforme checkbox
+                    if (atencao) {
+                        // Se marcado e não tem SRS, criar; se já tem, garantir que está ativo
+                        if (!entrada.srs) {
+                            entrada.srs = inicializarSrsVRVS3P(hoje);
+                        } else {
+                            entrada.srs.ativo = true;
+                            // Garantir campos VRVS 3P se não existirem
+                            if (!entrada.srs.engine || entrada.srs.engine !== 'VRVS_FSRS3_v1') {
+                                // Migrar se necessário (será feito na próxima carga, mas garantir aqui também)
+                                if (!entrada.srs.engine) {
+                                    const estagio = mapearRepeticoesParaEstagio(entrada.srs.repeticoes || 0);
+                                    entrada.srs.estagio = estagio;
+                                    entrada.srs.intervalo = VRVS3P_STAGE_INTERVALS[estagio];
+                                    entrada.srs.engine = 'VRVS_FSRS3_v1';
+                                    if (typeof entrada.srs.facilidade !== 'number') entrada.srs.facilidade = 2.3;
+                                    if (!Array.isArray(entrada.srs.historicoRespostas)) entrada.srs.historicoRespostas = [];
+                                    if (!entrada.srs.ultimaRevisaoData) entrada.srs.ultimaRevisaoData = hoje;
+                                }
+                            }
+                        }
+                    } else {
+                        // Se desmarcado, desativar SRS (mas não deletar para manter histórico)
+                        if (entrada.srs) {
+                            entrada.srs.ativo = false;
+                        }
+                    }
                 }
             } else {
                 // Nova entrada
@@ -9167,7 +9385,15 @@
                     criadoEm: hoje,
                     ultimaAtualizacao: hoje
                 };
-                inicializarSrsEntrada(novaEntrada); // Inicializar SRS na nova entrada
+                
+                // Se checkbox marcado, inicializar SRS VRVS 3P; senão, não criar SRS
+                if (atencao) {
+                    novaEntrada.srs = inicializarSrsVRVS3P(hoje);
+                } else {
+                    // Não criar SRS se checkbox não marcado
+                    novaEntrada.srs = null;
+                }
+                
                 window.diario.entradas.push(novaEntrada);
             }
             
@@ -9439,7 +9665,9 @@
             
             document.getElementById('novaDiarioTopico').value = entrada.topico;
             document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
-            document.getElementById('novaDiarioAtencao').checked = entrada.atencao || false;
+            // Marcar checkbox se entrada tem SRS ativo OU se campo atencao está marcado
+            const temSrsAtivo = entrada.srs && entrada.srs.ativo;
+            document.getElementById('novaDiarioAtencao').checked = entrada.atencao || temSrsAtivo || false;
             
             // Mostrar modal
             document.getElementById('modalNovaDiario').classList.add('active');
@@ -9601,13 +9829,13 @@
                     </div>
                     <div class="diario-sessao-acoes">
                         <button class="btn btn-small" onclick="mostrarRespostaSessaoDiario()">
-                            👁️ Mostrar resposta
+                            🔍 MOSTRAR RESPOSTA
                         </button>
                     </div>
                     <div class="diario-sessao-botoes-qualidade">
-                        <button class="btn btn-small btn-danger" onclick="responderSessaoDiario('esqueci')">❌ Esqueci</button>
-                        <button class="btn btn-small" onclick="responderSessaoDiario('lembrei')">👍 Lembrei</button>
-                        <button class="btn btn-small btn-sucesso" onclick="responderSessaoDiario('facil')">😌 Fácil</button>
+                        <button class="btn btn-esqueci btn-danger" onclick="responderSessaoDiario('esqueci')" title="Não lembrei ou errei. Vou revisar em breve.">❌ ESQUECI</button>
+                        <button class="btn btn-lembrei" onclick="responderSessaoDiario('lembrei')" title="Lembrei, mas precisei pensar. Progresso normal.">👍 LEMBREI</button>
+                        <button class="btn btn-facil btn-sucesso" onclick="responderSessaoDiario('facil')" title="Veio na hora! Posso esperar mais pra revisar.">😌 FÁCIL</button>
                     </div>
                     <div class="diario-sessao-opcoes">
                         <button class="link-btn" onclick="pularSessaoDiario()">⏭️ Pular este tópico</button>
