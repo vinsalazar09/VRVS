@@ -44,11 +44,13 @@ Esse protocolo também vale por padrão para qualquer tarefa de refino/bugfix em
 2. **SEGUNDO:** Remover ou ajustar a regra conflitante
 3. **TERCEIRO:** Só então adicionar regras novas se realmente necessário
 
-**Exemplo prático:**
-- ❌ ERRADO: Adicionar `#novaDiarioTopico { min-height: 80px !important; }` quando já existe `#modalNovaDiario .form-textarea { min-height: 300px !important; }`
-- ✅ CORRETO: Remover ou ajustar `#modalNovaDiario .form-textarea` para não afetar `#novaDiarioTopico`, ou usar especificidade maior sem `!important`
+**Exemplo prático do erro que NÃO deve repetir:**
+- ❌ **ERRADO:** Adicionar `#novaDiarioTopico { min-height: 80px !important; }` quando já existe `#modalNovaDiario .form-textarea { min-height: 300px !important; }` conflitando
+- ✅ **CORRETO:** Remover ou ajustar `#modalNovaDiario .form-textarea` para não afetar `#novaDiarioTopico`, ou usar especificidade maior sem `!important`
 
-## 3. Regras de Ouro (continuação)
+**Princípio:** Se há uma regra conflitante, ela é o problema. Remova o problema, não adicione mais regras em cima.
+
+---
 
 ### 3.1. Diagnóstico antes de solução
 
@@ -206,9 +208,11 @@ Quando o PROTOCOLO PATCH LIMPO estiver ativo, **NÃO FAZER**:
 
 3. **Adicionar propriedades sem evidência:** Se não há evidência clara de que uma propriedade resolve o problema, NÃO adicionar. Prefira remover conflitos existentes primeiro.
 
-4. Alterar múltiplas abas/telas de uma vez quando o usuário pediu só uma (ex: pediu Agenda → Atrasados, não mexer em Tarefas).
+4. **Ignorar conflitos existentes:** Se identificar uma regra conflitante (ex: `min-height: 300px !important` sobrescrevendo `min-height: 80px`), REMOVER ou ajustar a regra conflitante primeiro, não adicionar mais regras em cima.
 
-5. Mudar sem avisar:
+5. Alterar múltiplas abas/telas de uma vez quando o usuário pediu só uma (ex: pediu Agenda → Atrasados, não mexer em Tarefas).
+
+6. Mudar sem avisar:
 
    - hierarquia HTML importante,
 
@@ -216,7 +220,7 @@ Quando o PROTOCOLO PATCH LIMPO estiver ativo, **NÃO FAZER**:
 
    - comportamento de funções globais.
 
-6. Responder "Pronto, corrigido" sem:
+7. Responder "Pronto, corrigido" sem:
 
    - explicar o que mudou,
 
