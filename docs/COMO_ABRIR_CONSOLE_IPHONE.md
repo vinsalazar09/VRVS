@@ -32,3 +32,7 @@ Se não conseguir conectar:
 - Logs `[PENDENCIAS]` quando você toca nos itens
 - Se `togglePendencia` está sendo chamado ou não
 
+
+
+
+
