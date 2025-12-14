@@ -9466,6 +9466,142 @@
             return 'atrasado';                    // muito atrasado
         }
         
+        // Mensagem pedagógica baseada em retenção global
+        function mensagemRetencao(retencaoGlobal, totalAtivos) {
+            if (totalAtivos === 0) {
+                return '✨ Nenhum tópico ativo ainda. Adicione entradas ao Diário e marque "Incluir nas revisões programadas" para começar.';
+            }
+            
+            const pct = retencaoGlobal * 100;
+            if (pct >= 80) {
+                return '🎯 Excelente! Seus tópicos estão bem consolidados. Continue no ritmo.';
+            } else if (pct >= 65) {
+                return '⚡ Alguns tópicos precisam de atenção. 10 minutos de revisão hoje fazem diferença.';
+            } else {
+                return '📚 Hora de revisar! Muitos tópicos estão esfriando. Foque nas áreas em vermelho.';
+            }
+        }
+        
+        // Calcular estatísticas agregadas do Diário VRVS 3P
+        function calcularEstatisticasVrvs3p(diario, hojeStr) {
+            const hoje = hojeStr || hojeStr();
+            
+            // Inicializar estrutura de retorno
+            const stats = {
+                totalAtivos: 0,
+                totalHoje: 0,
+                totalAtrasadas: 0,
+                retencaoGlobal: null,
+                retencaoGlobalPct: null,
+                porArea: [],
+                maturidade: {
+                    novos: 0,      // estágios 0-1
+                    fixando: 0,    // estágios 2-3
+                    maduros: 0,    // estágios 4-6
+                    consolidados: 0 // estágios 7-10
+                }
+            };
+            
+            // Validar entrada
+            if (!diario || !Array.isArray(diario.entradas) || diario.entradas.length === 0) {
+                return stats;
+            }
+            
+            // Filtrar apenas entradas ativas com SRS
+            const entradasAtivas = diario.entradas.filter(e => 
+                e.srs && 
+                e.srs.ativo === true &&
+                e.srs.engine === 'VRVS_FSRS3_v1'
+            );
+            
+            stats.totalAtivos = entradasAtivas.length;
+            
+            if (stats.totalAtivos === 0) {
+                return stats;
+            }
+            
+            // Contar tópicos para hoje e atrasados
+            let somaRetencao = 0;
+            let contagemRetencao = 0;
+            const porAreaMap = {};
+            
+            entradasAtivas.forEach(entrada => {
+                const srs = entrada.srs;
+                const estagio = srs.estagio || 0;
+                const proximaRevisao = srs.proximaRevisao || hoje;
+                
+                // Contar para hoje
+                if (proximaRevisao <= hoje) {
+                    stats.totalHoje++;
+                    
+                    // Se muito atrasado (mais que 1 intervalo)
+                    const diff = diffEmDias(proximaRevisao, hoje);
+                    if (diff > (srs.intervalo || 1)) {
+                        stats.totalAtrasadas++;
+                    }
+                }
+                
+                // Calcular retenção estimada por estágio
+                const retencaoEstagio = obterRetencaoPorEstagio(estagio);
+                somaRetencao += retencaoEstagio;
+                contagemRetencao++;
+                
+                // Agrupar por área
+                const area = entrada.area || 'Outros';
+                if (!porAreaMap[area]) {
+                    porAreaMap[area] = {
+                        area: area,
+                        total: 0,
+                        somaRetencao: 0,
+                        hoje: 0,
+                        atrasadas: 0
+                    };
+                }
+                porAreaMap[area].total++;
+                porAreaMap[area].somaRetencao += retencaoEstagio;
+                if (proximaRevisao <= hoje) {
+                    porAreaMap[area].hoje++;
+                    const diff = diffEmDias(proximaRevisao, hoje);
+                    if (diff > (srs.intervalo || 1)) {
+                        porAreaMap[area].atrasadas++;
+                    }
+                }
+                
+                // Classificar maturidade
+                if (estagio <= 1) {
+                    stats.maturidade.novos++;
+                } else if (estagio <= 3) {
+                    stats.maturidade.fixando++;
+                } else if (estagio <= 6) {
+                    stats.maturidade.maduros++;
+                } else {
+                    stats.maturidade.consolidados++;
+                }
+            });
+            
+            // Calcular retenção global
+            if (contagemRetencao > 0) {
+                stats.retencaoGlobal = somaRetencao / contagemRetencao;
+                stats.retencaoGlobalPct = Math.round(stats.retencaoGlobal * 100);
+            }
+            
+            // Processar retenção por área
+            stats.porArea = Object.keys(porAreaMap).map(area => {
+                const item = porAreaMap[area];
+                const retencaoMedia = item.total > 0 ? item.somaRetencao / item.total : 0;
+                return {
+                    area: area,
+                    total: item.total,
+                    retencao: retencaoMedia,
+                    retencaoPct: Math.round(retencaoMedia * 100),
+                    hoje: item.hoje,
+                    atrasadas: item.atrasadas
+                };
+            }).sort((a, b) => b.retencao - a.retencao); // Ordenar por retenção (maior primeiro)
+            
+            return stats;
+        }
+        
         // ==================== FIM VRVS 3P AUXILIARES ====================
         
         // Inicializar SRS em uma entrada (compatibilidade + VRVS 3P)
