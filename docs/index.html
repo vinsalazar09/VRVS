@@ -568,31 +568,45 @@
             min-width: 0;
         }
         
+        /* ========================================
+           CHIP VRVS 3P - NEON OUTLINE (OPÇÃO 1)
+           ======================================== */
         #vrvs3p-chip-diario {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(0, 206, 209, 0.25);
-            border: 1px solid rgba(0, 206, 209, 0.5);
-            border-radius: 20px;
+            gap: 8px;
+            padding: 8px 14px;
+            
+            /* fundo transparente para não virar mais um "tijolo" */
+            background: transparent !important;
+            
+            /* borda neon turquesa */
+            border: 1.5px solid #00FFE0 !important;
+            border-radius: 25px;
+            
+            /* glow sutil */
+            box-shadow:
+                0 0 8px rgba(0, 255, 224, 0.3),
+                inset 0 0 8px rgba(0, 255, 224, 0.05);
+            
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             white-space: nowrap;
             flex-shrink: 0;
-            max-width: 200px;
         }
         
         #vrvs3p-chip-diario:hover {
-            background: rgba(0, 206, 209, 0.35);
+            background: rgba(0, 255, 224, 0.08);
+            box-shadow:
+                0 0 12px rgba(0, 255, 224, 0.5),
+                inset 0 0 12px rgba(0, 255, 224, 0.1);
         }
         
         #vrvs3p-chip-text {
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffffff;
-            line-height: 1.2;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            font-size: 13px;
+            font-weight: 500;
+            color: #00FFE0 !important;
+            letter-spacing: 0.3px;
         }
         
         /* Responsivo – portrait iPhone */
@@ -602,12 +616,11 @@
             }
             
             #vrvs3p-chip-diario {
-                padding: 4px 10px;
-                max-width: 180px;
+                padding: 6px 12px;
             }
             
             #vrvs3p-chip-text {
-                font-size: 11px;
+                font-size: 12px;
             }
             
             .btn-nova-diario {
@@ -3298,7 +3311,7 @@
                 <div class="card">
                     <div class="card-title diario-header-row">
                         <div class="diario-header-left">
-                            <span>📔 DIÁRIO DE APRENDIZADOS</span>
+                        <span>📔 DIÁRIO DE APRENDIZADOS</span>
                             <div id="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p(); event.stopPropagation();">
                                 🧠 <span id="vrvs3p-chip-text">Carregando...</span>
                             </div>
@@ -4605,7 +4618,7 @@
             // 5. Renderizar Caderno
             setTimeout(() => {
                 if (typeof renderCadernoV2 === 'function') {
-                    renderCadernoV2();
+                renderCadernoV2();
                 } else if (typeof renderCaderno === 'function') {
                     renderCaderno();
                 }
@@ -4659,17 +4672,17 @@
                                     // Scroll e highlight após garantir conteúdo completo
                                     setTimeout(() => {
                                         const elemento = document.querySelector(`[data-tema-id="${temaIdClean}"]`) || temaConteudo;
-                                        if (elemento) {
-                                            elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (elemento) {
+                        elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                             
                                             const originalBg = elemento.style.background;
                                             elemento.style.background = 'rgba(0, 206, 209, 0.22)';
                                             elemento.style.transition = 'background 0.3s ease';
-                                            setTimeout(() => {
+                        setTimeout(() => {
                                                 elemento.style.background = originalBg || '';
-                                            }, 2000);
-                                        }
-                                    }, 100);
+                        }, 2000);
+                    }
+            }, 100);
                                 });
                             }
                         }
@@ -4834,7 +4847,7 @@
             
             if (tarefas.length === 0) {
                 if (totalTopicos === 0) {
-                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div>Nenhuma missão pendente</div></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div>Nenhuma missão pendente</div></div>';
                 } else {
                     container.innerHTML = html;
                 }
@@ -9630,13 +9643,13 @@
             
             return {
                 engine: 'VRVS_FSRS3_v1',
-                ativo: true,
+                    ativo: true,
                 estagio: 0,
                 intervalo: intervalo,
                 ultimaRevisaoData: hoje,
                 proximaRevisao: addDias(hoje, intervalo),
                 ultimaResposta: null,
-                repeticoes: 0,
+                    repeticoes: 0,
                 facilidade: 2.3,
                 historicoRespostas: []
             };
@@ -9654,7 +9667,7 @@
             if (resposta === 'esqueci') {
                 if (estagio <= 1) {
                     estagio = 0;
-                } else {
+            } else {
                     estagio = estagio - 2;
                 }
             } else if (resposta === 'lembrei') {
@@ -10213,18 +10226,18 @@
                 const topico = document.getElementById('novaDiarioTopico')?.value.trim();
                 const resposta = document.getElementById('novaDiarioResposta')?.value.trim();
                 const atencao = document.getElementById('novaDiarioAtencao')?.checked || false;
-                const dataInput = document.getElementById('novaDiarioData');
-                const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
-                
+            const dataInput = document.getElementById('novaDiarioData');
+            const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
+            
                 // Validação: área e tema são obrigatórios
-                if (!area || !tema || !topico) {
-                    mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
+            if (!area || !tema || !topico) {
+                mostrarNotificacaoFeedback('⚠️ Preencha pelo menos Área, Tema e Tópico!', 'error');
                     // SEMPRE limpar flag e fechar modal mesmo em erro
                     window.editandoDaSessao = false;
-                    return;
-                }
-                
-                const hoje = new Date().toISOString().split('T')[0];
+                return;
+            }
+            
+            const hoje = new Date().toISOString().split('T')[0];
             
             if (entradaId) {
                 // Editar entrada existente
@@ -10239,13 +10252,13 @@
                         // NÃO resetar SRS (manter estágio, intervalo, proximaRevisao, historicoRespostas)
                     } else {
                         // Edição normal da Lista: atualizar tudo
-                        entrada.area = area;
-                        entrada.tema = tema;
-                        entrada.topico = topico;
-                        entrada.resposta = resposta;
-                        entrada.atencao = atencao;
-                        entrada.data = data; // Usar data do campo
-                        entrada.ultimaAtualizacao = hoje;
+                    entrada.area = area;
+                    entrada.tema = tema;
+                    entrada.topico = topico;
+                    entrada.resposta = resposta;
+                    entrada.atencao = atencao;
+                    entrada.data = data; // Usar data do campo
+                    entrada.ultimaAtualizacao = hoje;
                         
                         // Gerenciar SRS conforme checkbox
                         if (atencao) {
@@ -10301,7 +10314,7 @@
                 window.diario.entradas.push(novaEntrada);
             }
             
-                salvarDiario();
+            salvarDiario();
                 
                 // Verificar se veio da sessão (já declarado acima, apenas usar)
                 const veioDaSessaoFlag = veioDaSessao;
@@ -10310,7 +10323,7 @@
                 window.editandoDaSessao = false;
                 
                 // Fechar modal antes de renderizar (evita conflito visual)
-                fecharModalDiario();
+            fecharModalDiario();
                 
                 // Pequeno delay para garantir que modal fechou antes de renderizar (especialmente mobile)
                 setTimeout(() => {
@@ -10322,11 +10335,11 @@
                         }
                     } else {
                         // Edição normal: renderizar lista completa
-                        renderDiario();
+            renderDiario();
                     }
                     // Atualizar chip VRVS 3P após salvar
                     atualizarChipVrvs3p();
-                    mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
+            mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
                 }, 50);
             } catch (error) {
                 console.error('[DIÁRIO] Erro ao salvar entrada:', error);
@@ -10358,17 +10371,33 @@
                 window.diario.entradas = [];
             }
             
-            const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
-            let resumo = '';
-            if (stats.totalAtivos === 0) {
-                resumo = 'Nenhum ativo';
+            const hoje = hojeStr();
+            const stats = calcularEstatisticasVrvs3p(window.diario || { entradas: [] }, hoje);
+            
+            let texto;
+            
+            if (!stats || stats.totalAtivos === 0) {
+                // Nenhum tópico ativo
+                texto = '🧠 Nenhum ativo';
             } else {
-                resumo = `${stats.totalAtivos} ativos · ${stats.totalHoje} hoje`;
-                if (stats.totalAtrasadas > 0) {
-                    resumo += ` · ${stats.totalAtrasadas} ⚠️`;
+                const totalAtivos = stats.totalAtivos || 0;
+                const pendentesHoje = stats.totalHoje || 0;
+                const atrasados = stats.totalAtrasadas || 0;
+                
+                if (pendentesHoje === 0 && atrasados === 0) {
+                    // Tudo em dia: nenhum hoje, nenhum atrasado
+                    texto = `🧠 ${totalAtivos} ativos · ✅ em dia`;
+                } else {
+                    // Formato padrão
+                    texto = `🧠 ${totalAtivos} ativos · ${pendentesHoje} hoje`;
+                    if (atrasados > 0) {
+                        texto += ` · ${atrasados} ⚠️`;
+                    }
                 }
             }
-            chipText.textContent = resumo;
+            
+            chipText.textContent = texto;
+            chip.style.display = 'inline-flex';
         }
         
         // Navegar para painel VRVS 3P
@@ -10709,7 +10738,7 @@
             
             // Atualizar temas baseado na área selecionada
             if (entrada.area) {
-                atualizarTemasDiario(entrada.area);
+            atualizarTemasDiario(entrada.area);
             }
             
             // Selecionar tema após popular select (com timeout maior para garantir que temas foram populados)
@@ -10894,7 +10923,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entradaAtual.area} • ${entradaAtual.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span>${indice} / ${total}</span>
+                        <span>${indice} / ${total}</span>
                             <button onclick="editarEntradaSessaoDiario()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
