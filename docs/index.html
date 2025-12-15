@@ -6917,9 +6917,15 @@
             }
             
             // Sempre calcular estatísticas (mesmo se vazio)
-            const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
-            const faixa = stats.retencaoGlobal !== null ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
-            const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats);
+            let stats = {};
+            try {
+                stats = calcularEstatisticasVrvs3p(window.diario, hojeStr()) || {};
+            } catch (e) {
+                console.error('[VRVS3P] Erro ao calcular estatísticas:', e);
+                stats = { totalAtivos: 0, totalHoje: 0, totalAtrasadas: 0 };
+            }
+            const faixa = (stats && stats.retencaoGlobal !== null && stats.retencaoGlobal !== undefined) ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
+            const mensagem = mensagemRetencao((stats && stats.retencaoGlobal) ? stats.retencaoGlobal : 0, stats || {});
             
             // Sempre renderizar painel (mesmo se vazio)
             htmlVrvs3p = `
@@ -6945,7 +6951,7 @@
                                 </div>
                                 
                                 <div class="vrvs3p-mensagem" style="padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border-left: 3px solid var(--turquesa-light); font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 20px;">
-                                    ${typeof mensagem === 'object' ? `${mensagem.emoji || ''} ${mensagem.texto || mensagem}` : mensagem}
+                                    ${(mensagem && typeof mensagem === 'object' && mensagem.emoji && mensagem.texto) ? `${mensagem.emoji} ${mensagem.texto}` : (mensagem || '')}
                                 </div>
                             </div>
                             
@@ -9756,9 +9762,9 @@
         // Mensagem pedagógica baseada em retenção global e stats completos
         function mensagemRetencao(retencaoGlobal, stats) {
             // Se stats é número (compatibilidade com chamadas antigas), tratar como totalAtivos
-            const totalAtivos = typeof stats === 'number' ? stats : (stats?.totalAtivos || 0);
-            const pendentesHoje = typeof stats === 'object' ? (stats?.totalHoje || 0) : 0;
-            const atrasados = typeof stats === 'object' ? (stats?.totalAtrasadas || 0) : 0;
+            const totalAtivos = typeof stats === 'number' ? stats : (stats && stats.totalAtivos ? stats.totalAtivos : 0);
+            const pendentesHoje = typeof stats === 'object' && stats ? (stats.totalHoje || 0) : 0;
+            const atrasados = typeof stats === 'object' && stats ? (stats.totalAtrasadas || 0) : 0;
             
             if (!totalAtivos) {
                 return {
@@ -9805,8 +9811,16 @@
         }
         
         // Calcular estatísticas agregadas do Diário VRVS 3P
-        function calcularEstatisticasVrvs3p(diario, hojeStr) {
-            const hoje = hojeStr || hojeStr();
+        function calcularEstatisticasVrvs3p(diario, hojeStrParam) {
+            // Se hojeStrParam não foi passado, usar função hojeStr() ou calcular diretamente
+            let hoje;
+            if (hojeStrParam) {
+                hoje = hojeStrParam;
+            } else if (typeof hojeStr === 'function') {
+                hoje = hojeStr();
+            } else {
+                hoje = new Date().toISOString().split('T')[0];
+            }
             
             // Inicializar estrutura de retorno
             const stats = {
@@ -11753,20 +11767,26 @@
                 window.diario.entradas = [];
             }
             
-            const statsVrvs3p = calcularEstatisticasVrvs3p(window.diario, hojeStr());
-            const faixaVrvs3p = statsVrvs3p.retencaoGlobal !== null ? classificarFaixaRetencao(statsVrvs3p.retencaoGlobal) : 'nenhum';
-            const mensagemVrvs3p = mensagemRetencao(statsVrvs3p.retencaoGlobal || 0, statsVrvs3p);
+            let statsVrvs3p = {};
+            try {
+                statsVrvs3p = calcularEstatisticasVrvs3p(window.diario, hojeStr()) || {};
+            } catch (e) {
+                console.error('[VRVS3P] Erro ao calcular estatísticas:', e);
+                statsVrvs3p = { totalAtivos: 0, totalHoje: 0, totalAtrasadas: 0 };
+            }
+            const faixaVrvs3p = (statsVrvs3p && statsVrvs3p.retencaoGlobal !== null && statsVrvs3p.retencaoGlobal !== undefined) ? classificarFaixaRetencao(statsVrvs3p.retencaoGlobal) : 'nenhum';
+            const mensagemVrvs3p = mensagemRetencao((statsVrvs3p && statsVrvs3p.retencaoGlobal) ? statsVrvs3p.retencaoGlobal : 0, statsVrvs3p || {});
             
             // Montar painel VRVS 3P colapsável (versão refinada para Resumo)
             // SEMPRE renderizar painel (mesmo se vazio)
             const faixaTexto = faixaVrvs3p === 'alta' ? 'Alta' : faixaVrvs3p === 'media' ? 'Média' : 'Baixa';
-            const resumoHeader = statsVrvs3p.totalAtivos > 0 && statsVrvs3p.retencaoGlobalPct !== null
-                ? `${statsVrvs3p.retencaoGlobalPct}% · ${statsVrvs3p.totalAtivos} ativos · ${statsVrvs3p.totalHoje} hoje · ${statsVrvs3p.totalAtrasadas} atrasados · ${faixaTexto}`
-                : statsVrvs3p.totalAtivos > 0
-                ? `${statsVrvs3p.totalAtivos} ativos · ${statsVrvs3p.totalHoje} hoje · ${statsVrvs3p.totalAtrasadas} atrasados`
+            const resumoHeader = (statsVrvs3p && statsVrvs3p.totalAtivos > 0 && statsVrvs3p.retencaoGlobalPct !== null)
+                ? `${statsVrvs3p.retencaoGlobalPct}% · ${statsVrvs3p.totalAtivos} ativos · ${statsVrvs3p.totalHoje || 0} hoje · ${statsVrvs3p.totalAtrasadas || 0} atrasados · ${faixaTexto}`
+                : (statsVrvs3p && statsVrvs3p.totalAtivos > 0)
+                ? `${statsVrvs3p.totalAtivos} ativos · ${statsVrvs3p.totalHoje || 0} hoje · ${statsVrvs3p.totalAtrasadas || 0} atrasados`
                 : 'Nenhum tópico ativo ainda';
             
-            if (statsVrvs3p.totalAtivos > 0) {
+            if (statsVrvs3p && statsVrvs3p.totalAtivos > 0) {
                 const classeBarra = faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa';
                 const classeMensagem = faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa';
                 htmlVrvs3p = `
@@ -11806,8 +11826,8 @@
                             </div>
                             <div class="vrvs3p-mensagem-box ${classeMensagem}">
                                 <div class="vrvs3p-mensagem-text">
-                                    <span class="vrvs3p-mensagem-emoji">${mensagemVrvs3p.emoji || '✨'}</span>
-                                    <span>${mensagemVrvs3p.texto || mensagemVrvs3p}</span>
+                                    <span class="vrvs3p-mensagem-emoji">${(mensagemVrvs3p && typeof mensagemVrvs3p === 'object' && mensagemVrvs3p.emoji) ? mensagemVrvs3p.emoji : '✨'}</span>
+                                    <span>${(mensagemVrvs3p && typeof mensagemVrvs3p === 'object' && mensagemVrvs3p.texto) ? mensagemVrvs3p.texto : (mensagemVrvs3p || '')}</span>
                                 </div>
                             </div>
                             <div class="vrvs3p-disclaimer">Estimativa VRVS 3P · Não é nota, é mapa de esforço</div>
@@ -11815,7 +11835,7 @@
                     </section>
                 `;
             } else {
-                const mensagemVazia = mensagemRetencao(0, statsVrvs3p);
+                const mensagemVazia = mensagemRetencao(0, statsVrvs3p || {});
                 htmlVrvs3p = `
                     <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed">
                         <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()">
@@ -11828,8 +11848,8 @@
                         <div class="vrvs3p-body">
                             <div class="vrvs3p-mensagem-box">
                                 <div class="vrvs3p-mensagem-text">
-                                    <span class="vrvs3p-mensagem-emoji">${mensagemVazia.emoji || '✨'}</span>
-                                    <span>${mensagemVazia.texto || mensagemVazia}</span>
+                                    <span class="vrvs3p-mensagem-emoji">${(mensagemVazia && typeof mensagemVazia === 'object' && mensagemVazia.emoji) ? mensagemVazia.emoji : '✨'}</span>
+                                    <span>${(mensagemVazia && typeof mensagemVazia === 'object' && mensagemVazia.texto) ? mensagemVazia.texto : (mensagemVazia || '')}</span>
                                 </div>
                             </div>
                             <div class="vrvs3p-disclaimer">Estimativa VRVS 3P · Não é nota, é mapa de esforço</div>
