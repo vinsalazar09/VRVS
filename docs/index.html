@@ -549,43 +549,70 @@
         
         /* ==================== SRS - ESTILOS DIÁRIO ==================== */
         
-        /* Chip VRVS 3P no Diário - pill discreto e legível */
+        /* ===== CHIP VRVS 3P – Diário ===== */
+        .diario-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+        }
+        
+        .diario-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+            min-width: 0;
+        }
+        
         #vrvs3p-chip-diario {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 14px;
-            background: rgba(0, 206, 209, 0.15);
-            border: 1px solid rgba(0, 206, 209, 0.4);
+            padding: 6px 12px;
+            background: rgba(0, 206, 209, 0.25);
+            border: 1px solid rgba(0, 206, 209, 0.5);
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
             flex-shrink: 0;
-            width: auto;
-            max-width: none;
+            max-width: 200px;
         }
         
         #vrvs3p-chip-diario:hover {
-            background: rgba(0, 206, 209, 0.25);
-            border-color: rgba(0, 206, 209, 0.6);
+            background: rgba(0, 206, 209, 0.35);
         }
         
         #vrvs3p-chip-text {
             font-size: 12px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            color: #ffffff;
             line-height: 1.2;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
-        /* Responsivo chip */
-        @media (max-width: 400px) {
+        /* Responsivo – portrait iPhone */
+        @media (max-width: 480px) {
+            .diario-header-row {
+                align-items: flex-start;
+            }
+            
             #vrvs3p-chip-diario {
                 padding: 4px 10px;
+                max-width: 180px;
             }
             
             #vrvs3p-chip-text {
                 font-size: 11px;
+            }
+            
+            .btn-nova-diario {
+                align-self: flex-end;
+                margin-top: 8px;
             }
         }
         
@@ -3269,14 +3296,14 @@
             <!-- DIÁRIO -->
             <div id="diario" class="section">
                 <div class="card">
-                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex: 0 0 auto;">
+                    <div class="card-title diario-header-row">
+                        <div class="diario-header-left">
                             <span>📔 DIÁRIO DE APRENDIZADOS</span>
-                            <div id="vrvs3p-chip-diario" class="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p(); event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(5, 25, 30, 0.96); border: 1px solid rgba(0, 206, 209, 0.4); font-size: 12px; color: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; flex-shrink: 0;">
-                                🧠 <span id="vrvs3p-chip-text" style="color: rgba(255,255,255,0.9);">Carregando...</span>
+                            <div id="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p(); event.stopPropagation();">
+                                🧠 <span id="vrvs3p-chip-text">Carregando...</span>
                             </div>
                         </div>
-                        <button onclick="abrirNovaEntradaDiario()" id="btnNovaDiario" style="background: #FF9F40 !important; color: #FFFFFF !important; border: 2px solid #FFB84D !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 700 !important; cursor: pointer !important; min-width: 90px !important; box-shadow: 0 2px 8px rgba(255, 159, 64, 0.4) !important; transition: all 0.2s ease; display: inline-block !important; position: relative !important; z-index: 10 !important; -webkit-tap-highlight-color: rgba(255, 159, 64, 0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; opacity: 1 !important; visibility: visible !important;">+ Nova</button>
+                        <button onclick="abrirNovaEntradaDiario()" id="btnNovaDiario" class="btn-nova-diario" style="background: #FF9F40 !important; color: #FFFFFF !important; border: 2px solid #FFB84D !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 700 !important; cursor: pointer !important; min-width: 90px !important; box-shadow: 0 2px 8px rgba(255, 159, 64, 0.4) !important; transition: all 0.2s ease; display: inline-block !important; position: relative !important; z-index: 10 !important; -webkit-tap-highlight-color: rgba(255, 159, 64, 0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; opacity: 1 !important; visibility: visible !important;">+ Nova</button>
                     </div>
                     
                     <!-- Tabs Lista / Sessão -->
@@ -6892,9 +6919,7 @@
             // Sempre calcular estatísticas (mesmo se vazio)
             const stats = calcularEstatisticasVrvs3p(window.diario, hojeStr());
             const faixa = stats.retencaoGlobal !== null ? classificarFaixaRetencao(stats.retencaoGlobal) : 'nenhum';
-            const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats.totalAtivos);
-            
-            console.log('[VRVS3P] Calculando painel em calcularAnalises(), stats:', stats);
+            const mensagem = mensagemRetencao(stats.retencaoGlobal || 0, stats);
             
             // Sempre renderizar painel (mesmo se vazio)
             htmlVrvs3p = `
@@ -6920,7 +6945,7 @@
                                 </div>
                                 
                                 <div class="vrvs3p-mensagem" style="padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border-left: 3px solid var(--turquesa-light); font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 20px;">
-                                    ${mensagem}
+                                    ${typeof mensagem === 'object' ? `${mensagem.emoji || ''} ${mensagem.texto || mensagem}` : mensagem}
                                 </div>
                             </div>
                             
@@ -9728,20 +9753,55 @@
             return 'atrasado';                    // muito atrasado
         }
         
-        // Mensagem pedagógica baseada em retenção global
-        function mensagemRetencao(retencaoGlobal, totalAtivos) {
-            if (totalAtivos === 0) {
-                return '✨ Nenhum tópico ativo ainda. Crie entradas no Diário com VRVS 3P marcado.';
+        // Mensagem pedagógica baseada em retenção global e stats completos
+        function mensagemRetencao(retencaoGlobal, stats) {
+            // Se stats é número (compatibilidade com chamadas antigas), tratar como totalAtivos
+            const totalAtivos = typeof stats === 'number' ? stats : (stats?.totalAtivos || 0);
+            const pendentesHoje = typeof stats === 'object' ? (stats?.totalHoje || 0) : 0;
+            const atrasados = typeof stats === 'object' ? (stats?.totalAtrasadas || 0) : 0;
+            
+            if (!totalAtivos) {
+                return {
+                    emoji: '✨',
+                    texto: 'Nenhum tópico ativo ainda. Crie entradas no Diário marcando VRVS 3P.'
+                };
             }
             
-            const pct = retencaoGlobal * 100;
-            if (pct >= 80) {
-                return '🎯 Excelente! Seus tópicos estão bem consolidados. Continue no ritmo.';
-            } else if (pct >= 65) {
-                return '⚡ Alguns tópicos precisam de atenção. Priorize os que estão para hoje.';
-            } else {
-                return '📚 Hora de revisar! Muitos tópicos estão esfriando. Faça uma sessão hoje.';
+            if (!pendentesHoje && !atrasados) {
+                return {
+                    emoji: '✅',
+                    texto: 'Tudo em dia. Não há revisões marcadas para hoje. Você pode criar novos tópicos ou revisar por área.'
+                };
             }
+            
+            if (atrasados > 0) {
+                return {
+                    emoji: '⏰',
+                    texto: 'Existem tópicos atrasados. Comece por eles para recuperar o ritmo das revisões.'
+                };
+            }
+            
+            // Aqui há revisões para hoje, sem atrasados
+            const pct = (typeof retencaoGlobal === 'number' ? retencaoGlobal : 0) * 100;
+            if (pct >= 80) {
+                return {
+                    emoji: '🎯',
+                    texto: 'Excelente! Faça suas revisões de hoje para manter os tópicos bem consolidados.'
+                };
+            }
+            
+            if (pct >= 65) {
+                return {
+                    emoji: '⚡',
+                    texto: 'Alguns tópicos precisam de atenção. Faça as revisões de hoje para fortalecer a memória.'
+                };
+            }
+            
+            // retencao < 65
+            return {
+                emoji: '📚',
+                texto: 'Hora de revisar. Muitos tópicos estão em estágios iniciais — faça uma sessão hoje.'
+            };
         }
         
         // Calcular estatísticas agregadas do Diário VRVS 3P
@@ -10575,13 +10635,6 @@
             const entradaAtual = getEntradaAtualSessao();
             if (!entradaAtual) return;
             
-            // DEBUG: Log ao abrir edição da sessão
-            console.log('[DEBUG VRVS3P] abrir edição da sessão', {
-                id: entradaAtual.id,
-                area: entradaAtual.area,
-                tema: entradaAtual.tema
-            });
-            
             // CRÍTICO: Marcar flag ANTES de chamar editarEntradaDiario
             // Isso garante que a função sabe que veio da sessão
             window.editandoDaSessao = true;
@@ -10926,6 +10979,8 @@
                 entrada.ultimaAtualizacao = new Date().toISOString().split('T')[0];
                 salvarDiario();
                 renderDiario();
+                // Atualizar chip VRVS 3P após alterar atenção
+                atualizarChipVrvs3p();
             }
         }
         
@@ -11700,7 +11755,7 @@
             
             const statsVrvs3p = calcularEstatisticasVrvs3p(window.diario, hojeStr());
             const faixaVrvs3p = statsVrvs3p.retencaoGlobal !== null ? classificarFaixaRetencao(statsVrvs3p.retencaoGlobal) : 'nenhum';
-            const mensagemVrvs3p = mensagemRetencao(statsVrvs3p.retencaoGlobal || 0, statsVrvs3p.totalAtivos);
+            const mensagemVrvs3p = mensagemRetencao(statsVrvs3p.retencaoGlobal || 0, statsVrvs3p);
             
             // Montar painel VRVS 3P colapsável (versão refinada para Resumo)
             // SEMPRE renderizar painel (mesmo se vazio)
@@ -11751,8 +11806,8 @@
                             </div>
                             <div class="vrvs3p-mensagem-box ${classeMensagem}">
                                 <div class="vrvs3p-mensagem-text">
-                                    <span class="vrvs3p-mensagem-emoji">${mensagemVrvs3p.match(/^[^\s]+/)?.[0] || '✨'}</span>
-                                    <span>${mensagemVrvs3p.replace(/^[^\s]+\s/, '')}</span>
+                                    <span class="vrvs3p-mensagem-emoji">${mensagemVrvs3p.emoji || '✨'}</span>
+                                    <span>${mensagemVrvs3p.texto || mensagemVrvs3p}</span>
                                 </div>
                             </div>
                             <div class="vrvs3p-disclaimer">Estimativa VRVS 3P · Não é nota, é mapa de esforço</div>
@@ -11760,6 +11815,7 @@
                     </section>
                 `;
             } else {
+                const mensagemVazia = mensagemRetencao(0, statsVrvs3p);
                 htmlVrvs3p = `
                     <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed">
                         <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()">
@@ -11772,8 +11828,8 @@
                         <div class="vrvs3p-body">
                             <div class="vrvs3p-mensagem-box">
                                 <div class="vrvs3p-mensagem-text">
-                                    <span class="vrvs3p-mensagem-emoji">✨</span>
-                                    <span>Nenhum tópico ativo ainda. Crie entradas no Diário com VRVS 3P marcado.</span>
+                                    <span class="vrvs3p-mensagem-emoji">${mensagemVazia.emoji || '✨'}</span>
+                                    <span>${mensagemVazia.texto || mensagemVazia}</span>
                                 </div>
                             </div>
                             <div class="vrvs3p-disclaimer">Estimativa VRVS 3P · Não é nota, é mapa de esforço</div>

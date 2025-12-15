@@ -281,3 +281,4 @@ No Resumo, o painel é mais compacto (apenas título + linha de métricas) para 
 **Arquivos modificados:** `docs/index.html`  
 **Linhas modificadas:** ~50 linhas (adicionadas/modificadas)
 
+
