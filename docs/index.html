@@ -2797,7 +2797,7 @@
                 <form id="modalCadastroForm" onsubmit="salvarNovoTemaModal(event)">
                     <div class="form-group">
                         <label class="form-label">Área de Conhecimento</label>
-                        <select class="form-select" id="modalNovaArea" required>
+                        <select class="form-select" id="modalCadastroArea" required>
                             <option value="">Selecione...</option>
                         </select>
                     </div>
@@ -9560,6 +9560,18 @@
             return new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
         }
         
+        // Helper para formatar texto do Diário preservando quebras de linha
+        function formatarTextoDiario(texto) {
+            if (!texto) return '';
+            const seguro = String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+            return seguro.replace(/\n/g, '<br>');
+        }
+        
         function addDias(dateStr, dias) {
             const d = new Date(dateStr);
             d.setDate(d.getDate() + dias);
@@ -9778,48 +9790,54 @@
             const totalAtivos = typeof stats === 'number' ? stats : (stats && stats.totalAtivos ? stats.totalAtivos : 0);
             const pendentesHoje = typeof stats === 'object' && stats ? (stats.totalHoje || 0) : 0;
             const atrasados = typeof stats === 'object' && stats ? (stats.totalAtrasadas || 0) : 0;
+            const pct = (typeof retencaoGlobal === 'number' ? retencaoGlobal : 0) * 100;
+            const temPendencias = (pendentesHoje > 0) || (atrasados > 0);
             
             if (!totalAtivos) {
                 return {
                     emoji: '✨',
-                    texto: 'Nenhum tópico ativo ainda. Crie entradas no Diário marcando VRVS 3P.'
+                    texto: 'Nenhum tópico ativo ainda. Crie entradas no Diário marcando VRVS 3P.',
+                    classe: 'neutro'
                 };
             }
             
-            if (!pendentesHoje && !atrasados) {
-                return {
-                    emoji: '✅',
-                    texto: 'Tudo em dia. Não há revisões marcadas para hoje. Você pode criar novos tópicos ou revisar por área.'
-                };
+            // Sem pendências: considerar retenção global
+            if (!temPendencias) {
+                if (pct >= 80) {
+                    return {
+                        emoji: '🎯',
+                        texto: 'Excelente! Seus tópicos estão bem consolidados e você está em dia.',
+                        classe: 'alta'
+                    };
+                } else if (pct >= 65) {
+                    return {
+                        emoji: '⚡',
+                        texto: 'Você está em dia hoje. Continue revisando para subir a retenção global.',
+                        classe: 'media'
+                    };
+                } else {
+                    return {
+                        emoji: '📚',
+                        texto: 'Você está em dia hoje, mas a retenção global ainda está baixa. Reforce alguns tópicos-chave.',
+                        classe: 'baixa'
+                    };
+                }
             }
             
+            // Com pendências (hoje ou atrasadas)
             if (atrasados > 0) {
                 return {
                     emoji: '⏰',
-                    texto: 'Existem tópicos atrasados. Comece por eles para recuperar o ritmo das revisões.'
+                    texto: 'Existem tópicos atrasados. Priorize os atrasados antes dos demais.',
+                    classe: 'baixa'
                 };
             }
             
-            // Aqui há revisões para hoje, sem atrasados
-            const pct = (typeof retencaoGlobal === 'number' ? retencaoGlobal : 0) * 100;
-            if (pct >= 80) {
-                return {
-                    emoji: '🎯',
-                    texto: 'Excelente! Faça suas revisões de hoje para manter os tópicos bem consolidados.'
-                };
-            }
-            
-            if (pct >= 65) {
-                return {
-                    emoji: '⚡',
-                    texto: 'Alguns tópicos precisam de atenção. Faça as revisões de hoje para fortalecer a memória.'
-                };
-            }
-            
-            // retencao < 65
+            // Só pendentes de hoje
             return {
-                emoji: '📚',
-                texto: 'Hora de revisar. Muitos tópicos estão em estágios iniciais — faça uma sessão hoje.'
+                emoji: '🧠',
+                texto: 'Você tem tópicos para revisar hoje. Reserve alguns minutos para avançar.',
+                classe: (pct >= 80 ? 'alta' : 'media')
             };
         }
         
@@ -10636,7 +10654,7 @@
                                 ${entrada.area} • ${entrada.tema}
                             </div>
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px;">
-                                ❓ ${entrada.topico}
+                                ❓ ${formatarTextoDiario(entrada.topico)}
                             </div>
                         </div>
                         <div style="display: flex; gap: 6px;">
@@ -10647,7 +10665,7 @@
                     ${mostrarResposta && entrada.resposta ? `
                         <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
-                            <span style="white-space: pre-wrap;">${entrada.resposta.replace(/\n/g, '<br>')}</span>
+                            <span>${formatarTextoDiario(entrada.resposta)}</span>
                         </div>
                     ` : mostrarResposta ? `
                         <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
@@ -10659,7 +10677,7 @@
                         </button>
                         <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
-                            <span style="white-space: pre-wrap;">${entrada.resposta ? entrada.resposta.replace(/\n/g, '<br>') : '(Sem resposta ainda)'}</span>
+                            <span>${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}</span>
                         </div>
                     `}
                 </div>
@@ -10928,11 +10946,11 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico">
-                        ❓ ${entradaAtual.topico}
+                        ❓ ${formatarTextoDiario(entradaAtual.topico)}
                     </div>
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta escondida">
                         <div class="diario-sessao-resposta-inner">
-                            ${entradaAtual.resposta ? entradaAtual.resposta.replace(/\n/g, '<br>') : '<em>(Sem resposta cadastrada)</em>'}
+                            ${entradaAtual.resposta ? formatarTextoDiario(entradaAtual.resposta) : '<em>(Sem resposta cadastrada)</em>'}
                         </div>
                     </div>
                     <div class="diario-sessao-acoes">
@@ -11048,8 +11066,25 @@
         // ==================== MODAL NOVA ÁREA ====================
         
         function abrirModalNovaArea() {
-            document.getElementById('inputNovaAreaNome').value = '';
-            document.getElementById('modalNovaArea').classList.add('active');
+            try {
+                const inputNome = document.getElementById('inputNovaAreaNome');
+                const modal = document.getElementById('modalNovaArea');
+                
+                if (!modal) {
+                    console.error('[BUG FIX] Modal modalNovaArea não encontrado!');
+                    mostrarNotificacaoFeedback('⚠️ Erro ao abrir modal de nova área.', 'error');
+                    return;
+                }
+                
+                if (inputNome) {
+                    inputNome.value = '';
+                }
+                
+                modal.classList.add('active');
+            } catch (e) {
+                console.error('[BUG FIX] Erro ao abrir modal nova área:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao abrir modal de nova área.', 'error');
+            }
         }
         
         function fecharModalNovaArea() {
@@ -11161,17 +11196,45 @@
         
         function abrirModalCadastro() {
             // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
-            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])].sort();
-            const selectArea = document.getElementById('modalNovaArea');
+            let areasExistentes = [];
+            try {
+                if (typeof AREAS_FIXAS !== 'undefined' && Array.isArray(AREAS_FIXAS)) {
+                    areasExistentes = [...AREAS_FIXAS];
+                }
+                if (typeof dados !== 'undefined' && Array.isArray(dados)) {
+                    const areasDosDados = dados.map(t => t.area).filter(a => a);
+                    areasExistentes = [...areasExistentes, ...areasDosDados];
+                }
+                areasExistentes = [...new Set(areasExistentes)].sort();
+            } catch (e) {
+                console.error('[BUG FIX] Erro ao coletar áreas:', e);
+                areasExistentes = AREAS_FIXAS || [];
+            }
+            
+            const selectArea = document.getElementById('modalCadastroArea');
+            if (!selectArea) {
+                console.error('[BUG FIX] Select modalCadastroArea não encontrado!');
+                return;
+            }
+            
             selectArea.innerHTML = '<option value="">Selecione...</option>' +
                 areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
             
             // Limpar campos
-            document.getElementById('modalNovoTema').value = '';
-            document.getElementById('modalNovaPrioridade').value = '3';
-            document.getElementById('modalNovaDataInicio').value = '';
+            const temaInput = document.getElementById('modalNovoTema');
+            const prioridadeInput = document.getElementById('modalNovaPrioridade');
+            const dataInput = document.getElementById('modalNovaDataInicio');
             
-            document.getElementById('modalCadastro').classList.add('active');
+            if (temaInput) temaInput.value = '';
+            if (prioridadeInput) prioridadeInput.value = '3';
+            if (dataInput) dataInput.value = '';
+            
+            const modal = document.getElementById('modalCadastro');
+            if (modal) {
+                modal.classList.add('active');
+            } else {
+                console.error('[BUG FIX] Modal modalCadastro não encontrado!');
+            }
         }
         
         function fecharModalCadastro() {
@@ -11187,7 +11250,10 @@
             if (modalNovaAreaInput && modalNovaAreaInput.style.display !== 'none' && modalNovaAreaInput.value.trim()) {
                 area = modalNovaAreaInput.value.trim();
             } else {
-                area = document.getElementById('modalNovaArea').value.trim();
+                const selectArea = document.getElementById('modalCadastroArea');
+                if (selectArea) {
+                    area = selectArea.value.trim();
+                }
             }
             
             // Validar que não é a opção especial
@@ -11817,7 +11883,8 @@
             
             if (statsVrvs3p && statsVrvs3p.totalAtivos > 0) {
                 const classeBarra = faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa';
-                const classeMensagem = faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa';
+                // Usar classe da mensagem se disponível, senão usar faixa de retenção
+                const classeMensagem = (mensagemVrvs3p && mensagemVrvs3p.classe) ? mensagemVrvs3p.classe : (faixaVrvs3p === 'alta' ? 'alta' : faixaVrvs3p === 'media' ? 'media' : 'baixa');
                 htmlVrvs3p = `
                     <section id="painel-vrvs3p" class="vrvs3p-card vrvs3p-collapsed">
                         <button type="button" class="vrvs3p-header" onclick="togglePainelVrvs3p()">
