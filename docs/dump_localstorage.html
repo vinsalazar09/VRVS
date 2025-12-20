@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRVS - Dump localStorage</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #0a1a1f;
+            color: #fff;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00CED1;
+        }
+        .info {
+            background: #1a2a2f;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .info-item {
+            margin: 5px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px 10px 0;
+            background: #00CED1;
+            border: none;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #00E5E8;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: #1a2a2f;
+            color: #fff;
+            border: 1px solid #00CED1;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .counter {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00CED1;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 VRVS - Dump localStorage</h1>
+    
+    <div class="info">
+        <div class="info-item"><strong>Origin:</strong> <span id="originDisplay">-</span></div>
+        <div class="info-item"><strong>User Agent:</strong> <span id="userAgentDisplay">-</span></div>
+        <div class="info-item"><strong>Timestamp:</strong> <span id="timestampDisplay">-</span></div>
+        <div class="counter" id="counterDisplay">Chaves encontradas: 0</div>
+    </div>
+    
+    <div>
+        <button onclick="gerarDump()">Gerar Dump</button>
+        <button onclick="copiarDump()" id="btnCopiar" disabled>Copiar</button>
+        <button onclick="baixarDump()" id="btnBaixar" disabled>Baixar .json</button>
+    </div>
+    
+    <textarea id="dumpOutput" readonly placeholder="Clique em 'Gerar Dump' para começar..."></textarea>
+    
+    <script>
+        // ES5 PURO - Zero sintaxe moderna
+        var dumpData = null;
+        
+        function atualizarInfo() {
+            try {
+                document.getElementById('originDisplay').textContent = window.location.origin;
+                document.getElementById('userAgentDisplay').textContent = navigator.userAgent;
+                document.getElementById('timestampDisplay').textContent = new Date().toISOString();
+            } catch(e) {
+                console.log('Erro ao atualizar info:', e);
+            }
+        }
+        
+        function gerarDump() {
+            try {
+                var data = {
+                    timestamp: new Date().toISOString(),
+                    origin: window.location.origin,
+                    userAgent: navigator.userAgent,
+                    items: {}
+                };
+                
+                var count = 0;
+                for (var i = 0; i < localStorage.length; i++) {
+                    var key = localStorage.key(i);
+                    var value = localStorage.getItem(key);
+                    data.items[key] = value;
+                    count++;
+                }
+                
+                dumpData = data;
+                document.getElementById('dumpOutput').value = JSON.stringify(data, null, 2);
+                document.getElementById('counterDisplay').textContent = 'Chaves encontradas: ' + count;
+                document.getElementById('btnCopiar').disabled = false;
+                document.getElementById('btnBaixar').disabled = false;
+                
+                atualizarInfo();
+            } catch(e) {
+                alert('Erro ao gerar dump: ' + e);
+                console.error(e);
+            }
+        }
+        
+        function copiarDump() {
+            try {
+                if (!dumpData) {
+                    alert('Gere o dump primeiro!');
+                    return;
+                }
+                
+                var textarea = document.getElementById('dumpOutput');
+                textarea.select();
+                textarea.setSelectionRange(0, 99999);
+                
+                var copiado = false;
+                try {
+                    copiado = document.execCommand('copy');
+                } catch(e) {
+                    console.log('execCommand não suportado:', e);
+                }
+                
+                if (copiado) {
+                    alert('Dump copiado para área de transferência!');
+                } else {
+                    alert('Não foi possível copiar automaticamente. Selecione o texto manualmente.');
+                }
+            } catch(e) {
+                alert('Erro ao copiar: ' + e);
+                console.error(e);
+            }
+        }
+        
+        function baixarDump() {
+            try {
+                if (!dumpData) {
+                    alert('Gere o dump primeiro!');
+                    return;
+                }
+                
+                var jsonStr = JSON.stringify(dumpData, null, 2);
+                var blob = new Blob([jsonStr], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'vrvs_localstorage_dump_' + new Date().getTime() + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch(e) {
+                alert('Erro ao baixar: ' + e + '\nUse o campo de texto acima para copiar manualmente.');
+                console.error(e);
+            }
+        }
+        
+        // Atualizar info ao carregar
+        window.onload = function() {
+            atualizarInfo();
+        };
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRVS - Recovery Service Worker</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #0a1a1f;
+            color: #fff;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00CED1;
+        }
+        button {
+            padding: 15px 25px;
+            margin: 10px 5px 10px 0;
+            background: #00CED1;
+            border: none;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+            border-radius: 4px;
+            font-size: 16px;
+            display: block;
+            width: 100%;
+            max-width: 400px;
+        }
+        button:hover {
+            background: #00E5E8;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            background: #1a2a2f;
+            border-left: 4px solid #00CED1;
+            border-radius: 4px;
+        }
+        .status.success {
+            border-left-color: #22c55e;
+            background: #0a2a0a;
+        }
+        .status.error {
+            border-left-color: #dc3545;
+            background: #2a0a0a;
+        }
+        .status.info {
+            border-left-color: #00CED1;
+        }
+        #statusContainer {
+            margin: 20px 0;
+            min-height: 100px;
+        }
+        .link-final {
+            display: block;
+            padding: 20px;
+            background: #00CED1;
+            color: #000;
+            text-decoration: none;
+            font-size: 24px;
+            margin-top: 20px;
+            text-align: center;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .link-final:hover {
+            background: #00E5E8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 VRVS - Recovery Service Worker</h1>
+    
+    <p><strong>Esta ferramenta limpa Service Workers e Cache Storage.</strong></p>
+    <p><em>Não mexe no localStorage - seus dados estão seguros.</em></p>
+    
+    <div>
+        <button onclick="desregistrarSW()">Desregistrar Service Workers</button>
+        <button onclick="apagarCache()">Apagar Cache Storage</button>
+        <button onclick="rodarTudo()">Rodar Tudo</button>
+    </div>
+    
+    <div id="statusContainer"></div>
+    
+    <script>
+        // ES5 PURO - Zero sintaxe moderna
+        function addStatus(msg, tipo) {
+            try {
+                var div = document.createElement('div');
+                div.className = 'status ' + (tipo || 'info');
+                div.textContent = msg;
+                document.getElementById('statusContainer').appendChild(div);
+                console.log('[RECOVERY]', msg);
+            } catch(e) {
+                console.error('Erro ao adicionar status:', e);
+            }
+        }
+        
+        function desregistrarSW() {
+            addStatus('Iniciando desregistro de Service Workers...', 'info');
+            
+            if (!('serviceWorker' in navigator)) {
+                addStatus('Service Worker não suportado neste navegador.', 'error');
+                return;
+            }
+            
+            try {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    if (registrations.length === 0) {
+                        addStatus('Nenhum Service Worker registrado.', 'success');
+                    } else {
+                        addStatus('Encontrados ' + registrations.length + ' Service Worker(s).', 'info');
+                        var promises = [];
+                        for (var i = 0; i < registrations.length; i++) {
+                            promises.push(registrations[i].unregister());
+                        }
+                        Promise.all(promises).then(function() {
+                            addStatus('✅ Service Workers desregistrados com sucesso!', 'success');
+                        }).catch(function(e) {
+                            addStatus('❌ Erro ao desregistrar SW: ' + e, 'error');
+                        });
+                    }
+                }).catch(function(e) {
+                    addStatus('❌ Erro ao obter registrations: ' + e, 'error');
+                });
+            } catch(e) {
+                addStatus('❌ Erro: ' + e, 'error');
+            }
+        }
+        
+        function apagarCache() {
+            addStatus('Iniciando limpeza de Cache Storage...', 'info');
+            
+            if (!('caches' in window)) {
+                addStatus('Cache Storage não suportado neste navegador.', 'error');
+                return;
+            }
+            
+            try {
+                caches.keys().then(function(cacheNames) {
+                    if (cacheNames.length === 0) {
+                        addStatus('Nenhum cache encontrado.', 'success');
+                    } else {
+                        addStatus('Encontrados ' + cacheNames.length + ' cache(s).', 'info');
+                        var promises = [];
+                        for (var i = 0; i < cacheNames.length; i++) {
+                            promises.push(caches.delete(cacheNames[i]));
+                        }
+                        Promise.all(promises).then(function() {
+                            addStatus('✅ Caches deletados com sucesso!', 'success');
+                        }).catch(function(e) {
+                            addStatus('❌ Erro ao deletar caches: ' + e, 'error');
+                        });
+                    }
+                }).catch(function(e) {
+                    addStatus('❌ Erro ao obter caches: ' + e, 'error');
+                });
+            } catch(e) {
+                addStatus('❌ Erro: ' + e, 'error');
+            }
+        }
+        
+        function rodarTudo() {
+            addStatus('=== RODANDO TUDO ===', 'info');
+            desregistrarSW();
+            setTimeout(function() {
+                apagarCache();
+                setTimeout(function() {
+                    criarLinkFinal();
+                }, 2000);
+            }, 1000);
+        }
+        
+        function criarLinkFinal() {
+            try {
+                var timestamp = new Date().getTime();
+                var link = document.createElement('a');
+                link.href = './index.html?cb=' + timestamp;
+                link.className = 'link-final';
+                link.textContent = 'Abrir VRVS (com cachebust)';
+                link.target = '_self';
+                
+                var container = document.getElementById('statusContainer');
+                var linkExistente = container.querySelector('.link-final');
+                if (linkExistente) {
+                    container.removeChild(linkExistente);
+                }
+                container.appendChild(link);
+                
+                addStatus('✅ Recovery concluído! Clique no link acima para abrir o app.', 'success');
+            } catch(e) {
+                addStatus('Erro ao criar link: ' + e, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+

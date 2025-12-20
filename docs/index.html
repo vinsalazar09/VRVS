@@ -2562,126 +2562,7 @@
         <div class="splash-progress">
             <div class="splash-progress-bar"></div>
         </div>
-        <div id="bootBuildVRVS" style="opacity:0.7;font-size:12px;margin-top:8px;color:rgba(255,255,255,0.6);"></div>
-        <div id="bootStatusVRVS" style="opacity:0.9;font-size:13px;margin-top:6px;white-space:pre-line;color:rgba(255,255,255,0.8);text-align:center;max-width:300px;"></div>
     </div>
-    
-    <!-- PREBOOT ES5 - Executa ANTES do script principal (prova de execução + escape do splash) -->
-    <script>
-    (function() {
-        // PREBOOT ES5 PURO - Zero sintaxe moderna (compatível Safari antigo)
-        // Build ID hard-coded
-        var VRVS_BUILD = "HOTFIX5-BOOT-PREBOOT-2025-12-20-2100";
-        
-        // Atualizar build no splash (prova visual de atualização)
-        try {
-            var buildEl = document.getElementById('bootBuildVRVS');
-            if (buildEl) {
-                buildEl.textContent = "build: " + VRVS_BUILD;
-            }
-        } catch(e) {}
-        
-        // Atualizar status (prova visual de que JS executou)
-        try {
-            var statusEl = document.getElementById('bootStatusVRVS');
-            if (statusEl) {
-                statusEl.textContent = "status: PREBOOT OK";
-            }
-        } catch(e) {}
-        
-        // Função independente para esconder splash (não depende do script principal)
-        function vrvsPrebootHideSplash(reason) {
-            try {
-                // Flag idempotente (reutiliza flag existente do projeto)
-                if (window.__vrvsSplashHidden) {
-                    return;
-                }
-                window.__vrvsSplashHidden = true;
-                
-                // Esconder splash
-                var splash = document.getElementById('splashScreen');
-                if (splash) {
-                    splash.classList.add('hidden');
-                    splash.style.display = 'none';
-                }
-                
-                // Destravar body (CRÍTICO: remove classe bloqueante e restaura scroll)
-                if (document.body) {
-                    document.body.classList.remove('splash-loading');
-                    document.body.style.overflow = 'auto';
-                    // Retry após 100ms se ainda estiver travado
-                    setTimeout(function() {
-                        if (document.body && document.body.classList.contains('splash-loading')) {
-                            document.body.classList.remove('splash-loading');
-                        }
-                    }, 100);
-                }
-                
-                // Atualizar status
-                try {
-                    var statusEl = document.getElementById('bootStatusVRVS');
-                    if (statusEl) {
-                        statusEl.textContent = "status: UI liberada (" + reason + ")";
-                    }
-                } catch(e) {}
-                
-                console.log('[VRVS][PREBOOT] UI liberada:', reason);
-            } catch (e) {
-                console.log('[VRVS][PREBOOT] vrvsPrebootHideSplash falhou:', e);
-            }
-        }
-        
-        // Função para mostrar erro básico (não acessa localStorage)
-        function mostrarErroBasico(msg) {
-            try {
-                var statusEl = document.getElementById('bootStatusVRVS');
-                if (statusEl) {
-                    var textoAtual = statusEl.textContent || '';
-                    statusEl.textContent = textoAtual + "\nERRO: " + msg;
-                }
-            } catch(e) {}
-        }
-        
-        // Handler de erro global (ES5)
-        var prevOnError = window.onerror;
-        window.onerror = function(msg, src, line, col, err) {
-            vrvsPrebootHideSplash("onerror");
-            mostrarErroBasico("Erro JS: " + (msg || "desconhecido"));
-            if (typeof prevOnError === 'function') {
-                try {
-                    return prevOnError.apply(this, arguments);
-                } catch(e) {}
-            }
-            return false;
-        };
-        
-        // Handler de promise rejeitada (ES5)
-        window.onunhandledrejection = function(e) {
-            vrvsPrebootHideSplash("unhandledrejection");
-            var reason = (e && e.reason) ? String(e.reason) : "promise rejeitada";
-            mostrarErroBasico("Promise: " + reason);
-        };
-        
-        // Watchdog curto (1.5s) - não depende do script principal
-        setTimeout(function() {
-            if (!window.__vrvsAppBooted) {
-                vrvsPrebootHideSplash("watchdog-1500ms");
-                mostrarErroBasico("Boot não confirmou em 1.5s");
-            }
-        }, 1500);
-        
-        // DOMContentLoaded failsafe (800ms após DOM montar)
-        if (document.addEventListener) {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    if (!window.__vrvsSplashHidden) {
-                        vrvsPrebootHideSplash("domcontentloaded");
-                    }
-                }, 800);
-            });
-        }
-    })();
-    </script>
     
     <div id="importMessage"></div>
     <div id="feedbackMessage"></div>
@@ -3731,7 +3612,7 @@
         </div>
     </div>
 
-    <!-- Chart.js lazy-load: não bloquear boot no iPhone -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // ==================== DADOS E INICIALIZAÇÃO ====================
         // Função para corrigir inversão área↔tema ANTES de carregar dados
@@ -3752,98 +3633,29 @@
         
         // ==================== FUNÇÕES DE SEGURANÇA ====================
         
-        // Helper para leitura segura de JSON do localStorage (resiliente a JSON corrompido)
-        function safeJSONParseLS(key, fallbackValue) {
-            try {
-                const raw = localStorage.getItem(key);
-                if (raw === null || raw === undefined || raw === '') {
-                    return fallbackValue;
-                }
-                return JSON.parse(raw);
-            } catch (e) {
-                console.warn(`[SAFE_PARSE] JSON inválido em ${key}. Usando fallback.`, e);
-                return fallbackValue;
-            }
-        }
-        
         function fazerBackupCompleto() {
             const backup = {
                 schemaVersion: 'VRVS_BACKUP_v1',
                 timestamp: new Date().toISOString(),
-                dados: safeJSONParseLS('vrvs_dados', []),
-                historico: safeJSONParseLS('vrvs_historico', []),
-                anotacoes: safeJSONParseLS('vrvs_anotacoes', []),
-                lembretes: safeJSONParseLS('vrvs_lembretes', []),
-                diario: safeJSONParseLS('vrvs_diario', {"entradas":[],"schemaVersion":"1.0"}),
-                config: safeJSONParseLS('vrvs_config', {})
+                dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
+                historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
+                anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
+                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
+                diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
+                config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
             };
             
             const backupKey = `vrvs_backup_${Date.now()}`;
+            localStorage.setItem(backupKey, JSON.stringify(backup));
             
-            try {
-                // Proteger JSON.stringify também (pode falhar se houver dado circular ou muito grande)
-                let backupPayload;
-                try {
-                    backupPayload = JSON.stringify(backup);
-                } catch (stringifyError) {
-                    console.error('[BACKUP] Falha ao serializar backup. Dados podem estar corrompidos.', stringifyError);
-                    throw stringifyError;
-                }
-                localStorage.setItem(backupKey, backupPayload);
-            } catch (e) {
-                // Se falhou por quota, tentar limpar backups antigos e retry 1x
-                if (e.name === 'QuotaExceededError' || e.code === 22) {
-                    try {
-                        const backupKeys = Object.keys(localStorage)
-                            .filter(k => k.startsWith('vrvs_backup_'))
-                            .sort()
-                            .reverse();
-                        
-                        // Manter apenas o mais recente, remover os demais
-                        if (backupKeys.length > 1) {
-                            backupKeys.slice(1).forEach(k => {
-                                try {
-                                    localStorage.removeItem(k);
-                                } catch (_) {}
-                            });
-                        }
-                        
-                        // Retry 1x após limpar
-                        let backupPayloadRetry;
-                        try {
-                            backupPayloadRetry = JSON.stringify(backup);
-                        } catch (stringifyError) {
-                            console.error('[BACKUP] Falha ao serializar backup no retry.', stringifyError);
-                            throw stringifyError;
-                        }
-                        localStorage.setItem(backupKey, backupPayloadRetry);
-                    } catch (e2) {
-                        // Se ainda falhar, abortar backup sem quebrar o boot
-                        console.warn('[BACKUP] Falha ao criar backup após limpeza. Continuando sem backup.', e2);
-                        throw e2; // Propaga erro para quem chamou tratar
-                    }
-                } else {
-                    // Outro tipo de erro, propagar
-                    throw e;
-                }
-            }
-            
-            // Manter apenas últimos 5 backups (se conseguiu salvar)
-            try {
+            // Manter apenas últimos 5 backups
             const backupKeys = Object.keys(localStorage)
                 .filter(k => k.startsWith('vrvs_backup_'))
                 .sort()
                 .reverse();
             
             if (backupKeys.length > 5) {
-                    backupKeys.slice(5).forEach(k => {
-                        try {
-                            localStorage.removeItem(k);
-                        } catch (_) {}
-                    });
-                }
-            } catch (_) {
-                // Falha ao limpar backups antigos não deve quebrar o boot
+                backupKeys.slice(5).forEach(k => localStorage.removeItem(k));
             }
             
             console.log(`[BACKUP] Backup criado: ${backupKey}`);
@@ -4079,163 +3891,15 @@
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         
-        // FAILSAFE DO BOOT - Esconder splash em caso de erro (evita travamento eterno)
-        (function setupBootFailsafeVRVS() {
-            function hideSplash(reason) {
-                try {
-                    const splash = document.getElementById('splashScreen');
-                    if (splash && !splash.classList.contains('hidden')) {
-                        splash.classList.add('hidden');
-                    }
-                    if (document.body) {
-                        document.body.classList.remove('splash-loading');
-                    }
-                } catch (_) {}
-                try {
-                    // Banner simples para não deixar o usuário no escuro
-                    if (!document.getElementById('bootErrorBanner')) {
-                        const b = document.createElement('div');
-                        b.id = 'bootErrorBanner';
-                        b.textContent = '⚠️ Erro ao iniciar. Recarregue o app. (ver console)';
-                        b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;padding:10px 12px;font-size:13px;background:rgba(239,68,68,0.18);border-bottom:1px solid rgba(239,68,68,0.35);backdrop-filter: blur(8px);';
-                        document.body && document.body.appendChild(b);
-                    }
-                } catch (_) {}
-                try { console.error('[VRVS BOOT FAILSAFE]', reason); } catch (_) {}
-            }
-            
-            const prevOnError = window.onerror;
-            window.onerror = function (msg, src, line, col, err) {
-                hideSplash(err || msg);
-                if (typeof prevOnError === 'function') {
-                    try { return prevOnError.apply(this, arguments); } catch (_) {}
-                }
-                return false;
-            };
-            
-            window.addEventListener('unhandledrejection', function (e) {
-                hideSplash(e && e.reason ? e.reason : 'unhandledrejection');
-            });
-            
-            // Watchdog: se splash não sumiu em 10s, destravar UI
-            setTimeout(function () {
-                try {
-                    const splash = document.getElementById('splashScreen');
-                    if (splash && !splash.classList.contains('hidden')) {
-                        hideSplash('watchdog-timeout');
-                    }
-                } catch (_) {}
-            }, 10000);
-        })();
+        let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
+        let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
+        let lembretes = JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]');
+        let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'); // Anotações por tema
         
-        // ==================== BOOT TRACE E FAILSAFE EXTRA ====================
-        
-        // Helpers para trace de boot (read-only, não acessa localStorage)
-        function bootSetStatus(msg) {
-            try {
-                const el = document.getElementById('bootStatusVRVS');
-                if (el) {
-                    el.textContent = msg;
-                }
-                console.log('[BOOT]', msg);
-            } catch (_) {}
-        }
-        
-        function bootSetBuild() {
-            try {
-                const el = document.getElementById('bootBuildVRVS');
-                if (el) {
-                    const now = new Date();
-                    const buildStr = `build: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-                    el.textContent = buildStr;
-                }
-            } catch (_) {}
-        }
-        
-        function bootForceHideSplash(reason) {
-            try {
-                // Flag idempotente: se já escondido, não fazer nada
-                if (window.__vrvsSplashHidden) return;
-                window.__vrvsSplashHidden = true;
-                
-                const splash = document.getElementById('splashScreen');
-                if (splash) {
-                    splash.classList.add('hidden');
-                    splash.style.display = 'none'; // Força esconder mesmo se CSS falhar
-                }
-                
-                if (document.body) {
-                    document.body.classList.remove('splash-loading');
-                    document.body.style.overflow = 'auto'; // Garante scroll liberado
-                    // Força remoção se ainda estiver após 100ms
-                    setTimeout(() => {
-                        if (document.body.classList.contains('splash-loading')) {
-                            document.body.classList.remove('splash-loading');
-                        }
-                    }, 100);
-                }
-                
-                // Atualizar status se elemento existir
-                const st = document.getElementById('bootStatusVRVS');
-                if (st) {
-                    st.textContent = `UI liberada: ${reason}`;
-                }
-                
-                console.log('[VRVS][BOOT] UI liberada:', reason);
-            } catch (e) {
-                console.log('[VRVS][BOOT] bootForceHideSplash falhou:', e);
-            }
-            try {
-                // Banner simples para não deixar o usuário no escuro
-                if (!document.getElementById('bootErrorBanner')) {
-                    const b = document.createElement('div');
-                    b.id = 'bootErrorBanner';
-                    b.textContent = '⚠️ Erro ao iniciar. Recarregue o app. (ver console)';
-                    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;padding:10px 12px;font-size:13px;background:rgba(239,68,68,0.18);border-bottom:1px solid rgba(239,68,68,0.35);backdrop-filter: blur(8px);';
-                    document.body && document.body.appendChild(b);
-                }
-            } catch (_) {}
-        }
-        
-        // Inicializar trace
-        bootSetBuild();
-        bootSetStatus('BOOT: JS iniciou');
-        
-        // Watchdog extra de 3s (camada adicional ao failsafe existente)
-        setTimeout(function () {
-            try {
-                if (!window.__vrvsSplashHidden) {
-                    bootSetStatus('BOOT: watchdog 3s ativado');
-                    bootForceHideSplash('watchdog-3s');
-                }
-            } catch (_) {}
-        }, 3000);
-        
-        // Failsafe DOMContentLoaded: liberar UI quando DOM montar (não esperar assets)
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                if (!window.__vrvsSplashHidden) {
-                    bootSetStatus('BOOT: DOMContentLoaded watchdog');
-                    bootForceHideSplash('domcontentloaded');
-                }
-            }, 800);
-        });
-        
-        // ==================== DADOS E INICIALIZAÇÃO ====================
-        
-        // Flag de confirmação do boot (para watchdog do PREBOOT)
-        window.__vrvsAppBooted = true;
-        
-        let dados = safeJSONParseLS('vrvs_dados', []);
-        let historico = safeJSONParseLS('vrvs_historico', []);
-        let lembretes = safeJSONParseLS('vrvs_lembretes', []);
-        let anotacoes = safeJSONParseLS('vrvs_anotacoes', []); // Anotações por tema
-        
-        // MOVIDO PARA DEFER PÓS-UI (HOTFIX4): dados.map() não roda mais no boot síncrono
         // Aplicar correção de inversão área/tema nos dados carregados
-        // if (Array.isArray(dados)) {
-        //     dados = dados.map(d => fixAreaTemaObjeto(d));
-        // }
+        if (Array.isArray(dados)) {
+            dados = dados.map(d => fixAreaTemaObjeto(d));
+        }
         
         // Limpar dados corrompidos
         function limparDadosCorretos() {
@@ -4256,6 +3920,8 @@
                 localStorage.setItem('vrvs_dados', JSON.stringify(dados));
             }
         }
+        
+        limparDadosCorretos();
         
         // Função para limpar histórico inválido (usada na inicialização e após importação)
         function limparHistoricoInvalido() {
@@ -4281,6 +3947,8 @@
                 console.log(`🧹 Limpeza: removidos ${historicoOriginal - historico.length} registros inválidos do histórico`);
             }
         }
+        
+        limparHistoricoInvalido(); // Limpar histórico inválido na inicialização
         
         // CORREÇÃO URGENTE: Normalizar áreas duplicadas em todos os dados
         function normalizarAreasEmMassa() {
@@ -4344,92 +4012,8 @@
             }
         }
         
-        // Agendar saneamentos para executar APÓS UI abrir (defer)
-        function agendarSaneamentoPosBoot() {
-            setTimeout(() => {
-                bootSetStatus('BOOT: UI first');
-                bootForceHideSplash('pre-saneamento');
-                
-                bootSetStatus('Saneamento: iniciando pós-UI');
-                
-                // PRIMEIRO: dados.map() agora roda aqui (pós-UI) com proteção
-                try {
-                    if (Array.isArray(dados)) {
-                        dados = dados.map(d => {
-                            try {
-                                return fixAreaTemaObjeto(d || {});
-                            } catch (e) {
-                                console.log('[VRVS][BOOT] fixAreaTemaObjeto falhou', e);
-                                return d || {};
-                            }
-                        });
-                    } else {
-                        dados = [];
-                    }
-                } catch (e) {
-                    console.log('[VRVS][BOOT] dados.map falhou', e);
-                    dados = [];
-                }
-                
-                // Saneamentos sequenciais (200ms entre cada para não sobrecarregar)
-                try {
-                    bootSetStatus('SANEAMENTO: limparDadosCorretos');
-                    limparDadosCorretos();
-                    bootSetStatus('Saneamento: dados ok');
-                } catch(e) {
-                    bootSetStatus('SANEAMENTO ERRO: limparDadosCorretos');
-                    console.error('[BOOT] Erro em limparDadosCorretos:', e);
-                }
-                
-                setTimeout(() => {
-                    try {
-                        bootSetStatus('SANEAMENTO: limparHistoricoInvalido');
-                        limparHistoricoInvalido();
-                        bootSetStatus('Saneamento: histórico ok');
-                    } catch(e) {
-                        bootSetStatus('SANEAMENTO ERRO: limparHistoricoInvalido');
-                        console.error('[BOOT] Erro em limparHistoricoInvalido:', e);
-                    }
-                    
-                    setTimeout(() => {
-                        try {
-                            bootSetStatus('SANEAMENTO: normalizarAreasEmMassa');
-                            normalizarAreasEmMassa();
-                            bootSetStatus('Saneamento: diário ok');
-                        } catch(e) {
-                            bootSetStatus('SANEAMENTO ERRO: normalizarAreasEmMassa');
-                            console.error('[BOOT] Erro em normalizarAreasEmMassa:', e);
-                        }
-                        
-                        bootSetStatus('BOOT: saneamento (defer) finalizado');
-                    }, 200);
-                }, 200);
-            }, 800); // Aumentado para 800ms (garante UI já apareceu antes de rodar pesado)
-        }
-        
-        // Agendar saneamentos (executa após UI abrir)
-        agendarSaneamentoPosBoot();
-        
-        // ==================== CHART.JS LAZY-LOAD ====================
-        
-        // Carregar Chart.js dinamicamente após UI abrir (não bloqueia boot)
-        function vrvsLazyLoadChartJs() {
-            if (window.Chart) {
-                console.log('[VRVS] Chart.js já carregado');
-                return;
-            }
-            const s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            s.async = true;
-            s.onload = () => console.log('[VRVS] Chart.js carregado');
-            s.onerror = () => console.log('[VRVS] Chart.js falhou (ok, app continua)');
-            document.head.appendChild(s);
-        }
-        
-        // Carregar Chart.js após UI liberada (1.5s após splash sumir)
-        setTimeout(() => {
-            vrvsLazyLoadChartJs();
-        }, 1500);
+        // Executar normalização na inicialização
+        normalizarAreasEmMassa();
         
         // ==================== FUNÇÕES AUXILIARES ====================
         
@@ -6109,13 +5693,6 @@
             });
             
             console.log('[CHART BARRAS] Criando gráfico com', sorted.length, 'áreas');
-            
-            // Verificar se Chart.js está disponível, se não, tentar carregar e abortar
-            if (typeof Chart === 'undefined') {
-                vrvsLazyLoadChartJs();
-                console.warn('[CHART BARRAS] Chart.js não disponível, tentando carregar...');
-                return; // Não renderizar sem Chart.js
-            }
             console.log('[CHART BARRAS] Chart disponível?', typeof Chart !== 'undefined');
             
             try {
@@ -6364,13 +5941,6 @@
                 }
             }
             
-            // Verificar se Chart.js está disponível
-            if (typeof Chart === 'undefined') {
-                vrvsLazyLoadChartJs();
-                console.warn('[CHART LINHA] Chart.js não disponível, tentando carregar...');
-                return;
-            }
-            
             // Criar novo gráfico sempre (mesmo vazio, para permitir reativar)
             const novaInstancia = new Chart(ctx, {
                 type: 'line',
@@ -6477,14 +6047,6 @@
             }
             
             if (areas.length === 0) {
-                if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
-                return;
-            }
-            
-            // Verificar se Chart.js está disponível
-            if (typeof Chart === 'undefined') {
-                vrvsLazyLoadChartJs();
-                console.warn('[CHART RADAR] Chart.js não disponível, tentando carregar...');
                 if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
                 return;
             }
@@ -8469,47 +8031,23 @@
         
         function migrarAnotacoesParaHotTopics() {
             // Migração segura: adicionar campo hotTopics sem perder dados
-            let anotacoesAtuais = [];
-            try {
-                anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
-            } catch (e) {
-                console.error('[MIGRAÇÃO] Falha ao ler vrvs_anotacoes:', e);
-                anotacoesAtuais = [];
-            }
+            const backupKey = fazerBackupCompleto();
+            const anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
             
             let atualizadas = false;
-            const anotacoesMigradas = (anotacoesAtuais || []).map(a => {
-                if (a && a.hotTopics === undefined) {
+            const anotacoesMigradas = anotacoesAtuais.map(a => {
+                if (a.hotTopics === undefined) {
                     a.hotTopics = ''; // Campo novo, vazio por padrão
                     atualizadas = true;
                 }
                 return a;
             });
             
-            // Se não precisa migrar, só garante variável em memória e sai
-            if (!atualizadas) {
-                anotacoes = anotacoesAtuais;
-                return;
-            }
-            
-            // Só faz backup SE houver migração
-            let backupKey = null;
-            try {
-                backupKey = fazerBackupCompleto();
-            } catch (e) {
-                console.warn('[MIGRAÇÃO] Backup falhou (provável quota). Seguindo sem backup.', e);
-                backupKey = null;
-            }
-            
-            // Tenta salvar migração; se falhar por quota, NÃO travar boot
-            try {
+            if (atualizadas) {
                 validarAntesDeSalvar('anotacoes', anotacoesMigradas);
                 localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoesMigradas));
                 anotacoes = anotacoesMigradas;
-                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado. Backup: ${backupKey || 'SEM_BACKUP'}`);
-            } catch (e) {
-                console.error('[MIGRAÇÃO] Falha ao salvar migração (provável quota). Mantendo dados antigos em memória.', e);
-                anotacoes = anotacoesAtuais; // mantém app operante
+                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado. Backup: ${backupKey}`);
             }
         }
         
@@ -9259,46 +8797,14 @@
         // ==================== WINDOW ONLOAD ====================
         
         window.onload = function() {
-            // Unificar com PREBOOT: chamar função do PREBOOT se disponível, senão usar função do script principal
-            try {
-                if (typeof vrvsPrebootHideSplash === 'function') {
-                    vrvsPrebootHideSplash('window-onload');
-                } else if (typeof bootForceHideSplash === 'function') {
-                    if (!window.__vrvsSplashHidden) {
-                        bootForceHideSplash('window-onload');
-                    }
-                }
-            } catch(e) {
-                console.error('[VRVS][BOOT] Erro ao esconder splash no onload:', e);
-                // Fallback: tentar esconder diretamente
-                try {
-                    var splash = document.getElementById('splashScreen');
-                    if (splash) {
-                        splash.classList.add('hidden');
-                        splash.style.display = 'none';
-                    }
-                    if (document.body) {
-                        document.body.classList.remove('splash-loading');
-                        document.body.style.overflow = 'auto';
-                    }
-                } catch(_) {}
-            }
-            
-            try {
-            
             // Garantir logo novamente após carregamento completo
             garantirLogoCarregada();
             
             // Restaurar cronômetro se estava rodando antes
             restaurarCronometro();
             
-            // Verificar se é primeira vez e mostrar tutorial (protegido)
-            let tutorialCompleto = null;
-            try {
-                tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');
-            } catch (e) {
-                console.log('[VRVS][BOOT] localStorage falhou no onload', e);
-            }
+            // Verificar se é primeira vez e mostrar tutorial
+            const tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');
             if (!tutorialCompleto) {
                 setTimeout(() => {
                     if (confirm('👋 Primeira vez aqui? Gostaria de fazer um tour rápido pela plataforma?')) {
@@ -9751,14 +9257,23 @@
                 document.getElementById('tutorialModal').style.display = 'flex';
             }
             
-            // Splash Screen - Lógica antiga removida (agora usa bootForceHideSplash unificado)
-            // Se splash já foi escondido pela função unificada, não fazer nada
-            if (window.__vrvsSplashHidden) {
-                // Apenas garantir que body está destravado
-                if (document.body) {
-                    document.body.classList.remove('splash-loading');
-                    document.body.style.overflow = 'auto';
-                }
+            // Splash Screen - Esconder após carregar (executar apenas uma vez)
+            if (!window.splashScreenRemovido) {
+                window.splashScreenRemovido = true;
+                setTimeout(() => {
+                    const splash = document.getElementById('splashScreen');
+                    if (splash && !splash.classList.contains('hidden')) {
+                        splash.classList.add('fade-out');
+                        if (document.body) {
+                            document.body.classList.remove('splash-loading');
+                        }
+                        setTimeout(() => {
+                            if (splash && !splash.classList.contains('hidden')) {
+                                splash.classList.add('hidden');
+                            }
+                        }, 800);
+                    }
+                }, 2500); // Mostrar por 2.5 segundos
             }
             
             // Inicializar campo de data com hoje (com verificação de segurança)
@@ -13183,8 +12698,6 @@
             const tentarRenderizarGraficos = () => {
                 if (typeof Chart === 'undefined') {
                     console.warn('[ANALYTICS GRAFICOS] Chart.js não está disponível ainda, tentando novamente...');
-                    // Tentar carregar Chart.js se ainda não carregou
-                    vrvsLazyLoadChartJs();
                     setTimeout(tentarRenderizarGraficos, 100);
                     return;
                 }
