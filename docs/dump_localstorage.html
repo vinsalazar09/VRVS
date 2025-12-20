@@ -16,13 +16,14 @@
         h1 {
             color: #00CED1;
         }
-        .info {
+        .status {
             background: #1a2a2f;
             padding: 15px;
             margin: 15px 0;
             border-radius: 8px;
+            border-left: 4px solid #00CED1;
         }
-        .info-item {
+        .status-item {
             margin: 5px 0;
         }
         button {
@@ -54,31 +55,23 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-        .counter {
-            font-size: 18px;
-            font-weight: bold;
-            color: #00CED1;
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
     <h1>🔧 VRVS - Dump localStorage</h1>
     
-    <div class="info">
-        <div class="info-item"><strong>Origin:</strong> <span id="originDisplay">-</span></div>
-        <div class="info-item"><strong>User Agent:</strong> <span id="userAgentDisplay">-</span></div>
-        <div class="info-item"><strong>Timestamp:</strong> <span id="timestampDisplay">-</span></div>
-        <div class="counter" id="counterDisplay">Chaves encontradas: 0</div>
+    <div class="status">
+        <div class="status-item"><strong>Origin:</strong> <span id="originDisplay">-</span></div>
+        <div class="status-item"><strong>User Agent:</strong> <span id="userAgentDisplay">-</span></div>
+        <div class="status-item"><strong>Timestamp:</strong> <span id="timestampDisplay">-</span></div>
+        <div class="status-item"><strong>Chaves encontradas:</strong> <span id="counterDisplay">0</span></div>
     </div>
     
     <div>
-        <button onclick="gerarDump()">Gerar Dump</button>
-        <button onclick="copiarDump()" id="btnCopiar" disabled>Copiar</button>
-        <button onclick="baixarDump()" id="btnBaixar" disabled>Baixar .json</button>
+        <button onclick="gerarDump()">GERAR DUMP</button>
     </div>
     
-    <textarea id="dumpOutput" readonly placeholder="Clique em 'Gerar Dump' para começar..."></textarea>
+    <textarea id="dumpOutput" readonly placeholder="Clique em 'GERAR DUMP' para começar..."></textarea>
     
     <script>
         // ES5 PURO - Zero sintaxe moderna
@@ -96,82 +89,44 @@
         
         function gerarDump() {
             try {
-                var data = {
+                var out = {
                     timestamp: new Date().toISOString(),
                     origin: window.location.origin,
                     userAgent: navigator.userAgent,
-                    items: {}
+                    keys: {}
                 };
                 
                 var count = 0;
                 for (var i = 0; i < localStorage.length; i++) {
                     var key = localStorage.key(i);
                     var value = localStorage.getItem(key);
-                    data.items[key] = value;
+                    out.keys[key] = value;
                     count++;
                 }
                 
-                dumpData = data;
-                document.getElementById('dumpOutput').value = JSON.stringify(data, null, 2);
-                document.getElementById('counterDisplay').textContent = 'Chaves encontradas: ' + count;
-                document.getElementById('btnCopiar').disabled = false;
-                document.getElementById('btnBaixar').disabled = false;
+                dumpData = out;
+                var jsonStr = JSON.stringify(out, null, 2);
+                document.getElementById('dumpOutput').value = jsonStr;
+                document.getElementById('counterDisplay').textContent = count;
                 
                 atualizarInfo();
+                
+                // Tentar download automático
+                try {
+                    var blob = new Blob([jsonStr], { type: 'application/json' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'vrvs_localstorage_dump_' + new Date().getTime() + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch(e) {
+                    console.log('Download automático falhou, use o textarea para copiar:', e);
+                }
             } catch(e) {
                 alert('Erro ao gerar dump: ' + e);
-                console.error(e);
-            }
-        }
-        
-        function copiarDump() {
-            try {
-                if (!dumpData) {
-                    alert('Gere o dump primeiro!');
-                    return;
-                }
-                
-                var textarea = document.getElementById('dumpOutput');
-                textarea.select();
-                textarea.setSelectionRange(0, 99999);
-                
-                var copiado = false;
-                try {
-                    copiado = document.execCommand('copy');
-                } catch(e) {
-                    console.log('execCommand não suportado:', e);
-                }
-                
-                if (copiado) {
-                    alert('Dump copiado para área de transferência!');
-                } else {
-                    alert('Não foi possível copiar automaticamente. Selecione o texto manualmente.');
-                }
-            } catch(e) {
-                alert('Erro ao copiar: ' + e);
-                console.error(e);
-            }
-        }
-        
-        function baixarDump() {
-            try {
-                if (!dumpData) {
-                    alert('Gere o dump primeiro!');
-                    return;
-                }
-                
-                var jsonStr = JSON.stringify(dumpData, null, 2);
-                var blob = new Blob([jsonStr], { type: 'application/json' });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'vrvs_localstorage_dump_' + new Date().getTime() + '.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } catch(e) {
-                alert('Erro ao baixar: ' + e + '\nUse o campo de texto acima para copiar manualmente.');
                 console.error(e);
             }
         }
@@ -183,4 +138,3 @@
     </script>
 </body>
 </html>
-

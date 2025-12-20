@@ -83,9 +83,9 @@
     <p><em>Não mexe no localStorage - seus dados estão seguros.</em></p>
     
     <div>
-        <button onclick="desregistrarSW()">Desregistrar Service Workers</button>
-        <button onclick="apagarCache()">Apagar Cache Storage</button>
-        <button onclick="rodarTudo()">Rodar Tudo</button>
+        <button onclick="desregistrarSW()">DESREGISTRAR SERVICE WORKERS</button>
+        <button onclick="limparCache()">LIMPAR CACHE STORAGE</button>
+        <button onclick="abrirVRVS()">ABRIR VRVS (cachebust)</button>
     </div>
     
     <div id="statusContainer"></div>
@@ -136,7 +136,7 @@
             }
         }
         
-        function apagarCache() {
+        function limparCache() {
             addStatus('Iniciando limpeza de Cache Storage...', 'info');
             
             if (!('caches' in window)) {
@@ -168,39 +168,16 @@
             }
         }
         
-        function rodarTudo() {
-            addStatus('=== RODANDO TUDO ===', 'info');
-            desregistrarSW();
-            setTimeout(function() {
-                apagarCache();
-                setTimeout(function() {
-                    criarLinkFinal();
-                }, 2000);
-            }, 1000);
-        }
-        
-        function criarLinkFinal() {
+        function abrirVRVS() {
             try {
-                var timestamp = new Date().getTime();
-                var link = document.createElement('a');
-                link.href = './index.html?cb=' + timestamp;
-                link.className = 'link-final';
-                link.textContent = 'Abrir VRVS (com cachebust)';
-                link.target = '_self';
-                
-                var container = document.getElementById('statusContainer');
-                var linkExistente = container.querySelector('.link-final');
-                if (linkExistente) {
-                    container.removeChild(linkExistente);
-                }
-                container.appendChild(link);
-                
-                addStatus('✅ Recovery concluído! Clique no link acima para abrir o app.', 'success');
+                var timestamp = Date.now();
+                var url = 'index.html?cachebust=' + timestamp;
+                addStatus('Redirecionando para: ' + url, 'info');
+                window.location.href = url;
             } catch(e) {
-                addStatus('Erro ao criar link: ' + e, 'error');
+                addStatus('Erro ao abrir VRVS: ' + e, 'error');
             }
         }
     </script>
 </body>
 </html>
-

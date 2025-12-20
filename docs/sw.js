@@ -8,9 +8,7 @@ const FILES_TO_CACHE = [
     './index.html',
     './manifest.json',
     './logo.png',
-    './favicon.ico',
-    './dump_localstorage.html',
-    './recovery_sw.html'
+    './favicon.ico'
 ];
 
 // Instalar Service Worker
