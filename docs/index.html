@@ -1242,6 +1242,8 @@
             color: var(--text-light);
             font-size: 14px;
             font-weight: 500;
+            white-space: pre-line;
+            word-break: break-word;
         }
         
         .campos-tempo {
@@ -9806,38 +9808,40 @@
                 if (pct >= 80) {
                     return {
                         emoji: '🎯',
-                        texto: 'Excelente! Seus tópicos estão bem consolidados e você está em dia.',
+                        texto: 'Excelente — em dia e com ótima retenção.',
                         classe: 'alta'
                     };
                 } else if (pct >= 65) {
                     return {
                         emoji: '⚡',
-                        texto: 'Você está em dia hoje. Continue revisando para subir a retenção global.',
+                        texto: 'Você está em dia; retenção moderada; mantenha o ritmo.',
                         classe: 'media'
                     };
                 } else {
                     return {
                         emoji: '📚',
-                        texto: 'Você está em dia hoje, mas a retenção global ainda está baixa. Reforce alguns tópicos-chave.',
+                        texto: 'Você está em dia, mas a retenção global está baixa. Continue revisando para subir a retenção.',
                         classe: 'baixa'
                     };
                 }
             }
             
-            // Com pendências (hoje ou atrasadas)
+            // Com pendências (hoje ou atrasadas) - NÃO pode dizer "tudo em dia"
             if (atrasados > 0) {
+                var textoAtrasados = 'Você tem ' + pendentesHoje + ' tópicos para hoje (' + atrasados + ' atrasados). Priorize limpar hoje.';
                 return {
                     emoji: '⏰',
-                    texto: 'Existem tópicos atrasados. Priorize os atrasados antes dos demais.',
+                    texto: textoAtrasados,
                     classe: 'baixa'
                 };
             }
             
-            // Só pendentes de hoje
+            // Só pendentes de hoje (sem atrasados)
+            var textoHoje = 'Você tem ' + pendentesHoje + ' tópicos para hoje. Priorize limpar hoje.';
             return {
                 emoji: '🧠',
-                texto: 'Você tem tópicos para revisar hoje. Reserve alguns minutos para avançar.',
-                classe: (pct >= 80 ? 'alta' : 'media')
+                texto: textoHoje,
+                classe: 'baixa'
             };
         }
         
