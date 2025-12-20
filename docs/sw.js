@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.3-hotfix-boot-defer-saneamento-20251220-0230";
+const CACHE_NAME = "vrvs-v5.3.4-hotfix4-splash-unblock-20251220-1900";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

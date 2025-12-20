@@ -3614,7 +3614,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js lazy-load: não bloquear boot no iPhone -->
     <script>
         // ==================== DADOS E INICIALIZAÇÃO ====================
         // Função para corrigir inversão área↔tema ANTES de carregar dados
@@ -4037,14 +4037,37 @@
         
         function bootForceHideSplash(reason) {
             try {
+                // Flag idempotente: se já escondido, não fazer nada
+                if (window.__vrvsSplashHidden) return;
+                window.__vrvsSplashHidden = true;
+                
                 const splash = document.getElementById('splashScreen');
-                if (splash && !splash.classList.contains('hidden')) {
+                if (splash) {
                     splash.classList.add('hidden');
+                    splash.style.display = 'none'; // Força esconder mesmo se CSS falhar
                 }
+                
                 if (document.body) {
                     document.body.classList.remove('splash-loading');
+                    document.body.style.overflow = 'auto'; // Garante scroll liberado
+                    // Força remoção se ainda estiver após 100ms
+                    setTimeout(() => {
+                        if (document.body.classList.contains('splash-loading')) {
+                            document.body.classList.remove('splash-loading');
+                        }
+                    }, 100);
                 }
-            } catch (_) {}
+                
+                // Atualizar status se elemento existir
+                const st = document.getElementById('bootStatusVRVS');
+                if (st) {
+                    st.textContent = `UI liberada: ${reason}`;
+                }
+                
+                console.log('[VRVS][BOOT] UI liberada:', reason);
+            } catch (e) {
+                console.log('[VRVS][BOOT] bootForceHideSplash falhou:', e);
+            }
             try {
                 // Banner simples para não deixar o usuário no escuro
                 if (!document.getElementById('bootErrorBanner')) {
@@ -4055,9 +4078,6 @@
                     document.body && document.body.appendChild(b);
                 }
             } catch (_) {}
-            try {
-                console.error('[BOOT FAILSAFE EXTRA]', reason);
-            } catch (_) {}
         }
         
         // Inicializar trace
@@ -4067,13 +4087,22 @@
         // Watchdog extra de 3s (camada adicional ao failsafe existente)
         setTimeout(function () {
             try {
-                const splash = document.getElementById('splashScreen');
-                if (splash && !splash.classList.contains('hidden')) {
+                if (!window.__vrvsSplashHidden) {
                     bootSetStatus('BOOT: watchdog 3s ativado');
                     bootForceHideSplash('watchdog-3s');
                 }
             } catch (_) {}
         }, 3000);
+        
+        // Failsafe DOMContentLoaded: liberar UI quando DOM montar (não esperar assets)
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (!window.__vrvsSplashHidden) {
+                    bootSetStatus('BOOT: DOMContentLoaded watchdog');
+                    bootForceHideSplash('domcontentloaded');
+                }
+            }, 800);
+        });
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         
@@ -4082,10 +4111,11 @@
         let lembretes = safeJSONParseLS('vrvs_lembretes', []);
         let anotacoes = safeJSONParseLS('vrvs_anotacoes', []); // Anotações por tema
         
+        // MOVIDO PARA DEFER PÓS-UI (HOTFIX4): dados.map() não roda mais no boot síncrono
         // Aplicar correção de inversão área/tema nos dados carregados
-        if (Array.isArray(dados)) {
-            dados = dados.map(d => fixAreaTemaObjeto(d));
-        }
+        // if (Array.isArray(dados)) {
+        //     dados = dados.map(d => fixAreaTemaObjeto(d));
+        // }
         
         // Limpar dados corrompidos
         function limparDadosCorretos() {
@@ -4197,41 +4227,89 @@
         // Agendar saneamentos para executar APÓS UI abrir (defer)
         function agendarSaneamentoPosBoot() {
             setTimeout(() => {
-                bootSetStatus('BOOT: saneamento (defer) iniciando');
-                
-                // Forçar esconder splash antes de rodar saneamentos pesados
+                bootSetStatus('BOOT: UI first');
                 bootForceHideSplash('pre-saneamento');
                 
+                bootSetStatus('Saneamento: iniciando pós-UI');
+                
+                // PRIMEIRO: dados.map() agora roda aqui (pós-UI) com proteção
+                try {
+                    if (Array.isArray(dados)) {
+                        dados = dados.map(d => {
+                            try {
+                                return fixAreaTemaObjeto(d || {});
+                            } catch (e) {
+                                console.log('[VRVS][BOOT] fixAreaTemaObjeto falhou', e);
+                                return d || {};
+                            }
+                        });
+                    } else {
+                        dados = [];
+                    }
+                } catch (e) {
+                    console.log('[VRVS][BOOT] dados.map falhou', e);
+                    dados = [];
+                }
+                
+                // Saneamentos sequenciais (200ms entre cada para não sobrecarregar)
                 try {
                     bootSetStatus('SANEAMENTO: limparDadosCorretos');
                     limparDadosCorretos();
+                    bootSetStatus('Saneamento: dados ok');
                 } catch(e) {
                     bootSetStatus('SANEAMENTO ERRO: limparDadosCorretos');
                     console.error('[BOOT] Erro em limparDadosCorretos:', e);
                 }
                 
-                try {
-                    bootSetStatus('SANEAMENTO: limparHistoricoInvalido');
-                    limparHistoricoInvalido();
-                } catch(e) {
-                    bootSetStatus('SANEAMENTO ERRO: limparHistoricoInvalido');
-                    console.error('[BOOT] Erro em limparHistoricoInvalido:', e);
-                }
-                
-                try {
-                    bootSetStatus('SANEAMENTO: normalizarAreasEmMassa');
-                    normalizarAreasEmMassa();
-                } catch(e) {
-                    bootSetStatus('SANEAMENTO ERRO: normalizarAreasEmMassa');
-                    console.error('[BOOT] Erro em normalizarAreasEmMassa:', e);
-                }
-                
-                bootSetStatus('BOOT: saneamento (defer) finalizado');
-            }, 100);
+                setTimeout(() => {
+                    try {
+                        bootSetStatus('SANEAMENTO: limparHistoricoInvalido');
+                        limparHistoricoInvalido();
+                        bootSetStatus('Saneamento: histórico ok');
+                    } catch(e) {
+                        bootSetStatus('SANEAMENTO ERRO: limparHistoricoInvalido');
+                        console.error('[BOOT] Erro em limparHistoricoInvalido:', e);
+                    }
+                    
+                    setTimeout(() => {
+                        try {
+                            bootSetStatus('SANEAMENTO: normalizarAreasEmMassa');
+                            normalizarAreasEmMassa();
+                            bootSetStatus('Saneamento: diário ok');
+                        } catch(e) {
+                            bootSetStatus('SANEAMENTO ERRO: normalizarAreasEmMassa');
+                            console.error('[BOOT] Erro em normalizarAreasEmMassa:', e);
+                        }
+                        
+                        bootSetStatus('BOOT: saneamento (defer) finalizado');
+                    }, 200);
+                }, 200);
+            }, 300); // Aumentado de 100ms para 300ms (melhor para iPhone)
         }
         
         // Agendar saneamentos (executa após UI abrir)
         agendarSaneamentoPosBoot();
+        
+        // ==================== CHART.JS LAZY-LOAD ====================
+        
+        // Carregar Chart.js dinamicamente após UI abrir (não bloqueia boot)
+        function vrvsLazyLoadChartJs() {
+            if (window.Chart) {
+                console.log('[VRVS] Chart.js já carregado');
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            s.async = true;
+            s.onload = () => console.log('[VRVS] Chart.js carregado');
+            s.onerror = () => console.log('[VRVS] Chart.js falhou (ok, app continua)');
+            document.head.appendChild(s);
+        }
+        
+        // Carregar Chart.js após UI liberada (1.5s após splash sumir)
+        setTimeout(() => {
+            vrvsLazyLoadChartJs();
+        }, 1500);
         
         // ==================== FUNÇÕES AUXILIARES ====================
         
@@ -5911,6 +5989,13 @@
             });
             
             console.log('[CHART BARRAS] Criando gráfico com', sorted.length, 'áreas');
+            
+            // Verificar se Chart.js está disponível, se não, tentar carregar e abortar
+            if (typeof Chart === 'undefined') {
+                vrvsLazyLoadChartJs();
+                console.warn('[CHART BARRAS] Chart.js não disponível, tentando carregar...');
+                return; // Não renderizar sem Chart.js
+            }
             console.log('[CHART BARRAS] Chart disponível?', typeof Chart !== 'undefined');
             
             try {
@@ -6159,6 +6244,13 @@
                 }
             }
             
+            // Verificar se Chart.js está disponível
+            if (typeof Chart === 'undefined') {
+                vrvsLazyLoadChartJs();
+                console.warn('[CHART LINHA] Chart.js não disponível, tentando carregar...');
+                return;
+            }
+            
             // Criar novo gráfico sempre (mesmo vazio, para permitir reativar)
             const novaInstancia = new Chart(ctx, {
                 type: 'line',
@@ -6265,6 +6357,14 @@
             }
             
             if (areas.length === 0) {
+                if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
+                return;
+            }
+            
+            // Verificar se Chart.js está disponível
+            if (typeof Chart === 'undefined') {
+                vrvsLazyLoadChartJs();
+                console.warn('[CHART RADAR] Chart.js não disponível, tentando carregar...');
                 if (chartRadarInst) { chartRadarInst.destroy(); chartRadarInst = null; }
                 return;
             }
@@ -9039,14 +9139,28 @@
         // ==================== WINDOW ONLOAD ====================
         
         window.onload = function() {
+            // Unificar lógica do splash: se já escondido, não fazer nada
+            try {
+                if (window.__vrvsSplashHidden) {
+                    console.log('[VRVS][BOOT] splash já removida, pulando animação');
+                } else {
+                    bootForceHideSplash('window-onload');
+                }
+            } catch(_) {}
+            
             // Garantir logo novamente após carregamento completo
             garantirLogoCarregada();
             
             // Restaurar cronômetro se estava rodando antes
             restaurarCronometro();
             
-            // Verificar se é primeira vez e mostrar tutorial
-            const tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');
+            // Verificar se é primeira vez e mostrar tutorial (protegido)
+            let tutorialCompleto = null;
+            try {
+                tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');
+            } catch (e) {
+                console.log('[VRVS][BOOT] localStorage falhou no onload', e);
+            }
             if (!tutorialCompleto) {
                 setTimeout(() => {
                     if (confirm('👋 Primeira vez aqui? Gostaria de fazer um tour rápido pela plataforma?')) {
@@ -9499,23 +9613,14 @@
                 document.getElementById('tutorialModal').style.display = 'flex';
             }
             
-            // Splash Screen - Esconder após carregar (executar apenas uma vez)
-            if (!window.splashScreenRemovido) {
-                window.splashScreenRemovido = true;
-                setTimeout(() => {
-                    const splash = document.getElementById('splashScreen');
-                    if (splash && !splash.classList.contains('hidden')) {
-                        splash.classList.add('fade-out');
-                        if (document.body) {
-                            document.body.classList.remove('splash-loading');
-                        }
-                        setTimeout(() => {
-                            if (splash && !splash.classList.contains('hidden')) {
-                                splash.classList.add('hidden');
-                            }
-                        }, 800);
-                    }
-                }, 2500); // Mostrar por 2.5 segundos
+            // Splash Screen - Lógica antiga removida (agora usa bootForceHideSplash unificado)
+            // Se splash já foi escondido pela função unificada, não fazer nada
+            if (window.__vrvsSplashHidden) {
+                // Apenas garantir que body está destravado
+                if (document.body) {
+                    document.body.classList.remove('splash-loading');
+                    document.body.style.overflow = 'auto';
+                }
             }
             
             // Inicializar campo de data com hoje (com verificação de segurança)
@@ -12940,6 +13045,8 @@
             const tentarRenderizarGraficos = () => {
                 if (typeof Chart === 'undefined') {
                     console.warn('[ANALYTICS GRAFICOS] Chart.js não está disponível ainda, tentando novamente...');
+                    // Tentar carregar Chart.js se ainda não carregou
+                    vrvsLazyLoadChartJs();
                     setTimeout(tentarRenderizarGraficos, 100);
                     return;
                 }
