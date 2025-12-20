@@ -2566,6 +2566,123 @@
         <div id="bootStatusVRVS" style="opacity:0.9;font-size:13px;margin-top:6px;white-space:pre-line;color:rgba(255,255,255,0.8);text-align:center;max-width:300px;"></div>
     </div>
     
+    <!-- PREBOOT ES5 - Executa ANTES do script principal (prova de execução + escape do splash) -->
+    <script>
+    (function() {
+        // PREBOOT ES5 PURO - Zero sintaxe moderna (compatível Safari antigo)
+        // Build ID hard-coded
+        var VRVS_BUILD = "HOTFIX5-BOOT-PREBOOT-2025-12-20-2100";
+        
+        // Atualizar build no splash (prova visual de atualização)
+        try {
+            var buildEl = document.getElementById('bootBuildVRVS');
+            if (buildEl) {
+                buildEl.textContent = "build: " + VRVS_BUILD;
+            }
+        } catch(e) {}
+        
+        // Atualizar status (prova visual de que JS executou)
+        try {
+            var statusEl = document.getElementById('bootStatusVRVS');
+            if (statusEl) {
+                statusEl.textContent = "status: PREBOOT OK";
+            }
+        } catch(e) {}
+        
+        // Função independente para esconder splash (não depende do script principal)
+        function vrvsPrebootHideSplash(reason) {
+            try {
+                // Flag idempotente (reutiliza flag existente do projeto)
+                if (window.__vrvsSplashHidden) {
+                    return;
+                }
+                window.__vrvsSplashHidden = true;
+                
+                // Esconder splash
+                var splash = document.getElementById('splashScreen');
+                if (splash) {
+                    splash.classList.add('hidden');
+                    splash.style.display = 'none';
+                }
+                
+                // Destravar body (CRÍTICO: remove classe bloqueante e restaura scroll)
+                if (document.body) {
+                    document.body.classList.remove('splash-loading');
+                    document.body.style.overflow = 'auto';
+                    // Retry após 100ms se ainda estiver travado
+                    setTimeout(function() {
+                        if (document.body && document.body.classList.contains('splash-loading')) {
+                            document.body.classList.remove('splash-loading');
+                        }
+                    }, 100);
+                }
+                
+                // Atualizar status
+                try {
+                    var statusEl = document.getElementById('bootStatusVRVS');
+                    if (statusEl) {
+                        statusEl.textContent = "status: UI liberada (" + reason + ")";
+                    }
+                } catch(e) {}
+                
+                console.log('[VRVS][PREBOOT] UI liberada:', reason);
+            } catch (e) {
+                console.log('[VRVS][PREBOOT] vrvsPrebootHideSplash falhou:', e);
+            }
+        }
+        
+        // Função para mostrar erro básico (não acessa localStorage)
+        function mostrarErroBasico(msg) {
+            try {
+                var statusEl = document.getElementById('bootStatusVRVS');
+                if (statusEl) {
+                    var textoAtual = statusEl.textContent || '';
+                    statusEl.textContent = textoAtual + "\nERRO: " + msg;
+                }
+            } catch(e) {}
+        }
+        
+        // Handler de erro global (ES5)
+        var prevOnError = window.onerror;
+        window.onerror = function(msg, src, line, col, err) {
+            vrvsPrebootHideSplash("onerror");
+            mostrarErroBasico("Erro JS: " + (msg || "desconhecido"));
+            if (typeof prevOnError === 'function') {
+                try {
+                    return prevOnError.apply(this, arguments);
+                } catch(e) {}
+            }
+            return false;
+        };
+        
+        // Handler de promise rejeitada (ES5)
+        window.onunhandledrejection = function(e) {
+            vrvsPrebootHideSplash("unhandledrejection");
+            var reason = (e && e.reason) ? String(e.reason) : "promise rejeitada";
+            mostrarErroBasico("Promise: " + reason);
+        };
+        
+        // Watchdog curto (1.5s) - não depende do script principal
+        setTimeout(function() {
+            if (!window.__vrvsAppBooted) {
+                vrvsPrebootHideSplash("watchdog-1500ms");
+                mostrarErroBasico("Boot não confirmou em 1.5s");
+            }
+        }, 1500);
+        
+        // DOMContentLoaded failsafe (800ms após DOM montar)
+        if (document.addEventListener) {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    if (!window.__vrvsSplashHidden) {
+                        vrvsPrebootHideSplash("domcontentloaded");
+                    }
+                }, 800);
+            });
+        }
+    })();
+    </script>
+    
     <div id="importMessage"></div>
     <div id="feedbackMessage"></div>
     
@@ -4106,6 +4223,9 @@
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         
+        // Flag de confirmação do boot (para watchdog do PREBOOT)
+        window.__vrvsAppBooted = true;
+        
         let dados = safeJSONParseLS('vrvs_dados', []);
         let historico = safeJSONParseLS('vrvs_historico', []);
         let lembretes = safeJSONParseLS('vrvs_lembretes', []);
@@ -4284,7 +4404,7 @@
                         bootSetStatus('BOOT: saneamento (defer) finalizado');
                     }, 200);
                 }, 200);
-            }, 300); // Aumentado de 100ms para 300ms (melhor para iPhone)
+            }, 800); // Aumentado para 800ms (garante UI já apareceu antes de rodar pesado)
         }
         
         // Agendar saneamentos (executa após UI abrir)
@@ -9139,14 +9259,32 @@
         // ==================== WINDOW ONLOAD ====================
         
         window.onload = function() {
-            // Unificar lógica do splash: se já escondido, não fazer nada
+            // Unificar com PREBOOT: chamar função do PREBOOT se disponível, senão usar função do script principal
             try {
-                if (window.__vrvsSplashHidden) {
-                    console.log('[VRVS][BOOT] splash já removida, pulando animação');
-                } else {
-                    bootForceHideSplash('window-onload');
+                if (typeof vrvsPrebootHideSplash === 'function') {
+                    vrvsPrebootHideSplash('window-onload');
+                } else if (typeof bootForceHideSplash === 'function') {
+                    if (!window.__vrvsSplashHidden) {
+                        bootForceHideSplash('window-onload');
+                    }
                 }
-            } catch(_) {}
+            } catch(e) {
+                console.error('[VRVS][BOOT] Erro ao esconder splash no onload:', e);
+                // Fallback: tentar esconder diretamente
+                try {
+                    var splash = document.getElementById('splashScreen');
+                    if (splash) {
+                        splash.classList.add('hidden');
+                        splash.style.display = 'none';
+                    }
+                    if (document.body) {
+                        document.body.classList.remove('splash-loading');
+                        document.body.style.overflow = 'auto';
+                    }
+                } catch(_) {}
+            }
+            
+            try {
             
             // Garantir logo novamente após carregamento completo
             garantirLogoCarregada();
