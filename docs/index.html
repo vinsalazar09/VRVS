@@ -3633,22 +3633,44 @@
         
         // ==================== FUNÇÕES DE SEGURANÇA ====================
         
+        // Helper para leitura segura de JSON do localStorage (resiliente a JSON corrompido)
+        function safeJSONParseLS(key, fallbackValue) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (raw === null || raw === undefined || raw === '') {
+                    return fallbackValue;
+                }
+                return JSON.parse(raw);
+            } catch (e) {
+                console.warn(`[SAFE_PARSE] JSON inválido em ${key}. Usando fallback.`, e);
+                return fallbackValue;
+            }
+        }
+        
         function fazerBackupCompleto() {
             const backup = {
                 schemaVersion: 'VRVS_BACKUP_v1',
                 timestamp: new Date().toISOString(),
-                dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
-                historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
-                anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
-                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
-                diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
-                config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
+                dados: safeJSONParseLS('vrvs_dados', []),
+                historico: safeJSONParseLS('vrvs_historico', []),
+                anotacoes: safeJSONParseLS('vrvs_anotacoes', []),
+                lembretes: safeJSONParseLS('vrvs_lembretes', []),
+                diario: safeJSONParseLS('vrvs_diario', {"entradas":[],"schemaVersion":"1.0"}),
+                config: safeJSONParseLS('vrvs_config', {})
             };
             
             const backupKey = `vrvs_backup_${Date.now()}`;
             
             try {
-            localStorage.setItem(backupKey, JSON.stringify(backup));
+                // Proteger JSON.stringify também (pode falhar se houver dado circular ou muito grande)
+                let backupPayload;
+                try {
+                    backupPayload = JSON.stringify(backup);
+                } catch (stringifyError) {
+                    console.error('[BACKUP] Falha ao serializar backup. Dados podem estar corrompidos.', stringifyError);
+                    throw stringifyError;
+                }
+                localStorage.setItem(backupKey, backupPayload);
             } catch (e) {
                 // Se falhou por quota, tentar limpar backups antigos e retry 1x
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
@@ -3668,7 +3690,14 @@
                         }
                         
                         // Retry 1x após limpar
-                        localStorage.setItem(backupKey, JSON.stringify(backup));
+                        let backupPayloadRetry;
+                        try {
+                            backupPayloadRetry = JSON.stringify(backup);
+                        } catch (stringifyError) {
+                            console.error('[BACKUP] Falha ao serializar backup no retry.', stringifyError);
+                            throw stringifyError;
+                        }
+                        localStorage.setItem(backupKey, backupPayloadRetry);
                     } catch (e2) {
                         // Se ainda falhar, abortar backup sem quebrar o boot
                         console.warn('[BACKUP] Falha ao criar backup após limpeza. Continuando sem backup.', e2);
@@ -3980,10 +4009,10 @@
             }, 10000);
         })();
         
-        let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
-        let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
-        let lembretes = JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]');
-        let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'); // Anotações por tema
+        let dados = safeJSONParseLS('vrvs_dados', []);
+        let historico = safeJSONParseLS('vrvs_historico', []);
+        let lembretes = safeJSONParseLS('vrvs_lembretes', []);
+        let anotacoes = safeJSONParseLS('vrvs_anotacoes', []); // Anotações por tema
         
         // Aplicar correção de inversão área/tema nos dados carregados
         if (Array.isArray(dados)) {
