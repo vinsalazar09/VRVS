@@ -3373,10 +3373,11 @@
                     </div>
                     
                     <!-- PATCH 2: Indicadores VRVS 3P (complementa chip) -->
+                    <!-- PATCH 4: Substituído ⚠️ atenção por 📆 próximas -->
                     <div id="diarioIndicadoresVRVS" style="display: flex; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px; margin-bottom: 16px; font-size: 12px; flex-wrap: wrap;">
                         <span style="color: rgba(255,255,255,0.7);">🧠 ativos: <span id="diarioCountAtivos" style="color: var(--turquesa-light); font-weight: 600;">0</span></span>
                         <span style="color: rgba(255,255,255,0.7);">⏰ hoje: <span id="diarioCountHoje" style="color: var(--cobre-light); font-weight: 600;">0</span></span>
-                        <span style="color: rgba(255,255,255,0.7);">⚠️ atenção: <span id="diarioCountAtencao" style="color: var(--cobre-main); font-weight: 600;">0</span></span>
+                        <span style="color: rgba(255,255,255,0.7);">📆 próximas: <span id="diarioCountProximas" style="color: var(--turquesa-main); font-weight: 600;">0</span></span>
                     </div>
                     
                     <!-- Filtros -->
@@ -10602,7 +10603,21 @@
         }
         
         function isAttention(entrada) {
-            return entrada && entrada.atencao === true;
+            // PATCH 4: Descontinuado - sempre retorna false (legado removido)
+            return false;
+        }
+        
+        function isUpcoming(entrada, hoje, dias = 3) {
+            // PATCH 4: Entradas com SRS ativo cuja proximaRevisao está nos próximos N dias (excluindo hoje)
+            if (!isSrsActive(entrada)) return false;
+            const proxima = entrada.srs.proximaRevisao;
+            if (!proxima) return false;
+            const hojeDate = new Date(hoje);
+            const proximaDate = new Date(proxima);
+            const limiteDate = new Date(hoje);
+            limiteDate.setDate(limiteDate.getDate() + dias);
+            // Próxima revisão > hoje E <= hoje + dias
+            return proximaDate > hojeDate && proximaDate <= limiteDate;
         }
         
         // ==================== FIM SRS ====================
@@ -10811,7 +10826,8 @@
                 
                 const topico = document.getElementById('novaDiarioTopico')?.value.trim();
                 const resposta = document.getElementById('novaDiarioResposta')?.value.trim();
-                const atencao = document.getElementById('novaDiarioAtencao')?.checked || false;
+                // PATCH 4: Checkbox agora controla APENAS VRVS 3P (não atencao)
+                const incluirVRVS3P = document.getElementById('novaDiarioAtencao')?.checked || false;
             const dataInput = document.getElementById('novaDiarioData');
             const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
             
@@ -10842,12 +10858,12 @@
                     entrada.tema = tema;
                     entrada.topico = topico;
                     entrada.resposta = resposta;
-                    entrada.atencao = atencao;
+                    // PATCH 4: Não setar atencao (legado removido)
                     entrada.data = data; // Usar data do campo
                     entrada.ultimaAtualizacao = hoje;
                         
-                        // Gerenciar SRS conforme checkbox
-                        if (atencao) {
+                        // PATCH 4: Gerenciar SRS conforme checkbox (APENAS VRVS 3P, não atencao)
+                        if (incluirVRVS3P) {
                             // Se marcado e não tem SRS, criar; se já tem, garantir que está ativo
                             if (!entrada.srs) {
                                 entrada.srs = inicializarSrsVRVS3P(hoje);
@@ -10884,13 +10900,13 @@
                     tema: tema,
                     topico: topico,
                     resposta: resposta,
-                    atencao: atencao,
+                    // PATCH 4: Não setar atencao (legado removido)
                     criadoEm: hoje,
                     ultimaAtualizacao: hoje
                 };
                 
-                // Se checkbox marcado, inicializar SRS VRVS 3P; senão, não criar SRS
-                if (atencao) {
+                // PATCH 4: Se checkbox marcado, inicializar SRS VRVS 3P; senão, não criar SRS
+                if (incluirVRVS3P) {
                     novaEntrada.srs = inicializarSrsVRVS3P(hoje);
                 } else {
                     // Não criar SRS se checkbox não marcado
@@ -10944,6 +10960,7 @@
         }
         
         // PATCH 2: Atualizar indicadores VRVS 3P no cabeçalho
+        // PATCH 4: Substituído contador "atenção" por "próximas"
         function atualizarIndicadoresDiario() {
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
                 window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
@@ -10955,16 +10972,17 @@
             // Contar usando helpers unificados (PATCH 3)
             const countAtivos = entradas.filter(e => isSrsActive(e)).length;
             const countHoje = entradas.filter(e => isDueToday(e, hoje)).length;
-            const countAtencao = entradas.filter(e => isAttention(e)).length;
+            // PATCH 4: Substituído countAtencao por countProximas
+            const countProximas = entradas.filter(e => isUpcoming(e, hoje, 3)).length;
             
             // Atualizar elementos HTML
             const elAtivos = document.getElementById('diarioCountAtivos');
             const elHoje = document.getElementById('diarioCountHoje');
-            const elAtencao = document.getElementById('diarioCountAtencao');
+            const elProximas = document.getElementById('diarioCountProximas');
             
             if (elAtivos) elAtivos.textContent = countAtivos;
             if (elHoje) elHoje.textContent = countHoje;
-            if (elAtencao) elAtencao.textContent = countAtencao;
+            if (elProximas) elProximas.textContent = countProximas;
         }
         
         // Atualizar chip VRVS 3P no Diário
@@ -11214,15 +11232,13 @@
             const hoje = hojeStr();
             
             // PATCH 1: Chips visuais (só mostrar os que se aplicam)
+            // PATCH 4: Removido chip ⚠️ (legado atencao)
             const chips = [];
             if (isSrsActive(entrada)) {
                 chips.push('<span style="font-size: 14px;" title="VRVS 3P ativo">🧠</span>');
             }
             if (isDueToday(entrada, hoje)) {
                 chips.push('<span style="font-size: 14px;" title="Para revisar hoje">⏰</span>');
-            }
-            if (isAttention(entrada)) {
-                chips.push('<span style="font-size: 14px;" title="Atenção manual">⚠️</span>');
             }
             const chipsHTML = chips.length > 0 ? `<div style="display: flex; gap: 4px; align-items: center; margin-bottom: 4px;">${chips.join('')}</div>` : '';
             
@@ -11368,9 +11384,9 @@
             
             document.getElementById('novaDiarioTopico').value = entrada.topico;
             document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
-            // Marcar checkbox se entrada tem SRS ativo OU se campo atencao está marcado
+            // PATCH 4: Marcar checkbox APENAS se entrada tem SRS ativo (não usar atencao legado)
             const temSrsAtivo = entrada.srs && entrada.srs.ativo;
-            document.getElementById('novaDiarioAtencao').checked = entrada.atencao || temSrsAtivo || false;
+            document.getElementById('novaDiarioAtencao').checked = temSrsAtivo || false;
             
             // Mostrar modal
             document.getElementById('modalNovaDiario').classList.add('active');
