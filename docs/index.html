@@ -537,6 +537,35 @@
             transform: translateY(0);
         }
         
+        /* ===== PATCH D - UX REFINADA: TOUCH/FOCUS ===== */
+        .btn {
+            /* Melhorar área de toque no mobile */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(255, 127, 80, 0.3);
+            min-height: 44px; /* Tamanho mínimo recomendado para touch */
+        }
+        
+        .btn:focus {
+            outline: 2px solid var(--turquesa-neon);
+            outline-offset: 2px;
+        }
+        
+        .btn:focus:not(:focus-visible) {
+            outline: none; /* Remover outline em clique, manter em navegação por teclado */
+        }
+        
+        /* Input de busca - melhorias touch/focus */
+        #taskSearchInput {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0, 206, 209, 0.2);
+            min-height: 44px;
+        }
+        
+        #taskSearchInput:focus {
+            outline: 2px solid var(--turquesa-neon);
+            outline-offset: 2px;
+        }
+        
         .btn-secondary {
             background: linear-gradient(135deg,
                 rgba(0, 206, 209, 0.3),
@@ -4795,6 +4824,28 @@
             const container = document.getElementById('tarefasContainer');
             let html = '';
             
+            // ===== PATCH D - INPUT DE BUSCA COM FOCO AUTOMÁTICO =====
+            html += `
+                <div style="margin-bottom: 16px;">
+                    <input 
+                        type="text" 
+                        id="taskSearchInput" 
+                        placeholder="🔍 Buscar tarefas por área ou tema..." 
+                        style="
+                            width: 100%;
+                            padding: 12px 16px;
+                            background: rgba(20, 35, 45, 0.6);
+                            border: 1px solid rgba(0, 206, 209, 0.3);
+                            border-radius: 10px;
+                            color: white;
+                            font-size: 14px;
+                            transition: all 0.3s ease;
+                        "
+                        oninput="filtrarTarefas(this.value)"
+                    />
+                </div>
+            `;
+            
             // ===== CALCULAR CONTAGEM DE DIÁRIO ATIVO POR TEMA (uma vez só) =====
             const contagemDiarioPorTema = {};
             if (window.diario && Array.isArray(window.diario.entradas)) {
@@ -4899,6 +4950,36 @@
             });
             
             container.innerHTML = html;
+        }
+        
+        // ===== PATCH D - FUNÇÃO DE FILTRO DE TAREFAS =====
+        function filtrarTarefas(termo) {
+            const termoLower = termo.toLowerCase().trim();
+            const cards = document.querySelectorAll('.missoes-area');
+            
+            if (cards.length === 0) return; // Sem cards para filtrar
+            
+            if (!termoLower) {
+                // Sem filtro: mostrar tudo
+                cards.forEach(card => card.style.display = '');
+                return;
+            }
+            
+            cards.forEach(areaCard => {
+                const areaNome = areaCard.querySelector('.missoes-area-nome')?.textContent.toLowerCase() || '';
+                const temaCards = areaCard.querySelectorAll('.tema-item');
+                let temMatch = false;
+                
+                temaCards.forEach(temaCard => {
+                    const temaNome = temaCard.querySelector('.tema-item-name')?.textContent.toLowerCase() || '';
+                    const match = areaNome.includes(termoLower) || temaNome.includes(termoLower);
+                    temaCard.style.display = match ? '' : 'none';
+                    if (match) temMatch = true;
+                });
+                
+                // Mostrar/esconder área conforme tem matches
+                areaCard.style.display = temMatch ? '' : 'none';
+            });
         }
         
         // Função para abrir sessão de revisões do dia (todos os tópicos)
@@ -6716,7 +6797,18 @@
             }
             
             if (sectionId === 'dados') renderDados();
-            if (sectionId === 'tarefa') renderTarefas();
+            if (sectionId === 'tarefa') {
+                renderTarefas();
+                // ===== PATCH D - FOCO AUTOMÁTICO NO INPUT DE BUSCA =====
+                setTimeout(() => {
+                    const searchInput = document.getElementById('taskSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        // Scroll suave até o input (se necessário)
+                        searchInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
+            }
             if (sectionId === 'agenda') renderAgendaUnificada();
             if (sectionId === 'stats') updateStats();
             if (sectionId === 'historico') renderHistorico();

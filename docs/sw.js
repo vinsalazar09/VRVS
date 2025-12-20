@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.2-fix-ui-msg-20251220-2300";
+const CACHE_NAME = "vrvs-v5.3.3-ui-touch-fix-20251220-2350";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
