@@ -3372,6 +3372,13 @@
                         </button>
                     </div>
                     
+                    <!-- PATCH 2: Indicadores VRVS 3P (complementa chip) -->
+                    <div id="diarioIndicadoresVRVS" style="display: flex; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px; margin-bottom: 16px; font-size: 12px; flex-wrap: wrap;">
+                        <span style="color: rgba(255,255,255,0.7);">🧠 ativos: <span id="diarioCountAtivos" style="color: var(--turquesa-light); font-weight: 600;">0</span></span>
+                        <span style="color: rgba(255,255,255,0.7);">⏰ hoje: <span id="diarioCountHoje" style="color: var(--cobre-light); font-weight: 600;">0</span></span>
+                        <span style="color: rgba(255,255,255,0.7);">⚠️ atenção: <span id="diarioCountAtencao" style="color: var(--cobre-main); font-weight: 600;">0</span></span>
+                    </div>
+                    
                     <!-- Filtros -->
                     <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
                         <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
@@ -10105,9 +10112,9 @@
             if (!window.diario || !Array.isArray(window.diario.entradas)) return [];
             const hoje = hojeStr();
             const resultado = window.diario.entradas.filter(e => {
-                if (!e.srs || !e.srs.ativo) return false;
-                const due = e.srs.proximaRevisao || hoje;
-                if (due > hoje) return false;
+                // Usar helpers unificados (PATCH 3)
+                if (!isSrsActive(e)) return false;
+                if (!isDueToday(e, hoje)) return false;
                 if (filtros.area && e.area !== filtros.area) return false;
                 if (filtros.tema && e.tema !== filtros.tema) return false;
                 return true;
@@ -10221,7 +10228,7 @@
                     console.log('❌ Entrada não encontrada');
                     return null;
                 }
-                const hoje = hojeStr();
+            const hoje = hojeStr();
                 const devidaHoje = entrada.atencao || 
                     (entrada.srs?.ativo && entrada.srs.proximaRevisao && entrada.srs.proximaRevisao <= hoje);
                 
@@ -10478,7 +10485,7 @@
                 if (problemas.length > 0) {
                     console.warn(`  ⚠️ Encontrados ${problemas.length} problemas:`);
                     console.table(problemas);
-                } else {
+            } else {
                     console.log('  ✅ Todas as entradas ativas têm estrutura correta');
                 }
                 
@@ -10581,6 +10588,23 @@
             }
         };
         
+        // ==================== HELPERS VRVS 3P (PATCH 3) ====================
+        
+        // Predicates unificados para evitar inconsistências
+        function isSrsActive(entrada) {
+            return entrada && entrada.srs && entrada.srs.ativo === true;
+        }
+        
+        function isDueToday(entrada, hoje) {
+            if (!isSrsActive(entrada)) return false;
+            const due = entrada.srs.proximaRevisao || hoje;
+            return due <= hoje;
+        }
+        
+        function isAttention(entrada) {
+            return entrada && entrada.atencao === true;
+        }
+        
         // ==================== FIM SRS ====================
         
         function carregarDiario() {
@@ -10600,7 +10624,7 @@
                     window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
                     inicializarSrsEmTodasEntradas(); // Seguro mesmo vazio
                 }
-                // Atualizar chip VRVS 3P após carregar
+                // Atualizar chip VRVS 3P e indicadores após carregar (PATCH 2)
                 atualizarChipVrvs3p();
             } catch (e) {
                 console.error('[DIÁRIO] Erro ao carregar:', e);
@@ -10899,7 +10923,7 @@
                         // Edição normal: renderizar lista completa
             renderDiario();
                     }
-                    // Atualizar chip VRVS 3P após salvar
+                    // Atualizar chip VRVS 3P e indicadores após salvar (PATCH 2)
                     atualizarChipVrvs3p();
             mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
                 }, 50);
@@ -10917,6 +10941,30 @@
             setTimeout(() => {
                 abrirNovaEntradaDiario();
             }, 300);
+        }
+        
+        // PATCH 2: Atualizar indicadores VRVS 3P no cabeçalho
+        function atualizarIndicadoresDiario() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+            }
+            
+            const hoje = hojeStr();
+            const entradas = window.diario.entradas || [];
+            
+            // Contar usando helpers unificados (PATCH 3)
+            const countAtivos = entradas.filter(e => isSrsActive(e)).length;
+            const countHoje = entradas.filter(e => isDueToday(e, hoje)).length;
+            const countAtencao = entradas.filter(e => isAttention(e)).length;
+            
+            // Atualizar elementos HTML
+            const elAtivos = document.getElementById('diarioCountAtivos');
+            const elHoje = document.getElementById('diarioCountHoje');
+            const elAtencao = document.getElementById('diarioCountAtencao');
+            
+            if (elAtivos) elAtivos.textContent = countAtivos;
+            if (elHoje) elHoje.textContent = countHoje;
+            if (elAtencao) elAtencao.textContent = countAtencao;
         }
         
         // Atualizar chip VRVS 3P no Diário
@@ -10960,6 +11008,9 @@
             
             chipText.textContent = texto;
             chip.style.display = 'inline-flex';
+            
+            // PATCH 2: Atualizar indicadores também
+            atualizarIndicadoresDiario();
         }
         
         // Navegar para painel VRVS 3P
@@ -11009,7 +11060,7 @@
             const container = document.getElementById('diarioContainer');
             if (!container) return;
             
-            // Atualizar chip VRVS 3P
+            // Atualizar chip VRVS 3P e indicadores (PATCH 2)
             atualizarChipVrvs3p();
             
             if (!window.diario || !window.diario.entradas || window.diario.entradas.length === 0) {
@@ -11048,60 +11099,15 @@
                 entradasFiltradas = entradasFiltradas.filter(e => e.data === filtroData);
             }
             
-            // Separar entradas que precisam revisão (com ⚠️ ou SRS ativo com proximaRevisao <= hoje)
+            // PATCH 1: Remover bloco separado "Revisar Hoje" - tudo fica agrupado por tema
+            // Não criar bloco separado, não remover entradas da lista principal
             const hoje = hojeStr();
-            const entradasRevisar = entradasFiltradas.filter(e => {
-                // Entrada marcada com atenção OU tem SRS ativo programado para hoje
-                if (e.atencao) return true;
-                if (e.srs && e.srs.ativo && e.srs.proximaRevisao) {
-                    return e.srs.proximaRevisao <= hoje;
-                }
-                return false;
-            });
             
-            // Log de debug (FASE 2)
-            if (entradasRevisar.length > 0) {
-                console.log('[VRVS3P-DEBUG] renderListaDiario - Entradas "Revisar Hoje":', {
-                    total: entradasRevisar.length,
-                    porMotivo: {
-                        atencao: entradasRevisar.filter(e => e.atencao).length,
-                        vrvs3p: entradasRevisar.filter(e => !e.atencao && e.srs?.ativo).length
-                    },
-                    detalhes: entradasRevisar.map(e => ({
-                        topico: e.topico?.substring(0, 40),
-                        atencao: e.atencao,
-                        proximaRevisao: e.srs?.proximaRevisao
-                    }))
-                });
-            }
-            
-            // Renderizar seção "Revisar Hoje"
+            // Esconder seção "Revisar Hoje" (não será mais usada)
             const revisarHoje = document.getElementById('diarioRevisarHoje');
             if (revisarHoje) {
-                if (entradasRevisar.length > 0) {
-                    revisarHoje.style.display = 'block';
-                    const revisarId = 'diario-revisar-hoje';
-                    revisarHoje.innerHTML = `
-                        <div class="area-section" style="margin-bottom: 0;">
-                            <div class="area-header collapsed" onclick="toggleAreaCaderno('${revisarId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
-                                <div class="area-header-left">
-                                    <span class="area-header-title">⚠️ Revisar Hoje</span>
-                                    <span class="area-header-count">${entradasRevisar.length} entrada${entradasRevisar.length > 1 ? 's' : ''}</span>
-                        </div>
-                                <span class="area-header-toggle">▼</span>
-                            </div>
-                            <div class="area-content collapsed" id="area-content-${revisarId}">
-                        ${entradasRevisar.map(e => renderEntradaDiario(e)).join('')}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    revisarHoje.style.display = 'none';
-                }
+                revisarHoje.style.display = 'none';
             }
-            
-            // Remover entradas com atenção da lista principal
-            entradasFiltradas = entradasFiltradas.filter(e => !e.atencao);
             
             if (filtroVista === 'data') {
                 renderDiarioPorData(entradasFiltradas, container);
@@ -11205,6 +11211,20 @@
         
         function renderEntradaDiario(entrada) {
             const mostrarResposta = modoDiario === 'respostas';
+            const hoje = hojeStr();
+            
+            // PATCH 1: Chips visuais (só mostrar os que se aplicam)
+            const chips = [];
+            if (isSrsActive(entrada)) {
+                chips.push('<span style="font-size: 14px;" title="VRVS 3P ativo">🧠</span>');
+            }
+            if (isDueToday(entrada, hoje)) {
+                chips.push('<span style="font-size: 14px;" title="Para revisar hoje">⏰</span>');
+            }
+            if (isAttention(entrada)) {
+                chips.push('<span style="font-size: 14px;" title="Atenção manual">⚠️</span>');
+            }
+            const chipsHTML = chips.length > 0 ? `<div style="display: flex; gap: 4px; align-items: center; margin-bottom: 4px;">${chips.join('')}</div>` : '';
             
             return `
                 <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255,127,80,0.2);">
@@ -11213,12 +11233,12 @@
                             <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 4px;">
                                 ${entrada.area} • ${entrada.tema}
                             </div>
+                            ${chipsHTML}
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px;">
                                 ❓ ${formatarTextoDiario(entrada.topico)}
                             </div>
                         </div>
                         <div style="display: flex; gap: 6px;">
-                            ${entrada.atencao ? '<span style="color: var(--cobre-main); font-size: 18px;">⚠️</span>' : ''}
                             <button onclick="editarEntradaDiario(${entrada.id})" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
                         </div>
                     </div>
@@ -11550,10 +11570,10 @@
                 if (typeof atualizarSRS_VRVS3P_RASTREADO !== 'undefined') {
                     atualizarSRS_VRVS3P_RASTREADO(entradaAtual, normalizarQualidade(qualidade));
                 } else {
-                    registrarRespostaSrsDiario(entradaAtual, qualidade);
+                registrarRespostaSrsDiario(entradaAtual, qualidade);
                 }
                 salvarDiario(); // já existe; apenas reutilizar
-                // Atualizar chip VRVS 3P após registrar resposta
+                // Atualizar chip VRVS 3P e indicadores após registrar resposta (PATCH 2)
                 atualizarChipVrvs3p();
             }
             
