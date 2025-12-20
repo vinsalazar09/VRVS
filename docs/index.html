@@ -2562,6 +2562,8 @@
         <div class="splash-progress">
             <div class="splash-progress-bar"></div>
         </div>
+        <div id="bootBuildVRVS" style="opacity:0.7;font-size:12px;margin-top:8px;color:rgba(255,255,255,0.6);"></div>
+        <div id="bootStatusVRVS" style="opacity:0.9;font-size:13px;margin-top:6px;white-space:pre-line;color:rgba(255,255,255,0.8);text-align:center;max-width:300px;"></div>
     </div>
     
     <div id="importMessage"></div>
@@ -4009,6 +4011,72 @@
             }, 10000);
         })();
         
+        // ==================== BOOT TRACE E FAILSAFE EXTRA ====================
+        
+        // Helpers para trace de boot (read-only, não acessa localStorage)
+        function bootSetStatus(msg) {
+            try {
+                const el = document.getElementById('bootStatusVRVS');
+                if (el) {
+                    el.textContent = msg;
+                }
+                console.log('[BOOT]', msg);
+            } catch (_) {}
+        }
+        
+        function bootSetBuild() {
+            try {
+                const el = document.getElementById('bootBuildVRVS');
+                if (el) {
+                    const now = new Date();
+                    const buildStr = `build: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                    el.textContent = buildStr;
+                }
+            } catch (_) {}
+        }
+        
+        function bootForceHideSplash(reason) {
+            try {
+                const splash = document.getElementById('splashScreen');
+                if (splash && !splash.classList.contains('hidden')) {
+                    splash.classList.add('hidden');
+                }
+                if (document.body) {
+                    document.body.classList.remove('splash-loading');
+                }
+            } catch (_) {}
+            try {
+                // Banner simples para não deixar o usuário no escuro
+                if (!document.getElementById('bootErrorBanner')) {
+                    const b = document.createElement('div');
+                    b.id = 'bootErrorBanner';
+                    b.textContent = '⚠️ Erro ao iniciar. Recarregue o app. (ver console)';
+                    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;padding:10px 12px;font-size:13px;background:rgba(239,68,68,0.18);border-bottom:1px solid rgba(239,68,68,0.35);backdrop-filter: blur(8px);';
+                    document.body && document.body.appendChild(b);
+                }
+            } catch (_) {}
+            try {
+                console.error('[BOOT FAILSAFE EXTRA]', reason);
+            } catch (_) {}
+        }
+        
+        // Inicializar trace
+        bootSetBuild();
+        bootSetStatus('BOOT: JS iniciou');
+        
+        // Watchdog extra de 3s (camada adicional ao failsafe existente)
+        setTimeout(function () {
+            try {
+                const splash = document.getElementById('splashScreen');
+                if (splash && !splash.classList.contains('hidden')) {
+                    bootSetStatus('BOOT: watchdog 3s ativado');
+                    bootForceHideSplash('watchdog-3s');
+                }
+            } catch (_) {}
+        }, 3000);
+        
+        // ==================== DADOS E INICIALIZAÇÃO ====================
+        
         let dados = safeJSONParseLS('vrvs_dados', []);
         let historico = safeJSONParseLS('vrvs_historico', []);
         let lembretes = safeJSONParseLS('vrvs_lembretes', []);
@@ -4039,8 +4107,6 @@
             }
         }
         
-        limparDadosCorretos();
-        
         // Função para limpar histórico inválido (usada na inicialização e após importação)
         function limparHistoricoInvalido() {
             const historicoOriginal = historico.length;
@@ -4065,8 +4131,6 @@
                 console.log(`🧹 Limpeza: removidos ${historicoOriginal - historico.length} registros inválidos do histórico`);
             }
         }
-        
-        limparHistoricoInvalido(); // Limpar histórico inválido na inicialização
         
         // CORREÇÃO URGENTE: Normalizar áreas duplicadas em todos os dados
         function normalizarAreasEmMassa() {
@@ -4130,8 +4194,44 @@
             }
         }
         
-        // Executar normalização na inicialização
-        normalizarAreasEmMassa();
+        // Agendar saneamentos para executar APÓS UI abrir (defer)
+        function agendarSaneamentoPosBoot() {
+            setTimeout(() => {
+                bootSetStatus('BOOT: saneamento (defer) iniciando');
+                
+                // Forçar esconder splash antes de rodar saneamentos pesados
+                bootForceHideSplash('pre-saneamento');
+                
+                try {
+                    bootSetStatus('SANEAMENTO: limparDadosCorretos');
+                    limparDadosCorretos();
+                } catch(e) {
+                    bootSetStatus('SANEAMENTO ERRO: limparDadosCorretos');
+                    console.error('[BOOT] Erro em limparDadosCorretos:', e);
+                }
+                
+                try {
+                    bootSetStatus('SANEAMENTO: limparHistoricoInvalido');
+                    limparHistoricoInvalido();
+                } catch(e) {
+                    bootSetStatus('SANEAMENTO ERRO: limparHistoricoInvalido');
+                    console.error('[BOOT] Erro em limparHistoricoInvalido:', e);
+                }
+                
+                try {
+                    bootSetStatus('SANEAMENTO: normalizarAreasEmMassa');
+                    normalizarAreasEmMassa();
+                } catch(e) {
+                    bootSetStatus('SANEAMENTO ERRO: normalizarAreasEmMassa');
+                    console.error('[BOOT] Erro em normalizarAreasEmMassa:', e);
+                }
+                
+                bootSetStatus('BOOT: saneamento (defer) finalizado');
+            }, 100);
+        }
+        
+        // Agendar saneamentos (executa após UI abrir)
+        agendarSaneamentoPosBoot();
         
         // ==================== FUNÇÕES AUXILIARES ====================
         
