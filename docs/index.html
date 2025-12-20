@@ -1242,6 +1242,7 @@
             color: var(--text-light);
             font-size: 14px;
             font-weight: 500;
+            white-space: pre-line; /* CORREÇÃO: Preservar quebras de linha */
         }
         
         .campos-tempo {
@@ -10299,6 +10300,8 @@
                                     }
                                 }
                             }
+                            // CORREÇÃO: Garantir sincronização do checkbox com SRS após inicialização
+                            entrada.srs.ativo = atencao;
                         } else {
                             // Se desmarcado, desativar SRS (mas não deletar para manter histórico)
                             if (entrada.srs) {
@@ -10324,6 +10327,8 @@
                 // Se checkbox marcado, inicializar SRS VRVS 3P; senão, não criar SRS
                 if (atencao) {
                     novaEntrada.srs = inicializarSrsVRVS3P(hoje);
+                    // CORREÇÃO: Garantir sincronização do checkbox com SRS após inicialização
+                    novaEntrada.srs.ativo = atencao;
                 } else {
                     // Não criar SRS se checkbox não marcado
                     novaEntrada.srs = null;
@@ -10540,8 +10545,9 @@
                 }
             }
             
-            // Remover entradas com atenção da lista principal
-            entradasFiltradas = entradasFiltradas.filter(e => !e.atencao);
+            // DESATIVADO: Entradas devem aparecer tanto em "Revisar Hoje" quanto na lista principal
+            // // Remover entradas com atenção da lista principal
+            // entradasFiltradas = entradasFiltradas.filter(e => !e.atencao);
             
             if (filtroVista === 'data') {
                 renderDiarioPorData(entradasFiltradas, container);
