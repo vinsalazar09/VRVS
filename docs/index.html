@@ -3646,16 +3646,56 @@
             };
             
             const backupKey = `vrvs_backup_${Date.now()}`;
-            localStorage.setItem(backupKey, JSON.stringify(backup));
             
-            // Manter apenas últimos 5 backups
+            try {
+            localStorage.setItem(backupKey, JSON.stringify(backup));
+            } catch (e) {
+                // Se falhou por quota, tentar limpar backups antigos e retry 1x
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    try {
+                        const backupKeys = Object.keys(localStorage)
+                            .filter(k => k.startsWith('vrvs_backup_'))
+                            .sort()
+                            .reverse();
+                        
+                        // Manter apenas o mais recente, remover os demais
+                        if (backupKeys.length > 1) {
+                            backupKeys.slice(1).forEach(k => {
+                                try {
+                                    localStorage.removeItem(k);
+                                } catch (_) {}
+                            });
+                        }
+                        
+                        // Retry 1x após limpar
+                        localStorage.setItem(backupKey, JSON.stringify(backup));
+                    } catch (e2) {
+                        // Se ainda falhar, abortar backup sem quebrar o boot
+                        console.warn('[BACKUP] Falha ao criar backup após limpeza. Continuando sem backup.', e2);
+                        throw e2; // Propaga erro para quem chamou tratar
+                    }
+                } else {
+                    // Outro tipo de erro, propagar
+                    throw e;
+                }
+            }
+            
+            // Manter apenas últimos 5 backups (se conseguiu salvar)
+            try {
             const backupKeys = Object.keys(localStorage)
                 .filter(k => k.startsWith('vrvs_backup_'))
                 .sort()
                 .reverse();
             
             if (backupKeys.length > 5) {
-                backupKeys.slice(5).forEach(k => localStorage.removeItem(k));
+                    backupKeys.slice(5).forEach(k => {
+                        try {
+                            localStorage.removeItem(k);
+                        } catch (_) {}
+                    });
+                }
+            } catch (_) {
+                // Falha ao limpar backups antigos não deve quebrar o boot
             }
             
             console.log(`[BACKUP] Backup criado: ${backupKey}`);
@@ -3890,6 +3930,55 @@
         ];
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
+        
+        // FAILSAFE DO BOOT - Esconder splash em caso de erro (evita travamento eterno)
+        (function setupBootFailsafeVRVS() {
+            function hideSplash(reason) {
+                try {
+                    const splash = document.getElementById('splashScreen');
+                    if (splash && !splash.classList.contains('hidden')) {
+                        splash.classList.add('hidden');
+                    }
+                    if (document.body) {
+                        document.body.classList.remove('splash-loading');
+                    }
+                } catch (_) {}
+                try {
+                    // Banner simples para não deixar o usuário no escuro
+                    if (!document.getElementById('bootErrorBanner')) {
+                        const b = document.createElement('div');
+                        b.id = 'bootErrorBanner';
+                        b.textContent = '⚠️ Erro ao iniciar. Recarregue o app. (ver console)';
+                        b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;padding:10px 12px;font-size:13px;background:rgba(239,68,68,0.18);border-bottom:1px solid rgba(239,68,68,0.35);backdrop-filter: blur(8px);';
+                        document.body && document.body.appendChild(b);
+                    }
+                } catch (_) {}
+                try { console.error('[VRVS BOOT FAILSAFE]', reason); } catch (_) {}
+            }
+            
+            const prevOnError = window.onerror;
+            window.onerror = function (msg, src, line, col, err) {
+                hideSplash(err || msg);
+                if (typeof prevOnError === 'function') {
+                    try { return prevOnError.apply(this, arguments); } catch (_) {}
+                }
+                return false;
+            };
+            
+            window.addEventListener('unhandledrejection', function (e) {
+                hideSplash(e && e.reason ? e.reason : 'unhandledrejection');
+            });
+            
+            // Watchdog: se splash não sumiu em 10s, destravar UI
+            setTimeout(function () {
+                try {
+                    const splash = document.getElementById('splashScreen');
+                    if (splash && !splash.classList.contains('hidden')) {
+                        hideSplash('watchdog-timeout');
+                    }
+                } catch (_) {}
+            }, 10000);
+        })();
         
         let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
         let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
@@ -8031,23 +8120,47 @@
         
         function migrarAnotacoesParaHotTopics() {
             // Migração segura: adicionar campo hotTopics sem perder dados
-            const backupKey = fazerBackupCompleto();
-            const anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
+            let anotacoesAtuais = [];
+            try {
+                anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
+            } catch (e) {
+                console.error('[MIGRAÇÃO] Falha ao ler vrvs_anotacoes:', e);
+                anotacoesAtuais = [];
+            }
             
             let atualizadas = false;
-            const anotacoesMigradas = anotacoesAtuais.map(a => {
-                if (a.hotTopics === undefined) {
+            const anotacoesMigradas = (anotacoesAtuais || []).map(a => {
+                if (a && a.hotTopics === undefined) {
                     a.hotTopics = ''; // Campo novo, vazio por padrão
                     atualizadas = true;
                 }
                 return a;
             });
             
-            if (atualizadas) {
+            // Se não precisa migrar, só garante variável em memória e sai
+            if (!atualizadas) {
+                anotacoes = anotacoesAtuais;
+                return;
+            }
+            
+            // Só faz backup SE houver migração
+            let backupKey = null;
+            try {
+                backupKey = fazerBackupCompleto();
+            } catch (e) {
+                console.warn('[MIGRAÇÃO] Backup falhou (provável quota). Seguindo sem backup.', e);
+                backupKey = null;
+            }
+            
+            // Tenta salvar migração; se falhar por quota, NÃO travar boot
+            try {
                 validarAntesDeSalvar('anotacoes', anotacoesMigradas);
                 localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoesMigradas));
                 anotacoes = anotacoesMigradas;
-                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado. Backup: ${backupKey}`);
+                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado. Backup: ${backupKey || 'SEM_BACKUP'}`);
+            } catch (e) {
+                console.error('[MIGRAÇÃO] Falha ao salvar migração (provável quota). Mantendo dados antigos em memória.', e);
+                anotacoes = anotacoesAtuais; // mantém app operante
             }
         }
         
