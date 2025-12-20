@@ -10104,7 +10104,7 @@
         function getEntradasParaRevisarHojeDiario(filtros) {
             if (!window.diario || !Array.isArray(window.diario.entradas)) return [];
             const hoje = hojeStr();
-            return window.diario.entradas.filter(e => {
+            const resultado = window.diario.entradas.filter(e => {
                 if (!e.srs || !e.srs.ativo) return false;
                 const due = e.srs.proximaRevisao || hoje;
                 if (due > hoje) return false;
@@ -10112,6 +10112,20 @@
                 if (filtros.tema && e.tema !== filtros.tema) return false;
                 return true;
             });
+            
+            // Log de debug (FASE 2)
+            if (resultado.length > 0) {
+                console.log('[VRVS3P-DEBUG] getEntradasParaRevisarHojeDiario:', {
+                    total: resultado.length,
+                    filtros: filtros,
+                    detalhes: resultado.map(e => ({
+                        topico: e.topico?.substring(0, 40),
+                        proximaRevisao: e.srs?.proximaRevisao
+                    }))
+                });
+            }
+            
+            return resultado;
         }
         
         // Selecionar entradas para TREINO LIVRE
@@ -10132,6 +10146,440 @@
             const resposta = normalizarQualidade(qualidade);
             atualizarSRS_VRVS3P(entrada, resposta);
         }
+        
+        // ==================== SISTEMA DE RASTREAMENTO VRVS 3P (FASE 2) ====================
+        
+        // Histórico de execuções do algoritmo (últimas 50)
+        window.__VRVS3P_HISTORICO = window.__VRVS3P_HISTORICO || [];
+        window.__VRVS3P_CONTADOR = window.__VRVS3P_CONTADOR || { total: 0, porResposta: { esqueci: 0, lembrei: 0, facil: 0 } };
+        
+        // Backup da função original
+        const atualizarSRS_VRVS3P_ORIGINAL = atualizarSRS_VRVS3P;
+        window.atualizarSRS_VRVS3P_ORIGINAL = atualizarSRS_VRVS3P_ORIGINAL; // Backup para referência
+        
+        // Função wrapper para rastrear execuções
+        function atualizarSRS_VRVS3P_RASTREADO(entrada, resposta) {
+            const inicio = performance.now();
+            const estadoAntes = entrada.srs ? JSON.parse(JSON.stringify(entrada.srs)) : null;
+            
+            // Executar algoritmo original
+            atualizarSRS_VRVS3P_ORIGINAL(entrada, resposta);
+            
+            const fim = performance.now();
+            const estadoDepois = entrada.srs ? JSON.parse(JSON.stringify(entrada.srs)) : null;
+            
+            // Registrar execução
+            const registro = {
+                timestamp: Date.now(),
+                entradaId: entrada.id,
+                topico: entrada.topico?.substring(0, 50) || '(sem tópico)',
+                area: entrada.area,
+                tema: entrada.tema,
+                resposta: resposta,
+                estadoAntes: estadoAntes,
+                estadoDepois: estadoDepois,
+                tempoExecucao: fim - inicio,
+                proximaRevisaoAntes: estadoAntes?.proximaRevisao,
+                proximaRevisaoDepois: estadoDepois?.proximaRevisao,
+                estagioAntes: estadoAntes?.estagio,
+                estagioDepois: estadoDepois?.estagio
+            };
+            
+            // Adicionar ao histórico (manter apenas últimas 50)
+            window.__VRVS3P_HISTORICO.push(registro);
+            if (window.__VRVS3P_HISTORICO.length > 50) {
+                window.__VRVS3P_HISTORICO.shift();
+            }
+            
+            // Atualizar contador
+            window.__VRVS3P_CONTADOR.total++;
+            if (window.__VRVS3P_CONTADOR.porResposta[resposta] !== undefined) {
+                window.__VRVS3P_CONTADOR.porResposta[resposta]++;
+            }
+            
+            // Log estruturado
+            console.log('[VRVS3P-DEBUG] Algoritmo executado:', {
+                topico: registro.topico,
+                resposta: resposta,
+                estagio: `${estadoAntes?.estagio ?? 'N/A'} → ${estadoDepois?.estagio ?? 'N/A'}`,
+                proximaRevisao: `${registro.proximaRevisaoAntes || 'N/A'} → ${registro.proximaRevisaoDepois || 'N/A'}`,
+                tempo: `${(fim - inicio).toFixed(2)}ms`
+            });
+            
+            return registro;
+        }
+        
+        // ==================== FERRAMENTA DE DEBUG VRVS 3P (FASE 1) ====================
+        
+        window.debugVRVS3P = {
+            // Inspecionar entrada específica
+            inspecionar: function(textoTopico) {
+                const entrada = window.diario?.entradas?.find(e => 
+                    e.topico && e.topico.includes(textoTopico)
+                );
+                if (!entrada) {
+                    console.log('❌ Entrada não encontrada');
+                    return null;
+                }
+                const hoje = hojeStr();
+                const devidaHoje = entrada.atencao || 
+                    (entrada.srs?.ativo && entrada.srs.proximaRevisao && entrada.srs.proximaRevisao <= hoje);
+                
+                console.table({
+                    'Tópico': entrada.topico?.substring(0, 60),
+                    'Área': entrada.area,
+                    'Tema': entrada.tema,
+                    'Atenção': entrada.atencao ? '⚠️ SIM' : '❌ NÃO',
+                    'VRVS 3P Ativo': entrada.srs?.ativo ? '✅ SIM' : '❌ NÃO',
+                    'Próxima Revisão': entrada.srs?.proximaRevisao || 'N/A',
+                    'Estágio': entrada.srs?.estagio ?? 'N/A',
+                    'Intervalo': entrada.srs?.intervalo ?? 'N/A',
+                    'Repetições': entrada.srs?.repeticoes ?? 0,
+                    'Devida Hoje': devidaHoje ? '⚠️ SIM' : '❌ NÃO',
+                    'Data Criação': entrada.data || 'N/A'
+                });
+                return entrada;
+            },
+            
+            // Comparar entrada com outras do mesmo tema
+            compararTema: function(textoTopico) {
+                const entrada = window.diario?.entradas?.find(e => 
+                    e.topico && e.topico.includes(textoTopico)
+                );
+                if (!entrada) {
+                    console.log('❌ Entrada não encontrada');
+                    return null;
+                }
+                
+                const mesmoTema = window.diario.entradas.filter(e => 
+                    e.area === entrada.area && e.tema === entrada.tema
+                );
+                
+                console.log(`📊 Comparação: ${entrada.area} • ${entrada.tema}`);
+                console.log(`Total de entradas no tema: ${mesmoTema.length}`);
+                
+                const comparacao = mesmoTema.map(e => ({
+                    'Tópico': e.topico?.substring(0, 40),
+                    'Atenção': e.atencao ? '⚠️' : '❌',
+                    'VRVS 3P': e.srs?.ativo ? '✅' : '❌',
+                    'Próxima Revisão': e.srs?.proximaRevisao || 'N/A',
+                    'Estágio': e.srs?.estagio ?? 'N/A'
+                }));
+                
+                console.table(comparacao);
+                
+                // Análise de diferenças
+                const comAtencao = mesmoTema.filter(e => e.atencao).length;
+                const comVRVS3P = mesmoTema.filter(e => e.srs?.ativo).length;
+                const devidasHoje = mesmoTema.filter(e => {
+                    const hoje = hojeStr();
+                    return e.atencao || (e.srs?.ativo && e.srs.proximaRevisao && e.srs.proximaRevisao <= hoje);
+                }).length;
+                
+                console.log('\n📈 Análise do tema:');
+                console.log(`  - Com atenção: ${comAtencao}/${mesmoTema.length}`);
+                console.log(`  - Com VRVS 3P ativo: ${comVRVS3P}/${mesmoTema.length}`);
+                console.log(`  - Devidas hoje: ${devidasHoje}/${mesmoTema.length}`);
+                
+                return { entrada, mesmoTema, comparacao };
+            },
+            
+            // Listar todas entradas com VRVS 3P ativo
+            listarAtivas: function() {
+                if (!window.diario?.entradas) {
+                    console.log('❌ Diário não carregado');
+                    return [];
+                }
+                const ativas = window.diario.entradas.filter(e => e.srs?.ativo);
+                console.log(`✅ Total: ${ativas.length} entradas ativas`);
+                console.table(ativas.map(e => ({
+                    'Tópico': e.topico?.substring(0, 50),
+                    'Área': e.area,
+                    'Tema': e.tema,
+                    'Próxima Revisão': e.srs?.proximaRevisao,
+                    'Estágio': e.srs?.estagio,
+                    'Intervalo': e.srs?.intervalo
+                })));
+                return ativas;
+            },
+            
+            // Verificar entradas devidas hoje
+            devidasHoje: function() {
+                if (!window.diario?.entradas) {
+                    console.log('❌ Diário não carregado');
+                    return [];
+                }
+                const hoje = hojeStr();
+                const devidas = window.diario.entradas.filter(e => {
+                    if (e.atencao) return true;
+                    if (e.srs?.ativo && e.srs.proximaRevisao) {
+                        return e.srs.proximaRevisao <= hoje;
+                    }
+                    return false;
+                });
+                console.log(`⚠️ Total: ${devidas.length} entradas devidas hoje`);
+                console.table(devidas.map(e => ({
+                    'Tópico': e.topico?.substring(0, 50),
+                    'Área': e.area,
+                    'Tema': e.tema,
+                    'Motivo': e.atencao ? '⚠️ Atenção manual' : '📅 VRVS 3P devido',
+                    'Próxima Revisão': e.srs?.proximaRevisao || 'N/A'
+                })));
+                return devidas;
+            },
+            
+            // Comparar sessão vs listagem (FASE 4)
+            compararSessaoListagem: function() {
+                if (!window.diario?.entradas) {
+                    console.log('❌ Diário não carregado');
+                    return null;
+                }
+                
+                const hoje = hojeStr();
+                
+                // Lógica da SESSÃO (getEntradasParaRevisarHojeDiario)
+                const sessao = window.diario.entradas.filter(e => {
+                    if (!e.srs || !e.srs.ativo) return false;
+                    const due = e.srs.proximaRevisao || hoje;
+                    return due <= hoje;
+                });
+                
+                // Lógica da LISTAGEM (renderListaDiario)
+                const listagem = window.diario.entradas.filter(e => {
+                    if (e.atencao) return true;
+                    if (e.srs && e.srs.ativo && e.srs.proximaRevisao) {
+                        return e.srs.proximaRevisao <= hoje;
+                    }
+                    return false;
+                });
+                
+                // Encontrar diferenças
+                const apenasSessao = sessao.filter(e => !listagem.find(l => l.id === e.id));
+                const apenasListagem = listagem.filter(e => !sessao.find(s => s.id === e.id));
+                
+                console.log('🔍 Comparação Sessão vs Listagem:');
+                console.log(`  Sessão: ${sessao.length} entradas`);
+                console.log(`  Listagem: ${listagem.length} entradas`);
+                console.log(`  Apenas na Sessão: ${apenasSessao.length}`);
+                console.log(`  Apenas na Listagem: ${apenasListagem.length}`);
+                
+                if (apenasListagem.length > 0) {
+                    console.log('\n⚠️ Entradas que aparecem APENAS na Listagem (provável causa do bug):');
+                    console.table(apenasListagem.map(e => ({
+                        'Tópico': e.topico?.substring(0, 50),
+                        'Área': e.area,
+                        'Tema': e.tema,
+                        'Atenção': e.atencao ? '⚠️ SIM' : '❌ NÃO',
+                        'VRVS 3P': e.srs?.ativo ? '✅ SIM' : '❌ NÃO',
+                        'Próxima Revisão': e.srs?.proximaRevisao || 'N/A'
+                    })));
+                }
+                
+                return {
+                    sessao,
+                    listagem,
+                    apenasSessao,
+                    apenasListagem,
+                    inconsistencia: apenasListagem.length > 0 || apenasSessao.length > 0
+                };
+            },
+            
+            // Verificar performance (FASE 3)
+            performance: function() {
+                const inicio = performance.now();
+                const ativas = window.diario?.entradas?.filter(e => e.srs?.ativo) || [];
+                const fim = performance.now();
+                
+                const total = window.diario?.entradas?.length || 0;
+                const tempoFiltro = fim - inicio;
+                
+                // Estimar tempo de processamento completo
+                const tempoEstimadoCompleto = (tempoFiltro / total) * ativas.length;
+                
+                console.log('⚡ Performance VRVS 3P:');
+                console.log(`  Total entradas: ${total}`);
+                console.log(`  Entradas ativas: ${ativas.length} (${Math.round(ativas.length/total*100)}%)`);
+                console.log(`  Tempo de filtro: ${tempoFiltro.toFixed(2)}ms`);
+                console.log(`  Tempo estimado processamento completo: ${tempoEstimadoCompleto.toFixed(2)}ms`);
+                
+                // Verificar histórico de execuções
+                const historico = window.__VRVS3P_HISTORICO || [];
+                if (historico.length > 0) {
+                    const tempoMedio = historico.reduce((sum, r) => sum + r.tempoExecucao, 0) / historico.length;
+                    const tempoMaximo = Math.max(...historico.map(r => r.tempoExecucao));
+                    console.log(`  Tempo médio por atualização: ${tempoMedio.toFixed(2)}ms`);
+                    console.log(`  Tempo máximo: ${tempoMaximo.toFixed(2)}ms`);
+                    console.log(`  Total de execuções rastreadas: ${historico.length}`);
+                }
+                
+                // Verificar contador
+                const contador = window.__VRVS3P_CONTADOR || { total: 0 };
+                console.log(`  Total de atualizações: ${contador.total}`);
+                
+                return {
+                    total,
+                    ativas: ativas.length,
+                    tempoFiltro,
+                    tempoEstimadoCompleto,
+                    historico: historico.length,
+                    contador: contador.total
+                };
+            },
+            
+            // Histórico de execuções (FASE 2)
+            historico: function(limite = 10) {
+                const historico = window.__VRVS3P_HISTORICO || [];
+                const ultimas = historico.slice(-limite);
+                
+                console.log(`📜 Últimas ${ultimas.length} execuções do algoritmo:`);
+                console.table(ultimas.map(r => ({
+                    'Hora': new Date(r.timestamp).toLocaleTimeString('pt-BR'),
+                    'Tópico': r.topico,
+                    'Resposta': r.resposta,
+                    'Estágio': `${r.estagioAntes ?? 'N/A'} → ${r.estagioDepois ?? 'N/A'}`,
+                    'Próxima Revisão': `${r.proximaRevisaoAntes || 'N/A'} → ${r.proximaRevisaoDepois || 'N/A'}`,
+                    'Tempo': `${r.tempoExecucao.toFixed(2)}ms`
+                })));
+                
+                return ultimas;
+            },
+            
+            // Validar algoritmo (FASE 2)
+            validar: function() {
+                console.log('🔬 Validação do Algoritmo VRVS 3P:');
+                
+                // Verificar constantes
+                const intervalos = VRVS3P_STAGE_INTERVALS;
+                const maxStage = VRVS3P_MAX_STAGE;
+                
+                console.log(`  Intervalos definidos: ${intervalos.length} estágios`);
+                console.log(`  Estágio máximo: ${maxStage}`);
+                console.log(`  Intervalos: [${intervalos.join(', ')}]`);
+                
+                // Verificar se todas as entradas ativas têm estrutura correta
+                const ativas = window.diario?.entradas?.filter(e => e.srs?.ativo) || [];
+                const problemas = [];
+                
+                ativas.forEach(e => {
+                    if (!e.srs.estagio && e.srs.estagio !== 0) {
+                        problemas.push({ entrada: e.topico?.substring(0, 30), problema: 'Estágio ausente' });
+                    }
+                    if (!e.srs.intervalo && e.srs.intervalo !== 0) {
+                        problemas.push({ entrada: e.topico?.substring(0, 30), problema: 'Intervalo ausente' });
+                    }
+                    if (e.srs.estagio > maxStage) {
+                        problemas.push({ entrada: e.topico?.substring(0, 30), problema: `Estágio inválido: ${e.srs.estagio} > ${maxStage}` });
+                    }
+                    if (!e.srs.proximaRevisao) {
+                        problemas.push({ entrada: e.topico?.substring(0, 30), problema: 'Próxima revisão ausente' });
+                    }
+                });
+                
+                if (problemas.length > 0) {
+                    console.warn(`  ⚠️ Encontrados ${problemas.length} problemas:`);
+                    console.table(problemas);
+                } else {
+                    console.log('  ✅ Todas as entradas ativas têm estrutura correta');
+                }
+                
+                // Testar cálculo manual
+                console.log('\n  🧪 Teste de cálculo manual:');
+                const hoje = hojeStr();
+                const testeEstagio = 3;
+                const intervaloEsperado = intervalos[testeEstagio];
+                const proximaEsperada = addDias(hoje, intervaloEsperado);
+                console.log(`    Estágio ${testeEstagio} → Intervalo: ${intervaloEsperado} dias → Próxima: ${proximaEsperada}`);
+                
+                return {
+                    intervalos: intervalos.length,
+                    maxStage,
+                    ativas: ativas.length,
+                    problemas: problemas.length,
+                    valido: problemas.length === 0
+                };
+            },
+            
+            // Teste unitário simples (FASE 2)
+            testar: function() {
+                console.log('🧪 Teste Unitário do Algoritmo VRVS 3P:');
+                
+                // Criar entrada de teste
+                const entradaTeste = {
+                    id: 'teste-' + Date.now(),
+                    area: 'Teste',
+                    tema: 'Teste',
+                    topico: 'Tópico de teste',
+                    srs: {
+                        ativo: true,
+                        estagio: 2,
+                        intervalo: 4,
+                        proximaRevisao: hojeStr(),
+                        repeticoes: 0,
+                        facilidade: 2.3,
+                        engine: 'VRVS_FSRS3_v1'
+                    }
+                };
+                
+                const testes = [
+                    { resposta: 'esqueci', estagioEsperado: 0, descricao: 'Esqueci (estágio 2 → 0)' },
+                    { resposta: 'lembrei', estagioEsperado: 3, descricao: 'Lembrei (estágio 2 → 3)' },
+                    { resposta: 'facil', estagioEsperado: 4, descricao: 'Fácil (estágio 2 → 4)' }
+                ];
+                
+                const resultados = [];
+                
+                testes.forEach((teste, idx) => {
+                    // Resetar entrada
+                    entradaTeste.srs.estagio = 2;
+                    entradaTeste.srs.intervalo = 4;
+                    entradaTeste.srs.proximaRevisao = hojeStr();
+                    
+                    // Executar
+                    atualizarSRS_VRVS3P(entradaTeste, teste.resposta);
+                    
+                    // Verificar
+                    const passou = entradaTeste.srs.estagio === teste.estagioEsperado;
+                    resultados.push({
+                        teste: teste.descricao,
+                        esperado: teste.estagioEsperado,
+                        obtido: entradaTeste.srs.estagio,
+                        passou: passou ? '✅' : '❌',
+                        intervalo: entradaTeste.srs.intervalo
+                    });
+                });
+                
+                console.table(resultados);
+                
+                const todosPassaram = resultados.every(r => r.passou === '✅');
+                console.log(todosPassaram ? '✅ Todos os testes passaram!' : '❌ Alguns testes falharam');
+                
+                return { resultados, todosPassaram };
+            },
+            
+            // Resumo completo
+            resumo: function() {
+                console.log('📊 RESUMO COMPLETO VRVS 3P:');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                
+                this.performance();
+                console.log('');
+                
+                const devidas = this.devidasHoje();
+                console.log('');
+                
+                const comparacao = this.compararSessaoListagem();
+                console.log('');
+                
+                const validacao = this.validar();
+                
+                return {
+                    performance: this.performance(),
+                    devidasHoje: devidas.length,
+                    comparacao,
+                    validacao
+                };
+            }
+        };
         
         // ==================== FIM SRS ====================
         
@@ -10611,6 +11059,22 @@
                 return false;
             });
             
+            // Log de debug (FASE 2)
+            if (entradasRevisar.length > 0) {
+                console.log('[VRVS3P-DEBUG] renderListaDiario - Entradas "Revisar Hoje":', {
+                    total: entradasRevisar.length,
+                    porMotivo: {
+                        atencao: entradasRevisar.filter(e => e.atencao).length,
+                        vrvs3p: entradasRevisar.filter(e => !e.atencao && e.srs?.ativo).length
+                    },
+                    detalhes: entradasRevisar.map(e => ({
+                        topico: e.topico?.substring(0, 40),
+                        atencao: e.atencao,
+                        proximaRevisao: e.srs?.proximaRevisao
+                    }))
+                });
+            }
+            
             // Renderizar seção "Revisar Hoje"
             const revisarHoje = document.getElementById('diarioRevisarHoje');
             if (revisarHoje) {
@@ -11082,7 +11546,12 @@
             
             // Se for sessão programada, aplica agendamento
             if (sessaoDiario.tipo === 'programado') {
-                registrarRespostaSrsDiario(entradaAtual, qualidade);
+                // Usar versão rastreada para debug
+                if (typeof atualizarSRS_VRVS3P_RASTREADO !== 'undefined') {
+                    atualizarSRS_VRVS3P_RASTREADO(entradaAtual, normalizarQualidade(qualidade));
+                } else {
+                    registrarRespostaSrsDiario(entradaAtual, qualidade);
+                }
                 salvarDiario(); // já existe; apenas reutilizar
                 // Atualizar chip VRVS 3P após registrar resposta
                 atualizarChipVrvs3p();
