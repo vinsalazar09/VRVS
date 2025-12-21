@@ -10138,8 +10138,9 @@
             if (!window.diario || !Array.isArray(window.diario.entradas)) return [];
             return window.diario.entradas.filter(e => {
                 const bateArea = !filtros.area || e.area === filtros.area;
-                // Usar apenas filtro de área (OPÇÃO B - filtro de tema não existe)
-                return bateArea;
+                const bateTema = !filtros.tema || e.tema === filtros.tema;
+                const bateFonte = !filtros.fonte || filtros.fonte === 'todas' || isSrsActive(e);
+                return bateArea && bateTema && bateFonte;
             });
         }
         
@@ -11445,42 +11446,40 @@
                 return;
             }
             
-            // Filtros padrão (usados quando o usuário entra pela aba Diário)
-            let filtros = {
-                area: null,
-                tema: null
-            };
-            
-            // Se houver filtros de sessão vindos da aba Tarefas, eles têm prioridade
-            if (window.filtrosSessaoDiario) {
-                filtros.area = window.filtrosSessaoDiario.area || null;
-                filtros.tema = window.filtrosSessaoDiario.tema || null;
-            } else {
-                // Caso contrário, use o filtro de área atual da UI (filtroDiarioArea)
-                const filtroAreaSelect = document.getElementById('filtroDiarioArea');
-                filtros.area = filtroAreaSelect && filtroAreaSelect.value ? filtroAreaSelect.value : null;
-                // Não precisa de filtro de tema na UI por enquanto (mantém simples)
-                filtros.tema = null;
-            }
-            
             // Guardar tipo
             sessaoDiario = sessaoDiario || {};
             sessaoDiario.tipo = tipo;
             
-            let entradas = [];
             if (tipo === 'programado') {
-                entradas = getEntradasParaRevisarHojeDiario(filtros);
+                // Sessão Programada: comportamento original (monta fila automaticamente)
+                let filtros = {
+                    area: null,
+                    tema: null
+                };
+                
+                // Se houver filtros de sessão vindos da aba Tarefas, eles têm prioridade
+                if (window.filtrosSessaoDiario) {
+                    filtros.area = window.filtrosSessaoDiario.area || null;
+                    filtros.tema = window.filtrosSessaoDiario.tema || null;
+                }
+                
+                const entradas = getEntradasParaRevisarHojeDiario(filtros);
+                sessaoDiario.filaIds = entradas.map(e => e.id);
+                sessaoDiario.indiceAtual = 0;
+                
+                if (!sessaoDiario.filaIds.length) {
+                    renderSessaoDiario(null);
+                } else {
+                    renderSessaoDiario(getEntradaAtualSessao());
+                }
             } else {
-                entradas = getEntradasTreinoLivreDiario(filtros);
-            }
-            
-            sessaoDiario.filaIds = entradas.map(e => e.id);
-            sessaoDiario.indiceAtual = 0;
-            
-            if (!sessaoDiario.filaIds.length) {
-                renderSessaoDiario(null);
-            } else {
-                renderSessaoDiario(getEntradaAtualSessao());
+                // Treino Livre: TL-1 - NÃO monta fila automaticamente
+                // Se já há fila montada, mostra confirmação; senão, mostra configuração
+                if (window.treinoLivreFila && window.treinoLivreFila.length > 0) {
+                    renderSessaoDiario(null); // Vai mostrar confirmação
+                } else {
+                    renderSessaoDiario(null); // Vai mostrar configuração
+                }
             }
         }
         
@@ -11513,14 +11512,14 @@
                         </div>
                     `;
                 } else {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div>📔 Nenhum tópico encontrado para treino livre com os filtros atuais.</div>
-                            <div style="font-size: 12px; opacity: 0.7; margin-top: 8px;">
-                                Ajuste os filtros de área ou crie novas entradas no Diário.
-                            </div>
-                        </div>
-                    `;
+                    // TL-1: Treino Livre - mostrar configuração ou confirmação
+                    if (window.treinoLivreFila && window.treinoLivreFila.length > 0) {
+                        // Fila já montada: mostrar confirmação
+                        renderConfirmacaoTreinoLivre(window.treinoLivreFila);
+                    } else {
+                        // Sem fila: mostrar configuração
+                        renderConfigTreinoLivre();
+                    }
                 }
                 return;
             }
@@ -11559,6 +11558,171 @@
                     <div class="diario-sessao-opcoes">
                         <button class="link-btn" onclick="pularSessaoDiario()">⏭️ Pular este tópico</button>
                         <button class="link-btn" onclick="desativarSessaoDiarioAtual()">🚫 Não revisar mais este tópico</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ==================== TL-1: TREINO LIVRE CUSTOMIZADO ====================
+        
+        // Inicializar configuração padrão do Treino Livre
+        if (typeof window.treinoLivreConfig === 'undefined') {
+            window.treinoLivreConfig = {
+                fonte: 'srs',        // 'srs' ou 'todas'
+                area: null,          // null = "Todas"
+                tema: null,          // null = "Todos"
+                quantidade: 10       // 5, 10, 20, 30
+            };
+        }
+        
+        // Renderizar painel de configuração do Treino Livre
+        function renderConfigTreinoLivre() {
+            const container = document.getElementById('diarioSessao');
+            if (!container) return;
+            
+            // Obter áreas e temas disponíveis
+            const entradas = window.diario.entradas || [];
+            const areas = [...new Set(entradas.map(e => e.area).filter(a => a))].sort();
+            const areaSelecionada = window.treinoLivreConfig.area;
+            const temas = areaSelecionada 
+                ? [...new Set(entradas.filter(e => e.area === areaSelecionada).map(e => e.tema).filter(t => t))].sort()
+                : [];
+            
+            const fonte = window.treinoLivreConfig.fonte || 'srs';
+            const quantidade = window.treinoLivreConfig.quantidade || 10;
+            
+            container.innerHTML = `
+                <div class="treino-livre-config">
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Fonte:</div>
+                        <div style="display: flex; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: rgba(20,35,45,0.6); border-radius: 8px; flex: 1;">
+                                <input type="radio" name="treinoLivreFonte" value="srs" ${fonte === 'srs' ? 'checked' : ''} onchange="window.treinoLivreConfig.fonte = 'srs'; renderConfigTreinoLivre();" style="cursor: pointer;">
+                                <span>🧠 Somente VRVS 3P</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: rgba(20,35,45,0.6); border-radius: 8px; flex: 1;">
+                                <input type="radio" name="treinoLivreFonte" value="todas" ${fonte === 'todas' ? 'checked' : ''} onchange="window.treinoLivreConfig.fonte = 'todas'; renderConfigTreinoLivre();" style="cursor: pointer;">
+                                <span>Todas</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Área:</label>
+                        <select id="treinoLivreArea" onchange="atualizarTemasTreinoLivre(this.value); window.treinoLivreConfig.area = this.value || null; renderConfigTreinoLivre();" style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                            <option value="">Todas as áreas</option>
+                            ${areas.map(a => `<option value="${a}" ${a === areaSelecionada ? 'selected' : ''}>${a}</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Tema:</label>
+                        <select id="treinoLivreTema" onchange="window.treinoLivreConfig.tema = this.value || null;" ${!areaSelecionada ? 'disabled' : ''} style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px; ${!areaSelecionada ? 'opacity: 0.5;' : ''}">
+                            <option value="">Todos os temas</option>
+                            ${temas.map(t => `<option value="${t}" ${t === window.treinoLivreConfig.tema ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Quantidade:</label>
+                        <select id="treinoLivreQuantidade" onchange="window.treinoLivreConfig.quantidade = parseInt(this.value);" style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                            <option value="5" ${quantidade === 5 ? 'selected' : ''}>5 itens</option>
+                            <option value="10" ${quantidade === 10 ? 'selected' : ''}>10 itens</option>
+                            <option value="20" ${quantidade === 20 ? 'selected' : ''}>20 itens</option>
+                            <option value="30" ${quantidade === 30 ? 'selected' : ''}>30 itens</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" onclick="montarTreinoLivre()" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600;">
+                        🎯 Montar Treino
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Atualizar dropdown de temas baseado na área selecionada
+        function atualizarTemasTreinoLivre(area) {
+            window.treinoLivreConfig.area = area || null;
+            if (!area) {
+                window.treinoLivreConfig.tema = null;
+            }
+            const temaSelect = document.getElementById('treinoLivreTema');
+            if (temaSelect) {
+                temaSelect.disabled = !area;
+            }
+        }
+        
+        // Montar fila do Treino Livre baseado na configuração
+        function montarTreinoLivre() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
+                return;
+            }
+            
+            const config = window.treinoLivreConfig;
+            const filtros = {
+                area: config.area || null,
+                tema: config.tema || null,
+                fonte: config.fonte || 'srs'
+            };
+            
+            // Obter entradas filtradas
+            let entradas = getEntradasTreinoLivreDiario(filtros);
+            
+            // Ordenar: mais recentes primeiro (usar data ou criadoEm)
+            entradas.sort((a, b) => {
+                const dataA = new Date(a.data || a.criadoEm || 0);
+                const dataB = new Date(b.data || b.criadoEm || 0);
+                return dataB - dataA; // Mais recente primeiro
+            });
+            
+            // Cortar para quantidade solicitada
+            const quantidadeSolicitada = config.quantidade || 10;
+            const quantidadeReal = Math.min(quantidadeSolicitada, entradas.length);
+            const fila = entradas.slice(0, quantidadeReal);
+            
+            // Salvar fila em memória (READ-ONLY)
+            window.treinoLivreFila = fila;
+            
+            // Mostrar confirmação
+            renderConfirmacaoTreinoLivre(fila);
+        }
+        
+        // Renderizar tela de confirmação do Treino Livre
+        function renderConfirmacaoTreinoLivre(fila) {
+            const container = document.getElementById('diarioSessao');
+            if (!container) return;
+            
+            const total = fila.length;
+            const preview = fila.slice(0, 3).map((e, i) => 
+                `${i + 1}. ${e.area} • ${e.tema}${e.topico ? ' • ' + e.topico.substring(0, 30) + '...' : ''}`
+            ).join('\n');
+            
+            container.innerHTML = `
+                <div class="treino-livre-confirmacao">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 18px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 8px;">
+                            ✅ Treino montado: ${total} itens
+                        </div>
+                        ${total < window.treinoLivreConfig.quantidade ? 
+                            `<div style="font-size: 12px; color: rgba(255,255,255,0.7);">Solicitado: ${window.treinoLivreConfig.quantidade}, disponível: ${total}</div>` 
+                            : ''}
+                    </div>
+                    
+                    ${preview ? `
+                    <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">Preview (primeiros 3):</div>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-line; line-height: 1.6;">${preview}</div>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary" onclick="window.treinoLivreFila = []; renderConfigTreinoLivre();" style="flex: 1; padding: 12px;">
+                            🔄 Remontar
+                        </button>
+                        <button class="btn" onclick="alert('Runner será implementado no Patch TL-2');" disabled style="flex: 1; padding: 12px; opacity: 0.5; cursor: not-allowed;">
+                            ▶️ Iniciar (TL-2)
+                        </button>
                     </div>
                 </div>
             `;
