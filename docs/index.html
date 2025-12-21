@@ -11488,6 +11488,8 @@
                 }
             }
             
+            // Limpar histórico ao mudar modo
+            window.sessaoProgramadaHistorico = [];
             // Reiniciar sessão quando modo muda
             iniciarSessaoDiario(modo);
         }
@@ -11547,6 +11549,11 @@
             return (window.diario.entradas || []).find(e => String(e.id) === String(id)) || null;
         }
         
+        // Histórico de cards já respondidos na Sessão Programada (read-only, máximo 10)
+        if (!window.sessaoProgramadaHistorico) {
+            window.sessaoProgramadaHistorico = [];
+        }
+        
         // ==================== SRS - UI DA SESSÃO ====================
         
         // Função para renderizar a sessão dentro do <div id="diarioSessao">
@@ -11556,6 +11563,8 @@
             
             // Se nenhum card na fila
             if (!entradaAtual) {
+                // Limpar histórico ao sair da sessão
+                window.sessaoProgramadaHistorico = [];
                 // Limpar filtros da sessão quando terminar
                 window.filtrosSessaoDiario = null;
                 
@@ -11584,14 +11593,25 @@
             
             const indice = sessaoDiario.indiceAtual + 1;
             const total = sessaoDiario.filaIds.length;
+            const isPrimeiro = sessaoDiario.indiceAtual === 0;
+            const historicoVazio = !window.sessaoProgramadaHistorico || window.sessaoProgramadaHistorico.length === 0;
+            const podeVerAnterior = sessaoDiario.tipo === 'programado' && !isPrimeiro && !historicoVazio;
             
             // Por padrão, resposta escondida até clicar
             container.innerHTML = `
+                ${sessaoDiario.tipo === 'programado' ? `
+                <div class="sessao-programada-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <button class="sessao-nav-anterior" onclick="voltarCardAnteriorSessao()" ${!podeVerAnterior ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(0, 206, 209, 0.3); color: rgba(0, 206, 209, 0.7); font-size: 13px; padding: 8px 12px; border-radius: 6px; cursor: pointer; min-height: 36px; ${!podeVerAnterior ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
+                        ← Ver anterior (somente leitura)
+                    </button>
+                    <span class="sessao-nav-progresso" style="font-size: 14px; color: rgba(0, 206, 209, 0.7);">${indice} / ${total}</span>
+                </div>
+                ` : ''}
                 <div class="diario-sessao-card">
                     <div class="diario-sessao-meta">
                         <span>${entradaAtual.area} • ${entradaAtual.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                        <span>${indice} / ${total}</span>
+                        ${sessaoDiario.tipo !== 'programado' ? `<span>${indice} / ${total}</span>` : ''}
                             <button onclick="editarEntradaSessaoDiario()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
@@ -11614,7 +11634,7 @@
                         <button class="btn btn-facil btn-sucesso" onclick="responderSessaoDiario('facil')" title="Veio na hora! Posso esperar mais pra revisar.">😌 FÁCIL</button>
                     </div>
                     <div class="diario-sessao-opcoes">
-                        <button class="link-btn" onclick="pularSessaoDiario()">⏭️ Pular este tópico</button>
+                        <button class="link-btn" onclick="pularSessaoDiario()">⏭️ Pular (sem registrar)</button>
                         <button class="link-btn" onclick="desativarSessaoDiarioAtual()">🚫 Não revisar mais este tópico</button>
                     </div>
                 </div>
@@ -11941,6 +11961,16 @@
             const entradaAtual = getEntradaAtualSessao();
             if (!entradaAtual) return;
             
+            // Se for sessão programada, salvar snapshot ANTES de avançar
+            if (sessaoDiario.tipo === 'programado') {
+                // Salvar snapshot do card atual no histórico (read-only)
+                window.sessaoProgramadaHistorico.push({...entradaAtual});
+                // Limitar histórico a últimos 10
+                if (window.sessaoProgramadaHistorico.length > 10) {
+                    window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico.slice(-10);
+                }
+            }
+            
             // Se for sessão programada, aplica agendamento
             if (sessaoDiario.tipo === 'programado') {
                 // Usar versão rastreada para debug
@@ -11966,6 +11996,18 @@
         
         // Pular card (sem alterar SRS)
         function pularSessaoDiario() {
+            const entradaAtual = getEntradaAtualSessao();
+            
+            // Se for sessão programada, salvar snapshot ANTES de avançar
+            if (sessaoDiario.tipo === 'programado' && entradaAtual) {
+                // Salvar snapshot do card atual no histórico (read-only)
+                window.sessaoProgramadaHistorico.push({...entradaAtual});
+                // Limitar histórico a últimos 10
+                if (window.sessaoProgramadaHistorico.length > 10) {
+                    window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico.slice(-10);
+                }
+            }
+            
             sessaoDiario.indiceAtual++;
             if (sessaoDiario.indiceAtual >= sessaoDiario.filaIds.length) {
                 renderSessaoDiario(null);
