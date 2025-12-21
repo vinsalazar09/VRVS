@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.5-patch-4-remove-atencao-20251220-2415";
+const CACHE_NAME = "vrvs-v5.3.6-refinos-pos-tl2-20251221-1631";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
