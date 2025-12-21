@@ -7099,6 +7099,7 @@
                         
                         ${stats.totalAtivos > 0 ? `
                             <div class="vrvs3p-saude-bloco">
+                                ${stats.totalRevisados > 0 ? `
                                 <div class="vrvs3p-progress-wrapper" style="margin-bottom: 20px;">
                                     <div class="vrvs3p-progress-bar" style="width: 100%; height: 24px; background: rgba(5,25,30,0.8); border-radius: 12px; overflow: hidden; position: relative;">
                                         <div class="vrvs3p-progress-fill vrvs3p-progress-fill--${faixa}" style="width: ${stats.retencaoGlobalPct}%; height: 100%; background: ${faixa === 'alta' ? 'linear-gradient(90deg, #22c55e, #16a34a)' : faixa === 'media' ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 'linear-gradient(90deg, #dc3545, #b91c1c)'}; transition: width 0.3s ease;"></div>
@@ -7108,16 +7109,25 @@
                                         <span class="vrvs3p-progress-status" style="font-size: 13px; color: rgba(255,255,255,0.7);">• ${faixa === 'alta' ? 'Alta' : faixa === 'media' ? 'Média' : 'Baixa'}</span>
                                     </div>
                                 </div>
+                                ` : ''}
                                 
                                 <div class="vrvs3p-contagem-linha" style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13px; color: rgba(255,255,255,0.8);">
-                                    <span><strong style="color: var(--turquesa-light);">${stats.totalAtivos}</strong> tópicos ativos</span>
+                                    ${stats.totalRevisados > 0 ? `<span><strong style="color: var(--turquesa-light);">${stats.totalRevisados}</strong> revisados</span>` : ''}
+                                    ${stats.totalNovos > 0 ? `<span>• <strong style="color: var(--turquesa-light);">${stats.totalNovos}</strong> novos</span>` : ''}
                                     <span>• <strong style="color: var(--cobre-light);">${stats.totalHoje}</strong> para revisar hoje</span>
-                                    <span>• <strong style="color: ${stats.totalAtrasadas > 0 ? '#dc3545' : 'rgba(255,255,255,0.8)'}">${stats.totalAtrasadas}</strong> atrasados</span>
+                                    ${stats.totalAtrasadas > 0 ? `<span>• <strong style="color: #dc3545">${stats.totalAtrasadas}</strong> atrasados</span>` : ''}
                                 </div>
+                                
+                                ${stats.totalRevisados === 0 ? `
+                                <div class="vrvs3p-mensagem" style="padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border-left: 3px solid var(--turquesa-light); font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 20px;">
+                                    Sem revisões ainda — ${stats.totalNovos} novos aguardando 1ª revisão
+                                </div>
+                                ` : `
                                 
                                 <div class="vrvs3p-mensagem" style="padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border-left: 3px solid var(--turquesa-light); font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 20px;">
                                     ${(mensagem && typeof mensagem === 'object' && mensagem.emoji && mensagem.texto) ? `${mensagem.emoji} ${mensagem.texto}` : (mensagem || '')}
                                 </div>
+                                `}
                             </div>
                             
                             ${stats.porArea.length > 0 ? `
@@ -10041,12 +10051,26 @@
                 return stats;
             }
             
-            // Contar tópicos para hoje e atrasados
+            // Separar novos (nunca revisados) dos revisados
+            const entradasNovas = entradasAtivas.filter(e => {
+                const srs = e.srs;
+                return (srs.repeticoes || 0) === 0 && !srs.ultimaResposta;
+            });
+            const entradasRevisadas = entradasAtivas.filter(e => {
+                const srs = e.srs;
+                return (srs.repeticoes || 0) > 0 || !!srs.ultimaResposta;
+            });
+            
+            stats.totalRevisados = entradasRevisadas.length;
+            stats.totalNovos = entradasNovas.length;
+            
+            // Contar tópicos para hoje e atrasados (todas as entradas ativas)
             let somaRetencao = 0;
             let contagemRetencao = 0;
             const porAreaMap = {};
             
-            entradasAtivas.forEach(entrada => {
+            // Calcular retenção APENAS com entradas revisadas
+            entradasRevisadas.forEach(entrada => {
                 const srs = entrada.srs;
                 const estagio = srs.estagio || 0;
                 const proximaRevisao = srs.proximaRevisao || hoje;
@@ -10100,11 +10124,44 @@
                 }
             });
             
-            // Calcular retenção global
+            // Calcular retenção global (apenas com revisados)
             if (contagemRetencao > 0) {
                 stats.retencaoGlobal = somaRetencao / contagemRetencao;
                 stats.retencaoGlobalPct = Math.round(stats.retencaoGlobal * 100);
+            } else {
+                // Se não há revisados, retenção é null (não exibir)
+                stats.retencaoGlobal = null;
+                stats.retencaoGlobalPct = null;
             }
+            
+            // Contar para hoje e atrasados (todas as entradas ativas)
+            entradasAtivas.forEach(entrada => {
+                const srs = entrada.srs;
+                const proximaRevisao = srs.proximaRevisao || hoje;
+                
+                // Contar para hoje
+                if (proximaRevisao <= hoje) {
+                    stats.totalHoje++;
+                    
+                    // Se muito atrasado (mais que 1 intervalo)
+                    const diff = diffEmDias(proximaRevisao, hoje);
+                    if (diff > (srs.intervalo || 1)) {
+                        stats.totalAtrasadas++;
+                    }
+                }
+                
+                // Classificar maturidade
+                const estagio = srs.estagio || 0;
+                if (estagio <= 1) {
+                    stats.maturidade.novos++;
+                } else if (estagio <= 3) {
+                    stats.maturidade.fixando++;
+                } else if (estagio <= 6) {
+                    stats.maturidade.maduros++;
+                } else {
+                    stats.maturidade.consolidados++;
+                }
+            });
             
             // Processar retenção por área
             stats.porArea = Object.keys(porAreaMap).map(area => {
