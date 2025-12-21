@@ -205,6 +205,9 @@ Você trabalha na pasta `/Users/viniciussalazar/Desktop/Teot/`
      - ✅ Verificar se são cópias de arquivos permanentes em `docs/` ou `DIARIO/CURSOR/`
      - ✅ Deletar cópias temporárias do Desktop
      - ✅ Deletar documentos de comunicação intermediária (ex: "ENVIAR_PARA_OPUS.md", "RESPOSTA_*.md")
+     - ✅ **DELETAR documentos temporários de handoff** (HANDOFF_CHAT_NOVO_*.md, ANEXOS_PARA_CHAT_NOVO.md, CHECKLIST_TESTE_*.md, ANALISE_*.md criados apenas para handoff)
+     - ✅ Mover documentos temporários de handoff para `DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/` (se precisar manter por algum motivo)
+     - ✅ **NÃO fazer commit de documentos temporários de handoff** (são apenas para arrastar no ChatGPT)
      - ✅ Manter apenas documentos importantes em pastas corretas
      - ✅ Verificar protocolo completo em `DIARIO/CURSOR/PROTOCOLO_LIMPEZA_TEMPORARIOS.md`
    - ✅ Verificar se há pontas soltas ou documentos faltando
