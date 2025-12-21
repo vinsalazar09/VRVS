@@ -5035,10 +5035,7 @@
                     return t.agenda >= dataInicio && t.agenda <= dataFim;
                 })
                 .sort((a, b) => {
-                    // Primeiro por menos sessões (menos sessões primeiro)
-                    const diffSessoes = (a.sessoes || 0) - (b.sessoes || 0);
-                    if (diffSessoes !== 0) return diffSessoes;
-                    // Depois por data (mais próximo primeiro)
+                    // Ordenar apenas por data (mais próxima primeiro)
                     return a.agenda.localeCompare(b.agenda);
                 });
             
