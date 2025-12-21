@@ -814,6 +814,131 @@
             color: var(--turquesa-light);
         }
         
+        /* ==================== TL-2: TREINO LIVRE RUNNER ==================== */
+        
+        .treino-livre-runner-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .treino-livre-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border-bottom: 1px solid rgba(0, 206, 209, 0.2);
+        }
+        
+        .treino-livre-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .treino-livre-sair {
+            background: transparent;
+            border: none;
+            color: var(--turquesa-light);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+        
+        .treino-livre-sair:hover,
+        .treino-livre-sair:active {
+            color: var(--turquesa-neon);
+        }
+        
+        .treino-livre-header-center {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .treino-livre-header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--turquesa-light);
+            margin-bottom: 2px;
+        }
+        
+        .treino-livre-header-subtitle {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .treino-livre-progresso {
+            font-size: 14px;
+            color: rgba(0, 206, 209, 0.7);
+            font-weight: 600;
+        }
+        
+        .treino-livre-navegacao {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        
+        .treino-livre-navegacao button {
+            flex: 1;
+            padding: 12px;
+            min-height: 44px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            background: rgba(0, 206, 209, 0.1);
+            color: var(--turquesa-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .treino-livre-navegacao button:hover:not(:disabled) {
+            background: rgba(0, 206, 209, 0.2);
+            border-color: rgba(0, 206, 209, 0.5);
+        }
+        
+        .treino-livre-navegacao button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        
+        .treino-livre-navegacao button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .treino-livre-fim {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .treino-livre-fim-titulo {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--turquesa-light);
+            margin-bottom: 12px;
+        }
+        
+        .treino-livre-fim-detalhe {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+        
+        .treino-livre-fim-disclaimer {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 24px;
+        }
+        
         /* ==================== FIM SRS ESTILOS ==================== */
         
         /* Botões de qualidade da sessão do Diário - estilo VRVS (fundo escuro + glow) */
@@ -11401,7 +11526,12 @@
                     renderSessaoDiario(getEntradaAtualSessao());
                 }
             } else {
-                // Treino Livre: TL-1 - NÃO monta fila automaticamente
+                // Treino Livre: TL-1/TL-2
+                // Se runner está ativo, mostrar runner
+                if (window.treinoLivreEstado?.ativo) {
+                    renderTreinoLivreRunner();
+                    return;
+                }
                 // Se já há fila montada, mostra confirmação; senão, mostra configuração
                 if (window.treinoLivreFila && window.treinoLivreFila.length > 0) {
                     renderSessaoDiario(null); // Vai mostrar confirmação
@@ -11552,6 +11682,154 @@
             `;
         }
         
+        // ==================== TL-2: TREINO LIVRE RUNNER ====================
+        
+        // Iniciar runner do Treino Livre
+        function iniciarTreinoLivre() {
+            if (!window.treinoLivreFila || window.treinoLivreFila.length === 0) {
+                renderConfigTreinoLivre();
+                return;
+            }
+            
+            // Criar estado mínimo do runner
+            window.treinoLivreEstado = {
+                ativo: true,
+                indiceAtual: 0
+            };
+            
+            renderTreinoLivreRunner();
+        }
+        
+        // Renderizar runner do Treino Livre
+        function renderTreinoLivreRunner() {
+            const container = document.getElementById('diarioSessao');
+            if (!container) return;
+            
+            if (!window.treinoLivreEstado?.ativo || !window.treinoLivreFila || window.treinoLivreFila.length === 0) {
+                // Estado inválido: limpar e voltar para confirmação
+                window.treinoLivreEstado = null;
+                setModoSessaoDiario('livre');
+                return;
+            }
+            
+            const indice = window.treinoLivreEstado.indiceAtual;
+            const total = window.treinoLivreFila.length;
+            const entradaAtual = window.treinoLivreFila[indice];
+            
+            if (!entradaAtual) {
+                // Entrada não encontrada: limpar e voltar
+                window.treinoLivreEstado = null;
+                setModoSessaoDiario('livre');
+                return;
+            }
+            
+            const indiceExibicao = indice + 1; // 1-indexed para exibição
+            const isPrimeiro = indice === 0;
+            const isUltimo = indice === total - 1;
+            
+            container.innerHTML = `
+                <div class="treino-livre-runner-wrapper">
+                    <div class="treino-livre-header">
+                        <div class="treino-livre-header-left">
+                            <button class="treino-livre-sair" onclick="sairTreinoLivre()" title="Sair do treino">
+                                ←
+                            </button>
+                        </div>
+                        <div class="treino-livre-header-center">
+                            <div class="treino-livre-header-title">TREINO LIVRE</div>
+                            <div class="treino-livre-header-subtitle">(somente leitura)</div>
+                        </div>
+                        <div class="treino-livre-progresso">${indiceExibicao} / ${total}</div>
+                    </div>
+                    
+                    ${renderTreinoLivreCard(entradaAtual)}
+                    
+                    <div class="treino-livre-navegacao">
+                        <button onclick="treinoLivreAnterior()" ${isPrimeiro ? 'disabled' : ''}>
+                            ← Anterior
+                        </button>
+                        <button onclick="${isUltimo ? 'encerrarTreinoLivre()' : 'treinoLivreProximo()'}">
+                            ${isUltimo ? 'Encerrar' : 'Próximo →'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
+        function renderTreinoLivreCard(entrada) {
+            return `
+                <div class="diario-sessao-card">
+                    <div class="diario-sessao-meta">
+                        <span>${entrada.area} • ${entrada.tema}</span>
+                    </div>
+                    <div class="diario-sessao-topico">
+                        ❓ ${formatarTextoDiario(entrada.topico)}
+                    </div>
+                    <div class="diario-sessao-resposta">
+                        <div class="diario-sessao-resposta-inner">
+                            ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '<em>(Sem resposta cadastrada)</em>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Navegação: Próximo
+        function treinoLivreProximo() {
+            if (!window.treinoLivreEstado?.ativo || !window.treinoLivreFila) return;
+            
+            const total = window.treinoLivreFila.length;
+            if (window.treinoLivreEstado.indiceAtual < total - 1) {
+                window.treinoLivreEstado.indiceAtual++;
+                renderTreinoLivreRunner();
+            }
+        }
+        
+        // Navegação: Anterior
+        function treinoLivreAnterior() {
+            if (!window.treinoLivreEstado?.ativo) return;
+            
+            if (window.treinoLivreEstado.indiceAtual > 0) {
+                window.treinoLivreEstado.indiceAtual--;
+                renderTreinoLivreRunner();
+            }
+        }
+        
+        // Sair do runner (volta para confirmação/config)
+        function sairTreinoLivre() {
+            window.treinoLivreEstado = null;
+            setModoSessaoDiario('livre');
+        }
+        
+        // Encerrar treino (mostra tela final)
+        function encerrarTreinoLivre() {
+            if (!window.treinoLivreFila) return;
+            
+            const total = window.treinoLivreFila.length;
+            window.treinoLivreEstado = null;
+            renderTreinoLivreFim(total);
+        }
+        
+        // Renderizar tela final do Treino Livre
+        function renderTreinoLivreFim(total) {
+            const container = document.getElementById('diarioSessao');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div class="treino-livre-fim">
+                    <div class="treino-livre-fim-titulo">✓ Treino concluído</div>
+                    <div class="treino-livre-fim-detalhe">${total} itens revisados</div>
+                    <div class="treino-livre-fim-disclaimer">(nenhuma alteração salva)</div>
+                    <button class="btn" onclick="sairTreinoLivre()" style="padding: 12px 24px; font-size: 14px;">
+                        Voltar ao Diário
+                    </button>
+                </div>
+            `;
+        }
+        
+        // ==================== FIM TL-2 ====================
+        
         // Atualizar dropdown de temas baseado na área selecionada
         function atualizarTemasTreinoLivre(area) {
             window.treinoLivreConfig.area = area || null;
@@ -11633,8 +11911,8 @@
                         <button class="btn btn-secondary" onclick="window.treinoLivreFila = []; renderConfigTreinoLivre();" style="flex: 1; padding: 12px;">
                             🔄 Remontar
                         </button>
-                        <button class="btn" onclick="alert('Runner será implementado no Patch TL-2');" disabled style="flex: 1; padding: 12px; opacity: 0.5; cursor: not-allowed;">
-                            ▶️ Iniciar (TL-2)
+                        <button class="btn" onclick="iniciarTreinoLivre()" style="flex: 1; padding: 12px;">
+                            ▶️ Iniciar Treino
                         </button>
                     </div>
                 </div>
