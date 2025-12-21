@@ -11766,13 +11766,33 @@
                     <div class="diario-sessao-topico">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
-                    <div class="diario-sessao-resposta">
+                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta escondida">
                         <div class="diario-sessao-resposta-inner">
                             ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '<em>(Sem resposta cadastrada)</em>'}
                         </div>
                     </div>
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
+                        <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="toggleRespostaTreinoLivre()" style="min-height: 44px;">
+                            👁️ MOSTRAR RESPOSTA
+                        </button>
+                    </div>
                 </div>
             `;
+        }
+        
+        // Toggle resposta do Treino Livre (exclusivo do TL-2, não afeta Sessão Programada)
+        function toggleRespostaTreinoLivre() {
+            const wrapper = document.getElementById('treinoLivreRespostaWrapper');
+            const btn = document.getElementById('treinoLivreToggleBtn');
+            if (!wrapper || !btn) return;
+            
+            if (wrapper.classList.contains('escondida')) {
+                wrapper.classList.remove('escondida');
+                btn.textContent = '🙈 OCULTAR RESPOSTA';
+            } else {
+                wrapper.classList.add('escondida');
+                btn.textContent = '👁️ MOSTRAR RESPOSTA';
+            }
         }
         
         // Navegação: Próximo
@@ -11884,10 +11904,6 @@
             if (!container) return;
             
             const total = fila.length;
-            const preview = fila.slice(0, 3).map((e, i) => {
-                const topicoTexto = e.topico ? (e.topico.length > 50 ? e.topico.substring(0, 50) + '...' : e.topico) : '';
-                return `${i + 1}. ${e.area} • ${e.tema}${topicoTexto ? ' • ' + topicoTexto : ''}`;
-            }).join('\n');
             
             container.innerHTML = `
                 <div class="treino-livre-confirmacao">
@@ -11899,13 +11915,6 @@
                             `<div style="font-size: 12px; color: rgba(255,255,255,0.7);">Solicitado: ${window.treinoLivreConfig.quantidade}, disponível: ${total}</div>` 
                             : ''}
                     </div>
-                    
-                    ${preview ? `
-                    <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">Preview (primeiros 3):</div>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-line; line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">${preview}</div>
-                    </div>
-                    ` : ''}
                     
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-secondary" onclick="window.treinoLivreFila = []; renderConfigTreinoLivre();" style="flex: 1; padding: 12px;">
