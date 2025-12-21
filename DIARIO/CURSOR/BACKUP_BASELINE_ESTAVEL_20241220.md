@@ -53,16 +53,16 @@
 
 ```bash
 cd /Users/viniciussalazar/Desktop/Teot
-git checkout [HASH_DO_COMMIT]
+git checkout 407da57
 ```
 
-**Hash do commit será preenchido após criar backup**
+**Hash do commit:** `407da57`
 
 ### Opção 2: Git Reset (Se já fez commits depois)
 
 ```bash
 cd /Users/viniciussalazar/Desktop/Teot
-git reset --hard [HASH_DO_COMMIT]
+git reset --hard 407da57
 ```
 
 **⚠️ CUIDADO:** Isso apaga commits posteriores. Use apenas se tiver certeza.
@@ -71,7 +71,7 @@ git reset --hard [HASH_DO_COMMIT]
 
 ```bash
 cd /Users/viniciussalazar/Desktop/Teot
-git checkout [HASH_DO_COMMIT] -- docs/index.html docs/sw.js
+git checkout 407da57 -- docs/index.html docs/sw.js
 ```
 
 ---
