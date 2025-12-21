@@ -554,18 +554,6 @@
             outline: none; /* Remover outline em clique, manter em navegação por teclado */
         }
         
-        /* Input de busca - melhorias touch/focus */
-        #taskSearchInput {
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: rgba(0, 206, 209, 0.2);
-            min-height: 44px;
-        }
-        
-        #taskSearchInput:focus {
-            outline: 2px solid var(--turquesa-neon);
-            outline-offset: 2px;
-        }
-        
         .btn-secondary {
             background: linear-gradient(135deg,
                 rgba(0, 206, 209, 0.3),
@@ -4832,28 +4820,6 @@
             const container = document.getElementById('tarefasContainer');
             let html = '';
             
-            // ===== PATCH D - INPUT DE BUSCA COM FOCO AUTOMÁTICO =====
-            html += `
-                <div style="margin-bottom: 16px;">
-                    <input 
-                        type="text" 
-                        id="taskSearchInput" 
-                        placeholder="🔍 Buscar tarefas por área ou tema..." 
-                        style="
-                            width: 100%;
-                            padding: 12px 16px;
-                            background: rgba(20, 35, 45, 0.6);
-                            border: 1px solid rgba(0, 206, 209, 0.3);
-                            border-radius: 10px;
-                            color: white;
-                            font-size: 14px;
-                            transition: all 0.3s ease;
-                        "
-                        oninput="filtrarTarefas(this.value)"
-                    />
-                </div>
-            `;
-            
             // ===== CALCULAR CONTAGEM DE DIÁRIO ATIVO POR TEMA (uma vez só) =====
             const contagemDiarioPorTema = {};
             if (window.diario && Array.isArray(window.diario.entradas)) {
@@ -4961,35 +4927,6 @@
         }
         
         // ===== PATCH D - FUNÇÃO DE FILTRO DE TAREFAS =====
-        function filtrarTarefas(termo) {
-            const termoLower = termo.toLowerCase().trim();
-            const cards = document.querySelectorAll('.missoes-area');
-            
-            if (cards.length === 0) return; // Sem cards para filtrar
-            
-            if (!termoLower) {
-                // Sem filtro: mostrar tudo
-                cards.forEach(card => card.style.display = '');
-                return;
-            }
-            
-            cards.forEach(areaCard => {
-                const areaNome = areaCard.querySelector('.missoes-area-nome')?.textContent.toLowerCase() || '';
-                const temaCards = areaCard.querySelectorAll('.tema-item');
-                let temMatch = false;
-                
-                temaCards.forEach(temaCard => {
-                    const temaNome = temaCard.querySelector('.tema-item-name')?.textContent.toLowerCase() || '';
-                    const match = areaNome.includes(termoLower) || temaNome.includes(termoLower);
-                    temaCard.style.display = match ? '' : 'none';
-                    if (match) temMatch = true;
-                });
-                
-                // Mostrar/esconder área conforme tem matches
-                areaCard.style.display = temMatch ? '' : 'none';
-            });
-        }
-        
         // Função para abrir sessão de revisões do dia (todos os tópicos)
         function abrirRevisoesDoDia() {
             // Limpar filtros para pegar todos os tópicos do dia
@@ -6804,15 +6741,6 @@
             if (sectionId === 'dados') renderDados();
             if (sectionId === 'tarefa') {
                 renderTarefas();
-                // ===== PATCH D - FOCO AUTOMÁTICO NO INPUT DE BUSCA =====
-                setTimeout(() => {
-                    const searchInput = document.getElementById('taskSearchInput');
-                    if (searchInput) {
-                        searchInput.focus();
-                        // Scroll suave até o input (se necessário)
-                        searchInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                }, 100);
             }
             if (sectionId === 'agenda') renderAgendaUnificada();
             if (sectionId === 'stats') updateStats();
@@ -11568,7 +11496,6 @@
         // Inicializar configuração padrão do Treino Livre
         if (typeof window.treinoLivreConfig === 'undefined') {
             window.treinoLivreConfig = {
-                fonte: 'srs',        // 'srs' ou 'todas'
                 area: null,          // null = "Todas"
                 tema: null,          // null = "Todos"
                 quantidade: 10       // 5, 10, 20, 30
@@ -11588,25 +11515,10 @@
                 ? [...new Set(entradas.filter(e => e.area === areaSelecionada).map(e => e.tema).filter(t => t))].sort()
                 : [];
             
-            const fonte = window.treinoLivreConfig.fonte || 'srs';
             const quantidade = window.treinoLivreConfig.quantidade || 10;
             
             container.innerHTML = `
                 <div class="treino-livre-config">
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Fonte:</div>
-                        <div style="display: flex; gap: 12px;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: rgba(20,35,45,0.6); border-radius: 8px; flex: 1;">
-                                <input type="radio" name="treinoLivreFonte" value="srs" ${fonte === 'srs' ? 'checked' : ''} onchange="window.treinoLivreConfig.fonte = 'srs'; renderConfigTreinoLivre();" style="cursor: pointer;">
-                                <span>🧠 Somente VRVS 3P</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: rgba(20,35,45,0.6); border-radius: 8px; flex: 1;">
-                                <input type="radio" name="treinoLivreFonte" value="todas" ${fonte === 'todas' ? 'checked' : ''} onchange="window.treinoLivreConfig.fonte = 'todas'; renderConfigTreinoLivre();" style="cursor: pointer;">
-                                <span>Todas</span>
-                            </label>
-                        </div>
-                    </div>
-                    
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Área:</label>
                         <select id="treinoLivreArea" onchange="atualizarTemasTreinoLivre(this.value); window.treinoLivreConfig.area = this.value || null; renderConfigTreinoLivre();" style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
@@ -11663,7 +11575,7 @@
             const filtros = {
                 area: config.area || null,
                 tema: config.tema || null,
-                fonte: config.fonte || 'srs'
+                fonte: 'srs'  // Treino Livre sempre usa apenas VRVS 3P ativo
             };
             
             // Obter entradas filtradas
@@ -11694,9 +11606,10 @@
             if (!container) return;
             
             const total = fila.length;
-            const preview = fila.slice(0, 3).map((e, i) => 
-                `${i + 1}. ${e.area} • ${e.tema}${e.topico ? ' • ' + e.topico.substring(0, 30) + '...' : ''}`
-            ).join('\n');
+            const preview = fila.slice(0, 3).map((e, i) => {
+                const topicoTexto = e.topico ? (e.topico.length > 50 ? e.topico.substring(0, 50) + '...' : e.topico) : '';
+                return `${i + 1}. ${e.area} • ${e.tema}${topicoTexto ? ' • ' + topicoTexto : ''}`;
+            }).join('\n');
             
             container.innerHTML = `
                 <div class="treino-livre-confirmacao">
@@ -11712,7 +11625,7 @@
                     ${preview ? `
                     <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
                         <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">Preview (primeiros 3):</div>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-line; line-height: 1.6;">${preview}</div>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); white-space: pre-line; line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">${preview}</div>
                     </div>
                     ` : ''}
                     
