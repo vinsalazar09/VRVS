@@ -11817,6 +11817,20 @@
                 indiceAtual: 0
             };
             
+            // Se Modo Avaliação ativo, criar estado de avaliação
+            if (window.treinoLivreConfig.modoAvaliacao) {
+                window.treinoLivreAvaliacao = {
+                    notas: {},
+                    respostaMostrada: {},
+                    config: window.treinoLivreAvaliacaoConfig || {
+                        naosei: 20,
+                        entre2: 50,
+                        acertaria: 90,
+                        dominado: 100
+                    }
+                };
+            }
+            
             renderTreinoLivreRunner();
         }
         
@@ -11847,22 +11861,25 @@
             const isPrimeiro = indice === 0;
             const isUltimo = indice === total - 1;
             
+            // Verificar se Modo Avaliação está ativo
+            const modoAvaliacao = window.treinoLivreConfig.modoAvaliacao && window.treinoLivreAvaliacao;
+            
             container.innerHTML = `
                 <div class="treino-livre-runner-wrapper">
                     <div class="treino-livre-header">
                         <div class="treino-livre-header-left">
-                            <button class="treino-livre-sair" onclick="sairTreinoLivre()" title="Sair do treino">
+                            <button class="treino-livre-sair" onclick="${modoAvaliacao ? 'confirmarSairAvaliacao()' : 'sairTreinoLivre()'}" title="Sair do treino">
                                 ←
                             </button>
                         </div>
                         <div class="treino-livre-header-center">
-                            <div class="treino-livre-header-title">TREINO LIVRE</div>
-                            <div class="treino-livre-header-subtitle">(somente leitura)</div>
+                            <div class="treino-livre-header-title">${modoAvaliacao ? 'AVALIAÇÃO' : 'TREINO LIVRE'}</div>
+                            <div class="treino-livre-header-subtitle">${modoAvaliacao ? entradaAtual.tema : '(somente leitura)'}</div>
                         </div>
                         <div class="treino-livre-progresso">${indiceExibicao} / ${total}</div>
                     </div>
                     
-                    ${renderTreinoLivreCard(entradaAtual)}
+                    ${modoAvaliacao ? renderTreinoLivreAvaliacao(entradaAtual, indice, total) : renderTreinoLivreCard(entradaAtual)}
                     
                     <div class="treino-livre-navegacao">
                         <button onclick="treinoLivreAnterior()" ${isPrimeiro ? 'disabled' : ''}>
@@ -11898,6 +11915,105 @@
                     </div>
                 </div>
             `;
+        }
+        
+        // ==================== TL-3: RENDERIZAÇÃO COM AVALIAÇÃO ====================
+        
+        // Renderizar card do Treino Livre com avaliação (TL-3)
+        function renderTreinoLivreAvaliacao(entrada, indice, total) {
+            const avaliacao = window.treinoLivreAvaliacao;
+            const respostaJaMostrada = avaliacao.respostaMostrada[indice] === true;
+            const notaAtual = avaliacao.notas[indice] !== undefined ? avaliacao.notas[indice] : null;
+            const config = avaliacao.config;
+            
+            return `
+                <div class="diario-sessao-card">
+                    <div class="diario-sessao-meta">
+                        <span>${entrada.area} • ${entrada.tema}</span>
+                    </div>
+                    <div class="diario-sessao-topico">
+                        ❓ ${formatarTextoDiario(entrada.topico)}
+                    </div>
+                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
+                        <div class="diario-sessao-resposta-inner">
+                            ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '<em>(Sem resposta cadastrada)</em>'}
+                        </div>
+                    </div>
+                    ${!respostaJaMostrada ? `
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
+                        <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="mostrarRespostaAvaliacao(${indice})" style="min-height: 44px;">
+                            👁️ MOSTRAR RESPOSTA
+                        </button>
+                    </div>
+                    ` : `
+                    <div style="margin: 16px 0;">
+                        <div style="text-align: center; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">Na prova, você teria...</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <button class="avaliacao-btn" onclick="avaliarTreinoLivre(${indice}, ${config.naosei})" style="padding: 12px; min-height: 44px; border-radius: 8px; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                ❌ NÃO SEI<br><span style="font-size: 11px; opacity: 0.8;">chutaria</span>
+                            </button>
+                            <button class="avaliacao-btn" onclick="avaliarTreinoLivre(${indice}, ${config.entre2})" style="padding: 12px; min-height: 44px; border-radius: 8px; background: rgba(255,159,64,0.2); border: 1px solid rgba(255,159,64,0.4); color: #FF9F40; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                🎲 ENTRE 2<br><span style="font-size: 11px; opacity: 0.8;">50/50</span>
+                            </button>
+                            <button class="avaliacao-btn" onclick="avaliarTreinoLivre(${indice}, ${config.acertaria})" style="padding: 12px; min-height: 44px; border-radius: 8px; background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); color: #22c55e; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                ✅ ACERTARIA<br><span style="font-size: 11px; opacity: 0.8;">alta conf.</span>
+                            </button>
+                            <button class="avaliacao-btn" onclick="avaliarTreinoLivre(${indice}, ${config.dominado})" style="padding: 12px; min-height: 44px; border-radius: 8px; background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); font-size: 13px; font-weight: 600; cursor: pointer;">
+                                ⭐ DOMINADO<br><span style="font-size: 11px; opacity: 0.8;">explicaria</span>
+                            </button>
+                        </div>
+                        <div style="text-align: center;">
+                            <button class="link-btn" onclick="pularAvaliacaoTreinoLivre(${indice})" style="font-size: 13px; min-height: 44px; padding: 8px;">
+                                ⏭️ PULAR
+                            </button>
+                        </div>
+                    </div>
+                    `}
+                </div>
+            `;
+        }
+        
+        // Mostrar resposta na avaliação
+        function mostrarRespostaAvaliacao(indice) {
+            if (!window.treinoLivreAvaliacao) return;
+            
+            window.treinoLivreAvaliacao.respostaMostrada[indice] = true;
+            renderTreinoLivreRunner();
+        }
+        
+        // Avaliar card
+        function avaliarTreinoLivre(indice, nota) {
+            if (!window.treinoLivreAvaliacao) return;
+            
+            window.treinoLivreAvaliacao.notas[indice] = nota;
+            treinoLivreProximo();
+        }
+        
+        // Pular avaliação
+        function pularAvaliacaoTreinoLivre(indice) {
+            if (!window.treinoLivreAvaliacao) return;
+            
+            window.treinoLivreAvaliacao.notas[indice] = null;
+            treinoLivreProximo();
+        }
+        
+        // Confirmar sair da avaliação
+        function confirmarSairAvaliacao() {
+            const avaliacao = window.treinoLivreAvaliacao;
+            if (!avaliacao) {
+                sairTreinoLivre();
+                return;
+            }
+            
+            const nAvaliados = Object.keys(avaliacao.notas).filter(i => avaliacao.notas[i] !== null && avaliacao.notas[i] !== undefined).length;
+            const total = window.treinoLivreFila ? window.treinoLivreFila.length : 0;
+            
+            if (!confirm(`Sair da avaliação?\n\nVocê avaliou ${nAvaliados} de ${total} cards.\nO progresso será perdido.`)) {
+                return;
+            }
+            
+            window.treinoLivreAvaliacao = null;
+            sairTreinoLivre();
         }
         
         // Toggle resposta do Treino Livre (exclusivo do TL-2, não afeta Sessão Programada)
@@ -11939,6 +12055,7 @@
         // Sair do runner (volta para confirmação/config)
         function sairTreinoLivre() {
             window.treinoLivreEstado = null;
+            window.treinoLivreAvaliacao = null; // Limpar avaliação
             setModoSessaoDiario('livre');
         }
         
@@ -11947,15 +12064,149 @@
             if (!window.treinoLivreFila) return;
             
             const total = window.treinoLivreFila.length;
+            const modoAvaliacao = window.treinoLivreConfig.modoAvaliacao && window.treinoLivreAvaliacao;
+            
+            // Se Modo Avaliação, calcular feedback antes de renderizar
+            let resultado = null;
+            if (modoAvaliacao) {
+                resultado = calcularFeedbackTL3();
+            }
+            
             window.treinoLivreEstado = null;
-            renderTreinoLivreFim(total);
+            window.treinoLivreAvaliacao = null; // Limpar avaliação
+            renderTreinoLivreFim(total, resultado);
+        }
+        
+        // Calcular feedback TL-3
+        function calcularFeedbackTL3() {
+            if (!window.treinoLivreAvaliacao || !window.treinoLivreFila) {
+                return null;
+            }
+            
+            const notas = window.treinoLivreFila.map((e, i) => window.treinoLivreAvaliacao.notas[i]);
+            const avaliados = notas.filter(n => n !== null && n !== undefined);
+            const nTotal = notas.length;
+            const nAvaliados = avaliados.length;
+            
+            if (nAvaliados === 0) {
+                return {
+                    score: null,
+                    motivo: 'Nenhum card avaliado',
+                    breakdown: { total: nTotal, avaliados: 0 }
+                };
+            }
+            
+            // Cálculo: média simples dos avaliados
+            const soma = avaliados.reduce((a, b) => a + b, 0);
+            const score = Math.round(soma / nAvaliados);
+            
+            // Cobertura
+            const cobertura = Math.round(100 * nAvaliados / nTotal);
+            
+            // Breakdown
+            const config = window.treinoLivreAvaliacao.config;
+            const breakdown = {
+                total: nTotal,
+                avaliados: nAvaliados,
+                cobertura: cobertura,
+                dominado: avaliados.filter(n => n === config.dominado).length,
+                acertaria: avaliados.filter(n => n === config.acertaria).length,
+                entre2: avaliados.filter(n => n === config.entre2).length,
+                naosei: avaliados.filter(n => n === config.naosei).length,
+                pulados: nTotal - nAvaliados
+            };
+            
+            // Avisos
+            const avisos = [];
+            if (nAvaliados < 5) avisos.push('Poucos cards avaliados');
+            if (cobertura < 60) avisos.push('Cobertura baixa');
+            
+            return { score, breakdown, avisos };
         }
         
         // Renderizar tela final do Treino Livre
-        function renderTreinoLivreFim(total) {
+        function renderTreinoLivreFim(total, resultado) {
             const container = document.getElementById('diarioSessao');
             if (!container) return;
             
+            // Se Modo Avaliação e tem resultado, mostrar resultado completo
+            if (resultado && resultado.score !== null) {
+                const { score, breakdown, avisos } = resultado;
+                const primeiroCard = window.treinoLivreFila[0];
+                
+                container.innerHTML = `
+                    <div class="treino-livre-fim">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 20px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 8px;">📊 RESULTADO DA AVALIAÇÃO</div>
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7);">${primeiroCard.tema}</div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <div style="font-size: 48px; font-weight: bold; color: var(--turquesa-light); margin-bottom: 8px;">${score}%</div>
+                            <div style="width: 100%; height: 24px; background: rgba(5,25,30,0.8); border-radius: 12px; overflow: hidden; margin-bottom: 12px;">
+                                <div style="width: ${score}%; height: 100%; background: linear-gradient(90deg, var(--turquesa-main), var(--turquesa-light)); transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 12px;">📋 Detalhes:</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.8;">
+                                <div>Total: ${breakdown.total} cards</div>
+                                <div>Avaliados: ${breakdown.avaliados} (${breakdown.cobertura}%)</div>
+                                <div style="margin-top: 12px;">
+                                    <div>⭐ Dominado: ${breakdown.dominado}</div>
+                                    <div>✅ Acertaria: ${breakdown.acertaria}</div>
+                                    <div>🎲 Entre 2: ${breakdown.entre2}</div>
+                                    <div>❌ Não sei: ${breakdown.naosei}</div>
+                                    ${breakdown.pulados > 0 ? `<div>⏭️ Pulados: ${breakdown.pulados}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${avisos.length > 0 ? `
+                        <div style="background: rgba(255,159,64,0.1); border: 1px solid rgba(255,159,64,0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                            <div style="font-size: 13px; color: #FF9F40;">
+                                ⚠️ ${avisos.join(' — ')} — resultado pode não ser representativo.
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; margin-bottom: 20px; font-style: italic;">
+                            Anote o score e registre manualmente na aba Feedback, se quiser.
+                        </div>
+                        
+                        <button class="btn" onclick="sairTreinoLivre()" style="width: 100%; padding: 12px; font-size: 14px;">
+                            Voltar ao Diário
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Se nenhum avaliado, mostrar mensagem específica
+            if (resultado && resultado.score === null) {
+                container.innerHTML = `
+                    <div class="treino-livre-fim">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 20px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 8px;">📊 RESULTADO DA AVALIAÇÃO</div>
+                        </div>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                            <div style="font-size: 16px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Nenhum card avaliado</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.7);">
+                                Você pulou todos os ${total} cards.<br>
+                                Não é possível calcular um score.
+                            </div>
+                        </div>
+                        <button class="btn" onclick="sairTreinoLivre()" style="width: 100%; padding: 12px; font-size: 14px;">
+                            Voltar ao Diário
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Tela final normal (TL-2)
             container.innerHTML = `
                 <div class="treino-livre-fim">
                     <div class="treino-livre-fim-titulo">✓ Treino concluído</div>
