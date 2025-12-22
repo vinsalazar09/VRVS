@@ -11705,8 +11705,36 @@
             window.treinoLivreConfig = {
                 area: null,          // null = "Todas"
                 tema: null,          // null = "Todos"
-                quantidade: 10       // 5, 10, 20, 30
+                quantidade: 10,      // 5, 10, 20, 30
+                modoAvaliacao: false // Modo Avaliação (TL-3)
             };
+        }
+        
+        // Carregar configuração de avaliação do localStorage
+        if (typeof window.treinoLivreAvaliacaoConfig === 'undefined') {
+            try {
+                const saved = localStorage.getItem('vrvs_avaliacao_config');
+                if (saved) {
+                    window.treinoLivreAvaliacaoConfig = JSON.parse(saved);
+                } else {
+                    window.treinoLivreAvaliacaoConfig = {
+                        naosei: 20,
+                        entre2: 50,
+                        acertaria: 90,
+                        dominado: 100,
+                        preset: 'prova_teot'
+                    };
+                }
+            } catch (e) {
+                // Fallback para valores default
+                window.treinoLivreAvaliacaoConfig = {
+                    naosei: 20,
+                    entre2: 50,
+                    acertaria: 90,
+                    dominado: 100,
+                    preset: 'prova_teot'
+                };
+            }
         }
         
         // Renderizar painel de configuração do Treino Livre
@@ -11750,6 +11778,21 @@
                             <option value="20" ${quantidade === 20 ? 'selected' : ''}>20 itens</option>
                             <option value="30" ${quantidade === 30 ? 'selected' : ''}>30 itens</option>
                         </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.9); cursor: pointer;">
+                            <input type="checkbox" id="treinoLivreModoAvaliacao" onchange="window.treinoLivreConfig.modoAvaliacao = this.checked; renderConfigTreinoLivre();" ${window.treinoLivreConfig.modoAvaliacao ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                            <span>📊 Modo Avaliação</span>
+                        </label>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px; margin-left: 26px;">
+                            Gera score 0-100% para autoavaliação
+                        </div>
+                        ${window.treinoLivreConfig.modoAvaliacao ? `
+                        <div style="margin-top: 8px; margin-left: 26px;">
+                            <a href="#" onclick="event.preventDefault(); abrirConfigAvaliacao(); return false;" style="color: var(--turquesa-light); font-size: 12px; text-decoration: none;">⚙️ Config. avançada</a>
+                        </div>
+                        ` : ''}
                     </div>
                     
                     <button class="btn" onclick="montarTreinoLivre()" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600;">
@@ -11947,6 +11990,13 @@
             }
             
             const config = window.treinoLivreConfig;
+            
+            // Validação: Modo Avaliação requer tema específico
+            if (config.modoAvaliacao && !config.tema) {
+                mostrarNotificacaoFeedback('⚠️ Para usar Modo Avaliação, selecione um tema específico. O feedback será registrado para esse tema.', 'error');
+                return;
+            }
+            
             const filtros = {
                 area: config.area || null,
                 tema: config.tema || null,
@@ -11998,11 +12048,147 @@
                             🔄 Remontar
                         </button>
                         <button class="btn" onclick="iniciarTreinoLivre()" style="flex: 1; padding: 12px;">
-                            ▶️ Iniciar Treino
+                            ${window.treinoLivreConfig.modoAvaliacao ? '▶️ INICIAR AVALIAÇÃO' : '▶️ Iniciar Treino'}
                         </button>
                     </div>
                 </div>
             `;
+        }
+        
+        // ==================== TL-3: CONFIG AVANÇADA ====================
+        
+        // Abrir modal de Config Avançada
+        function abrirConfigAvaliacao() {
+            const config = window.treinoLivreAvaliacaoConfig;
+            let modal = document.getElementById('modalConfigAvaliacao');
+            
+            if (!modal) {
+                // Criar modal se não existir
+                criarModalConfigAvaliacao();
+                modal = document.getElementById('modalConfigAvaliacao');
+            }
+            
+            // Preencher valores atuais
+            document.getElementById('configAvaliacaoNaosei').value = config.naosei;
+            document.getElementById('configAvaliacaoEntre2').value = config.entre2;
+            document.getElementById('configAvaliacaoAcertaria').value = config.acertaria;
+            document.getElementById('configAvaliacaoDominado').value = config.dominado;
+            document.getElementById('configAvaliacaoPreset').value = config.preset || 'prova_teot';
+            
+            modal.style.display = 'flex';
+        }
+        
+        // Criar HTML do modal
+        function criarModalConfigAvaliacao() {
+            const modalHTML = `
+                <div id="modalConfigAvaliacao" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+                    <div style="background: linear-gradient(135deg, rgba(10,31,40,0.95), rgba(26,47,53,0.95)); border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(0,206,209,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: var(--turquesa-light); font-size: 18px; margin: 0;">⚙️ Valores da Avaliação</h3>
+                            <button onclick="document.getElementById('modalConfigAvaliacao').style.display = 'none';" style="background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 24px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">✕</button>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Preset:</label>
+                            <select id="configAvaliacaoPreset" onchange="aplicarPresetAvaliacao(this.value)" style="width: 100%; padding: 10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                                <option value="prova_teot">Prova TEOT (padrão)</option>
+                                <option value="binario">Binário</option>
+                                <option value="conservador">Conservador</option>
+                            </select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div>
+                                <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 6px;">❌ NÃO SEI:</label>
+                                <input type="number" id="configAvaliacaoNaosei" min="0" max="100" style="width: 100%; padding: 10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 6px;">🎲 ENTRE 2:</label>
+                                <input type="number" id="configAvaliacaoEntre2" min="0" max="100" style="width: 100%; padding: 10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 6px;">✅ ACERTARIA:</label>
+                                <input type="number" id="configAvaliacaoAcertaria" min="0" max="100" style="width: 100%; padding: 10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 6px;">⭐ DOMINADO:</label>
+                                <input type="number" id="configAvaliacaoDominado" min="0" max="100" style="width: 100%; padding: 10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 16px; padding: 12px; background: rgba(255,159,64,0.1); border-radius: 8px; border: 1px solid rgba(255,159,64,0.2);">
+                            ⚠️ Valores devem ser 0-100 e crescentes (NÃO SEI < ENTRE 2 < ACERTARIA < DOMINADO)
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" onclick="restaurarPresetAvaliacao()" style="flex: 1; padding: 12px; min-height: 44px;">Restaurar padrão</button>
+                            <button class="btn" onclick="salvarConfigAvaliacao()" style="flex: 1; padding: 12px; min-height: 44px;">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        // Aplicar preset
+        function aplicarPresetAvaliacao(preset) {
+            const presets = {
+                prova_teot: { naosei: 20, entre2: 50, acertaria: 90, dominado: 100 },
+                binario: { naosei: 0, entre2: 50, acertaria: 50, dominado: 100 },
+                conservador: { naosei: 10, entre2: 40, acertaria: 80, dominado: 100 }
+            };
+            
+            const valores = presets[preset] || presets.prova_teot;
+            document.getElementById('configAvaliacaoNaosei').value = valores.naosei;
+            document.getElementById('configAvaliacaoEntre2').value = valores.entre2;
+            document.getElementById('configAvaliacaoAcertaria').value = valores.acertaria;
+            document.getElementById('configAvaliacaoDominado').value = valores.dominado;
+        }
+        
+        // Restaurar preset padrão
+        function restaurarPresetAvaliacao() {
+            aplicarPresetAvaliacao('prova_teot');
+            document.getElementById('configAvaliacaoPreset').value = 'prova_teot';
+        }
+        
+        // Validar configuração
+        function validarConfigAvaliacao(valores) {
+            const erros = [];
+            
+            // Valores entre 0 e 100
+            if (valores.naosei < 0 || valores.naosei > 100) erros.push('NÃO SEI deve estar entre 0 e 100');
+            if (valores.entre2 < 0 || valores.entre2 > 100) erros.push('ENTRE 2 deve estar entre 0 e 100');
+            if (valores.acertaria < 0 || valores.acertaria > 100) erros.push('ACERTARIA deve estar entre 0 e 100');
+            if (valores.dominado < 0 || valores.dominado > 100) erros.push('DOMINADO deve estar entre 0 e 100');
+            
+            // Ordem crescente
+            if (valores.naosei >= valores.entre2) erros.push('NÃO SEI deve ser menor que ENTRE 2');
+            if (valores.entre2 >= valores.acertaria) erros.push('ENTRE 2 deve ser menor que ACERTARIA');
+            if (valores.acertaria >= valores.dominado) erros.push('ACERTARIA deve ser menor que DOMINADO');
+            
+            return erros;
+        }
+        
+        // Salvar configuração
+        function salvarConfigAvaliacao() {
+            const valores = {
+                naosei: parseInt(document.getElementById('configAvaliacaoNaosei').value),
+                entre2: parseInt(document.getElementById('configAvaliacaoEntre2').value),
+                acertaria: parseInt(document.getElementById('configAvaliacaoAcertaria').value),
+                dominado: parseInt(document.getElementById('configAvaliacaoDominado').value),
+                preset: document.getElementById('configAvaliacaoPreset').value
+            };
+            
+            // Validação
+            const erros = validarConfigAvaliacao(valores);
+            if (erros.length > 0) {
+                mostrarNotificacaoFeedback('⚠️ ' + erros.join(' '), 'error');
+                return;
+            }
+            
+            // Salvar
+            window.treinoLivreAvaliacaoConfig = valores;
+            localStorage.setItem('vrvs_avaliacao_config', JSON.stringify(valores));
+            
+            // Fechar modal
+            document.getElementById('modalConfigAvaliacao').style.display = 'none';
+            mostrarNotificacaoFeedback('✅ Configuração salva', 'success');
         }
         
         // Mostrar resposta (apenas altera CSS)
