@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.11-botao-anterior-tl3-20251224-0115";
+const CACHE_NAME = "vrvs-v5.3.12-fix-botao-ver-anterior-20251224-0602";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

@@ -9732,13 +9732,22 @@
         // Helper para formatar texto do Diário preservando quebras de linha
         function formatarTextoDiario(texto) {
             if (!texto) return '';
-            const seguro = String(texto)
+            
+            // Normalizar quebras de linha primeiro (Windows \r\n, Mac antigo \r)
+            let formatado = String(texto)
+                .replace(/\r\n/g, '\n') // Windows
+                .replace(/\r/g, '\n');  // Mac antigo
+            
+            // Escapar HTML
+            formatado = formatado
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
-            return seguro.replace(/\n/g, '<br>');
+            
+            // Converter \n para <br> (mantém compatibilidade com CSS pre-wrap)
+            return formatado.replace(/\n/g, '<br>');
         }
         
         function addDias(dateStr, dias) {
@@ -12601,6 +12610,56 @@
             } else {
                 renderSessaoDiario(getEntradaAtualSessao());
             }
+        }
+        
+        // Voltar para card anterior na Sessão Programada (read-only)
+        function voltarCardAnteriorSessao() {
+            if (!window.sessaoProgramadaHistorico || window.sessaoProgramadaHistorico.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Não há card anterior para visualizar.', 'error');
+                return;
+            }
+            
+            // Pegar último card do histórico
+            const cardAnterior = window.sessaoProgramadaHistorico[window.sessaoProgramadaHistorico.length - 1];
+            
+            if (!cardAnterior) {
+                mostrarNotificacaoFeedback('⚠️ Card anterior não encontrado.', 'error');
+                return;
+            }
+            
+            // Renderizar em modo read-only
+            renderCardAnteriorReadOnly(cardAnterior);
+        }
+        
+        // Renderizar card anterior em modo read-only
+        function renderCardAnteriorReadOnly(entrada) {
+            const container = document.getElementById('diarioSessao');
+            if (!container) return;
+            
+            const indice = sessaoDiario.indiceAtual + 1;
+            const total = sessaoDiario.filaIds.length;
+            
+            container.innerHTML = `
+                <div class="sessao-programada-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <button class="sessao-nav-anterior" onclick="renderSessaoDiario(getEntradaAtualSessao())" style="background: transparent; border: 1px solid rgba(0, 206, 209, 0.3); color: rgba(0, 206, 209, 0.7); font-size: 13px; padding: 8px 12px; border-radius: 6px; cursor: pointer; min-height: 36px;">
+                        → Voltar ao atual
+                    </button>
+                    <span style="font-size: 12px; color: rgba(255,255,255,0.5);">Visualizando card anterior (somente leitura)</span>
+                </div>
+                <div class="diario-sessao-card">
+                    <div class="diario-sessao-meta">
+                        <span>${entrada.area} • ${entrada.tema}</span>
+                    </div>
+                    <div class="diario-sessao-topico">
+                        ❓ ${formatarTextoDiario(entrada.topico)}
+                    </div>
+                    <div class="diario-sessao-resposta" style="display: block;">
+                        <div class="diario-sessao-resposta-inner">
+                            ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '<em>(Sem resposta cadastrada)</em>'}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
         // ==================== FIM SRS UI ====================
