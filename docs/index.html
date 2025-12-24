@@ -763,6 +763,13 @@
             background: rgba(0, 206, 209, 0.3);
         }
         
+        /* Preservar formatação na resposta do Treino Livre */
+        .diario-sessao-resposta-inner {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
         /* Botões de qualidade */
         .diario-sessao-botoes-qualidade {
             display: flex;
@@ -12900,7 +12907,7 @@
                 });
             }
             
-            // Agrupar temas por área
+            // Agrupar temas por área com dedupe por nome normalizado
             const areaGroups = {};
             
             dados.forEach(tema => {
@@ -12908,20 +12915,38 @@
                 if (filtroArea && tema.area !== filtroArea) return;
                 
                 if (!areaGroups[tema.area]) {
-                    areaGroups[tema.area] = [];
+                    areaGroups[tema.area] = new Map(); // Usar Map para dedupe por chave normalizada
                 }
                 
                 // Buscar anotação do tema
                 const anotacao = anotacoes.find(a => String(a.temaId) === String(tema.id));
                 
-                areaGroups[tema.area].push({
-                    temaId: tema.id,
-                    tema: tema.tema,
-                    area: tema.area,
-                    conteudo: anotacao?.conteudo || '',
-                    hotTopics: anotacao?.hotTopics || '',
-                    ultimaAtualizacao: anotacao?.ultimaAtualizacao || ''
-                });
+                // Chave normalizada para dedupe
+                const temaNormalizado = normalizarTema(tema.tema);
+                const chaveDedupe = temaNormalizado || String(tema.id); // Fallback para ID se tema vazio
+                
+                // Se já existe tema com mesmo nome normalizado, manter o primeiro (por ID menor ou ordem)
+                if (!areaGroups[tema.area].has(chaveDedupe)) {
+                    areaGroups[tema.area].set(chaveDedupe, {
+                        temaId: tema.id,
+                        tema: tema.tema,
+                        area: tema.area,
+                        conteudo: anotacao?.conteudo || '',
+                        hotTopics: anotacao?.hotTopics || '',
+                        ultimaAtualizacao: anotacao?.ultimaAtualizacao || ''
+                    });
+                } else {
+                    // Tema duplicado detectado - manter o primeiro, logar warning
+                    const existente = areaGroups[tema.area].get(chaveDedupe);
+                    if (existente.temaId !== tema.id) {
+                        console.warn('[CADERNO] Tema duplicado detectado:', tema.tema, 'vs', existente.tema, '- mantendo primeiro');
+                    }
+                }
+            });
+            
+            // Converter Maps para arrays para compatibilidade com código existente
+            Object.keys(areaGroups).forEach(area => {
+                areaGroups[area] = Array.from(areaGroups[area].values());
             });
             
             if (Object.keys(areaGroups).length === 0) {
@@ -13064,6 +13089,19 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML.replace(/\n/g, '<br>');
+        }
+        
+        // Normalizar tema para dedupe (remove espaços, acentos, caracteres especiais)
+        function normalizarTema(tema) {
+            if (!tema) return '';
+            return String(tema)
+                .trim()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacríticos
+                .replace(/\(s\)/g, '') // Remove (s) opcional
+                .replace(/[^\w\s]/g, '') // Remove caracteres especiais
+                .replace(/\s+/g, ' '); // Normaliza espaços múltiplos
         }
         
         // ==================== AGENDA UNIFICADA ====================
