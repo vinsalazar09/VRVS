@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.9-dedupe-caderno-formatacao-20251224-0058";
+const CACHE_NAME = "vrvs-v5.3.10-dedupe-diario-tema-20251224-0110";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

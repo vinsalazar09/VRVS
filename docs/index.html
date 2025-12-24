@@ -11286,12 +11286,23 @@
         
         function renderDiarioPorTema(entradas, container) {
             // CORREÇÃO: Agrupar primeiro por ÁREA, depois por TEMA dentro de cada área
+            // A1b: Dedupe por nome normalizado (case/acentos) para evitar duplicação
             const porArea = {};
             entradas.forEach(e => {
                 if (!porArea[e.area]) porArea[e.area] = {};
-                const temaKey = e.tema;
-                if (!porArea[e.area][temaKey]) porArea[e.area][temaKey] = [];
-                porArea[e.area][temaKey].push(e);
+                
+                // Normalizar tema para dedupe (remove espaços, acentos, caracteres especiais)
+                const temaNormalizado = normalizarTema(e.tema);
+                const temaKey = temaNormalizado || String(e.id); // Fallback para ID se tema vazio
+                
+                // Se já existe tema com mesmo nome normalizado, agrupar
+                if (!porArea[e.area][temaKey]) {
+                    porArea[e.area][temaKey] = {
+                        temaOriginal: e.tema, // Manter primeiro tema encontrado como "canônico"
+                        entradas: []
+                    };
+                }
+                porArea[e.area][temaKey].entradas.push(e);
             });
             
             const areasOrdenadas = Object.keys(porArea).sort();
@@ -11305,7 +11316,7 @@
             areasOrdenadas.forEach(area => {
                 const areaId = `diario-area-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
                 const temasDaArea = Object.keys(porArea[area]).sort();
-                const totalEntradasArea = temasDaArea.reduce((sum, tema) => sum + porArea[area][tema].length, 0);
+                const totalEntradasArea = temasDaArea.reduce((sum, temaKey) => sum + porArea[area][temaKey].entradas.length, 0);
                 
                 // Box da ÁREA (colapsável)
                 html += `<div style="margin-bottom: 24px;">
@@ -11318,20 +11329,26 @@
                     </div>
                     <div class="area-content collapsed" id="area-content-${areaId}">`;
                 
-                // Temas dentro da área (também colapsáveis)
-                temasDaArea.forEach(tema => {
-                    const temaId = `diario-tema-${area.replace(/[^a-zA-Z0-9]/g, '-')}-${tema.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                // Temas dentro da área (também colapsáveis) - ordenar por temaOriginal
+                const temasOrdenados = temasDaArea.sort((a, b) => 
+                    porArea[area][a].temaOriginal.localeCompare(porArea[area][b].temaOriginal, 'pt-BR')
+                );
+                
+                temasOrdenados.forEach(temaKey => {
+                    const grupoTema = porArea[area][temaKey];
+                    const temaOriginal = grupoTema.temaOriginal;
+                    const temaId = `diario-tema-${area.replace(/[^a-zA-Z0-9]/g, '-')}-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
                     html += `
                         <div style="margin-bottom: 16px; margin-left: 12px;">
                             <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
                                 <div class="area-header-left">
-                                    <span class="area-header-title">📄 ${tema}</span>
-                                    <span class="area-header-count">${porArea[area][tema].length} entrada${porArea[area][tema].length > 1 ? 's' : ''}</span>
+                                    <span class="area-header-title">📄 ${temaOriginal}</span>
+                                    <span class="area-header-count">${grupoTema.entradas.length} entrada${grupoTema.entradas.length > 1 ? 's' : ''}</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-${temaId}">
-                                ${porArea[area][tema].map(e => renderEntradaDiario(e)).join('')}
+                                ${grupoTema.entradas.map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
                 });
