@@ -11853,6 +11853,8 @@
                         dominado: 100
                     }
                 };
+                // Criar histórico de avaliações para permitir desfazer/voltar
+                window.treinoLivreHistoricoAvaliacoes = [];
             }
             
             renderTreinoLivreRunner();
@@ -11906,10 +11908,10 @@
                     ${modoAvaliacao ? renderTreinoLivreAvaliacao(entradaAtual, indice, total) : renderTreinoLivreCard(entradaAtual)}
                     
                     <div class="treino-livre-navegacao">
-                        <button onclick="treinoLivreAnterior()" ${isPrimeiro ? 'disabled' : ''}>
+                        <button onclick="treinoLivreAnterior()" ${isPrimeiro && (!modoAvaliacao || !window.treinoLivreHistoricoAvaliacoes?.length) ? 'disabled' : ''} style="min-height: 44px;">
                             ← Anterior
                         </button>
-                        <button onclick="${isUltimo ? 'encerrarTreinoLivre()' : 'treinoLivreProximo()'}">
+                        <button onclick="${isUltimo ? 'encerrarTreinoLivre()' : 'treinoLivreProximo()'}" style="min-height: 44px;">
                             ${isUltimo ? 'Encerrar' : 'Próximo →'}
                         </button>
                     </div>
@@ -12009,6 +12011,21 @@
         function avaliarTreinoLivre(indice, nota) {
             if (!window.treinoLivreAvaliacao) return;
             
+            // Salvar snapshot no histórico ANTES de avançar (permite desfazer)
+            if (!window.treinoLivreHistoricoAvaliacoes) {
+                window.treinoLivreHistoricoAvaliacoes = [];
+            }
+            
+            const snapshot = {
+                indice: window.treinoLivreEstado.indiceAtual,
+                nota: window.treinoLivreAvaliacao.notas[indice],
+                respostaMostrada: window.treinoLivreAvaliacao.respostaMostrada[indice] === true
+            };
+            
+            window.treinoLivreHistoricoAvaliacoes.push(snapshot);
+            // Limitar histórico a últimos 10
+            window.treinoLivreHistoricoAvaliacoes = window.treinoLivreHistoricoAvaliacoes.slice(-10);
+            
             window.treinoLivreAvaliacao.notas[indice] = nota;
             treinoLivreProximo();
         }
@@ -12016,6 +12033,21 @@
         // Pular avaliação
         function pularAvaliacaoTreinoLivre(indice) {
             if (!window.treinoLivreAvaliacao) return;
+            
+            // Salvar snapshot no histórico ANTES de avançar (permite desfazer)
+            if (!window.treinoLivreHistoricoAvaliacoes) {
+                window.treinoLivreHistoricoAvaliacoes = [];
+            }
+            
+            const snapshot = {
+                indice: window.treinoLivreEstado.indiceAtual,
+                nota: window.treinoLivreAvaliacao.notas[indice],
+                respostaMostrada: window.treinoLivreAvaliacao.respostaMostrada[indice] === true
+            };
+            
+            window.treinoLivreHistoricoAvaliacoes.push(snapshot);
+            // Limitar histórico a últimos 10
+            window.treinoLivreHistoricoAvaliacoes = window.treinoLivreHistoricoAvaliacoes.slice(-10);
             
             window.treinoLivreAvaliacao.notas[indice] = null;
             treinoLivreProximo();
@@ -12070,7 +12102,24 @@
         function treinoLivreAnterior() {
             if (!window.treinoLivreEstado?.ativo) return;
             
-            if (window.treinoLivreEstado.indiceAtual > 0) {
+            const modoAvaliacao = window.treinoLivreConfig.modoAvaliacao && window.treinoLivreAvaliacao;
+            
+            // Se Modo Avaliação ativo e tem histórico, restaurar do histórico
+            if (modoAvaliacao && window.treinoLivreHistoricoAvaliacoes && window.treinoLivreHistoricoAvaliacoes.length > 0) {
+                // Pegar último snapshot do histórico
+                const snapshot = window.treinoLivreHistoricoAvaliacoes[window.treinoLivreHistoricoAvaliacoes.length - 1];
+                
+                // Restaurar estado
+                window.treinoLivreEstado.indiceAtual = snapshot.indice;
+                window.treinoLivreAvaliacao.notas[snapshot.indice] = snapshot.nota;
+                window.treinoLivreAvaliacao.respostaMostrada[snapshot.indice] = snapshot.respostaMostrada;
+                
+                // Remover snapshot do histórico (já foi restaurado)
+                window.treinoLivreHistoricoAvaliacoes.pop();
+                
+                renderTreinoLivreRunner();
+            } else if (window.treinoLivreEstado.indiceAtual > 0) {
+                // Navegação normal (sem Modo Avaliação ou sem histórico)
                 window.treinoLivreEstado.indiceAtual--;
                 renderTreinoLivreRunner();
             }
@@ -12080,6 +12129,7 @@
         function sairTreinoLivre() {
             window.treinoLivreEstado = null;
             window.treinoLivreAvaliacao = null; // Limpar avaliação
+            window.treinoLivreHistoricoAvaliacoes = null; // Limpar histórico
             setModoSessaoDiario('livre');
         }
         
