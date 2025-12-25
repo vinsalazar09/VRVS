@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.24-fix-formatacao-texto-diario-p4-20251225-0224";
+const CACHE_NAME = "vrvs-v5.3.25-fix-tarefa-abre-sessao-filtrada-p1-20251225-0307";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

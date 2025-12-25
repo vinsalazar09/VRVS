@@ -4710,19 +4710,20 @@
         
         // Contar quantos cards do Diário estão programados para hoje dentro de um tema
         function contarDiarioProgramadoParaTema(area, tema) {
-            if (!window.diario || !Array.isArray(window.diario.entradas)) return 0;
-            const hoje = hojeStr();
-            return window.diario.entradas.filter(e =>
-                e.area === area &&
-                e.tema === tema &&
-                e.srs &&
-                e.srs.ativo &&
-                (e.srs.proximaRevisao || hoje) <= hoje
-            ).length;
+            // P1: Usar mesma função que monta a fila para garantir consistência
+            const entradas = getEntradasParaRevisarHojeDiario({ area, tema });
+            return entradas.length;
         }
         
         // Abrir sessão do Diário filtrada por tema
         function abrirSessaoDiarioParaTema(area, tema) {
+            // P1: Validar se há tópicos antes de abrir sessão
+            const qtdDiario = contarDiarioProgramadoParaTema(area, tema);
+            if (qtdDiario === 0) {
+                mostrarNotificacaoFeedback('📋 Sem tópicos deste tema para hoje', 'info');
+                return;
+            }
+            
             // Guardar filtros específicos da sessão chamada pela aba Tarefas
             window.filtrosSessaoDiario = {
                 area: area || null,
@@ -4737,11 +4738,19 @@
             // Trocar para aba Diário da aplicação geral
             showSection('diario');
             
-            // Abrir aba "Sessão"
+            // Abrir aba "Sessão" e iniciar sessão programada filtrada
             setTimeout(() => {
                 setAbaDiario('sessao');
                 // Garantir modo programado por padrão
                 setModoSessaoDiario('programado');
+                
+                // P1: Validação adicional após iniciar sessão
+                setTimeout(() => {
+                    if (sessaoDiario.filaIds && sessaoDiario.filaIds.length === 0) {
+                        mostrarNotificacaoFeedback('📋 Sem tópicos deste tema para hoje', 'info');
+                        window.filtrosSessaoDiario = null; // Limpar filtro se vazio
+                    }
+                }, 50);
             }, 100);
         }
         
