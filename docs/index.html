@@ -11312,18 +11312,24 @@
             entradas.forEach(e => {
                 if (!porArea[e.area]) porArea[e.area] = {};
                 
-                // Normalizar tema para dedupe (remove espaços, acentos, caracteres especiais)
+                // BUG A: Normalizar tema E área para dedupe (remove espaços, acentos, caracteres especiais e invisíveis)
                 const temaNormalizado = normalizarTema(e.tema);
+                const areaNormalizada = normalizarTema(e.area); // BUG A: Normalizar área também para evitar duplicação por área
                 const temaKey = temaNormalizado || String(e.id); // Fallback para ID se tema vazio
                 
-                // Se já existe tema com mesmo nome normalizado, agrupar
-                if (!porArea[e.area][temaKey]) {
-                    porArea[e.area][temaKey] = {
+                // BUG A: Usar área normalizada como chave interna (sem mudar label exibido)
+                const areaKey = areaNormalizada || e.area;
+                if (!porArea[areaKey]) porArea[areaKey] = {};
+                
+                // Se já existe tema com mesmo nome normalizado na área normalizada, agrupar
+                if (!porArea[areaKey][temaKey]) {
+                    porArea[areaKey][temaKey] = {
                         temaOriginal: e.tema, // Manter primeiro tema encontrado como "canônico"
+                        areaOriginal: e.area, // BUG A: Manter área original para exibição
                         entradas: []
                     };
                 }
-                porArea[e.area][temaKey].entradas.push(e);
+                porArea[areaKey][temaKey].entradas.push(e);
             });
             
             const areasOrdenadas = Object.keys(porArea).sort();
@@ -11334,16 +11340,18 @@
             }
             
             let html = '';
-            areasOrdenadas.forEach(area => {
-                const areaId = `diario-area-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                const temasDaArea = Object.keys(porArea[area]).sort();
-                const totalEntradasArea = temasDaArea.reduce((sum, temaKey) => sum + porArea[area][temaKey].entradas.length, 0);
+            areasOrdenadas.forEach(areaKey => {
+                // BUG A: Usar areaOriginal para exibição, mas areaKey para agrupamento
+                const areaOriginal = porArea[areaKey][Object.keys(porArea[areaKey])[0]].areaOriginal || areaKey;
+                const areaId = `diario-area-${areaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const temasDaArea = Object.keys(porArea[areaKey]).sort();
+                const totalEntradasArea = temasDaArea.reduce((sum, temaKey) => sum + porArea[areaKey][temaKey].entradas.length, 0);
                 
-                // Box da ÁREA (colapsável)
+                // Box da ÁREA (colapsável) - usar areaOriginal para exibição
                 html += `<div style="margin-bottom: 24px;">
                     <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
                         <div class="area-header-left">
-                            <span class="area-header-title">📁 ${area}</span>
+                            <span class="area-header-title">📁 ${areaOriginal}</span>
                             <span class="area-header-count">${totalEntradasArea} entrada${totalEntradasArea > 1 ? 's' : ''}</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
@@ -11352,19 +11360,13 @@
                 
                 // Temas dentro da área (também colapsáveis) - ordenar por temaOriginal
                 const temasOrdenados = temasDaArea.sort((a, b) => 
-                    porArea[area][a].temaOriginal.localeCompare(porArea[area][b].temaOriginal, 'pt-BR')
+                    porArea[areaKey][a].temaOriginal.localeCompare(porArea[areaKey][b].temaOriginal, 'pt-BR')
                 );
                 
                 temasOrdenados.forEach(temaKey => {
-                    const grupoTema = porArea[area][temaKey];
+                    const grupoTema = porArea[areaKey][temaKey];
                     const temaOriginal = grupoTema.temaOriginal;
-                    const temaId = `diario-tema-${area.replace(/[^a-zA-Z0-9]/g, '-')}-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                    
-                    // DEBUG VISUAL BUG A: Mostrar temaOriginal, temaKey, area, IDs
-                    const idsEntradas = grupoTema.entradas.map(e => e.id).join(',');
-                    const charCodesTemaKey = [...temaKey].map(c => c.charCodeAt(0)).join(',');
-                    const charCodesTemaOriginal = [...temaOriginal].map(c => c.charCodeAt(0)).join(',');
-                    const debugInfo = `[DEBUG: orig="${temaOriginal}" key="${temaKey}" area="${area}" ids=[${idsEntradas}] keyCodes=[${charCodesTemaKey}] origCodes=[${charCodesTemaOriginal}]]`;
+                    const temaId = `diario-tema-${areaKey.replace(/[^a-zA-Z0-9]/g, '-')}-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
                     
                     html += `
                         <div style="margin-bottom: 16px; margin-left: 12px;">
@@ -11372,7 +11374,6 @@
                                 <div class="area-header-left">
                                     <span class="area-header-title">📄 ${temaOriginal}</span>
                                     <span class="area-header-count">${grupoTema.entradas.length} entrada${grupoTema.entradas.length > 1 ? 's' : ''}</span>
-                                    <div style="font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; font-family: monospace;">${debugInfo}</div>
                         </div>
                         <span class="area-header-toggle">▼</span>
                     </div>
@@ -13239,11 +13240,13 @@
             return div.innerHTML.replace(/\n/g, '<br>');
         }
         
-        // Normalizar tema para dedupe (remove espaços, acentos, caracteres especiais)
+        // BUG A: Normalizar tema para dedupe (remove espaços, acentos, caracteres especiais e invisíveis)
         function normalizarTema(tema) {
             if (!tema) return '';
             return String(tema)
                 .trim()
+                .replace(/\u00A0/g, ' ') // BUG A: Substituir NBSP por espaço
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') // BUG A: Remover zero-width (ZWS, ZWNJ, ZWJ, BOM)
                 .toLowerCase()
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '') // Remove diacríticos
