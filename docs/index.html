@@ -9787,28 +9787,23 @@
         }
         
         // Helper para formatar texto do Diário preservando quebras de linha
-        function formatarTextoDiario(texto) {
+        // P4: Normalizar texto preservando quebras (retorna texto puro, não HTML)
+        function normalizarTextoDiario(texto) {
             if (!texto) return '';
             
-            // Normalizar quebras de linha primeiro (Windows \r\n, Mac antigo \r)
-            // BUG C: Normalizar também quebras de linha Unicode (iOS/Notes: \u2028, \u2029, \u0085)
-            let formatado = String(texto)
+            // Normalizar quebras de linha (Windows \r\n, Mac antigo \r, Unicode)
+            return String(texto)
                 .replace(/\r\n/g, '\n') // Windows
                 .replace(/\r/g, '\n')   // Mac antigo
                 .replace(/\u2028/g, '\n') // Line Separator (Unicode)
                 .replace(/\u2029/g, '\n') // Paragraph Separator (Unicode)
                 .replace(/\u0085/g, '\n'); // Next Line (Unicode)
-            
-            // Escapar HTML
-            formatado = formatado
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-            
-            // Converter \n para <br> (mantém compatibilidade com CSS pre-wrap)
-            return formatado.replace(/\n/g, '<br>');
+        }
+        
+        // P4: Formatar texto para exibição (mantém compatibilidade, mas prepara para textContent)
+        function formatarTextoDiario(texto) {
+            // P4: Retornar texto normalizado (será usado com textContent + CSS pre-wrap)
+            return normalizarTextoDiario(texto);
         }
         
         function addDias(dateStr, dias) {
@@ -11864,8 +11859,8 @@
                         ❓ ${formatarTextoDiario(entradaAtual.topico)}
                     </div>
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta escondida">
-                        <div class="diario-sessao-resposta-inner">
-                            ${entradaAtual.resposta ? formatarTextoDiario(entradaAtual.resposta) : '<em>(Sem resposta cadastrada)</em>'}
+                        <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
+                            ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
                         </div>
                     </div>
                     <div class="diario-sessao-acoes">
@@ -12685,6 +12680,14 @@
             const wrapper = document.getElementById('diarioSessaoRespostaWrapper');
             if (wrapper) {
                 wrapper.classList.remove('escondida');
+                // P4: Usar textContent em vez de innerHTML para fidelidade ao editor
+                const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
+                if (inner && inner.getAttribute('data-resposta') === 'true') {
+                    const entradaAtual = getEntradaAtualSessao();
+                    if (entradaAtual && entradaAtual.resposta) {
+                        inner.textContent = normalizarTextoDiario(entradaAtual.resposta);
+                    }
+                }
             }
         }
         
