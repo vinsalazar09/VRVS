@@ -11712,7 +11712,7 @@
                 ${sessaoDiario.tipo === 'programado' ? `
                 <div class="sessao-programada-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                     <button class="sessao-nav-anterior" onclick="voltarCardAnteriorSessao()" ${!podeVerAnterior ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(0, 206, 209, 0.3); color: rgba(0, 206, 209, 0.7); font-size: 13px; padding: 8px 12px; border-radius: 6px; cursor: pointer; min-height: 36px; ${!podeVerAnterior ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
-                        ← Ver anterior (somente leitura)
+                        ← Anterior (reavaliar)
                     </button>
                     <span class="sessao-nav-progresso" style="font-size: 14px; color: rgba(0, 206, 209, 0.7);">${indice} / ${total}</span>
                 </div>
@@ -12558,10 +12558,16 @@
             const entradaAtual = getEntradaAtualSessao();
             if (!entradaAtual) return;
             
-            // Se for sessão programada, salvar snapshot ANTES de avançar
+            // BUG B: Se for sessão programada, salvar action com deep clone SRS ANTES de atualizar
             if (sessaoDiario.tipo === 'programado') {
-                // Salvar snapshot do card atual no histórico (read-only)
-                window.sessaoProgramadaHistorico.push({...entradaAtual});
+                const action = {
+                    tipo: 'avaliacao',
+                    entradaId: entradaAtual.id,
+                    srsAntes: entradaAtual.srs ? JSON.parse(JSON.stringify(entradaAtual.srs)) : null, // deep clone
+                    indiceAntes: sessaoDiario.indiceAtual,
+                    timestamp: Date.now()
+                };
+                window.sessaoProgramadaHistorico.push(action);
                 // Limitar histórico a últimos 10
                 if (window.sessaoProgramadaHistorico.length > 10) {
                     window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico.slice(-10);
@@ -12595,10 +12601,16 @@
         function pularSessaoDiario() {
             const entradaAtual = getEntradaAtualSessao();
             
-            // Se for sessão programada, salvar snapshot ANTES de avançar
+            // BUG B: Se for sessão programada, salvar action ANTES de avançar
             if (sessaoDiario.tipo === 'programado' && entradaAtual) {
-                // Salvar snapshot do card atual no histórico (read-only)
-                window.sessaoProgramadaHistorico.push({...entradaAtual});
+                const action = {
+                    tipo: 'pulo',
+                    entradaId: entradaAtual.id,
+                    srsAntes: entradaAtual.srs ? JSON.parse(JSON.stringify(entradaAtual.srs)) : null, // deep clone
+                    indiceAntes: sessaoDiario.indiceAtual,
+                    timestamp: Date.now()
+                };
+                window.sessaoProgramadaHistorico.push(action);
                 // Limitar histórico a últimos 10
                 if (window.sessaoProgramadaHistorico.length > 10) {
                     window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico.slice(-10);
@@ -12632,61 +12644,44 @@
             }
         }
         
-        // Voltar para card anterior na Sessão Programada (read-only)
+        // BUG B: Voltar para card anterior e permitir REAVALIAR (undo SRS real)
         function voltarCardAnteriorSessao() {
-            // DEBUG BUG B: Toast com estado atual
-            const indiceAtual = sessaoDiario.indiceAtual;
-            const historicoLen = window.sessaoProgramadaHistorico ? window.sessaoProgramadaHistorico.length : 0;
-            const podeVoltar = sessaoDiario.tipo === 'programado' && indiceAtual > 0 && historicoLen > 0;
-            
-            mostrarNotificacaoFeedback(`🔍 DEBUG: clicou anterior; indiceAtual=${indiceAtual}; historicoLen=${historicoLen}; podeVoltar=${podeVoltar}`, 'info');
-            
             if (!window.sessaoProgramadaHistorico || window.sessaoProgramadaHistorico.length === 0) {
-                mostrarNotificacaoFeedback('⚠️ Não há card anterior para visualizar.', 'error');
+                mostrarNotificacaoFeedback('⚠️ Não há ação anterior para desfazer.', 'error');
                 return;
             }
             
-            // Pegar último card do histórico
-            const cardAnterior = window.sessaoProgramadaHistorico[window.sessaoProgramadaHistorico.length - 1];
+            // Pop último action do histórico
+            const action = window.sessaoProgramadaHistorico.pop();
             
-            if (!cardAnterior) {
-                mostrarNotificacaoFeedback('⚠️ Card anterior não encontrado.', 'error');
+            if (!action || !action.entradaId) {
+                mostrarNotificacaoFeedback('⚠️ Ação anterior inválida.', 'error');
                 return;
             }
             
-            // Renderizar em modo read-only
-            renderCardAnteriorReadOnly(cardAnterior);
-        }
-        
-        // Renderizar card anterior em modo read-only
-        function renderCardAnteriorReadOnly(entrada) {
-            const container = document.getElementById('diarioSessao');
-            if (!container) return;
+            // Encontrar entrada no diário
+            const entrada = window.diario.entradas.find(e => String(e.id) === String(action.entradaId));
+            if (!entrada) {
+                mostrarNotificacaoFeedback('⚠️ Entrada não encontrada no diário.', 'error');
+                return;
+            }
             
-            const indice = sessaoDiario.indiceAtual + 1;
-            const total = sessaoDiario.filaIds.length;
+            // BUG B: Restaurar SRS se foi avaliação
+            if (action.tipo === 'avaliacao' && action.srsAntes !== null) {
+                entrada.srs = JSON.parse(JSON.stringify(action.srsAntes)); // deep clone
+            }
             
-            container.innerHTML = `
-                <div class="sessao-programada-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <button class="sessao-nav-anterior" onclick="renderSessaoDiario(getEntradaAtualSessao())" style="background: transparent; border: 1px solid rgba(0, 206, 209, 0.3); color: rgba(0, 206, 209, 0.7); font-size: 13px; padding: 8px 12px; border-radius: 6px; cursor: pointer; min-height: 36px;">
-                        → Voltar ao atual
-                    </button>
-                    <span style="font-size: 12px; color: rgba(255,255,255,0.5);">Visualizando card anterior (somente leitura)</span>
-                </div>
-                <div class="diario-sessao-card">
-                    <div class="diario-sessao-meta">
-                        <span>${entrada.area} • ${entrada.tema}</span>
-                    </div>
-                    <div class="diario-sessao-topico">
-                        ❓ ${formatarTextoDiario(entrada.topico)}
-                    </div>
-                    <div class="diario-sessao-resposta" style="display: block;">
-                        <div class="diario-sessao-resposta-inner">
-                            ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '<em>(Sem resposta cadastrada)</em>'}
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Restaurar índice
+            sessaoDiario.indiceAtual = Math.max(0, action.indiceAntes);
+            
+            // Salvar diário com SRS restaurado
+            salvarDiario();
+            
+            // Atualizar chip VRVS 3P após restaurar
+            atualizarChipVrvs3p();
+            
+            // Renderizar card anterior COM botões ativos (não read-only)
+            renderSessaoDiario(entrada);
         }
         
         // ==================== FIM SRS UI ====================
