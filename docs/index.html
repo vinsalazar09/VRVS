@@ -10300,8 +10300,14 @@
                 // Usar helpers unificados (PATCH 3)
                 if (!isSrsActive(e)) return false;
                 if (!isDueToday(e, hoje)) return false;
+                // P1: Filtrar por área (comparação direta)
                 if (filtros.area && e.area !== filtros.area) return false;
-                if (filtros.tema && e.tema !== filtros.tema) return false;
+                // P1: Filtrar por tema usando normalização (permite variações de case/acentos)
+                if (filtros.tema) {
+                    const temaNormalizado = normalizarTema(e.tema);
+                    const filtroTemaNormalizado = normalizarTema(filtros.tema);
+                    if (temaNormalizado !== filtroTemaNormalizado) return false;
+                }
                 return true;
             });
             
@@ -11697,6 +11703,13 @@
             iniciarSessaoDiario(modo);
         }
         
+        // P1: Função para limpar filtro da sessão e voltar para fila geral
+        function limparFiltroSessaoDiario() {
+            window.filtrosSessaoDiario = null;
+            // Reiniciar sessão com fila geral
+            iniciarSessaoDiario(sessaoDiario.tipo || modoSessaoDiario);
+        }
+        
         // Inicializar a sessão de Diário
         function iniciarSessaoDiario(tipo) {
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
@@ -11773,12 +11786,26 @@
                 
                 const tipo = sessaoDiario.tipo || modoSessaoDiario;
                 if (tipo === 'programado') {
+                    // P1: Verificar se há filtro ativo
+                    const temFiltro = window.filtrosSessaoDiario && (window.filtrosSessaoDiario.area || window.filtrosSessaoDiario.tema);
+                    const filtroArea = window.filtrosSessaoDiario?.area || '';
+                    const filtroTema = window.filtrosSessaoDiario?.tema || '';
+                    
                     container.innerHTML = `
                         <div class="empty-state">
-                            <div>✅ Você não tem nenhum tópico do Diário <strong>programado para hoje</strong> com os filtros atuais.</div>
-                            <button class="btn btn-small" onclick="setModoSessaoDiario('livre')" style="margin-top: 12px;">
-                                🔁 Fazer treino livre mesmo assim
-                            </button>
+                            <div>${temFiltro ? `📋 Sem tópicos deste tema para hoje` : `✅ Você não tem nenhum tópico do Diário <strong>programado para hoje</strong> com os filtros atuais.`}</div>
+                            ${temFiltro ? `
+                                <div style="margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.6);">
+                                    Filtrado: <strong>${filtroArea ? filtroArea + ' • ' : ''}${filtroTema}</strong>
+                                </div>
+                                <button class="btn btn-small" onclick="limparFiltroSessaoDiario()" style="margin-top: 12px;">
+                                    🔁 Ver tudo (hoje)
+                                </button>
+                            ` : `
+                                <button class="btn btn-small" onclick="setModoSessaoDiario('livre')" style="margin-top: 12px;">
+                                    🔁 Fazer treino livre mesmo assim
+                                </button>
+                            `}
                         </div>
                     `;
                 } else {
@@ -11800,6 +11827,11 @@
             const historicoVazio = !window.sessaoProgramadaHistorico || window.sessaoProgramadaHistorico.length === 0;
             const podeVerAnterior = sessaoDiario.tipo === 'programado' && !isPrimeiro && !historicoVazio;
             
+            // P1: Verificar se há filtro ativo para mostrar na UI
+            const temFiltro = sessaoDiario.tipo === 'programado' && window.filtrosSessaoDiario && (window.filtrosSessaoDiario.area || window.filtrosSessaoDiario.tema);
+            const filtroArea = window.filtrosSessaoDiario?.area || '';
+            const filtroTema = window.filtrosSessaoDiario?.tema || '';
+            
             // Por padrão, resposta escondida até clicar
             container.innerHTML = `
                 ${sessaoDiario.tipo === 'programado' ? `
@@ -11809,6 +11841,16 @@
                     </button>
                     <span class="sessao-nav-progresso" style="font-size: 14px; color: rgba(0, 206, 209, 0.7);">${indice} / ${total}</span>
                 </div>
+                ${temFiltro ? `
+                <div style="background: rgba(255,127,80,0.1); border: 1px solid rgba(255,127,80,0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: rgba(255,255,255,0.8);">
+                        📋 Filtrado: <strong style="color: var(--cobre-light);">${filtroArea ? filtroArea + ' • ' : ''}${filtroTema}</strong>
+                    </span>
+                    <button onclick="limparFiltroSessaoDiario()" style="background: transparent; border: 1px solid rgba(255,127,80,0.5); color: var(--cobre-light); font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
+                        Ver tudo (hoje)
+                    </button>
+                </div>
+                ` : ''}
                 ` : ''}
                 <div class="diario-sessao-card">
                     <div class="diario-sessao-meta">
