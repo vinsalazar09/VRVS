@@ -740,10 +740,15 @@
             display: none;
         }
         
+        /* BUG C: Consolidar CSS duplicado e forçar text-align:left */
         .diario-sessao-resposta-inner {
             font-size: 13px;
             line-height: 1.6;
             color: rgba(255, 255, 255, 0.9);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            text-align: left; /* BUG C: Forçar alinhamento à esquerda (eliminar herança de center) */
         }
         
         .diario-sessao-acoes {
@@ -761,13 +766,6 @@
         .diario-sessao-acoes .btn:hover,
         .diario-sessao-acoes .btn:active {
             background: rgba(0, 206, 209, 0.3);
-        }
-        
-        /* Preservar formatação na resposta do Treino Livre */
-        .diario-sessao-resposta-inner {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
         }
         
         /* Botões de qualidade */
@@ -9734,9 +9732,13 @@
             if (!texto) return '';
             
             // Normalizar quebras de linha primeiro (Windows \r\n, Mac antigo \r)
+            // BUG C: Normalizar também quebras de linha Unicode (iOS/Notes: \u2028, \u2029, \u0085)
             let formatado = String(texto)
                 .replace(/\r\n/g, '\n') // Windows
-                .replace(/\r/g, '\n');  // Mac antigo
+                .replace(/\r/g, '\n')   // Mac antigo
+                .replace(/\u2028/g, '\n') // Line Separator (Unicode)
+                .replace(/\u2029/g, '\n') // Paragraph Separator (Unicode)
+                .replace(/\u0085/g, '\n'); // Next Line (Unicode)
             
             // Escapar HTML
             formatado = formatado
@@ -10978,10 +10980,15 @@
                         // NÃO resetar SRS (manter estágio, intervalo, proximaRevisao, historicoRespostas)
                     } else {
                         // Edição normal da Lista: atualizar tudo
+                    // BUG C: Normalizar quebras de linha Unicode antes de salvar
+                    const respostaNormalizada = String(resposta || '')
+                        .replace(/\u2028/g, '\n')
+                        .replace(/\u2029/g, '\n')
+                        .replace(/\u0085/g, '\n');
                     entrada.area = area;
                     entrada.tema = tema;
                     entrada.topico = topico;
-                    entrada.resposta = resposta;
+                    entrada.resposta = respostaNormalizada;
                     // PATCH 4: Não setar atencao (legado removido)
                     entrada.data = data; // Usar data do campo
                     entrada.ultimaAtualizacao = hoje;
@@ -11017,13 +11024,18 @@
                 }
             } else {
                 // Nova entrada
+                // BUG C: Normalizar quebras de linha Unicode antes de salvar
+                const respostaNormalizada = String(resposta || '')
+                    .replace(/\u2028/g, '\n')
+                    .replace(/\u2029/g, '\n')
+                    .replace(/\u0085/g, '\n');
                 const novaEntrada = {
                     id: Date.now(),
                     data: data, // Usar data do campo
                     area: area,
                     tema: tema,
                     topico: topico,
-                    resposta: resposta,
+                    resposta: respostaNormalizada,
                     // PATCH 4: Não setar atencao (legado removido)
                     criadoEm: hoje,
                     ultimaAtualizacao: hoje
