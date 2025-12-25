@@ -11308,25 +11308,45 @@
         function renderDiarioPorTema(entradas, container) {
             // CORREÇÃO: Agrupar primeiro por ÁREA, depois por TEMA dentro de cada área
             // A1b: Dedupe por nome normalizado (case/acentos) para evitar duplicação
+            // BUG A2: Dedupe singular/plural usando normalizarTemaKey
             const porArea = {};
             entradas.forEach(e => {
-                // HOTFIX: Normalizar tema para dedupe (remover normalização de área por enquanto para estabilidade)
-                const temaNormalizado = normalizarTema(e.tema);
-                const temaKey = temaNormalizado || String(e.id); // Fallback para ID se tema vazio
+                // BUG A2: Usar normalizarTemaKey para agrupamento (singulariza "fraturas" -> "fratura")
+                const temaKey = normalizarTemaKey(e.tema) || String(e.id); // Fallback para ID se tema vazio
                 
                 // HOTFIX: Usar área ORIGINAL como chave (não normalizada) para evitar quebra
                 // TODO: Reimplementar normalização de área de forma segura após estabilizar
                 const areaKey = e.area;
                 if (!porArea[areaKey]) porArea[areaKey] = {};
                 
-                // Se já existe tema com mesmo nome normalizado na área, agrupar
+                // Se já existe tema com mesma chave normalizada na área, agrupar
                 if (!porArea[areaKey][temaKey]) {
                     porArea[areaKey][temaKey] = {
-                        temaOriginal: e.tema, // Manter primeiro tema encontrado como "canônico"
+                        temaOriginal: e.tema, // Primeiro tema encontrado (será substituído se houver plural)
+                        variantes: [], // BUG A2: Armazenar todas as variantes originais
                         entradas: []
                     };
                 }
+                // BUG A2: Armazenar variante original
+                if (!porArea[areaKey][temaKey].variantes.includes(e.tema)) {
+                    porArea[areaKey][temaKey].variantes.push(e.tema);
+                }
                 porArea[areaKey][temaKey].entradas.push(e);
+            });
+            
+            // BUG A2: Escolher temaOriginal preferindo plural após agrupamento
+            Object.keys(porArea).forEach(areaKey => {
+                Object.keys(porArea[areaKey]).forEach(temaKey => {
+                    const grupo = porArea[areaKey][temaKey];
+                    // Procurar variante que começa com "Fraturas" (case-insensitive)
+                    const variantePlural = grupo.variantes.find(v => 
+                        v.toLowerCase().trim().startsWith('fraturas')
+                    );
+                    if (variantePlural) {
+                        grupo.temaOriginal = variantePlural; // Preferir plural
+                    }
+                    // Senão, manter primeiro temaOriginal (já definido acima)
+                });
             });
             
             const areasOrdenadas = Object.keys(porArea).sort();
@@ -13266,6 +13286,15 @@
                 .replace(/\(s\)/g, '') // Remove (s) opcional
                 .replace(/[^\w\s]/g, '') // Remove caracteres especiais
                 .replace(/\s+/g, ' '); // Normaliza espaços múltiplos
+        }
+        
+        // BUG A2: Normalizar chave de tema para agrupamento (singular/plural)
+        function normalizarTemaKey(tema) {
+            if (!tema) return '';
+            let base = normalizarTema(tema);
+            // Regra mínima de canonicidade: singularizar "fraturas" para "fratura"
+            base = base.replace(/^fraturas\b/, 'fratura');
+            return base;
         }
         
         // ==================== AGENDA UNIFICADA ====================
