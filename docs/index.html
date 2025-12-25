@@ -5022,7 +5022,7 @@
                 t._iniciadoOntem = (sessoes === 1) && (ult === ontemLocal || ult === ontemUTC);
             });
             
-            // BUG D: Ordenar: iniciado ontem primeiro → menos sessões → agenda → tema
+            // BUG D: Ordenar: iniciado ontem primeiro → menos sessões → agenda (mais atrasado) → tema
             tarefas.sort((a, b) => {
                 const ao = a._iniciadoOntem ? 1 : 0;
                 const bo = b._iniciadoOntem ? 1 : 0;
@@ -5032,23 +5032,29 @@
                 const sb = Number(b.sessoes || 0);
                 if (sa !== sb) return sa - sb; // menos sessões primeiro
                 
-                // tie-break estável:
+                // tie-break: agenda mais atrasado primeiro (preferir mais urgente)
                 const da = String(a.agenda || '');
                 const db = String(b.agenda || '');
-                if (da !== db) return da.localeCompare(db); // agenda mais cedo primeiro (estável)
+                if (da !== db) return da.localeCompare(db); // mais atrasado primeiro (menor data = mais urgente)
                 
                 return String(a.tema || '').localeCompare(String(b.tema || ''), 'pt-BR', { sensitivity: 'base' });
             });
             
-            // Agrupar por área (sem colapso intermediário de tema)
+            // BUG D: Agrupar por área PRESERVANDO ordem global (não ordenar áreas alfabeticamente)
             const porArea = {};
+            const orderedAreas = []; // Ordem de aparição das áreas conforme tarefas já ordenadas
+            
             tarefas.forEach(t => {
                 const area = t.area || 'Outros';
-                if (!porArea[area]) porArea[area] = [];
+                if (!porArea[area]) {
+                    porArea[area] = [];
+                    orderedAreas.push(area); // Preservar ordem de primeira aparição
+                }
                 porArea[area].push(t);
             });
             
-            const areasOrdenadas = Object.keys(porArea).sort();
+            // BUG D: Usar orderedAreas (ordem global) em vez de Object.keys(porArea).sort()
+            const areasOrdenadas = orderedAreas;
             
             if (areasOrdenadas.length === 0) {
                 container.innerHTML = html || '<div class="empty-state"><div class="empty-icon">✅</div><div>Nenhuma missão pendente</div></div>';

@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.21-fix-bug-d-ordem-tarefas-20251225-0153";
+const CACHE_NAME = "vrvs-v5.3.22-fix-bug-d-ordem-global-preservada-20251225-0208";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
