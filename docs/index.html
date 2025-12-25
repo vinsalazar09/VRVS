@@ -4943,9 +4943,8 @@
         }
         
         function renderTarefas() {
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            const hojeStr = hoje.toISOString().split('T')[0];
+            // BUG D: Usar data local (não UTC)
+            const hojeStr = hojeStrLocal();
             
             const container = document.getElementById('tarefasContainer');
             let html = '';
@@ -4986,10 +4985,12 @@
                 `;
             }
             
-            // Data limite: hoje - 7 dias (tarefas com até 7 dias de atraso)
-            const limite = new Date(hoje);
+            // BUG D: Data limite usando data local (hoje - 7 dias)
+            const hojeDate = new Date();
+            hojeDate.setHours(0, 0, 0, 0);
+            const limite = new Date(hojeDate);
             limite.setDate(limite.getDate() - 7);
-            const limiteStr = limite.toISOString().split('T')[0];
+            const limiteStr = dateStrLocal(limite);
             
             const tarefas = dados.filter(t => {
                 if (!t.agenda || !t.tema) return false;
@@ -4997,9 +4998,9 @@
                 if (!dataValida(t.agenda)) return false;
                 // Apenas tarefas com até 7 dias de atraso (hoje até 7 dias atrás)
                 const agendaDate = new Date(t.agenda + 'T00:00:00');
-                const hojeDate = new Date(hojeStr + 'T00:00:00');
-                const limiteDate = new Date(limiteStr + 'T00:00:00');
-                return agendaDate <= hojeDate && agendaDate >= limiteDate;
+                const hojeDateLocal = new Date(hojeStr + 'T00:00:00');
+                const limiteDateLocal = new Date(limiteStr + 'T00:00:00');
+                return agendaDate <= hojeDateLocal && agendaDate >= limiteDateLocal;
             });
             
             if (tarefas.length === 0) {
@@ -5011,13 +5012,32 @@
                 return;
             }
             
-            // Ordenar: menos sessões primeiro (menos sessões em cima)
+            // BUG D: Calcular "iniciado ontem" antes do sort
+            const ontemLocal = ontemStrLocal();
+            const ontemUTC = ontemStrUTC();
+            
+            tarefas.forEach(t => {
+                const sessoes = Number(t.sessoes || 0);
+                const ult = ymdFromAny(t.ultEstudo || t.ult_estudo || t.ultimoEstudo || t.ult || '');
+                t._iniciadoOntem = (sessoes === 1) && (ult === ontemLocal || ult === ontemUTC);
+            });
+            
+            // BUG D: Ordenar: iniciado ontem primeiro → menos sessões → agenda → tema
             tarefas.sort((a, b) => {
-                // Primeiro por menos sessões (menos sessões primeiro)
-                const diffSessoes = (a.sessoes || 0) - (b.sessoes || 0);
-                if (diffSessoes !== 0) return diffSessoes;
-                // Depois por data (mais recente primeiro)
-                return new Date(b.agenda) - new Date(a.agenda);
+                const ao = a._iniciadoOntem ? 1 : 0;
+                const bo = b._iniciadoOntem ? 1 : 0;
+                if (ao !== bo) return bo - ao; // iniciado ontem primeiro
+                
+                const sa = Number(a.sessoes || 0);
+                const sb = Number(b.sessoes || 0);
+                if (sa !== sb) return sa - sb; // menos sessões primeiro
+                
+                // tie-break estável:
+                const da = String(a.agenda || '');
+                const db = String(b.agenda || '');
+                if (da !== db) return da.localeCompare(db); // agenda mais cedo primeiro (estável)
+                
+                return String(a.tema || '').localeCompare(String(b.tema || ''), 'pt-BR', { sensitivity: 'base' });
             });
             
             // Agrupar por área (sem colapso intermediário de tema)
@@ -9725,6 +9745,39 @@
         // Funções utilitárias de data
         function hojeStr() {
             return new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+        }
+        
+        // BUG D: Helpers de data local (timezone do dispositivo, não UTC)
+        function pad2(n) {
+            return String(n).padStart(2, '0');
+        }
+        
+        function dateStrLocal(d) {
+            const x = new Date(d);
+            return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`;
+        }
+        
+        function hojeStrLocal() {
+            return dateStrLocal(new Date());
+        }
+        
+        function ontemStrLocal() {
+            const d = new Date();
+            d.setDate(d.getDate() - 1);
+            return dateStrLocal(d);
+        }
+        
+        function ontemStrUTC() {
+            const d = new Date();
+            d.setDate(d.getDate() - 1);
+            return d.toISOString().slice(0, 10);
+        }
+        
+        function ymdFromAny(v) {
+            if (!v) return '';
+            const s = String(v);
+            // se vier ISO com hora, corta
+            return s.length >= 10 ? s.slice(0, 10) : s;
         }
         
         // Helper para formatar texto do Diário preservando quebras de linha
