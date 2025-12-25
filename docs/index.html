@@ -4711,9 +4711,7 @@
         // Contar quantos cards do Diário estão programados para hoje dentro de um tema
         function contarDiarioProgramadoParaTema(area, tema) {
             // P1: Usar mesma função que monta a fila para garantir consistência
-            debugP1('CONTAR', { area, tema, areaLen: area?.length, temaLen: tema?.length });
             const entradas = getEntradasParaRevisarHojeDiario({ area, tema });
-            debugP1('CONTAR_RES', { count: entradas.length });
             return entradas.length;
         }
         
@@ -4727,15 +4725,7 @@
         
         function abrirSessaoDiarioParaTema(area, tema) {
             // P1 v2 OPUS: Montar fila AQUI para evitar timing issues
-            debugP1('ABRIR', { area, tema, areaLen: area?.length, temaLen: tema?.length });
-            
-            // P1 FIX: Comparar char codes para detectar diferenças invisíveis
-            const areaChars = area ? Array.from(area).slice(0,5).map(c => c.charCodeAt(0)) : [];
-            const temaChars = tema ? Array.from(tema).slice(0,5).map(c => c.charCodeAt(0)) : [];
-            debugP1('CHARS', { areaChars, temaChars });
-            
             const entradas = getEntradasParaRevisarHojeDiario({ area, tema });
-            debugP1('ABRIR_RES', { count: entradas.length });
             
             if (entradas.length === 0) {
                 mostrarNotificacaoFeedback('📋 Sem tópicos deste tema para hoje', 'info');
@@ -10313,31 +10303,16 @@
             // P1 FIX: Usar data local (timezone do dispositivo, não UTC)
             const hoje = hojeStrLocal();
             
-            debugP1('GET_ENTRADAS_INI', { 
-                filtros, 
-                totalEntradas: window.diario.entradas.length,
-                hoje 
-            });
-            
-            let countSrsAtivo = 0;
-            let countDueHoje = 0;
-            let countMatchArea = 0;
-            let countMatchTema = 0;
-            
             const resultado = window.diario.entradas.filter(e => {
                 // Usar helpers unificados (PATCH 3)
                 if (!isSrsActive(e)) return false;
-                countSrsAtivo++;
-                
                 if (!isDueToday(e, hoje)) return false;
-                countDueHoje++;
                 
                 // P1 FIX: Normalizar área também (como tema)
                 if (filtros.area) {
                     const areaNorm = normalizarTema(e.area);
                     const filtroAreaNorm = normalizarTema(filtros.area);
                     if (areaNorm !== filtroAreaNorm) return false;
-                    countMatchArea++;
                 }
                 
                 // P1: Filtrar por tema usando normalização (permite variações de case/acentos)
@@ -10345,17 +10320,8 @@
                     const temaNormalizado = normalizarTema(e.tema);
                     const filtroTemaNormalizado = normalizarTema(filtros.tema);
                     if (temaNormalizado !== filtroTemaNormalizado) return false;
-                    countMatchTema++;
                 }
                 return true;
-            });
-            
-            debugP1('GET_ENTRADAS_RES', {
-                countSrsAtivo,
-                countDueHoje,
-                countMatchArea,
-                countMatchTema,
-                resultadoFinal: resultado.length
             });
             
             // Log de debug (FASE 2)
@@ -11826,7 +11792,14 @@
                     // Limpar fila pré-montada após usar
                     window.sessaoFiltradaPreMontada = null;
                     
-                    renderSessaoDiario(getEntradaAtualSessao());
+                    // P1 FIX: Verificar se getEntradaAtualSessao() retorna null antes de renderizar
+                    const entradaAtual = getEntradaAtualSessao();
+                    if (entradaAtual) {
+                        renderSessaoDiario(entradaAtual);
+                    } else {
+                        // Se não encontrou entrada, renderizar vazio mas com filtro ativo
+                        renderSessaoDiario(null);
+                    }
                     return; // IMPORTANTE: sair aqui, não continuar montando fila
                 }
                 
@@ -13495,23 +13468,6 @@
             div.textContent = text;
             return div.innerHTML.replace(/\n/g, '<br>');
         }
-        
-        // ========== DEBUG P1 - REMOVER APÓS RESOLVER ==========
-        function debugP1(msg, data) {
-            console.log('[P1]', msg, data);
-            let d = document.getElementById('debugP1');
-            if (!d) {
-                d = document.createElement('div');
-                d.id = 'debugP1';
-                d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:150px;overflow:auto;background:#000;color:#0f0;font-size:9px;padding:4px;z-index:99999;font-family:monospace;';
-                d.innerHTML = '<b>DEBUG P1 - Toque para fechar</b><br>';
-                d.onclick = () => d.remove();
-                document.body.appendChild(d);
-            }
-            d.innerHTML += msg + ': ' + JSON.stringify(data).substring(0, 200) + '<br>';
-            d.scrollTop = d.scrollHeight;
-        }
-        // ========== FIM DEBUG P1 ==========
         
         // BUG A: Normalizar tema para dedupe (remove espaços, acentos, caracteres especiais e invisíveis)
         function normalizarTema(tema) {
