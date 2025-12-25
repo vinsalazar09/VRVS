@@ -4739,10 +4739,13 @@
             showSection('diario');
             
             // Abrir aba "Sessão" e iniciar sessão programada filtrada
+            // P1 CORREÇÃO: Chamar setModoSessaoDiario ANTES de setAbaDiario para garantir que
+            // a fila seja montada com os filtros antes de renderizar a aba
             setTimeout(() => {
-                setAbaDiario('sessao');
-                // Garantir modo programado por padrão
+                // Primeiro definir o modo e montar a fila (isso preserva window.filtrosSessaoDiario)
                 setModoSessaoDiario('programado');
+                // Depois mudar para aba sessão (que agora não limpa os filtros se não há sessão ativa)
+                setAbaDiario('sessao');
                 
                 // P1: Validação adicional após iniciar sessão
                 setTimeout(() => {
@@ -11679,8 +11682,8 @@
                     tabLista.classList.remove('active');
                     containerLista.style.display = 'none';
                     containerSessao.style.display = 'block';
-                    // Inicialmente, só mostra a tela "escolha o tipo de sessão"
-                    renderSessaoDiario(null);
+                    // P1 FIX: Usar função placeholder sem side-effects (GPT)
+                    renderSessaoDiarioVazia();
                 }
             }
         }
@@ -11712,6 +11715,45 @@
             window.filtrosSessaoDiario = null;
             // Reiniciar sessão com fila geral
             iniciarSessaoDiario(sessaoDiario.tipo || modoSessaoDiario);
+        }
+        
+        // P1: Função placeholder para renderizar tela vazia sem side-effects (GPT)
+        function renderSessaoDiarioVazia() {
+            const container = document.getElementById('diarioSessao');
+            if (!container) return;
+            
+            const tipo = sessaoDiario?.tipo || modoSessaoDiario;
+            if (tipo === 'programado') {
+                const temFiltro = window.filtrosSessaoDiario && (window.filtrosSessaoDiario.area || window.filtrosSessaoDiario.tema);
+                const filtroArea = window.filtrosSessaoDiario?.area || '';
+                const filtroTema = window.filtrosSessaoDiario?.tema || '';
+                
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>${temFiltro ? `📋 Sem tópicos deste tema para hoje` : `✅ Você não tem nenhum tópico do Diário <strong>programado para hoje</strong> com os filtros atuais.`}</div>
+                        ${temFiltro ? `
+                            <div style="margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.6);">
+                                Filtrado: <strong>${filtroArea ? filtroArea + ' • ' : ''}${filtroTema}</strong>
+                            </div>
+                            <button class="btn btn-small" onclick="limparFiltroSessaoDiario()" style="margin-top: 12px;">
+                                🔁 Ver tudo (hoje)
+                            </button>
+                        ` : `
+                            <button class="btn btn-small" onclick="setModoSessaoDiario('livre')" style="margin-top: 12px;">
+                                🔁 Fazer treino livre mesmo assim
+                            </button>
+                        `}
+                    </div>
+                `;
+            } else {
+                // Treino Livre: mostrar configuração
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>Nenhuma sessão iniciada.</div>
+                        <div style="margin-top: 12px;">Escolha <b>Revisão programada</b> ou <b>Treino livre</b>.</div>
+                    </div>
+                `;
+            }
         }
         
         // Inicializar a sessão de Diário
@@ -11785,8 +11827,14 @@
             if (!entradaAtual) {
                 // Limpar histórico ao sair da sessão
                 window.sessaoProgramadaHistorico = [];
-                // Limpar filtros da sessão quando terminar
-                window.filtrosSessaoDiario = null;
+                
+                // P1 FIX: NÃO limpar filtros se estiver iniciando sessão filtrada da Tarefa (OPUS Ponto 2)
+                const estaIniciandoSessaoFiltrada = window.filtrosSessaoDiario && 
+                                                     window.filtrosSessaoDiario.origem === 'tarefa';
+                if (!estaIniciandoSessaoFiltrada) {
+                    // Limpar filtros da sessão quando terminar
+                    window.filtrosSessaoDiario = null;
+                }
                 
                 const tipo = sessaoDiario.tipo || modoSessaoDiario;
                 if (tipo === 'programado') {
