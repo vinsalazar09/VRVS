@@ -11310,22 +11310,19 @@
             // A1b: Dedupe por nome normalizado (case/acentos) para evitar duplicação
             const porArea = {};
             entradas.forEach(e => {
-                if (!porArea[e.area]) porArea[e.area] = {};
-                
-                // BUG A: Normalizar tema E área para dedupe (remove espaços, acentos, caracteres especiais e invisíveis)
+                // HOTFIX: Normalizar tema para dedupe (remover normalização de área por enquanto para estabilidade)
                 const temaNormalizado = normalizarTema(e.tema);
-                const areaNormalizada = normalizarTema(e.area); // BUG A: Normalizar área também para evitar duplicação por área
                 const temaKey = temaNormalizado || String(e.id); // Fallback para ID se tema vazio
                 
-                // BUG A: Usar área normalizada como chave interna (sem mudar label exibido)
-                const areaKey = areaNormalizada || e.area;
+                // HOTFIX: Usar área ORIGINAL como chave (não normalizada) para evitar quebra
+                // TODO: Reimplementar normalização de área de forma segura após estabilizar
+                const areaKey = e.area;
                 if (!porArea[areaKey]) porArea[areaKey] = {};
                 
-                // Se já existe tema com mesmo nome normalizado na área normalizada, agrupar
+                // Se já existe tema com mesmo nome normalizado na área, agrupar
                 if (!porArea[areaKey][temaKey]) {
                     porArea[areaKey][temaKey] = {
                         temaOriginal: e.tema, // Manter primeiro tema encontrado como "canônico"
-                        areaOriginal: e.area, // BUG A: Manter área original para exibição
                         entradas: []
                     };
                 }
@@ -11341,17 +11338,26 @@
             
             let html = '';
             areasOrdenadas.forEach(areaKey => {
-                // BUG A: Usar areaOriginal para exibição, mas areaKey para agrupamento
-                const areaOriginal = porArea[areaKey][Object.keys(porArea[areaKey])[0]].areaOriginal || areaKey;
+                // HOTFIX: areaKey agora é a área original (não normalizada), então usar diretamente
                 const areaId = `diario-area-${areaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
                 const temasDaArea = Object.keys(porArea[areaKey]).sort();
-                const totalEntradasArea = temasDaArea.reduce((sum, temaKey) => sum + porArea[areaKey][temaKey].entradas.length, 0);
                 
-                // Box da ÁREA (colapsável) - usar areaOriginal para exibição
+                // HOTFIX: Verificar se porArea[areaKey] existe e tem temas antes de acessar
+                if (!porArea[areaKey] || temasDaArea.length === 0) {
+                    console.warn('[DIÁRIO] Área sem temas:', areaKey);
+                    return; // Pular esta área se estiver vazia
+                }
+                
+                const totalEntradasArea = temasDaArea.reduce((sum, temaKey) => {
+                    if (!porArea[areaKey][temaKey]) return sum;
+                    return sum + (porArea[areaKey][temaKey].entradas?.length || 0);
+                }, 0);
+                
+                // Box da ÁREA (colapsável)
                 html += `<div style="margin-bottom: 24px;">
                     <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
                         <div class="area-header-left">
-                            <span class="area-header-title">📁 ${areaOriginal}</span>
+                            <span class="area-header-title">📁 ${areaKey}</span>
                             <span class="area-header-count">${totalEntradasArea} entrada${totalEntradasArea > 1 ? 's' : ''}</span>
                         </div>
                         <span class="area-header-toggle">▼</span>
@@ -11359,13 +11365,20 @@
                     <div class="area-content collapsed" id="area-content-${areaId}">`;
                 
                 // Temas dentro da área (também colapsáveis) - ordenar por temaOriginal
-                const temasOrdenados = temasDaArea.sort((a, b) => 
-                    porArea[areaKey][a].temaOriginal.localeCompare(porArea[areaKey][b].temaOriginal, 'pt-BR')
-                );
+                const temasOrdenados = temasDaArea.sort((a, b) => {
+                    const temaA = porArea[areaKey][a]?.temaOriginal || '';
+                    const temaB = porArea[areaKey][b]?.temaOriginal || '';
+                    return temaA.localeCompare(temaB, 'pt-BR');
+                });
                 
                 temasOrdenados.forEach(temaKey => {
                     const grupoTema = porArea[areaKey][temaKey];
-                    const temaOriginal = grupoTema.temaOriginal;
+                    if (!grupoTema || !grupoTema.entradas) {
+                        console.warn('[DIÁRIO] Grupo tema inválido:', areaKey, temaKey);
+                        return; // Pular se grupo inválido
+                    }
+                    
+                    const temaOriginal = grupoTema.temaOriginal || temaKey;
                     const temaId = `diario-tema-${areaKey.replace(/[^a-zA-Z0-9]/g, '-')}-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
                     
                     html += `
