@@ -4717,43 +4717,33 @@
         
         // Abrir sessão do Diário filtrada por tema
         function abrirSessaoDiarioParaTema(area, tema) {
-            // P1: Validar se há tópicos antes de abrir sessão
-            const qtdDiario = contarDiarioProgramadoParaTema(area, tema);
-            if (qtdDiario === 0) {
+            // P1 v2 OPUS: Montar fila AQUI para evitar timing issues
+            const entradas = getEntradasParaRevisarHojeDiario({ area, tema });
+            
+            if (entradas.length === 0) {
                 mostrarNotificacaoFeedback('📋 Sem tópicos deste tema para hoje', 'info');
                 return;
             }
             
-            // Guardar filtros específicos da sessão chamada pela aba Tarefas
-            window.filtrosSessaoDiario = {
-                area: area || null,
-                tema: tema || null,
-                origem: 'tarefa'   // Para debug e identificação
+            // Guardar fila JÁ MONTADA com IDs (não apenas filtros)
+            window.sessaoFiltradaPreMontada = {
+                filaIds: entradas.map(e => e.id),
+                area: area,
+                tema: tema,
+                total: entradas.length,
+                origem: 'tarefa'
             };
             
-            // Ajustar filtros do Diário na UI (opcional, para visual)
+            // Ajustar filtros visuais (opcional)
             const filtroArea = document.getElementById('filtroDiarioArea');
             if (filtroArea) filtroArea.value = area || '';
             
-            // Trocar para aba Diário da aplicação geral
+            // Trocar para aba Diário
             showSection('diario');
             
-            // Abrir aba "Sessão" e iniciar sessão programada filtrada
-            // P1 CORREÇÃO: Chamar setModoSessaoDiario ANTES de setAbaDiario para garantir que
-            // a fila seja montada com os filtros antes de renderizar a aba
             setTimeout(() => {
-                // Primeiro definir o modo e montar a fila (isso preserva window.filtrosSessaoDiario)
                 setModoSessaoDiario('programado');
-                // Depois mudar para aba sessão (que agora não limpa os filtros se não há sessão ativa)
                 setAbaDiario('sessao');
-                
-                // P1: Validação adicional após iniciar sessão
-                setTimeout(() => {
-                    if (sessaoDiario.filaIds && sessaoDiario.filaIds.length === 0) {
-                        mostrarNotificacaoFeedback('📋 Sem tópicos deste tema para hoje', 'info');
-                        window.filtrosSessaoDiario = null; // Limpar filtro se vazio
-                    }
-                }, 50);
             }, 100);
         }
         
@@ -11768,7 +11758,29 @@
             sessaoDiario.tipo = tipo;
             
             if (tipo === 'programado') {
-                // Sessão Programada: comportamento original (monta fila automaticamente)
+                // P1 v2 OPUS: Se há fila pré-montada da Tarefa, usar diretamente
+                if (window.sessaoFiltradaPreMontada && 
+                    window.sessaoFiltradaPreMontada.filaIds && 
+                    window.sessaoFiltradaPreMontada.filaIds.length > 0) {
+                    
+                    sessaoDiario.filaIds = window.sessaoFiltradaPreMontada.filaIds;
+                    sessaoDiario.indiceAtual = 0;
+                    
+                    // Manter filtros para UI (mostrar "Filtrado: X")
+                    window.filtrosSessaoDiario = {
+                        area: window.sessaoFiltradaPreMontada.area,
+                        tema: window.sessaoFiltradaPreMontada.tema,
+                        origem: 'tarefa'
+                    };
+                    
+                    // Limpar fila pré-montada após usar
+                    window.sessaoFiltradaPreMontada = null;
+                    
+                    renderSessaoDiario(getEntradaAtualSessao());
+                    return; // IMPORTANTE: sair aqui, não continuar montando fila
+                }
+                
+                // Fluxo normal (sessão global ou filtros da UI)
                 let filtros = {
                     area: null,
                     tema: null
