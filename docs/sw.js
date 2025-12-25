@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.27-fix-p1-normalizar-area-filtro-20251225-1645";
+const CACHE_NAME = "vrvs-v5.3.26-fix-p1-sessao-filtrada-combinada-gpt-opus-20251225-1619";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

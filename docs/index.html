@@ -10307,12 +10307,8 @@
                 // Usar helpers unificados (PATCH 3)
                 if (!isSrsActive(e)) return false;
                 if (!isDueToday(e, hoje)) return false;
-                // P1 FIX: Filtrar por área usando normalização (permite variações de case/acentos/espaços)
-                if (filtros.area) {
-                    const areaNormalizada = normalizarTema(e.area);
-                    const filtroAreaNormalizada = normalizarTema(filtros.area);
-                    if (areaNormalizada !== filtroAreaNormalizada) return false;
-                }
+                // P1: Filtrar por área (comparação direta)
+                if (filtros.area && e.area !== filtros.area) return false;
                 // P1: Filtrar por tema usando normalização (permite variações de case/acentos)
                 if (filtros.tema) {
                     const temaNormalizado = normalizarTema(e.tema);
@@ -10322,44 +10318,15 @@
                 return true;
             });
             
-            // P1 DEBUG: Log detalhado para diagnóstico
-            if (filtros.area || filtros.tema) {
-                console.log('[P1-DEBUG] getEntradasParaRevisarHojeDiario:', {
+            // Log de debug (FASE 2)
+            if (resultado.length > 0) {
+                console.log('[VRVS3P-DEBUG] getEntradasParaRevisarHojeDiario:', {
+                    total: resultado.length,
                     filtros: filtros,
-                    totalEntradas: window.diario.entradas.length,
-                    entradasFiltradas: resultado.length,
-                    detalhes: resultado.slice(0, 5).map(e => ({
-                        id: e.id,
-                        area: e.area,
-                        tema: e.tema,
-                        areaNormalizada: normalizarTema(e.area),
-                        temaNormalizado: normalizarTema(e.tema),
-                        isSrsActive: isSrsActive(e),
-                        isDueToday: isDueToday(e, hoje),
+                    detalhes: resultado.map(e => ({
+                        topico: e.topico?.substring(0, 40),
                         proximaRevisao: e.srs?.proximaRevisao
-                    })),
-                    exemplosNaoEncontrados: window.diario.entradas
-                        .filter(e => {
-                            if (!isSrsActive(e) || !isDueToday(e, hoje)) return false;
-                            if (filtros.area) {
-                                const areaNorm = normalizarTema(e.area);
-                                const filtroAreaNorm = normalizarTema(filtros.area);
-                                if (areaNorm === filtroAreaNorm) return false; // Já encontrado
-                            }
-                            if (filtros.tema) {
-                                const temaNorm = normalizarTema(e.tema);
-                                const filtroTemaNorm = normalizarTema(filtros.tema);
-                                if (temaNorm === filtroTemaNorm) return false; // Já encontrado
-                            }
-                            return true;
-                        })
-                        .slice(0, 3)
-                        .map(e => ({
-                            area: e.area,
-                            tema: e.tema,
-                            areaNormalizada: normalizarTema(e.area),
-                            temaNormalizado: normalizarTema(e.tema)
-                        }))
+                    }))
                 });
             }
             
