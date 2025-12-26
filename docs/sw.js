@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.30-fix-p1-logs-normalizacao-area-timezone-20251225-1825";
+const CACHE_NAME = "vrvs-v5.3.32-fix-ajuste-3-treino-livre-formatacao-20251225-1840";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
