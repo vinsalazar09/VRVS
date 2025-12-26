@@ -12344,7 +12344,8 @@
             const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
             if (inner && inner.getAttribute('data-resposta-texto') === 'true') {
                 // AJUSTE 3: Usar textContent para preservar formatação (quebras de linha)
-                const entradaAtual = window.treinoLivreFila && window.treinoLivreFila[sessaoDiario?.indiceAtual || 0];
+                const indiceAtual = window.treinoLivreEstado?.indiceAtual || 0;
+                const entradaAtual = window.treinoLivreFila && window.treinoLivreFila[indiceAtual];
                 if (entradaAtual && entradaAtual.resposta) {
                     inner.textContent = formatarTextoDiario(entradaAtual.resposta);
                 }
