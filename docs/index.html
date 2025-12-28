@@ -726,8 +726,6 @@
             color: var(--cobre-light);
             margin-bottom: 20px;
             line-height: 1.5;
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
         }
         
         .diario-sessao-resposta {
@@ -1715,14 +1713,6 @@
             transform: rotate(90deg);
         }
         
-        .modal-body {
-            color: var(--text-light);
-        }
-        
-        #tutorialConteudo {
-            color: var(--text-light);
-        }
-        
         /* SCROLL BAR CUSTOM */
         ::-webkit-scrollbar {
             width: 8px;
@@ -1871,20 +1861,8 @@
             100% { width: 100%; }
         }
         
-        /* FAILSAFE iOS: se window.onload travar, o splash não pode prender o usuário */
-        @keyframes vrvsSplashAutoHide {
-            0%, 85% { opacity: 1; visibility: visible; }
-            100% { opacity: 0; visibility: hidden; pointer-events: none; }
-        }
-        
-        /* Só atua quando o body ainda estiver em splash-loading */
-        body.splash-loading #splashScreen {
-            animation: vrvsSplashAutoHide 0.6s ease forwards;
-            animation-delay: 4.5s; /* tempo de tolerância */
-        }
-        
         body.splash-loading {
-            overflow: auto;
+            overflow: hidden;
         }
         
         /* ===== NOVOS ESTILOS - REFATORAÇÃO v2.0 ===== */
@@ -8911,32 +8889,6 @@
         // ==================== WINDOW ONLOAD ====================
         
         window.onload = function() {
-            // REMOVER SPLASH SCREEN PRIMEIRO
-            setTimeout(() => {
-                const splash = document.getElementById('splashScreen');
-                const body = document.body;
-                if (splash) {
-                    splash.classList.add('fade-out');
-                    setTimeout(() => {
-                        splash.classList.add('hidden');
-                        body.classList.remove('splash-loading');
-                    }, 300);
-                } else {
-                    body.classList.remove('splash-loading');
-                }
-            }, 500);
-            
-            // GARANTIR RENDERIZAÇÃO APÓS REMOVER SPLASH (failsafe)
-            setTimeout(() => {
-                try {
-                    renderDados();
-                    renderAgenda();
-                    renderTarefas();
-                } catch (error) {
-                    console.error('[ONLOAD] Erro ao renderizar após splash:', error);
-                }
-            }, 600);
-            
             // Garantir logo novamente após carregamento completo
             garantirLogoCarregada();
             
@@ -12214,8 +12166,7 @@
                                 if (wrapper && !wrapper.classList.contains('escondida')) {
                                     const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
                                     if (inner && inner.getAttribute('data-resposta-texto') === 'true' && !inner.textContent.trim()) {
-                                        const indiceAtual = window.treinoLivreEstado?.indiceAtual ?? 0;
-                                        const entrada = window.treinoLivreFila && window.treinoLivreFila[indiceAtual];
+                                        const entrada = window.treinoLivreFila && window.treinoLivreFila[${indice}];
                                         if (entrada && entrada.resposta) {
                                             inner.textContent = formatarTextoDiario(entrada.resposta);
                                         }
@@ -14788,10 +14739,7 @@
         if (typeof initApp !== 'undefined') {
             const initAppOriginal = initApp;
             initApp = function() {
-                // Verificar se initAppOriginal é função antes de chamar
-                if (typeof initAppOriginal === 'function') {
-                    initAppOriginal();
-                }
+                initAppOriginal();
             
                 // Renderizar novas abas se estiverem ativas
                 setTimeout(() => {
@@ -14816,22 +14764,7 @@
                 buildTagEl.textContent = '[build: 5e4b588]';
                 buildTagEl.style.display = 'none'; // P1: Ocultar build tag
             }
-            
-            // INICIALIZAÇÃO CRÍTICA: Renderizar dados ao carregar
-            try {
-                renderDados();
-                renderAgenda();
-                renderTarefas();
-                if (typeof renderHistorico === 'function') renderHistorico();
-                if (typeof renderPendencias === 'function') renderPendencias();
-                if (typeof renderCaderno === 'function') renderCaderno();
-                if (typeof renderDiario === 'function') renderDiario();
-                if (typeof updateStats === 'function') updateStats();
-            } catch (error) {
-                console.error('[INIT] Erro ao renderizar na inicialização:', error);
-            }
         });
-    }
     </script>
 </body>
 </html>
