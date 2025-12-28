@@ -14788,7 +14788,10 @@
         if (typeof initApp !== 'undefined') {
             const initAppOriginal = initApp;
             initApp = function() {
-                initAppOriginal();
+                // Verificar se initAppOriginal é função antes de chamar
+                if (typeof initAppOriginal === 'function') {
+                    initAppOriginal();
+                }
             
                 // Renderizar novas abas se estiverem ativas
                 setTimeout(() => {
