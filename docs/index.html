@@ -8899,6 +8899,21 @@
         // ==================== WINDOW ONLOAD ====================
         
         window.onload = function() {
+            // REMOVER SPLASH SCREEN PRIMEIRO
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                const body = document.body;
+                if (splash) {
+                    splash.classList.add('fade-out');
+                    setTimeout(() => {
+                        splash.classList.add('hidden');
+                        body.classList.remove('splash-loading');
+                    }, 300);
+                } else {
+                    body.classList.remove('splash-loading');
+                }
+            }, 500);
+            
             // Garantir logo novamente após carregamento completo
             garantirLogoCarregada();
             
@@ -14776,7 +14791,7 @@
                 buildTagEl.style.display = 'none'; // P1: Ocultar build tag
             }
         });
-    }
+        
     </script>
 </body>
 </html>
