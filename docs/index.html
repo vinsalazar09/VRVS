@@ -1871,8 +1871,20 @@
             100% { width: 100%; }
         }
         
+        /* FAILSAFE iOS: se window.onload travar, o splash não pode prender o usuário */
+        @keyframes vrvsSplashAutoHide {
+            0%, 85% { opacity: 1; visibility: visible; }
+            100% { opacity: 0; visibility: hidden; pointer-events: none; }
+        }
+        
+        /* Só atua quando o body ainda estiver em splash-loading */
+        body.splash-loading #splashScreen {
+            animation: vrvsSplashAutoHide 0.6s ease forwards;
+            animation-delay: 4.5s; /* tempo de tolerância */
+        }
+        
         body.splash-loading {
-            overflow: hidden;
+            overflow: auto;
         }
         
         /* ===== NOVOS ESTILOS - REFATORAÇÃO v2.0 ===== */
