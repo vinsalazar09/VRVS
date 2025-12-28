@@ -12158,24 +12158,6 @@
                     
                     ${modoAvaliacao ? renderTreinoLivreAvaliacao(entradaAtual, indice, total) : renderTreinoLivreCard(entradaAtual)}
                     
-                    <script>
-                        // AJUSTE 3: Preencher resposta com textContent após renderizar
-                        (function() {
-                            setTimeout(() => {
-                                const wrapper = document.getElementById('treinoLivreRespostaWrapper');
-                                if (wrapper && !wrapper.classList.contains('escondida')) {
-                                    const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
-                                    if (inner && inner.getAttribute('data-resposta-texto') === 'true' && !inner.textContent.trim()) {
-                                        const entrada = window.treinoLivreFila && window.treinoLivreFila[${indice}];
-                                        if (entrada && entrada.resposta) {
-                                            inner.textContent = formatarTextoDiario(entrada.resposta);
-                                        }
-                                    }
-                                }
-                            }, 50);
-                        })();
-                    </script>
-                    
                     <div class="treino-livre-navegacao">
                         <button onclick="treinoLivreAnterior()" ${isPrimeiro && (!modoAvaliacao || !window.treinoLivreHistoricoAvaliacoes?.length) ? 'disabled' : ''} style="min-height: 44px;">
                             ← Anterior

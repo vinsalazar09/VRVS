@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.34-hotfix-rollback-20251227";
+const CACHE_NAME = "vrvs-v5.3.35-rollback-final-20251227";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
