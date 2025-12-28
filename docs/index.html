@@ -12176,7 +12176,8 @@
                                 if (wrapper && !wrapper.classList.contains('escondida')) {
                                     const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
                                     if (inner && inner.getAttribute('data-resposta-texto') === 'true' && !inner.textContent.trim()) {
-                                        const entrada = window.treinoLivreFila && window.treinoLivreFila[${indice}];
+                                        const indiceAtual = window.treinoLivreEstado?.indiceAtual ?? 0;
+                                        const entrada = window.treinoLivreFila && window.treinoLivreFila[indiceAtual];
                                         if (entrada && entrada.resposta) {
                                             inner.textContent = formatarTextoDiario(entrada.resposta);
                                         }
