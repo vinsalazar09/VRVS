@@ -8926,6 +8926,17 @@
                 }
             }, 500);
             
+            // GARANTIR RENDERIZAÇÃO APÓS REMOVER SPLASH (failsafe)
+            setTimeout(() => {
+                try {
+                    renderDados();
+                    renderAgenda();
+                    renderTarefas();
+                } catch (error) {
+                    console.error('[ONLOAD] Erro ao renderizar após splash:', error);
+                }
+            }, 600);
+            
             // Garantir logo novamente após carregamento completo
             garantirLogoCarregada();
             
@@ -14801,6 +14812,20 @@
                 // Build tag já está no HTML, apenas garantir que está visível
                 buildTagEl.textContent = '[build: 5e4b588]';
                 buildTagEl.style.display = 'none'; // P1: Ocultar build tag
+            }
+            
+            // INICIALIZAÇÃO CRÍTICA: Renderizar dados ao carregar
+            try {
+                renderDados();
+                renderAgenda();
+                renderTarefas();
+                if (typeof renderHistorico === 'function') renderHistorico();
+                if (typeof renderPendencias === 'function') renderPendencias();
+                if (typeof renderCaderno === 'function') renderCaderno();
+                if (typeof renderDiario === 'function') renderDiario();
+                if (typeof updateStats === 'function') updateStats();
+            } catch (error) {
+                console.error('[INIT] Erro ao renderizar na inicialização:', error);
             }
         });
         
