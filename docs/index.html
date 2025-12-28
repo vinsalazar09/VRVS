@@ -3970,27 +3970,28 @@
             dados = dados.map(d => fixAreaTemaObjeto(d));
         }
         
-        // Limpar dados corrompidos
+        // Limpar dados corrompidos (DESABILITADO TEMPORARIAMENTE PARA SEGURANÇA)
         function limparDadosCorretos() {
-            const dadosOriginais = dados.length;
-            dados = dados.filter(t => {
-                if (!t.area || t.area.match(/^\d{4}-\d{2}-\d{2}/)) return false;
-                if (t.area && t.area.toLowerCase().includes('sugest')) return false;
-                if (!t.tema || t.tema.toLowerCase().includes('revisao ativa') || t.tema.toLowerCase().includes('revisão ativa')) return false;
-                if (t.tema.length > 100) return false;
-                if (t.tema.match(/^\d{4}-\d{2}-\d{2}/)) return false;
-                if (t.tema.includes('Sugestão:') || t.tema.includes('sugestão:')) return false;
-                if ((t.tema.match(/\|/g) || []).length > 2) return false;
-                return true;
-            });
-            
-            if (dados.length < dadosOriginais) {
-                console.log(`🧹 Limpeza: removidos ${dadosOriginais - dados.length} registros corrompidos`);
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-            }
+            // DESABILITADO: Não limpar dados automaticamente
+            // const dadosOriginais = dados.length;
+            // dados = dados.filter(t => {
+            //     if (!t.area || t.area.match(/^\d{4}-\d{2}-\d{2}/)) return false;
+            //     if (t.area && t.area.toLowerCase().includes('sugest')) return false;
+            //     if (!t.tema || t.tema.toLowerCase().includes('revisao ativa') || t.tema.toLowerCase().includes('revisão ativa')) return false;
+            //     if (t.tema.length > 100) return false;
+            //     if (t.tema.match(/^\d{4}-\d{2}-\d{2}/)) return false;
+            //     if (t.tema.includes('Sugestão:') || t.tema.includes('sugestão:')) return false;
+            //     if ((t.tema.match(/\|/g) || []).length > 2) return false;
+            //     return true;
+            // });
+            // 
+            // if (dados.length < dadosOriginais) {
+            //     console.log(`🧹 Limpeza: removidos ${dadosOriginais - dados.length} registros corrompidos`);
+            //     localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+            // }
         }
         
-        limparDadosCorretos();
+        // limparDadosCorretos(); // DESABILITADO
         
         // Função para limpar histórico inválido (usada na inicialização e após importação)
         function limparHistoricoInvalido() {
