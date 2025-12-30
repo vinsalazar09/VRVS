@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.47-fix-quota-import-20251230-1329";
+const CACHE_NAME = "vrvs-v5.3.48-clean-prod-20251230-1335";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
