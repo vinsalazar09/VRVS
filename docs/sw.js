@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.37-safeboot-20251230-0230";
+const CACHE_NAME = "vrvs-v5.3.38-sw-hotfix-20251230-0242";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -56,67 +56,51 @@ self.addEventListener('activate', (event) => {
 
 // Interceptar requisições
 self.addEventListener('fetch', (event) => {
-    // Ignorar requisições não-GET
-    if (event.request.method !== 'GET') {
-        return;
-    }
+    if (event.request.method !== 'GET') return;
 
-    // Ignorar requisições de API externas (mas permitir CDNs)
     const url = new URL(event.request.url);
-    if (url.origin !== location.origin && 
-        !url.href.includes('cdn.jsdelivr.net')) {
-        return;
-    }
+    // não interceptar requests fora do domínio do app
+    if (url.origin !== self.location.origin) return;
 
-    // ESTRATÉGIA: Network-first para HTML (força atualização sempre)
-    if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
-        event.respondWith(
-            fetch(event.request, { cache: 'no-store' }).then((response) => {
-                // Se conseguiu buscar da rede, atualizar cache
-                if (response && response.status === 200) {
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
+    event.respondWith((async () => {
+        // Navegação (document): rede primeiro, fallback cache
+        if (event.request.mode === 'navigate') {
+            try {
+                return await fetch(event.request);
+            } catch (e) {
+                try {
+                    // tenta achar um "index" já cacheado (várias possibilidades)
+                    const cache = await caches.open(CACHE_NAME);
+                    return (
+                        (await cache.match('./')) ||
+                        (await cache.match('/')) ||
+                        (await cache.match('index.html')) ||
+                        (await caches.match(event.request))
+                    );
+                } catch (_) {
+                    return new Response('', { status: 503, statusText: 'Offline' });
                 }
-                return response;
-            }).catch(() => {
-                // Se offline, usar cache
-                return caches.match(event.request).then((response) => {
-                    return response || caches.match('./index.html');
-                });
-            })
-        );
-        return;
-    }
+            }
+        }
 
-    // Para outros arquivos, usar cache-first mas verificar atualização
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            // Buscar da rede primeiro para verificar atualizações
-            return fetch(event.request).then((networkResponse) => {
-                // Se conseguiu da rede e é sucesso, atualizar cache
-                if (networkResponse && networkResponse.status === 200) {
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                    return networkResponse;
+        // Assets: rede primeiro, fallback cache (sempre com try/catch)
+        try {
+            const net = await fetch(event.request);
+            try {
+                if (net && net.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    cache.put(event.request, net.clone()).catch(() => {});
                 }
-                // Se não conseguiu da rede, usar cache se disponível
-                return response || networkResponse;
-            }).catch(() => {
-                // Se offline, usar cache se disponível
-                if (response) {
-                    return response;
-                }
-                // Se for HTML e offline, retornar index.html
-                if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
-                    return caches.match('./index.html');
-                }
-            });
-        })
-    );
+            } catch (_) {}
+            return net;
+        } catch (e) {
+            try {
+                const cached = await caches.match(event.request);
+                if (cached) return cached;
+            } catch (_) {}
+            return new Response('', { status: 503, statusText: 'Offline' });
+        }
+    })());
 });
 
 // Sincronização em background quando voltar online
