@@ -33,6 +33,115 @@
 
         // marco que o <head> executou
         __vrvsMark(1);
+        
+        // === VRVS EMERGÊNCIA (PWA preso no splash) ===
+        function vrvsDownloadRawStoragePWA(){
+            try {
+                var keys = ['vrvs_dados','vrvs_historico','vrvs_anotacoes','vrvs_diario','vrvs_config'];
+                var snap = { ts: new Date().toISOString(), note: 'RAW localStorage (PWA context)', data: {}, allKeys: [] };
+                for (var i=0; i<keys.length; i++){
+                    var k = keys[i];
+                    try { snap.data[k] = localStorage.getItem(k); } catch(e){ snap.data[k] = null; }
+                }
+                try {
+                    for (var j=0; j<localStorage.length; j++){
+                        var kk = localStorage.key(j);
+                        snap.allKeys.push({ key: kk, length: (localStorage.getItem(kk)||'').length });
+                    }
+                } catch(_) {}
+                var blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+                var a = document.createElement('a');
+                var stamp = new Date().toISOString().replace(/[:.]/g,'-');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'VRVS_PWA_RAW_' + stamp + '.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(_){} }, 2000);
+            } catch(e) {
+                alert('Falha ao baixar RAW: ' + String(e));
+            }
+        }
+        
+        function vrvsClearSWAndCachesThenReload(){
+            try {
+                var done = function(){
+                    try { location.reload(); } catch(_) {}
+                };
+                // unregister SW
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(regs){
+                        return Promise.all(regs.map(function(r){ try{ return r.unregister(); } catch(e){ return Promise.resolve(false); } }));
+                    }).catch(function(){});
+                }
+                // clear caches
+                if ('caches' in window) {
+                    caches.keys().then(function(names){
+                        return Promise.all(names.map(function(n){ try{ return caches.delete(n); } catch(e){ return Promise.resolve(false); } }));
+                    }).then(done).catch(done);
+                } else {
+                    done();
+                }
+            } catch(e) {
+                try { location.reload(); } catch(_) {}
+            }
+        }
+        
+        function vrvsShowRescueOverlayIfStuck(){
+            try {
+                if (!document.body) { setTimeout(vrvsShowRescueOverlayIfStuck, 200); return; }
+                // só mostra se ainda está em splash-loading (preso)
+                var stuck = false;
+                try { stuck = document.body.classList.contains('splash-loading'); } catch(_) {}
+                if (!stuck) return;
+                // evita duplicar
+                if (document.getElementById('vrvsRescueOverlay')) return;
+                var ov = document.createElement('div');
+                ov.id = 'vrvsRescueOverlay';
+                ov.style.cssText =
+                    'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.88);color:#fff;' +
+                    'padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto;font-family:-apple-system,system-ui;';
+                var title = document.createElement('div');
+                title.style.cssText = 'font-size:16px;font-weight:700;';
+                title.textContent = 'VRVS — MODO RESGATE (PWA preso no splash)';
+                var info = document.createElement('div');
+                info.style.cssText = 'font-size:13px;opacity:.95;line-height:1.35;';
+                info.textContent = 'O app não terminou o boot. Você pode baixar seus dados do PWA agora (RAW) e/ou limpar cache offline e recarregar. Isso NÃO apaga seus dados.';
+                var btn1 = document.createElement('button');
+                btn1.textContent = 'Baixar RAW (dados atuais do PWA)';
+                btn1.style.cssText = 'padding:12px;border-radius:12px;border:0;font-size:14px;font-weight:700;';
+                btn1.onclick = vrvsDownloadRawStoragePWA;
+                var btn2 = document.createElement('button');
+                btn2.textContent = 'Limpar cache offline (SW/caches) e recarregar';
+                btn2.style.cssText = 'padding:12px;border-radius:12px;border:0;font-size:14px;font-weight:700;';
+                btn2.onclick = vrvsClearSWAndCachesThenReload;
+                var box = document.createElement('pre');
+                box.id = 'vrvsRescueKeys';
+                box.style.cssText = 'background:rgba(255,255,255,.08);padding:12px;border-radius:12px;font-size:12px;white-space:pre-wrap;';
+                try {
+                    var lines = [];
+                    var mainKeys = ['vrvs_dados','vrvs_historico','vrvs_anotacoes','vrvs_diario','vrvs_config'];
+                    for (var i=0;i<mainKeys.length;i++){
+                        var k = mainKeys[i];
+                        var v = null;
+                        try { v = localStorage.getItem(k); } catch(e){ v = null; }
+                        lines.push(k + ': ' + (v ? ('len=' + v.length) : 'MISSING/ERR'));
+                    }
+                    box.textContent = lines.join('\n');
+                } catch(e) {
+                    box.textContent = 'Falha ao ler localStorage: ' + String(e);
+                }
+                ov.appendChild(title);
+                ov.appendChild(info);
+                ov.appendChild(btn1);
+                ov.appendChild(btn2);
+                ov.appendChild(box);
+                document.body.appendChild(ov);
+            } catch(e) {}
+        }
+        
+        // se após 7s ainda estiver em splash-loading, mostra resgate
+        setTimeout(vrvsShowRescueOverlayIfStuck, 7000);
     </script>
     <script>
         (function () {
