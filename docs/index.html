@@ -115,6 +115,26 @@
                 btn2.textContent = 'Limpar cache offline (SW/caches) e recarregar';
                 btn2.style.cssText = 'padding:12px;border-radius:12px;border:0;font-size:14px;font-weight:700;';
                 btn2.onclick = vrvsClearSWAndCachesThenReload;
+                var btn3 = document.createElement('button');
+                btn3.textContent = 'Fechar overlay e tentar continuar';
+                btn3.style.cssText = 'padding:12px;border-radius:12px;border:0;font-size:14px;font-weight:700;background:rgba(255,255,255,.2);';
+                btn3.onclick = function(){
+                    try {
+                        var overlay = document.getElementById('vrvsRescueOverlay');
+                        if (overlay) overlay.remove();
+                        // tenta remover splash-loading e forçar boot continuar
+                        try { document.body.classList.remove('splash-loading'); } catch(_) {}
+                        try {
+                            var splash = document.getElementById('splashScreen');
+                            if (splash) {
+                                splash.classList.add('fade-out');
+                                setTimeout(function(){
+                                    try { splash.classList.add('hidden'); } catch(_) {}
+                                }, 800);
+                            }
+                        } catch(_) {}
+                    } catch(e) {}
+                };
                 var box = document.createElement('pre');
                 box.id = 'vrvsRescueKeys';
                 box.style.cssText = 'background:rgba(255,255,255,.08);padding:12px;border-radius:12px;font-size:12px;white-space:pre-wrap;';
@@ -135,6 +155,7 @@
                 ov.appendChild(info);
                 ov.appendChild(btn1);
                 ov.appendChild(btn2);
+                ov.appendChild(btn3);
                 ov.appendChild(box);
                 document.body.appendChild(ov);
             } catch(e) {}
