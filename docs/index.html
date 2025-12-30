@@ -3964,10 +3964,12 @@
             reader.onload = (e) => {
                 try {
                     const raw = JSON.parse(e.target.result);
+                    console.log('[IMPORT RAW] Arquivo carregado:', raw.note || 'backup padrão');
                     
                     // Converter RAW do overlay para formato de backup se necessário
                     let backup = raw;
                     if (raw.note && raw.note.includes('RAW localStorage')) {
+                        console.log('[IMPORT RAW] Detectado RAW do overlay, convertendo...');
                         // É um RAW do overlay, precisa converter
                         backup = {
                             schemaVersion: 'VRVS_BACKUP_v1',
@@ -3983,36 +3985,70 @@
                         // Parsear strings JSON do RAW
                         if (raw.data) {
                             try {
-                                backup.vrvs_dados = raw.data.vrvs_dados ? JSON.parse(raw.data.vrvs_dados) : [];
-                            } catch(e) { backup.vrvs_dados = []; }
+                                const dadosRaw = raw.data.vrvs_dados;
+                                backup.vrvs_dados = dadosRaw ? (typeof dadosRaw === 'string' ? JSON.parse(dadosRaw) : dadosRaw) : [];
+                                console.log('[IMPORT RAW] vrvs_dados:', backup.vrvs_dados?.length || 0, 'itens');
+                            } catch(e) { 
+                                console.error('[IMPORT RAW] Erro ao parsear vrvs_dados:', e);
+                                backup.vrvs_dados = []; 
+                            }
                             
                             try {
-                                backup.vrvs_historico = raw.data.vrvs_historico ? JSON.parse(raw.data.vrvs_historico) : [];
-                            } catch(e) { backup.vrvs_historico = []; }
+                                const historicoRaw = raw.data.vrvs_historico;
+                                backup.vrvs_historico = historicoRaw ? (typeof historicoRaw === 'string' ? JSON.parse(historicoRaw) : historicoRaw) : [];
+                                console.log('[IMPORT RAW] vrvs_historico:', backup.vrvs_historico?.length || 0, 'itens');
+                            } catch(e) { 
+                                console.error('[IMPORT RAW] Erro ao parsear vrvs_historico:', e);
+                                backup.vrvs_historico = []; 
+                            }
                             
                             try {
-                                backup.vrvs_anotacoes = raw.data.vrvs_anotacoes ? JSON.parse(raw.data.vrvs_anotacoes) : [];
-                            } catch(e) { backup.vrvs_anotacoes = []; }
+                                const anotacoesRaw = raw.data.vrvs_anotacoes;
+                                backup.vrvs_anotacoes = anotacoesRaw ? (typeof anotacoesRaw === 'string' ? JSON.parse(anotacoesRaw) : anotacoesRaw) : [];
+                                console.log('[IMPORT RAW] vrvs_anotacoes:', backup.vrvs_anotacoes?.length || 0, 'itens');
+                            } catch(e) { 
+                                console.error('[IMPORT RAW] Erro ao parsear vrvs_anotacoes:', e);
+                                backup.vrvs_anotacoes = []; 
+                            }
                             
                             try {
-                                backup.vrvs_lembretes = raw.data.vrvs_lembretes ? JSON.parse(raw.data.vrvs_lembretes) : [];
-                            } catch(e) { backup.vrvs_lembretes = []; }
+                                const lembretesRaw = raw.data.vrvs_lembretes;
+                                backup.vrvs_lembretes = lembretesRaw ? (typeof lembretesRaw === 'string' ? JSON.parse(lembretesRaw) : lembretesRaw) : [];
+                                console.log('[IMPORT RAW] vrvs_lembretes:', backup.vrvs_lembretes?.length || 0, 'itens');
+                            } catch(e) { 
+                                console.error('[IMPORT RAW] Erro ao parsear vrvs_lembretes:', e);
+                                backup.vrvs_lembretes = []; 
+                            }
                             
                             try {
-                                backup.vrvs_diario = raw.data.vrvs_diario ? JSON.parse(raw.data.vrvs_diario) : {entradas:[],schemaVersion:"1.0"};
-                            } catch(e) { backup.vrvs_diario = {entradas:[],schemaVersion:"1.0"}; }
+                                const diarioRaw = raw.data.vrvs_diario;
+                                backup.vrvs_diario = diarioRaw ? (typeof diarioRaw === 'string' ? JSON.parse(diarioRaw) : diarioRaw) : {entradas:[],schemaVersion:"1.0"};
+                                console.log('[IMPORT RAW] vrvs_diario:', backup.vrvs_diario?.entradas?.length || 0, 'entradas');
+                            } catch(e) { 
+                                console.error('[IMPORT RAW] Erro ao parsear vrvs_diario:', e);
+                                backup.vrvs_diario = {entradas:[],schemaVersion:"1.0"}; 
+                            }
                             
                             try {
-                                backup.vrvs_config = raw.data.vrvs_config ? JSON.parse(raw.data.vrvs_config) : {};
-                            } catch(e) { backup.vrvs_config = {}; }
+                                const configRaw = raw.data.vrvs_config;
+                                backup.vrvs_config = configRaw ? (typeof configRaw === 'string' ? JSON.parse(configRaw) : configRaw) : {};
+                                console.log('[IMPORT RAW] vrvs_config:', Object.keys(backup.vrvs_config || {}).length, 'chaves');
+                            } catch(e) { 
+                                console.error('[IMPORT RAW] Erro ao parsear vrvs_config:', e);
+                                backup.vrvs_config = {}; 
+                            }
                         }
+                        console.log('[IMPORT RAW] Conversão concluída');
                     }
                     
                     // Validar schemaVersion
                     if (!backup.schemaVersion || backup.schemaVersion !== 'VRVS_BACKUP_v1') {
+                        console.error('[IMPORT RAW] schemaVersion inválido:', backup.schemaVersion);
                         mostrarNotificacaoFeedback('⚠️ Arquivo não é um backup VRVS válido (schemaVersion incorreto)', 'error');
                         return;
                     }
+                    
+                    console.log('[IMPORT RAW] Validação OK, mostrando preview...');
                     
                     // Mostrar preview antes de restaurar
                     const totalDados = backup.vrvs_dados?.length || 0;
