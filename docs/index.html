@@ -1865,6 +1865,31 @@
             overflow: hidden;
         }
         
+        /* Banner de corrupção */
+        #vrvsCorruptBanner {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, .85);
+            color: #fff;
+            font-size: 13px;
+            z-index: 99999;
+            display: none;
+        }
+        #vrvsCorruptBanner button {
+            margin-left: 10px;
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: rgba(255, 127, 80, 0.8);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
         /* ===== NOVOS ESTILOS - REFATORAÇÃO v2.0 ===== */
         
         /* Sub-navegação dentro de abas */
@@ -3661,6 +3686,43 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // ==================== SAFE-BOOT: PARSE SEGURO DE LOCALSTORAGE ====================
+        window.__VRVS_CORRUPT_KEYS__ = [];
+        
+        function vrvsSafeParseLS(key, fallback) {
+            const raw = localStorage.getItem(key);
+            if (raw == null) return fallback;
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                window.__VRVS_CORRUPT_KEYS__.push({
+                    key,
+                    length: raw.length,
+                    error: String(e)
+                });
+                return fallback; // NÃO sobrescrever localStorage
+            }
+        }
+        
+        function vrvsDownloadRawStorage() {
+            const keys = ['vrvs_dados','vrvs_historico','vrvs_anotacoes','vrvs_diario','vrvs_config'];
+            const snap = { ts: new Date().toISOString(), data: {}, corrupt: window.__VRVS_CORRUPT_KEYS__ };
+            keys.forEach(k => snap.data[k] = localStorage.getItem(k));
+            // também capturar backups internos, se existirem:
+            const extra = Object.keys(localStorage).filter(k => k.startsWith('vrvs_backup_')).sort().slice(-20);
+            snap.extra = {};
+            extra.forEach(k => snap.extra[k] = localStorage.getItem(k));
+            const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+            a.href = URL.createObjectURL(blob);
+            a.download = `VRVS_RAW_iPhone_${stamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        }
+        
         // ==================== DADOS E INICIALIZAÇÃO ====================
         // Função para corrigir inversão área↔tema ANTES de carregar dados
         function fixAreaTemaObjeto(obj) {
@@ -3684,12 +3746,12 @@
             const backup = {
                 schemaVersion: 'VRVS_BACKUP_v1',
                 timestamp: new Date().toISOString(),
-                dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
-                historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
-                anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
-                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
-                diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
-                config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
+                dados: vrvsSafeParseLS('vrvs_dados', []),
+                historico: vrvsSafeParseLS('vrvs_historico', []),
+                anotacoes: vrvsSafeParseLS('vrvs_anotacoes', []),
+                lembretes: vrvsSafeParseLS('vrvs_lembretes', []),
+                diario: vrvsSafeParseLS('vrvs_diario', {"entradas":[],"schemaVersion":"1.0"}),
+                config: vrvsSafeParseLS('vrvs_config', {})
             };
             
             const backupKey = `vrvs_backup_${Date.now()}`;
@@ -3715,12 +3777,12 @@
                 const backup = {
                     schemaVersion: 'VRVS_BACKUP_v1',
                     createdAt: new Date().toISOString(),
-                    vrvs_dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
-                    vrvs_historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
-                    vrvs_anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
-                    vrvs_lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
-                    vrvs_diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
-                    vrvs_config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
+                    vrvs_dados: vrvsSafeParseLS('vrvs_dados', []),
+                    vrvs_historico: vrvsSafeParseLS('vrvs_historico', []),
+                    vrvs_anotacoes: vrvsSafeParseLS('vrvs_anotacoes', []),
+                    vrvs_lembretes: vrvsSafeParseLS('vrvs_lembretes', []),
+                    vrvs_diario: vrvsSafeParseLS('vrvs_diario', {"entradas":[],"schemaVersion":"1.0"}),
+                    vrvs_config: vrvsSafeParseLS('vrvs_config', {})
                 };
                 
                 // Contar itens para preview
@@ -3938,10 +4000,10 @@
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         
-        let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
-        let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
-        let lembretes = JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]');
-        let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'); // Anotações por tema
+        let dados = vrvsSafeParseLS('vrvs_dados', []);
+        let historico = vrvsSafeParseLS('vrvs_historico', []);
+        let lembretes = vrvsSafeParseLS('vrvs_lembretes', []);
+        let anotacoes = vrvsSafeParseLS('vrvs_anotacoes', []); // Anotações por tema
         
         // Aplicar correção de inversão área/tema nos dados carregados
         if (Array.isArray(dados)) {
@@ -8124,7 +8186,7 @@
         function migrarAnotacoesParaHotTopics() {
             // Migração segura: adicionar campo hotTopics sem perder dados
             const backupKey = fazerBackupCompleto();
-            const anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
+            const anotacoesAtuais = vrvsSafeParseLS('vrvs_anotacoes', []);
             
             let atualizadas = false;
             const anotacoesMigradas = anotacoesAtuais.map(a => {
@@ -14746,8 +14808,22 @@
                 buildTagEl.textContent = '[build: 5e4b588]';
                 buildTagEl.style.display = 'none'; // P1: Ocultar build tag
             }
+            
+            // Mostrar banner se detectar corrupção
+            try {
+                if (window.__VRVS_CORRUPT_KEYS__ && window.__VRVS_CORRUPT_KEYS__.length) {
+                    const el = document.getElementById('vrvsCorruptBanner');
+                    if (el) el.style.display = 'block';
+                }
+            } catch(_) {}
         });
     </script>
+    
+    <!-- Banner de corrupção (oculto por padrão) -->
+    <div id="vrvsCorruptBanner">
+        ⚠️ Dados locais com erro. App abriu em modo seguro.
+        <button onclick="vrvsDownloadRawStorage()">Baixar RAW</button>
+    </div>
 </body>
 </html>
 
