@@ -4115,6 +4115,7 @@
                     }
                     
                     // Re-renderizar tudo
+                    console.log('[IMPORT RAW] Recarregando UI...');
                     renderDados();
                     renderTarefas();
                     renderAgenda();
@@ -4124,10 +4125,12 @@
                     renderDiario();
                     updateStats();
                     
+                    console.log('[IMPORT RAW] ✅ Importação concluída com sucesso!');
                     mostrarNotificacaoFeedback('✅ Backup restaurado com sucesso! Todos os dados foram atualizados.');
                 } catch (error) {
-                    console.error('[BACKUP] Erro ao importar JSON:', error);
-                    mostrarNotificacaoFeedback('⚠️ Erro ao importar backup. Verifique se o arquivo é válido.', 'error');
+                    console.error('[IMPORT RAW] ❌ Erro ao importar backup:', error);
+                    console.error('[IMPORT RAW] Stack:', error.stack);
+                    mostrarNotificacaoFeedback('⚠️ Erro ao importar backup: ' + (error.message || 'Erro desconhecido'), 'error');
                 }
             };
             
