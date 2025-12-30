@@ -3876,6 +3876,15 @@
         
         // ==================== FUNÇÕES DE SEGURANÇA ====================
         
+        // Detectar se está em modo standalone (PWA)
+        function isStandalone() {
+            try {
+                if (navigator && navigator.standalone) return true; // iOS
+                if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true; // padrão
+                return false;
+            } catch (e) { return false; }
+        }
+        
         function fazerBackupCompleto() {
             const backup = {
                 schemaVersion: 'VRVS_BACKUP_v1',
@@ -3888,21 +3897,45 @@
                 config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
             };
             
+            // Limitar backups no PWA (2) vs desktop (5)
+            const MAX_BACKUPS = isStandalone() ? 2 : 5;
+            
+            // Limpar backups antigos ANTES de criar novo (para abrir espaço)
+            const bks = Object.keys(localStorage)
+                .filter(k => k.startsWith('vrvs_backup_'))
+                .sort();
+            
+            while (bks.length >= MAX_BACKUPS) {
+                const rm = bks.shift();
+                try { localStorage.removeItem(rm); } catch(_) {}
+            }
+            
             const backupKey = `vrvs_backup_${Date.now()}`;
             localStorage.setItem(backupKey, JSON.stringify(backup));
             
-            // Manter apenas últimos 5 backups
-            const backupKeys = Object.keys(localStorage)
-                .filter(k => k.startsWith('vrvs_backup_'))
-                .sort()
-                .reverse();
-            
-            if (backupKeys.length > 5) {
-                backupKeys.slice(5).forEach(k => localStorage.removeItem(k));
-            }
-            
-            console.log(`[BACKUP] Backup criado: ${backupKey}`);
+            console.log(`[BACKUP] Backup criado: ${backupKey} (MAX_BACKUPS: ${MAX_BACKUPS})`);
             return backupKey;
+        }
+        
+        // Baixar snapshot pré-import (NÃO grava no localStorage)
+        function baixarSnapshotAntesImport() {
+            try {
+                const keys = ['vrvs_dados','vrvs_historico','vrvs_anotacoes','vrvs_diario','vrvs_config','vrvs_lembretes'];
+                const snap = { ts: new Date().toISOString(), note: 'snapshot antes do import', data: {} };
+                keys.forEach(k => { snap.data[k] = localStorage.getItem(k); });
+                
+                const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+                a.href = URL.createObjectURL(blob);
+                a.download = `VRVS_PRE_IMPORT_${stamp}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+            } catch (e) {
+                try { alert('Falha ao baixar snapshot pré-import: ' + String(e)); } catch(_) {}
+            }
         }
         
         // Exportar backup completo em JSON (download)
@@ -4074,48 +4107,94 @@
                     
                     if (!confirmacao) return;
                     
-                    // Fazer backup antes de restaurar
-                    console.log('[IMPORT RAW] Fazendo backup antes de restaurar...');
-                    fazerBackupCompleto();
+                    // Snapshot pré-import (download, NÃO grava no localStorage)
+                    console.log('[IMPORT RAW] Baixando snapshot pré-import...');
+                    baixarSnapshotAntesImport();
                     
-                    // Restaurar dados
+                    // Limpar backups antigos, mantendo 1 mais recente (segurança extra)
+                    try {
+                        const bks = Object.keys(localStorage).filter(k => k.startsWith('vrvs_backup_')).sort();
+                        // manter o mais recente (último), apagar o resto
+                        for (let i = 0; i < bks.length - 1; i++) {
+                            try { localStorage.removeItem(bks[i]); } catch(_) {}
+                        }
+                        console.log('[IMPORT RAW] Backups antigos limpos, mantido 1 mais recente');
+                    } catch(_) {}
+                    
+                    // Restaurar dados (removeItem + setItem para reduzir pico de alocação)
                     console.log('[IMPORT RAW] Restaurando dados...');
                     if (backup.vrvs_dados) {
-                        localStorage.setItem('vrvs_dados', JSON.stringify(backup.vrvs_dados));
-                        dados = backup.vrvs_dados;
-                        console.log('[IMPORT RAW] ✅ vrvs_dados restaurado:', backup.vrvs_dados.length, 'itens');
+                        try { localStorage.removeItem('vrvs_dados'); } catch(_) {}
+                        try {
+                            localStorage.setItem('vrvs_dados', JSON.stringify(backup.vrvs_dados));
+                            dados = backup.vrvs_dados;
+                            console.log('[IMPORT RAW] ✅ vrvs_dados restaurado:', backup.vrvs_dados.length, 'itens');
+                        } catch(e) {
+                            alert('Falha ao restaurar vrvs_dados (quota). Snapshot pré-import foi baixado.');
+                            throw e;
+                        }
                     }
                     
                     if (backup.vrvs_historico) {
-                        localStorage.setItem('vrvs_historico', JSON.stringify(backup.vrvs_historico));
-                        historico = backup.vrvs_historico;
-                        console.log('[IMPORT RAW] ✅ vrvs_historico restaurado:', backup.vrvs_historico.length, 'itens');
+                        try { localStorage.removeItem('vrvs_historico'); } catch(_) {}
+                        try {
+                            localStorage.setItem('vrvs_historico', JSON.stringify(backup.vrvs_historico));
+                            historico = backup.vrvs_historico;
+                            console.log('[IMPORT RAW] ✅ vrvs_historico restaurado:', backup.vrvs_historico.length, 'itens');
+                        } catch(e) {
+                            alert('Falha ao restaurar vrvs_historico (quota). Snapshot pré-import foi baixado.');
+                            throw e;
+                        }
                     }
                     
                     if (backup.vrvs_anotacoes) {
-                        localStorage.setItem('vrvs_anotacoes', JSON.stringify(backup.vrvs_anotacoes));
-                        anotacoes = backup.vrvs_anotacoes;
-                        console.log('[IMPORT RAW] ✅ vrvs_anotacoes restaurado:', backup.vrvs_anotacoes.length, 'itens');
+                        try { localStorage.removeItem('vrvs_anotacoes'); } catch(_) {}
+                        try {
+                            localStorage.setItem('vrvs_anotacoes', JSON.stringify(backup.vrvs_anotacoes));
+                            anotacoes = backup.vrvs_anotacoes;
+                            console.log('[IMPORT RAW] ✅ vrvs_anotacoes restaurado:', backup.vrvs_anotacoes.length, 'itens');
+                        } catch(e) {
+                            alert('Falha ao restaurar vrvs_anotacoes (quota). Snapshot pré-import foi baixado.');
+                            throw e;
+                        }
                     }
                     
                     if (backup.vrvs_lembretes) {
-                        localStorage.setItem('vrvs_lembretes', JSON.stringify(backup.vrvs_lembretes));
-                        console.log('[IMPORT RAW] ✅ vrvs_lembretes restaurado:', backup.vrvs_lembretes.length, 'itens');
+                        try { localStorage.removeItem('vrvs_lembretes'); } catch(_) {}
+                        try {
+                            localStorage.setItem('vrvs_lembretes', JSON.stringify(backup.vrvs_lembretes));
+                            console.log('[IMPORT RAW] ✅ vrvs_lembretes restaurado:', backup.vrvs_lembretes.length, 'itens');
+                        } catch(e) {
+                            alert('Falha ao restaurar vrvs_lembretes (quota). Snapshot pré-import foi baixado.');
+                            throw e;
+                        }
                     }
                     
                     // CRÍTICO: Restaurar Diário com SRS completo
                     if (backup.vrvs_diario) {
-                        localStorage.setItem('vrvs_diario', JSON.stringify(backup.vrvs_diario));
-                        window.diario = backup.vrvs_diario;
-                        console.log('[IMPORT RAW] ✅ vrvs_diario restaurado:', backup.vrvs_diario.entradas?.length || 0, 'entradas');
-                        
-                        // Migrar SRS se necessário (mas não resetar se já está completo)
-                        migrarSRSParaVRVS3P();
+                        try { localStorage.removeItem('vrvs_diario'); } catch(_) {}
+                        try {
+                            localStorage.setItem('vrvs_diario', JSON.stringify(backup.vrvs_diario));
+                            window.diario = backup.vrvs_diario;
+                            console.log('[IMPORT RAW] ✅ vrvs_diario restaurado:', backup.vrvs_diario.entradas?.length || 0, 'entradas');
+                            
+                            // Migrar SRS se necessário (mas não resetar se já está completo)
+                            migrarSRSParaVRVS3P();
+                        } catch(e) {
+                            alert('Falha ao restaurar vrvs_diario (quota). Snapshot pré-import foi baixado.');
+                            throw e;
+                        }
                     }
                     
                     if (backup.vrvs_config) {
-                        localStorage.setItem('vrvs_config', JSON.stringify(backup.vrvs_config));
-                        console.log('[IMPORT RAW] ✅ vrvs_config restaurado');
+                        try { localStorage.removeItem('vrvs_config'); } catch(_) {}
+                        try {
+                            localStorage.setItem('vrvs_config', JSON.stringify(backup.vrvs_config));
+                            console.log('[IMPORT RAW] ✅ vrvs_config restaurado');
+                        } catch(e) {
+                            alert('Falha ao restaurar vrvs_config (quota). Snapshot pré-import foi baixado.');
+                            throw e;
+                        }
                     }
                     
                     // Re-renderizar tudo
