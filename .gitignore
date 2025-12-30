@@ -24,9 +24,36 @@ dist/
 build/
 
 # Documentação de desenvolvimento (não precisa ir pro GitHub)
-FAZER_PUSH_AGORA.md
-PUSH_SIMPLES.md
-VERIFICACAO_COMPLETA.md
+# Arquivos temporários e de diagnóstico na raiz
+*.md
+!README.md
+!docs/README.md
+!docs/ARQUITETURA_DADOS.md
+!docs/DOCUMENTACAO_COMPLETA.md
+!docs/CHANGELOG.md
+!docs/ERROS_E_ACERTOS_TECNICOS.md
+
+# Pastas de diagnóstico e temporários
+DIAGNOSTICO/
+DIARIO/CURSOR/*.md
+DIARIO/CURSOR/*.txt
+!DIARIO/CURSOR/00_LEIA_PRIMEIRO_SEMPRE.txt
+!DIARIO/CURSOR/BASE_CONHECIMENTO_PLATAFORMA.md
+!DIARIO/CURSOR/CADERNO_ERROS_ACERTOS.txt
+DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.md
+
+# Scripts temporários
+*.py
+*.html
+*.js
+!docs/index.html
+!docs/sw.js
+!docs/manifest.json
+!docs/logo.*
+!docs/favicon.ico
+
+# Arquivos específicos que devem ser ignorados
+docs/COMO_ABRIR_CONSOLE_IPHONE.md
 docs/COMO_ATUALIZAR_APP.md
 docs/INSTRUCOES_PUSH_GITHUB.md
 docs/PROBLEMA_CACHE_EXPLICADO.md
@@ -40,8 +67,5 @@ docs/PLANO_SEGURANCA_IMPLEMENTACAO.md
 docs/PROMPT_DIARIO_APRENDIZADOS_OPUS.md
 docs/RESUMO_IMPLEMENTACAO_20251211.md
 docs/SOLUCAO_OPUS_APLICADA.md
-
-# Arquivos temporários de teste
-teste_*.html
-RECUPERAR_ANOTACOES_AGORA.html
-analise_*.py
+docs/chatgpt/
+docs/opus/

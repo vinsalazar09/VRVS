@@ -3968,8 +3968,12 @@
                     
                     // Converter RAW do overlay para formato de backup se necessário
                     let backup = raw;
-                    if (raw.note && raw.note.includes('RAW localStorage')) {
+                    // Detectar RAW do overlay: pode ter 'note' com 'RAW localStorage' OU ter 'data' sem 'schemaVersion'
+                    const isRawOverlay = (raw.note && raw.note.includes('RAW localStorage')) || 
+                                        (raw.data && !raw.schemaVersion);
+                    if (isRawOverlay) {
                         console.log('[IMPORT RAW] Detectado RAW do overlay, convertendo...');
+                        console.log('[IMPORT RAW] Tipo detectado:', raw.note ? 'por note' : 'por estrutura');
                         // É um RAW do overlay, precisa converter
                         backup = {
                             schemaVersion: 'VRVS_BACKUP_v1',
