@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.44-overlay-fechar-20251230-0340";
+const CACHE_NAME = "vrvs-v5.3.45-import-raw-20251230-0345";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

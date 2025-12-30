@@ -3963,7 +3963,50 @@
             
             reader.onload = (e) => {
                 try {
-                    const backup = JSON.parse(e.target.result);
+                    const raw = JSON.parse(e.target.result);
+                    
+                    // Converter RAW do overlay para formato de backup se necessário
+                    let backup = raw;
+                    if (raw.note && raw.note.includes('RAW localStorage')) {
+                        // É um RAW do overlay, precisa converter
+                        backup = {
+                            schemaVersion: 'VRVS_BACKUP_v1',
+                            timestamp: raw.ts || new Date().toISOString(),
+                            vrvs_dados: null,
+                            vrvs_historico: null,
+                            vrvs_anotacoes: null,
+                            vrvs_lembretes: null,
+                            vrvs_diario: null,
+                            vrvs_config: null
+                        };
+                        
+                        // Parsear strings JSON do RAW
+                        if (raw.data) {
+                            try {
+                                backup.vrvs_dados = raw.data.vrvs_dados ? JSON.parse(raw.data.vrvs_dados) : [];
+                            } catch(e) { backup.vrvs_dados = []; }
+                            
+                            try {
+                                backup.vrvs_historico = raw.data.vrvs_historico ? JSON.parse(raw.data.vrvs_historico) : [];
+                            } catch(e) { backup.vrvs_historico = []; }
+                            
+                            try {
+                                backup.vrvs_anotacoes = raw.data.vrvs_anotacoes ? JSON.parse(raw.data.vrvs_anotacoes) : [];
+                            } catch(e) { backup.vrvs_anotacoes = []; }
+                            
+                            try {
+                                backup.vrvs_lembretes = raw.data.vrvs_lembretes ? JSON.parse(raw.data.vrvs_lembretes) : [];
+                            } catch(e) { backup.vrvs_lembretes = []; }
+                            
+                            try {
+                                backup.vrvs_diario = raw.data.vrvs_diario ? JSON.parse(raw.data.vrvs_diario) : {entradas:[],schemaVersion:"1.0"};
+                            } catch(e) { backup.vrvs_diario = {entradas:[],schemaVersion:"1.0"}; }
+                            
+                            try {
+                                backup.vrvs_config = raw.data.vrvs_config ? JSON.parse(raw.data.vrvs_config) : {};
+                            } catch(e) { backup.vrvs_config = {}; }
+                        }
+                    }
                     
                     // Validar schemaVersion
                     if (!backup.schemaVersion || backup.schemaVersion !== 'VRVS_BACKUP_v1') {
