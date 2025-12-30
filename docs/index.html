@@ -4071,32 +4071,39 @@
                     if (!confirmacao) return;
                     
                     // Fazer backup antes de restaurar
+                    console.log('[IMPORT RAW] Fazendo backup antes de restaurar...');
                     fazerBackupCompleto();
                     
                     // Restaurar dados
+                    console.log('[IMPORT RAW] Restaurando dados...');
                     if (backup.vrvs_dados) {
                         localStorage.setItem('vrvs_dados', JSON.stringify(backup.vrvs_dados));
                         dados = backup.vrvs_dados;
+                        console.log('[IMPORT RAW] ✅ vrvs_dados restaurado:', backup.vrvs_dados.length, 'itens');
                     }
                     
                     if (backup.vrvs_historico) {
                         localStorage.setItem('vrvs_historico', JSON.stringify(backup.vrvs_historico));
                         historico = backup.vrvs_historico;
+                        console.log('[IMPORT RAW] ✅ vrvs_historico restaurado:', backup.vrvs_historico.length, 'itens');
                     }
                     
                     if (backup.vrvs_anotacoes) {
                         localStorage.setItem('vrvs_anotacoes', JSON.stringify(backup.vrvs_anotacoes));
                         anotacoes = backup.vrvs_anotacoes;
+                        console.log('[IMPORT RAW] ✅ vrvs_anotacoes restaurado:', backup.vrvs_anotacoes.length, 'itens');
                     }
                     
                     if (backup.vrvs_lembretes) {
                         localStorage.setItem('vrvs_lembretes', JSON.stringify(backup.vrvs_lembretes));
+                        console.log('[IMPORT RAW] ✅ vrvs_lembretes restaurado:', backup.vrvs_lembretes.length, 'itens');
                     }
                     
                     // CRÍTICO: Restaurar Diário com SRS completo
                     if (backup.vrvs_diario) {
                         localStorage.setItem('vrvs_diario', JSON.stringify(backup.vrvs_diario));
                         window.diario = backup.vrvs_diario;
+                        console.log('[IMPORT RAW] ✅ vrvs_diario restaurado:', backup.vrvs_diario.entradas?.length || 0, 'entradas');
                         
                         // Migrar SRS se necessário (mas não resetar se já está completo)
                         migrarSRSParaVRVS3P();
@@ -4104,6 +4111,7 @@
                     
                     if (backup.vrvs_config) {
                         localStorage.setItem('vrvs_config', JSON.stringify(backup.vrvs_config));
+                        console.log('[IMPORT RAW] ✅ vrvs_config restaurado');
                     }
                     
                     // Re-renderizar tudo
