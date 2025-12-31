@@ -888,6 +888,10 @@
             color: var(--cobre-light);
             margin-bottom: 20px;
             line-height: 1.5;
+            white-space: pre-wrap;       /* preservar espaçamento original */
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            text-align: left;
         }
         
         .diario-sessao-resposta {
@@ -4615,12 +4619,23 @@
                 return;
             }
             
-            // Popular select de áreas com AREAS_FIXAS
+            // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
             const editAreaSelect = document.getElementById('editArea');
             if (editAreaSelect) {
+                // Unir AREAS_FIXAS + áreas existentes nos dados
+                const areasExistentes = [...new Set(dados.map(t => t.area).filter(Boolean))];
+                const areasCompletas = [...new Set([...AREAS_FIXAS, ...areasExistentes])].sort();
+                
                 editAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
-                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('') +
+                    areasCompletas.map(area => `<option value="${area}">${area}</option>`).join('') +
                     '<option value="__NOVA_AREA__">➕ Adicionar Nova Área...</option>';
+                
+                // Garantir seleção da área atual (mesmo que não esteja em AREAS_FIXAS)
+                if (tema.area && areasCompletas.includes(tema.area)) {
+                    editAreaSelect.value = tema.area;
+                } else {
+                    editAreaSelect.value = tema.area || '';
+                }
             }
             
             // Garantir que input está escondido ao abrir modal
@@ -4631,7 +4646,6 @@
             }
             
             document.getElementById('editId').value = tema.id;
-            editAreaSelect.value = tema.area || '';
             document.getElementById('editTema').value = tema.tema;
             document.getElementById('editPrioridade').value = tema.prioridade || 3;
             document.getElementById('editStatus').value = tema.status || 'Planejado';
@@ -9330,7 +9344,7 @@
             
             // ==================== SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA ====================
             const APP_VERSION = '5.3';
-            const SW_VERSION = 'vrvs-v5.3-sincronizacao-completa-20251212-2250';
+            const SW_VERSION = 'vrvs-v5.3.49-fix-ajustes-1230-20251230-2005';
             
             // Changelog das atualizações
             const CHANGELOG = {
@@ -10048,11 +10062,15 @@
             atualizarSelectsCaderno();
             renderCaderno();
             
-            // Popular select de áreas fixas no cadastro
+            // Popular select de áreas fixas no cadastro (incluir áreas existentes para consistência)
             const novaAreaSelect = document.getElementById('novaArea');
             if (novaAreaSelect) {
+                // Unir AREAS_FIXAS + áreas existentes nos dados (mesmo padrão do modal de edição)
+                const areasExistentes = [...new Set(dados.map(t => t.area).filter(Boolean))];
+                const areasCompletas = [...new Set([...AREAS_FIXAS, ...areasExistentes])].sort();
+                
                 novaAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
-                    AREAS_FIXAS.map(area => `<option value="${area}">${area}</option>`).join('') +
+                    areasCompletas.map(area => `<option value="${area}">${area}</option>`).join('') +
                     '<option value="__NOVA_AREA__">➕ Adicionar Nova Área...</option>';
             }
             
@@ -11688,9 +11706,16 @@
         }
         
         function renderDiarioPorData(entradas, container) {
-            // Agrupar por data
+            // Ordenar por data de criação (mais recentes primeiro) ANTES de agrupar
+            const entradasOrdenadas = [...entradas].sort((a, b) => {
+                const da = a.criadoEm || a.data || '0000-00-00';
+                const db = b.criadoEm || b.data || '0000-00-00';
+                return db.localeCompare(da); // Mais recentes primeiro
+            });
+            
+            // Agrupar por data (usar entradasOrdenadas)
             const porData = {};
-            entradas.forEach(e => {
+            entradasOrdenadas.forEach(e => {
                 if (!porData[e.data]) porData[e.data] = [];
                 porData[e.data].push(e);
             });
@@ -11723,11 +11748,18 @@
         }
         
         function renderDiarioPorTema(entradas, container) {
+            // Ordenar por data de criação (mais recentes primeiro) ANTES de agrupar
+            const entradasOrdenadas = [...entradas].sort((a, b) => {
+                const da = a.criadoEm || a.data || '0000-00-00';
+                const db = b.criadoEm || b.data || '0000-00-00';
+                return db.localeCompare(da); // Mais recentes primeiro
+            });
+            
             // CORREÇÃO: Agrupar primeiro por ÁREA, depois por TEMA dentro de cada área
             // A1b: Dedupe por nome normalizado (case/acentos) para evitar duplicação
             // BUG A2: Dedupe singular/plural usando normalizarTemaKey
             const porArea = {};
-            entradas.forEach(e => {
+            entradasOrdenadas.forEach(e => {
                 // BUG A2: Usar normalizarTemaKey para agrupamento (singulariza "fraturas" -> "fratura")
                 const temaKey = normalizarTemaKey(e.tema) || String(e.id); // Fallback para ID se tema vazio
                 
