@@ -491,41 +491,6 @@ Teot/
 **"ENCERRANDO CHAT"** ou **"ENCERRAR CHAT"** ou **"FINALIZAR"** ou **"TERMINAR"**
 → Executa protocolo completo de encerramento automaticamente
 
-### 📦 PREPARAR HANDOFF PARA CHAT NOVO (EXECUÇÃO AUTOMÁTICA):
-**Gatilhos principais:**
-- "vou abrir chat novo GPT"
-- "vou abrir chat novo Opus"
-- "preparar handoff GPT"
-- "preparar handoff Opus"
-- "chat novo GPT"
-- "chat novo Opus"
-- Qualquer frase contendo "chat novo" + ("GPT"/"ChatGPT"/"Opus"/"Claude")
-
-**⚠️ REGRA:** Se detectar QUALQUER um desses gatilhos, execute AUTOMATICAMENTE:
-
-**PASSO 1:** Identificar qual ferramenta (GPT ou Opus)
-
-**PASSO 2:** Atualizar pasta correspondente (`_HANDOFF_GPT/` ou `_HANDOFF_OPUS/`):
-   - ✅ Copiar arquivos estruturais atualizados:
-     - `00_LEIA_PRIMEIRO_SEMPRE.txt`
-     - `BASE_CONHECIMENTO_PLATAFORMA.md`
-     - `CADERNO_ERROS_ACERTOS.txt`
-   - ✅ Copiar HANDOFF mais recente:
-     - GPT: `_TEMPORARIOS_HANDOFF/HANDOFF_CHAT_GPT_*.md` (mais recente)
-     - Opus: `_TEMPORARIOS_HANDOFF/HANDOFF_OPUS_*.md` (se existir)
-   - ✅ Verificar se há documentos estruturais novos que precisam ser atualizados
-
-**PASSO 3:** Listar arquivos prontos para anexar:
-   - ✅ Mostrar ordem de anexação
-   - ✅ Mostrar caminhos completos dos arquivos
-   - ✅ Confirmar que tudo está atualizado
-
-**PASSO 4:** Se houver documentos estruturais novos ou mudanças significativas:
-   - ✅ Atualizar ambas as pastas (_HANDOFF_GPT/ e _HANDOFF_OPUS/)
-   - ✅ Avisar usuário que precisa atualizar arquivos nas pastas de handoff
-
-**⚠️ IMPORTANTE:** Este protocolo é sobre ORGANIZAR e ATUALIZAR documentos, não sobre modificar código de produção.
-
 ═══════════════════════════════════════════════════════════════
 ⚠️ LEMBRE-SE SEMPRE
 ═══════════════════════════════════════════════════════════════
