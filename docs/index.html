@@ -11723,14 +11723,20 @@
             entradas = entradasOrdenadas; // <- importante: garante uso da lista ordenada
             /* === FIM PATCH 2 === */
             
-            // Agrupar por data (usar entradasOrdenadas)
+            // Agrupar por data (usar entradasOrdenadas) - manter ordem dentro de cada grupo
             const porData = {};
             entradasOrdenadas.forEach(e => {
                 if (!porData[e.data]) porData[e.data] = [];
                 porData[e.data].push(e);
             });
             
-            const datasOrdenadas = Object.keys(porData).sort((a, b) => new Date(b) - new Date(a));
+            // Ordenar grupos por criadoEm da primeira entrada (mais recente primeiro)
+            const datasOrdenadas = Object.keys(porData).sort((a, b) => {
+                // Pegar primeira entrada de cada grupo (já está ordenada por criadoEm)
+                const primeiraA = porData[a][0];
+                const primeiraB = porData[b][0];
+                return parseData(primeiraB) - parseData(primeiraA); // Mais recente primeiro
+            });
             
             if (datasOrdenadas.length === 0) {
                 container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><div>Nenhuma entrada encontrada</div></div>';
@@ -11775,6 +11781,7 @@
             // CORREÇÃO: Agrupar primeiro por ÁREA, depois por TEMA dentro de cada área
             // A1b: Dedupe por nome normalizado (case/acentos) para evitar duplicação
             // BUG A2: Dedupe singular/plural usando normalizarTemaKey
+            // PATCH 2: Manter ordem de entradasOrdenadas dentro de cada grupo
             const porArea = {};
             entradasOrdenadas.forEach(e => {
                 // BUG A2: Usar normalizarTemaKey para agrupamento (singulariza "fraturas" -> "fratura")
