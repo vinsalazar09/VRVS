@@ -882,17 +882,20 @@
             margin-bottom: 16px;
         }
         
+        /* === PATCH 1 - AJUSTE FORMATAÇÃO PERGUNTA (31/12/2025) === */
         .diario-sessao-topico {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--cobre-light);
-            margin-bottom: 20px;
-            line-height: 1.5;
-            white-space: pre-wrap;       /* preservar espaçamento original */
+            display: block;
+            text-align: left !important;
+            white-space: pre-wrap;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            text-align: left;
+            line-height: 1.5;
+            color: var(--cobre-light);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
         }
+        /* === FIM PATCH 1 === */
         
         .diario-sessao-resposta {
             background: rgba(0, 206, 209, 0.1);
@@ -11706,12 +11709,19 @@
         }
         
         function renderDiarioPorData(entradas, container) {
-            // Ordenar por data de criação (mais recentes primeiro) ANTES de agrupar
-            const entradasOrdenadas = [...entradas].sort((a, b) => {
-                const da = a.criadoEm || a.data || '0000-00-00';
-                const db = b.criadoEm || b.data || '0000-00-00';
-                return db.localeCompare(da); // Mais recentes primeiro
-            });
+            /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
+            const parseData = (entrada) => {
+                try {
+                    const d = entrada.criadoEm || entrada.data || '1970-01-01';
+                    const t = new Date(d).getTime();
+                    return Number.isFinite(t) ? t : 0;
+                } catch (e) {
+                    return 0;
+                }
+            };
+            const entradasOrdenadas = [...entradas].sort((a, b) => parseData(b) - parseData(a));
+            entradas = entradasOrdenadas; // <- importante: garante uso da lista ordenada
+            /* === FIM PATCH 2 === */
             
             // Agrupar por data (usar entradasOrdenadas)
             const porData = {};
@@ -11748,12 +11758,19 @@
         }
         
         function renderDiarioPorTema(entradas, container) {
-            // Ordenar por data de criação (mais recentes primeiro) ANTES de agrupar
-            const entradasOrdenadas = [...entradas].sort((a, b) => {
-                const da = a.criadoEm || a.data || '0000-00-00';
-                const db = b.criadoEm || b.data || '0000-00-00';
-                return db.localeCompare(da); // Mais recentes primeiro
-            });
+            /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
+            const parseData = (entrada) => {
+                try {
+                    const d = entrada.criadoEm || entrada.data || '1970-01-01';
+                    const t = new Date(d).getTime();
+                    return Number.isFinite(t) ? t : 0;
+                } catch (e) {
+                    return 0;
+                }
+            };
+            const entradasOrdenadas = [...entradas].sort((a, b) => parseData(b) - parseData(a));
+            entradas = entradasOrdenadas; // <- importante: garante uso da lista ordenada
+            /* === FIM PATCH 2 === */
             
             // CORREÇÃO: Agrupar primeiro por ÁREA, depois por TEMA dentro de cada área
             // A1b: Dedupe por nome normalizado (case/acentos) para evitar duplicação

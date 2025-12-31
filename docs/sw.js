@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.50-fix-ajustes-1230-consistencia-novaArea-20251231-1656";
+const CACHE_NAME = "vrvs-v5.3.51-fix-format-order-20251231";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
