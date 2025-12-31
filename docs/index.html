@@ -9473,6 +9473,26 @@
                         }
                     });
                     
+                    // Expor função global para atualização manual
+                    window.forcarAtualizacaoSW = function() {
+                        if (!registration) {
+                            alert('Service Worker não registrado ainda.');
+                            return;
+                        }
+                        console.log('🔄 Forçando atualização manual do Service Worker...');
+                        registration.update().then(() => {
+                            if (registration.waiting) {
+                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                                alert('Nova versão encontrada! O app será recarregado em instantes.');
+                            } else {
+                                alert('Você já está na versão mais recente!');
+                            }
+                        }).catch(err => {
+                            console.error('Erro ao atualizar:', err);
+                            alert('Erro ao verificar atualizações. Tente novamente.');
+                        });
+                    };
+                    
                     // Limpar caches antigos ao iniciar
                     if ('caches' in window) {
                         caches.keys().then((cacheNames) => {
@@ -14910,9 +14930,19 @@
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('caderno')" style="text-align: left;">❓ Como usar o Caderno V2?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('analytics')" style="text-align: left;">❓ Como usar Análises?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('exportar')" style="text-align: left;">❓ Como exportar Hot Topics em HTML?</button>
+                    <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
                 </div>
                 <div id="respostaFaqAjuda" style="margin-top: 20px;"></div>
             `;
+        }
+        
+        function forcarAtualizacaoApp() {
+            if ('serviceWorker' in navigator && window.forcarAtualizacaoSW) {
+                window.forcarAtualizacaoSW();
+            } else {
+                alert('Service Worker não disponível. Recarregando página...');
+                window.location.reload(true);
+            }
         }
         
         function mostrarRespostaAjuda(tipo) {
