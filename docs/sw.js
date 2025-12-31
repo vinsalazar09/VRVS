@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.99-force-redeploy-1735689600";
+const CACHE_NAME = "vrvs-v5.3.56-ios-update-tiebreak-20251231-2320";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -14,6 +14,7 @@ const FILES_TO_CACHE = [
 // Instalar Service Worker
 self.addEventListener('install', (event) => {
     console.log('[Service Worker] Instalando versão:', CACHE_NAME);
+    self.skipWaiting(); // Forçar ativação imediata
     event.waitUntil(
         // Limpar TODOS os caches antigos primeiro
         caches.keys().then((cacheNames) => {
@@ -31,27 +32,16 @@ self.addEventListener('install', (event) => {
             });
         })
     );
-    // Forçar ativação imediata para atualizações
-    self.skipWaiting();
 });
 
 // Ativar Service Worker
 self.addEventListener('activate', (event) => {
     console.log('[Service Worker] Ativando versão:', CACHE_NAME);
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('[Service Worker] Removendo cache antigo:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
-    // Garantir controle imediato de todas as páginas
-    return self.clients.claim();
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+        await self.clients.claim();
+    })());
 });
 
 // Interceptar requisições

@@ -882,20 +882,25 @@
             margin-bottom: 16px;
         }
         
-        /* === PATCH 1 - AJUSTE FORMATAÇÃO PERGUNTA (31/12/2025) === */
+        /* === PATCH CSS — garantir "esquerda de verdade" no card (31/12/2025) === */
         .diario-sessao-topico {
-            display: block;
+            width: 100% !important;
+            align-self: stretch !important;
             text-align: left !important;
-            white-space: pre-wrap;
+            white-space: pre-wrap !important;
+            overflow-wrap: anywhere;
             word-wrap: break-word;
-            overflow-wrap: break-word;
             line-height: 1.5;
             color: var(--cobre-light);
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 20px;
         }
-        /* === FIM PATCH 1 === */
+        /* Se o card estiver como flex e centralizando itens, corrigir só no eixo transversal */
+        .diario-sessao-card {
+            align-items: stretch !important;
+        }
+        /* === FIM PATCH CSS === */
         
         .diario-sessao-resposta {
             background: rgba(0, 206, 209, 0.1);
@@ -9408,17 +9413,29 @@
                     // Verificar atualizações imediatamente
                     registration.update();
                     
+                    if (registration.waiting) {
+                        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                    
                     // Detectar quando há nova versão disponível
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         console.log('🔄 Nova versão do Service Worker detectada!');
                         
+                        if (!newWorker) return;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Há uma nova versão instalada, mas ainda não ativa
-                                mostrarNotificacaoAtualizacao();
+                                newWorker.postMessage({ type: 'SKIP_WAITING' });
                             }
                         });
+                    });
+                    
+                    // Forçar reload quando Service Worker atualizar
+                    let reloading = false;
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        if (reloading) return;
+                        reloading = true;
+                        window.location.reload();
                     });
                     
                     // Verificar atualizações periodicamente (a cada 1 minuto)
@@ -11730,6 +11747,16 @@
                 porData[e.data].push(e);
             });
             
+            /* === PATCH ORDENAÇÃO COM DESEMPATE POR ID (31/12/2025) === */
+            const cmp = (a, b) => {
+                const diff = parseData(b) - parseData(a);
+                if (diff !== 0) return diff;
+                return (Number(b.id) || 0) - (Number(a.id) || 0); // desempate: mais novo primeiro
+            };
+            // ordena cada grupo por "mais recente"
+            Object.keys(porData).forEach(k => porData[k].sort(cmp));
+            /* === FIM PATCH DESEMPATE === */
+            
             // Ordenar grupos por criadoEm da primeira entrada (mais recente primeiro)
             const datasOrdenadas = Object.keys(porData).sort((a, b) => {
                 // Pegar primeira entrada de cada grupo (já está ordenada por criadoEm)
@@ -11755,7 +11782,7 @@
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-${dataId}">
-                        ${porData[data].sort((a, b) => parseData(b) - parseData(a)).map(e => renderEntradaDiario(e)).join('')}
+                        ${porData[data].map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
             });
@@ -11874,6 +11901,15 @@
                     const temaOriginal = grupoTema.temaOriginal || temaKey;
                     const temaId = `diario-tema-${areaKey.replace(/[^a-zA-Z0-9]/g, '-')}-${temaKey.replace(/[^a-zA-Z0-9]/g, '-')}`;
                     
+                    /* === PATCH ORDENAÇÃO COM DESEMPATE POR ID (31/12/2025) === */
+                    const cmp = (a, b) => {
+                        const diff = parseData(b) - parseData(a);
+                        if (diff !== 0) return diff;
+                        return (Number(b.id) || 0) - (Number(a.id) || 0); // desempate: mais novo primeiro
+                    };
+                    grupoTema.entradas.sort(cmp);
+                    /* === FIM PATCH DESEMPATE === */
+                    
                     html += `
                         <div style="margin-bottom: 16px; margin-left: 12px;">
                             <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
@@ -11884,7 +11920,7 @@
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-${temaId}">
-                                ${grupoTema.entradas.sort((a, b) => parseData(b) - parseData(a)).map(e => renderEntradaDiario(e)).join('')}
+                                ${grupoTema.entradas.map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
                 });
