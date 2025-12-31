@@ -9407,13 +9407,24 @@
             
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
+                // Forçar reload quando Service Worker atualizar (ANTES de registrar)
+                let reloading = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (reloading) return;
+                    reloading = true;
+                    console.log('🔄 Service Worker atualizado, recarregando...');
+                    window.location.reload();
+                });
+                
                 navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then((registration) => {
                     console.log('✅ Service Worker registrado:', registration.scope);
                     
                     // Verificar atualizações imediatamente
                     registration.update();
                     
+                    // Se já há worker esperando, forçar ativação
                     if (registration.waiting) {
+                        console.log('⚠️ Service Worker esperando, forçando ativação...');
                         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
                     }
                     
@@ -9423,25 +9434,44 @@
                         console.log('🔄 Nova versão do Service Worker detectada!');
                         
                         if (!newWorker) return;
+                        
                         newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                            console.log('🔄 Estado do SW:', newWorker.state);
+                            if (newWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    // Há versão antiga ativa, forçar skip
+                                    console.log('⚠️ Versão antiga ativa, forçando skip...');
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                } else {
+                                    // Primeira instalação
+                                    console.log('✅ Primeira instalação do SW');
+                                }
+                            }
+                            if (newWorker.state === 'activated') {
+                                console.log('✅ Service Worker ativado!');
                             }
                         });
                     });
                     
-                    // Forçar reload quando Service Worker atualizar
-                    let reloading = false;
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        if (reloading) return;
-                        reloading = true;
-                        window.location.reload();
-                    });
-                    
-                    // Verificar atualizações periodicamente (a cada 1 minuto)
+                    // Verificar atualizações periodicamente (a cada 30 segundos - mais agressivo)
                     setInterval(() => {
                         registration.update();
-                    }, 60000);
+                    }, 30000);
+                    
+                    // Verificar atualizações também quando app volta ao foco
+                    document.addEventListener('visibilitychange', () => {
+                        if (!document.hidden) {
+                            registration.update();
+                        }
+                    });
+                    
+                    // Escutar mensagens do Service Worker
+                    navigator.serviceWorker.addEventListener('message', (event) => {
+                        if (event.data && event.data.type === 'SW_ACTIVATED') {
+                            console.log('🔄 Service Worker ativado, recarregando...', event.data.cacheName);
+                            window.location.reload();
+                        }
+                    });
                     
                     // Limpar caches antigos ao iniciar
                     if ('caches' in window) {
@@ -15181,4 +15211,5 @@
     </script>
 </body>
 </html>
+
 

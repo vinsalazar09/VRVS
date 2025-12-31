@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.56-ios-update-tiebreak-20251231-2320";
+const CACHE_NAME = "vrvs-v5.3.57-force-ios-update-20251231-2330";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -14,22 +14,27 @@ const FILES_TO_CACHE = [
 // Instalar Service Worker
 self.addEventListener('install', (event) => {
     console.log('[Service Worker] Instalando versão:', CACHE_NAME);
-    self.skipWaiting(); // Forçar ativação imediata
+    // Forçar ativação imediata ANTES de qualquer coisa
+    self.skipWaiting();
     event.waitUntil(
-        // Limpar TODOS os caches antigos primeiro
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    console.log('[Service Worker] Removendo cache antigo na instalação:', cacheName);
-                    return caches.delete(cacheName);
-                })
-            );
-        }).then(() => {
-            // Depois criar novo cache
-            return caches.open(CACHE_NAME).then((cache) => {
+        Promise.all([
+            // Limpar TODOS os caches antigos primeiro
+            caches.keys().then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((cacheName) => {
+                        console.log('[Service Worker] Removendo cache antigo na instalação:', cacheName);
+                        return caches.delete(cacheName);
+                    })
+                );
+            }),
+            // Criar novo cache em paralelo
+            caches.open(CACHE_NAME).then((cache) => {
                 console.log('[Service Worker] Fazendo cache dos arquivos');
                 return cache.addAll(FILES_TO_CACHE);
-            });
+            })
+        ]).then(() => {
+            // Forçar skip novamente após cache
+            self.skipWaiting();
         })
     );
 });
@@ -38,9 +43,19 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     console.log('[Service Worker] Ativando versão:', CACHE_NAME);
     event.waitUntil((async () => {
+        // Limpar caches antigos
         const keys = await caches.keys();
-        await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+        await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => {
+            console.log('[Service Worker] Removendo cache antigo na ativação:', k);
+            return caches.delete(k);
+        }));
+        // Forçar controle imediato de todas as páginas
         await self.clients.claim();
+        // Notificar todas as páginas para recarregar
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+            client.postMessage({ type: 'SW_ACTIVATED', cacheName: CACHE_NAME });
+        });
     })());
 });
 
@@ -124,7 +139,10 @@ async function syncData() {
 // Mensagem para notificar atualização disponível
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
+        console.log('[Service Worker] Recebido SKIP_WAITING, forçando ativação...');
+        self.skipWaiting().then(() => {
+            return self.clients.claim();
+        });
     }
 });
 
