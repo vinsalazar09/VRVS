@@ -11755,7 +11755,7 @@
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-${dataId}">
-                        ${porData[data].map(e => renderEntradaDiario(e)).join('')}
+                        ${porData[data].sort((a, b) => parseData(b) - parseData(a)).map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
             });
@@ -11884,7 +11884,7 @@
                         <span class="area-header-toggle">▼</span>
                     </div>
                     <div class="area-content collapsed" id="area-content-${temaId}">
-                                ${grupoTema.entradas.map(e => renderEntradaDiario(e)).join('')}
+                                ${grupoTema.entradas.sort((a, b) => parseData(b) - parseData(a)).map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
                 });
