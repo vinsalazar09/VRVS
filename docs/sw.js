@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.55-force-update-20251231-2315";
+const CACHE_NAME = "vrvs-v5.3.99-force-redeploy-1735689600";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
