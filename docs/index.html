@@ -12462,7 +12462,7 @@
                             <button onclick="editarEntradaSessaoDiario()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
-                    <div class="diario-sessao-topico" style="width:100%; display:block; text-align:left; align-self:stretch; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
+                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entradaAtual.topico)}
                     </div>
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta escondida">
@@ -12692,7 +12692,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
-                    <div class="diario-sessao-topico" style="width:100%; display:block; text-align:left; align-self:stretch; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
+                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta escondida">
@@ -12723,7 +12723,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
-                    <div class="diario-sessao-topico" style="width:100%; display:block; text-align:left; align-self:stretch; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
+                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
@@ -14982,8 +14982,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.60-fix-card-container-20250101";
-        const APP_BUILD_CACHE = "vrvs-v5.3.60-fix-card-container-20250101";
+        const APP_BUILD = "vrvs-v5.3.61-fix-sessao-pergunta-left-20250101";
+        const APP_BUILD_CACHE = "vrvs-v5.3.61-fix-sessao-pergunta-left-20250101";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
