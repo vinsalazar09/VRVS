@@ -2775,6 +2775,23 @@
                 transition-duration: 0.01ms !important;
             }
         }
+        /* === HOTFIX iOS - FORÇAR ESQUERDA NA SESSÃO (2025-01-01) === */
+        #diarioSessao .diario-sessao-topico,
+        #diarioSessao .diario-sessao-topico * {
+            text-align: left !important;
+        }
+        #diarioSessao .diario-sessao-topico {
+            width: 100% !important;
+            display: block !important;
+            align-self: stretch !important;
+            white-space: pre-wrap !important;
+            overflow-wrap: anywhere !important;
+            word-wrap: break-word !important;
+        }
+        #diarioSessao .diario-sessao-card {
+            align-items: stretch !important;
+        }
+        /* === FIM HOTFIX === */
     </style>
 </head>
 <body class="splash-loading">
@@ -12297,7 +12314,24 @@
                 }
                 
                 const entradas = getEntradasParaRevisarHojeDiario(filtros);
-                sessaoDiario.filaIds = entradas.map(e => e.id);
+                // === PATCH ORDENAÇÃO SESSÃO (2025-01-01) ===
+                const parseData = (entrada) => {
+                    try {
+                        const d = entrada.criadoEm || entrada.data || '1970-01-01';
+                        const t = new Date(d).getTime();
+                        return Number.isFinite(t) ? t : 0;
+                    } catch (e) {
+                        return 0;
+                    }
+                };
+                const cmpMaisRecente = (a, b) => {
+                    const diff = parseData(b) - parseData(a);
+                    if (diff !== 0) return diff;
+                    return (Number(b.id) || 0) - (Number(a.id) || 0);
+                };
+                const entradasOrdenadas = [...entradas].sort(cmpMaisRecente);
+                // === FIM PATCH ===
+                sessaoDiario.filaIds = entradasOrdenadas.map(e => e.id);
                 sessaoDiario.indiceAtual = 0;
                 
                 if (!sessaoDiario.filaIds.length) {
@@ -14931,6 +14965,8 @@
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('analytics')" style="text-align: left;">❓ Como usar Análises?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('exportar')" style="text-align: left;">❓ Como exportar Hot Topics em HTML?</button>
                     <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
+                    <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
+                    <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
                 </div>
                 <div id="respostaFaqAjuda" style="margin-top: 20px;"></div>
             `;
@@ -14944,6 +14980,75 @@
                 window.location.reload(true);
             }
         }
+        
+        // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
+        const APP_BUILD = "vrvs-v5.3.58-hotfix-left-order-diag-20250101";
+        const APP_BUILD_CACHE = "vrvs-v5.3.58-hotfix-left-order-diag-20250101";
+        
+        async function diagnosticoApp() {
+            let info = `📋 DIAGNÓSTICO DO APP\n\n`;
+            info += `APP_BUILD: ${APP_BUILD}\n`;
+            info += `CACHE_NAME LOCAL: ${APP_BUILD_CACHE}\n\n`;
+            
+            if ('serviceWorker' in navigator) {
+                const controller = navigator.serviceWorker.controller;
+                info += `Service Worker Controller: ${controller ? controller.scriptURL : 'null'}\n`;
+                
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        info += `Registration Active: ${registration.active ? registration.active.scriptURL : 'null'}\n`;
+                        info += `Registration Waiting: ${registration.waiting ? registration.waiting.scriptURL : 'null'}\n`;
+                    }
+                } catch (e) {
+                    info += `Erro ao obter registration: ${e.message}\n`;
+                }
+                
+                try {
+                    const caches = await caches.keys();
+                    info += `\nCaches encontrados (${caches.length}):\n`;
+                    caches.forEach(c => info += `  - ${c}\n`);
+                } catch (e) {
+                    info += `Erro ao listar caches: ${e.message}\n`;
+                }
+                
+                try {
+                    const swUrl = new URL('sw.js', location.href).toString();
+                    const swResponse = await fetch(swUrl + '?ts=' + Date.now(), { cache: 'no-store' });
+                    const swText = await swResponse.text();
+                    const cacheMatch = swText.match(/const CACHE_NAME\s*=\s*["']([^"']+)["']/);
+                    info += `\nCACHE_NAME ONLINE: ${cacheMatch ? cacheMatch[1] : 'NÃO ENCONTRADO'}\n`;
+                } catch (e) {
+                    info += `\nErro ao buscar sw.js online: ${e.message}\n`;
+                }
+            } else {
+                info += `Service Worker não disponível\n`;
+            }
+            
+            alert(info);
+        }
+        
+        async function resetAppShell() {
+            if (!confirm('🧹 Reset App Shell\n\nIsso vai:\n- Desregistrar Service Worker\n- Limpar todos os caches\n- Recarregar o app\n\nDados do localStorage NÃO serão apagados.\n\nContinuar?')) {
+                return;
+            }
+            
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(r => r.unregister()));
+                }
+                
+                const cacheKeys = await caches.keys();
+                await Promise.all(cacheKeys.map(k => caches.delete(k)));
+                
+                alert('✅ App Shell resetado! Recarregando...');
+                location.href = location.pathname + '?reset=' + Date.now();
+            } catch (e) {
+                alert('❌ Erro ao resetar: ' + e.message);
+            }
+        }
+        // === FIM FUNÇÕES DIAGNÓSTICO/RESET ===
         
         function mostrarRespostaAjuda(tipo) {
             const container = document.getElementById('respostaFaqAjuda');

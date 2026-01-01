@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.57-force-ios-update-20251231-2330";
+const CACHE_NAME = "vrvs-v5.3.58-hotfix-left-order-diag-20250101";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
