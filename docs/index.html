@@ -12462,7 +12462,7 @@
                             <button onclick="editarEntradaSessaoDiario()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
-                    <div class="diario-sessao-topico">
+                    <div class="diario-sessao-topico" style="width:100%; display:block; text-align:left; align-self:stretch; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
                         ❓ ${formatarTextoDiario(entradaAtual.topico)}
                     </div>
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta escondida">
@@ -12692,7 +12692,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
-                    <div class="diario-sessao-topico">
+                    <div class="diario-sessao-topico" style="width:100%; display:block; text-align:left; align-self:stretch; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta escondida">
@@ -12723,7 +12723,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
-                    <div class="diario-sessao-topico">
+                    <div class="diario-sessao-topico" style="width:100%; display:block; text-align:left; align-self:stretch; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
@@ -14982,8 +14982,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.58-hotfix-left-order-diag-20250101";
-        const APP_BUILD_CACHE = "vrvs-v5.3.58-hotfix-left-order-diag-20250101";
+        const APP_BUILD = "vrvs-v5.3.59-fix-diag-inline-left-20250101";
+        const APP_BUILD_CACHE = "vrvs-v5.3.59-fix-diag-inline-left-20250101";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
@@ -15005,16 +15005,15 @@
                 }
                 
                 try {
-                    const caches = await caches.keys();
-                    info += `\nCaches encontrados (${caches.length}):\n`;
-                    caches.forEach(c => info += `  - ${c}\n`);
+                    const cacheNames = await window.caches.keys();
+                    info += `\nCaches encontrados (${cacheNames.length}):\n`;
+                    cacheNames.forEach(c => info += `  - ${c}\n`);
                 } catch (e) {
                     info += `Erro ao listar caches: ${e.message}\n`;
                 }
                 
                 try {
-                    const swUrl = new URL('sw.js', location.href).toString();
-                    const swResponse = await fetch(swUrl + '?ts=' + Date.now(), { cache: 'no-store' });
+                    const swResponse = await fetch('./sw.js?ts=' + Date.now(), { cache: 'no-store' });
                     const swText = await swResponse.text();
                     const cacheMatch = swText.match(/const CACHE_NAME\s*=\s*["']([^"']+)["']/);
                     info += `\nCACHE_NAME ONLINE: ${cacheMatch ? cacheMatch[1] : 'NÃO ENCONTRADO'}\n`;
@@ -15039,8 +15038,8 @@
                     await Promise.all(regs.map(r => r.unregister()));
                 }
                 
-                const cacheKeys = await caches.keys();
-                await Promise.all(cacheKeys.map(k => caches.delete(k)));
+                const cacheKeys = await window.caches.keys();
+                await Promise.all(cacheKeys.map(k => window.caches.delete(k)));
                 
                 alert('✅ App Shell resetado! Recarregando...');
                 location.href = location.pathname + '?reset=' + Date.now();
