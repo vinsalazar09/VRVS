@@ -12454,7 +12454,7 @@
                 </div>
                 ` : ''}
                 ` : ''}
-                <div class="diario-sessao-card">
+                <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
                     <div class="diario-sessao-meta">
                         <span>${entradaAtual.area} • ${entradaAtual.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -12688,7 +12688,7 @@
         // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
         function renderTreinoLivreCard(entrada) {
             return `
-                <div class="diario-sessao-card">
+                <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
@@ -12719,7 +12719,7 @@
             const config = avaliacao.config;
             
             return `
-                <div class="diario-sessao-card">
+                <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
@@ -14982,8 +14982,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.59-fix-diag-inline-left-20250101";
-        const APP_BUILD_CACHE = "vrvs-v5.3.59-fix-diag-inline-left-20250101";
+        const APP_BUILD = "vrvs-v5.3.60-fix-card-container-20250101";
+        const APP_BUILD_CACHE = "vrvs-v5.3.60-fix-card-container-20250101";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
