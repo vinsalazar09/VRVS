@@ -993,6 +993,70 @@
             color: var(--turquesa-light);
         }
         
+        /* ==================== BOTÕES DE OPÇÕES DA SESSÃO (v5.3.63) ==================== */
+        
+        .diario-sessao-opcoes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .diario-sessao-opcoes-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .sessao-opcao-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 44px; /* iOS touch target */
+        }
+        
+        .sessao-opcao-pular {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .sessao-opcao-pular:hover,
+        .sessao-opcao-pular:active {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .sessao-opcao-desativar {
+            background: rgba(255, 127, 80, 0.1);
+            border: 1px solid rgba(255, 127, 80, 0.3);
+            color: rgba(255, 127, 80, 0.8);
+        }
+        
+        .sessao-opcao-desativar:hover,
+        .sessao-opcao-desativar:active {
+            background: rgba(255, 127, 80, 0.2);
+            color: var(--cobre-main);
+        }
+        
+        .sessao-opcao-excluir {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: rgba(220, 53, 69, 0.8);
+            width: 100%;
+        }
+        
+        .sessao-opcao-excluir:hover,
+        .sessao-opcao-excluir:active {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
         /* ==================== TL-2: TREINO LIVRE RUNNER ==================== */
         
         .treino-livre-runner-wrapper {
@@ -12438,8 +12502,8 @@
             container.innerHTML = `
                 ${sessaoDiario.tipo === 'programado' ? `
                 <div class="sessao-programada-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <button class="sessao-nav-anterior" onclick="voltarCardAnteriorSessao()" ${!podeVerAnterior ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(0, 206, 209, 0.3); color: rgba(0, 206, 209, 0.7); font-size: 13px; padding: 8px 12px; border-radius: 6px; cursor: pointer; min-height: 36px; ${!podeVerAnterior ? 'opacity: 0.3; cursor: not-allowed;' : ''}">
-                        ← Anterior (reavaliar)
+                    <button class="sessao-nav-anterior" onclick="voltarCardAnteriorSessao()" ${!podeVerAnterior ? 'disabled' : ''} style="background: ${!podeVerAnterior ? 'transparent' : 'rgba(0, 206, 209, 0.1)'}; border: 1px solid rgba(0, 206, 209, ${!podeVerAnterior ? '0.2' : '0.4'}); color: rgba(0, 206, 209, ${!podeVerAnterior ? '0.4' : '0.9'}); font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: ${!podeVerAnterior ? 'not-allowed' : 'pointer'}; min-height: 44px; font-weight: 500; transition: all 0.2s ease;">
+                        ← Anterior
                     </button>
                     <span class="sessao-nav-progresso" style="font-size: 14px; color: rgba(0, 206, 209, 0.7);">${indice} / ${total}</span>
                 </div>
@@ -12480,9 +12544,18 @@
                         <button class="btn btn-lembrei" onclick="responderSessaoDiario('lembrei')" title="Lembrei, mas precisei pensar. Progresso normal.">👍 LEMBREI</button>
                         <button class="btn btn-facil btn-sucesso" onclick="responderSessaoDiario('facil')" title="Veio na hora! Posso esperar mais pra revisar.">😌 FÁCIL</button>
                     </div>
-                    <div class="diario-sessao-opcoes">
-                        <button class="link-btn" onclick="pularSessaoDiario()">⏭️ Pular (sem registrar)</button>
-                        <button class="link-btn" onclick="desativarSessaoDiarioAtual()">🚫 Não revisar mais este tópico</button>
+                    <div class="diario-sessao-opcoes-container">
+                        <div class="diario-sessao-opcoes-row">
+                            <button class="sessao-opcao-btn sessao-opcao-pular" onclick="pularSessaoDiario()">
+                                ⏭️ Pular
+                            </button>
+                            <button class="sessao-opcao-btn sessao-opcao-desativar" onclick="desativarSessaoDiarioAtual()">
+                                🚫 Não revisar mais
+                            </button>
+                        </div>
+                        <button class="sessao-opcao-btn sessao-opcao-excluir" onclick="excluirEntradaDiarioAtual()">
+                            🗑️ Excluir este tópico
+                        </button>
                     </div>
                 </div>
             `;
@@ -12725,11 +12798,13 @@
                     
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Quantidade:</label>
-                        <select id="treinoLivreQuantidade" onchange="window.treinoLivreConfig.quantidade = parseInt(this.value);" style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                        <select id="treinoLivreQuantidade" onchange="window.treinoLivreConfig.quantidade = parseInt(this.value) || 9999;" style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
                             <option value="5" ${quantidade === 5 ? 'selected' : ''}>5 itens</option>
                             <option value="10" ${quantidade === 10 ? 'selected' : ''}>10 itens</option>
                             <option value="20" ${quantidade === 20 ? 'selected' : ''}>20 itens</option>
                             <option value="30" ${quantidade === 30 ? 'selected' : ''}>30 itens</option>
+                            <option value="50" ${quantidade === 50 ? 'selected' : ''}>50 itens</option>
+                            <option value="9999" ${quantidade === 9999 || quantidade > 50 ? 'selected' : ''}>📚 Todos</option>
                         </select>
                     </div>
                     
@@ -13273,9 +13348,9 @@
             
             const config = window.treinoLivreConfig;
             
-            // Validação: Modo Avaliação requer tema específico
-            if (config.modoAvaliacao && !config.tema) {
-                mostrarNotificacaoFeedback('⚠️ Para usar Modo Avaliação, selecione um tema específico. O feedback será registrado para esse tema.', 'error');
+            // Validação: Modo Avaliação requer tema específico OU filtro por período
+            if (config.modoAvaliacao && !config.tema && (!config.periodo || config.periodo === 'todos')) {
+                mostrarNotificacaoFeedback('⚠️ Para usar Modo Avaliação, selecione um tema específico ou filtre por período.', 'error');
                 return;
             }
 
@@ -13609,6 +13684,53 @@
                 renderSessaoDiario(null);
             } else {
                 renderSessaoDiario(getEntradaAtualSessao());
+            }
+        }
+        
+        // Excluir entrada atual do Diário permanentemente
+        function excluirEntradaDiarioAtual() {
+            const entrada = getEntradaAtualSessao();
+            if (!entrada) return;
+            
+            // Confirmação com detalhes do tópico
+            const preview = (entrada.topico || '').substring(0, 50) + ((entrada.topico || '').length > 50 ? '...' : '');
+            const confirmar = confirm(`⚠️ EXCLUIR PERMANENTEMENTE?\n\nTópico: "${preview}"\nÁrea: ${entrada.area || 'N/A'}\nTema: ${entrada.tema || 'N/A'}\n\nEsta ação não pode ser desfeita.`);
+            
+            if (!confirmar) return;
+            
+            // Remover da lista de entradas
+            const index = window.diario.entradas.findIndex(e => String(e.id) === String(entrada.id));
+            if (index > -1) {
+                window.diario.entradas.splice(index, 1);
+                salvarDiario();
+                
+                // Remover da fila da sessão atual
+                if (sessaoDiario && Array.isArray(sessaoDiario.filaIds)) {
+                    const filaIndex = sessaoDiario.filaIds.indexOf(entrada.id);
+                    if (filaIndex > -1) {
+                        sessaoDiario.filaIds.splice(filaIndex, 1);
+                    }
+                    
+                    // Ajustar índice se necessário
+                    if (sessaoDiario.indiceAtual >= sessaoDiario.filaIds.length) {
+                        sessaoDiario.indiceAtual = Math.max(0, sessaoDiario.filaIds.length - 1);
+                    }
+                }
+                
+                mostrarNotificacaoFeedback('🗑️ Tópico excluído permanentemente.', 'success');
+                
+                // Atualizar contadores com delay para garantir sincronismo visual
+                setTimeout(() => {
+                    renderDiario();
+                    atualizarChipVrvs3p();
+                }, 300);
+                
+                // Avançar para próximo card ou finalizar sessão
+                if (sessaoDiario.filaIds.length === 0) {
+                    renderSessaoDiario(null);
+                } else {
+                    renderSessaoDiario(getEntradaAtualSessao());
+                }
             }
         }
         
@@ -15183,8 +15305,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.62-periodo-filter";
-        const APP_BUILD_CACHE = "vrvs-v5.3.62-periodo-filter";
+        const APP_BUILD = "vrvs-v5.3.63-ux-sessao";
+        const APP_BUILD_CACHE = "vrvs-v5.3.63-ux-sessao";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
