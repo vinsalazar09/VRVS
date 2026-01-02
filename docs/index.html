@@ -12972,7 +12972,7 @@
                     </div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
-                            ${entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
+                            ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
                         </div>
                     </div>
                     ${!respostaJaMostrada ? `
@@ -13013,18 +13013,7 @@
         function mostrarRespostaAvaliacao(indice) {
             if (!window.treinoLivreAvaliacao) return;
             
-            // AJUSTE 3: Preencher resposta com textContent antes de mostrar
-            const wrapper = document.getElementById('treinoLivreRespostaWrapper');
-            if (wrapper) {
-                const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
-                if (inner && inner.getAttribute('data-resposta-texto') === 'true') {
-                    const entradaAtual = window.treinoLivreFila && window.treinoLivreFila[indice];
-                    if (entradaAtual && entradaAtual.resposta) {
-                        inner.textContent = formatarTextoDiario(entradaAtual.resposta);
-                    }
-                }
-            }
-            
+            // Setar estado e deixar o re-render preencher via template
             window.treinoLivreAvaliacao.respostaMostrada[indice] = true;
             renderTreinoLivreRunner();
         }
@@ -15334,8 +15323,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.63-ux-sessao";
-        const APP_BUILD_CACHE = "vrvs-v5.3.63-ux-sessao";
+        const APP_BUILD = "vrvs-v5.3.64-resposta-avaliacao";
+        const APP_BUILD_CACHE = "vrvs-v5.3.64-resposta-avaliacao";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
