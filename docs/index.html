@@ -13029,6 +13029,35 @@
             renderTreinoLivreRunner();
         }
         
+        // Toggle mostrar/esconder resposta no Treino Livre (modo normal)
+        function toggleRespostaTreinoLivre() {
+            const wrapper = document.getElementById('treinoLivreRespostaWrapper');
+            if (!wrapper) return;
+            
+            const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
+            const btn = document.getElementById('treinoLivreToggleBtn');
+            
+            // Se está escondida, mostrar
+            if (wrapper.classList.contains('escondida')) {
+                wrapper.classList.remove('escondida');
+                
+                // Preencher resposta se ainda não foi preenchida
+                if (inner && inner.getAttribute('data-resposta-texto') === 'true') {
+                    const indice = window.treinoLivreEstado?.indiceAtual;
+                    const entradaAtual = window.treinoLivreFila && indice !== undefined ? window.treinoLivreFila[indice] : null;
+                    if (entradaAtual && entradaAtual.resposta && !inner.textContent.trim()) {
+                        inner.textContent = formatarTextoDiario(entradaAtual.resposta);
+                    }
+                }
+                
+                if (btn) btn.textContent = '🙈 OCULTAR RESPOSTA';
+            } else {
+                // Esconder
+                wrapper.classList.add('escondida');
+                if (btn) btn.textContent = '👁️ MOSTRAR RESPOSTA';
+            }
+        }
+        
         // Avaliar card
         function avaliarTreinoLivre(indice, nota) {
             if (!window.treinoLivreAvaliacao) return;
