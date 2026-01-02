@@ -12493,11 +12493,19 @@
         // Inicializar configuração padrão do Treino Livre
         if (typeof window.treinoLivreConfig === 'undefined') {
             window.treinoLivreConfig = {
+                periodo: 'todos',   // 'todos' | 'hoje' | 'ontem' | 'ultimos3' | 'ultimos7' | 'custom'
+                dataDe: null,       // YYYY-MM-DD (custom)
+                dataAte: null,      // YYYY-MM-DD (custom)
                 area: null,          // null = "Todas"
                 tema: null,          // null = "Todos"
                 quantidade: 10,      // 5, 10, 20, 30
                 modoAvaliacao: false // Modo Avaliação (TL-3)
             };
+        } else {
+            // Garantir defaults sem quebrar config antiga
+            window.treinoLivreConfig.periodo = window.treinoLivreConfig.periodo || 'todos';
+            if (typeof window.treinoLivreConfig.dataDe === 'undefined') window.treinoLivreConfig.dataDe = null;
+            if (typeof window.treinoLivreConfig.dataAte === 'undefined') window.treinoLivreConfig.dataAte = null;
         }
         
         // Carregar configuração de avaliação do localStorage
@@ -12527,6 +12535,130 @@
             }
         }
         
+        // ==================== FILTRO POR PERÍODO (TREINO LIVRE) ====================
+        // Compara datas como inteiro YYYYMMDD para evitar bugs de timezone (iOS etc.)
+        function filtrarTreinoLivrePorPeriodo(entradas, config) {
+            const periodo = (config && config.periodo) ? config.periodo : 'todos';
+            if (periodo === 'todos') return entradas;
+
+            function dataParaInteiro(dataStr) {
+                if (!dataStr) return null;
+                const m = String(dataStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (!m) return null;
+                return parseInt(`${m[1]}${m[2]}${m[3]}`, 10);
+            }
+
+            function ymdDeDate(d) {
+                const ano = d.getFullYear();
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const dia = String(d.getDate()).padStart(2, '0');
+                return `${ano}-${mes}-${dia}`;
+            }
+
+            function hojeStr() {
+                return ymdDeDate(new Date());
+            }
+
+            function subtrairDias(dataStr, dias) {
+                // Meio-dia reduz chance de edge DST
+                const base = new Date(String(dataStr).slice(0, 10) + 'T12:00:00');
+                base.setDate(base.getDate() - dias);
+                return ymdDeDate(base);
+            }
+
+            // Normaliza qualquer fonte em YYYY-MM-DD (aceita YYYY-MM-DD..., timestamp numérico, etc.)
+            function normalizarYMD(valor) {
+                if (!valor) return null;
+
+                // Timestamp numérico (number ou string numérica)
+                const asNum = Number(valor);
+                if (Number.isFinite(asNum) && asNum > 1000000000000) {
+                    return ymdDeDate(new Date(asNum));
+                }
+
+                // String tipo "YYYY-MM-DD" ou "YYYY-MM-DDTHH:MM..."
+                const s = String(valor);
+                const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+                if (m) return m[1];
+
+                return null;
+            }
+
+            function obterDataCriacao(entrada) {
+                // Prioridade 1: criadoEm
+                const c1 = normalizarYMD(entrada && entrada.criadoEm);
+                if (c1) return c1;
+
+                // Prioridade 2: data
+                const c2 = normalizarYMD(entrada && entrada.data);
+                if (c2) return c2;
+
+                // Prioridade 3: derivar do id se for timestamp
+                const c3 = normalizarYMD(entrada && entrada.id);
+                if (c3) return c3;
+
+                return null;
+            }
+
+            const hoje = hojeStr();
+            let dataInicio = null;
+            let dataFim = null;
+
+            switch (periodo) {
+                case 'hoje':
+                    dataInicio = hoje; dataFim = hoje;
+                    break;
+                case 'ontem':
+                    dataInicio = subtrairDias(hoje, 1);
+                    dataFim = subtrairDias(hoje, 1);
+                    break;
+                case 'ultimos3':
+                    dataInicio = subtrairDias(hoje, 2); // inclui hoje
+                    dataFim = hoje;
+                    break;
+                case 'ultimos7':
+                    dataInicio = subtrairDias(hoje, 6); // inclui hoje
+                    dataFim = hoje;
+                    break;
+                case 'custom':
+                    dataInicio = normalizarYMD(config.dataDe) || null;
+                    dataFim = normalizarYMD(config.dataAte) || null;
+                    break;
+                default:
+                    return entradas;
+            }
+
+            const inicioInt = dataParaInteiro(dataInicio);
+            const fimInt = dataParaInteiro(dataFim);
+
+            return entradas.filter(e => {
+                const dc = obterDataCriacao(e);
+                if (!dc) return false;
+
+                const di = dataParaInteiro(dc);
+                if (!di) return false;
+
+                if (inicioInt && di < inicioInt) return false;
+                if (fimInt && di > fimInt) return false;
+                return true;
+            });
+        }
+
+        function contarEntradasDisponiveisTreinoLivre() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) return 0;
+
+            const config = window.treinoLivreConfig || {};
+            const filtros = {
+                area: config.area || null,
+                tema: config.tema || null,
+                fonte: 'srs' // manter comportamento atual (não mexer em flag/atencao aqui)
+            };
+
+            let entradas = getEntradasTreinoLivreDiario(filtros);
+            entradas = filtrarTreinoLivrePorPeriodo(entradas, config);
+            return entradas.length;
+        }
+
         // Renderizar painel de configuração do Treino Livre
         function renderConfigTreinoLivre() {
             const container = document.getElementById('diarioSessao');
@@ -12544,6 +12676,37 @@
             
             container.innerHTML = `
                 <div class="treino-livre-config">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block; font-size:14px; color: rgba(255,255,255,0.9); margin-bottom:8px;">Criados em:</label>
+                        <select id="treinoLivrePeriodo"
+                            onchange="window.treinoLivreConfig.periodo = this.value; renderConfigTreinoLivre();"
+                            style="width:100%; padding:12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color:white; font-size:14px;">
+                            <option value="todos" ${(window.treinoLivreConfig.periodo || 'todos') === 'todos' ? 'selected' : ''}>Todo o período</option>
+                            <option value="hoje" ${window.treinoLivreConfig.periodo === 'hoje' ? 'selected' : ''}>📅 Hoje</option>
+                            <option value="ontem" ${window.treinoLivreConfig.periodo === 'ontem' ? 'selected' : ''}>📅 Ontem</option>
+                            <option value="ultimos3" ${window.treinoLivreConfig.periodo === 'ultimos3' ? 'selected' : ''}>📅 Últimos 3 dias</option>
+                            <option value="ultimos7" ${window.treinoLivreConfig.periodo === 'ultimos7' ? 'selected' : ''}>📅 Últimos 7 dias</option>
+                            <option value="custom" ${window.treinoLivreConfig.periodo === 'custom' ? 'selected' : ''}>📅 Personalizado...</option>
+                        </select>
+                    </div>
+
+                    ${window.treinoLivreConfig.periodo === 'custom' ? `
+                    <div style="margin-bottom: 16px; display:flex; gap:12px;">
+                        <div style="flex:1;">
+                            <label style="display:block; font-size:12px; color: rgba(255,255,255,0.7); margin-bottom:4px;">De:</label>
+                            <input type="date" id="treinoLivreDataDe" value="${window.treinoLivreConfig.dataDe || ''}"
+                                onchange="window.treinoLivreConfig.dataDe = this.value; renderConfigTreinoLivre();"
+                                style="width:100%; padding:10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color:white; font-size:14px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; font-size:12px; color: rgba(255,255,255,0.7); margin-bottom:4px;">Até:</label>
+                            <input type="date" id="treinoLivreDataAte" value="${window.treinoLivreConfig.dataAte || ''}"
+                                onchange="window.treinoLivreConfig.dataAte = this.value; renderConfigTreinoLivre();"
+                                style="width:100%; padding:10px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color:white; font-size:14px;">
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">Área:</label>
                         <select id="treinoLivreArea" onchange="atualizarTemasTreinoLivre(this.value); window.treinoLivreConfig.area = this.value || null; renderConfigTreinoLivre();" style="width: 100%; padding: 12px; background: rgba(20,35,45,0.6); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; color: white; font-size: 14px;">
@@ -12583,6 +12746,12 @@
                             <a href="#" onclick="event.preventDefault(); abrirConfigAvaliacao(); return false;" style="color: var(--turquesa-light); font-size: 12px; text-decoration: none;">⚙️ Config. avançada</a>
                         </div>
                         ` : ''}
+                    </div>
+                    
+                    <div style="margin-bottom:16px; padding:12px; background: rgba(0,206,209,0.05); border-radius:8px; text-align:center;">
+                        <span style="font-size:14px; color: rgba(255,255,255,0.8);">
+                            🔢 <strong style="color: var(--turquesa-light);">${contarEntradasDisponiveisTreinoLivre()}</strong> entradas disponíveis
+                        </span>
                     </div>
                     
                     <button class="btn" onclick="montarTreinoLivre()" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600;">
@@ -13109,6 +13278,22 @@
                 mostrarNotificacaoFeedback('⚠️ Para usar Modo Avaliação, selecione um tema específico. O feedback será registrado para esse tema.', 'error');
                 return;
             }
+
+            // Validação: Período personalizado requer pelo menos uma data
+            if (config.periodo === 'custom' && !config.dataDe && !config.dataAte) {
+                mostrarNotificacaoFeedback('⚠️ Para período personalizado, preencha pelo menos uma data.', 'error');
+                return;
+            }
+
+            // Validação: Datas invertidas no período personalizado
+            if (config.periodo === 'custom' && config.dataDe && config.dataAte) {
+                const deInt = parseInt(String(config.dataDe).slice(0,10).replace(/-/g,''), 10);
+                const ateInt = parseInt(String(config.dataAte).slice(0,10).replace(/-/g,''), 10);
+                if (deInt > ateInt) {
+                    mostrarNotificacaoFeedback('⚠️ A data "De" não pode ser posterior à data "Até".', 'error');
+                    return;
+                }
+            }
             
             const filtros = {
                 area: config.area || null,
@@ -13118,6 +13303,22 @@
             
             // Obter entradas filtradas
             let entradas = getEntradasTreinoLivreDiario(filtros);
+            
+            // Aplicar filtro de período
+            entradas = filtrarTreinoLivrePorPeriodo(entradas, config);
+
+            // Feedback se período não tem entradas
+            if (entradas.length === 0 && config.periodo !== 'todos') {
+                const msgs = {
+                    hoje: 'Nenhuma entrada criada hoje.',
+                    ontem: 'Nenhuma entrada criada ontem.',
+                    ultimos3: 'Nenhuma entrada nos últimos 3 dias.',
+                    ultimos7: 'Nenhuma entrada nos últimos 7 dias.',
+                    custom: 'Nenhuma entrada no período selecionado.'
+                };
+                mostrarNotificacaoFeedback('⚠️ ' + (msgs[config.periodo] || 'Nenhuma entrada encontrada.'), 'error');
+                return;
+            }
             
             // Ordenar: mais recentes primeiro (usar data ou criadoEm)
             entradas.sort((a, b) => {
@@ -14982,8 +15183,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.61-fix-sessao-pergunta-left-20250101";
-        const APP_BUILD_CACHE = "vrvs-v5.3.61-fix-sessao-pergunta-left-20250101";
+        const APP_BUILD = "vrvs-v5.3.62-periodo-filter";
+        const APP_BUILD_CACHE = "vrvs-v5.3.62-periodo-filter";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
