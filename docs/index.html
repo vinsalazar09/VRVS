@@ -908,13 +908,20 @@
             padding: 14px;
             border-radius: 8px;
             margin-bottom: 20px;
+            /* FIX iOS: garantir alinhamento à esquerda e largura total */
+            text-align: left !important;
+            text-align-last: left !important;
+            -webkit-text-align-last: left !important;
+            width: 100% !important;
+            display: block !important;
+            align-self: stretch !important;
         }
         
         .diario-sessao-resposta.escondida {
             display: none;
         }
         
-        /* BUG C: Consolidar CSS duplicado e forçar text-align:left */
+        /* FIX iOS: garantir alinhamento à esquerda e largura total */
         .diario-sessao-resposta-inner {
             font-size: 13px;
             line-height: 1.6;
@@ -922,7 +929,13 @@
             white-space: pre-wrap;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            text-align: left; /* BUG C: Forçar alinhamento à esquerda (eliminar herança de center) */
+            /* FIX iOS: garantir alinhamento à esquerda e largura total */
+            text-align: left !important;
+            text-align-last: left !important;
+            -webkit-text-align-last: left !important;
+            width: 100% !important;
+            display: block !important;
+            align-self: stretch !important;
         }
         
         .diario-sessao-acoes {
@@ -15323,8 +15336,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.64-resposta-avaliacao";
-        const APP_BUILD_CACHE = "vrvs-v5.3.64-resposta-avaliacao";
+        const APP_BUILD = "vrvs-v5.3.65-resposta-alignfix";
+        const APP_BUILD_CACHE = "vrvs-v5.3.65-resposta-alignfix";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
