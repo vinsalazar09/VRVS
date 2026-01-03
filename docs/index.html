@@ -13085,19 +13085,11 @@
                 if (btn) btn.textContent = '🙈 OCULTAR RESPOSTA';
             } else {
                 // Esconder
-<<<<<<< Updated upstream
-                wrapper.classList.add('escondida');
-                
-                // P2: Registrar que resposta foi escondida (opcional, mas mantém consistência)
-                if (indice !== undefined && window.treinoLivreRespostaMostrada) {
-                    window.treinoLivreRespostaMostrada[indice] = false;
-=======
                 wrapper.hidden = true;
                 
                 // P2 v2: Registrar que resposta foi escondida (usar entrada.id)
                 if (chave && window.treinoLivreRespostaMostrada) {
                     window.treinoLivreRespostaMostrada[chave] = false;
->>>>>>> Stashed changes
                 }
                 
                 if (btn) btn.textContent = '👁️ MOSTRAR RESPOSTA';
