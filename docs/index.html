@@ -938,6 +938,11 @@
             align-self: stretch !important;
         }
         
+        /* P2 v2: fallback robusto — não depender de .escondida */
+        [hidden] {
+            display: none !important;
+        }
+        
         .diario-sessao-acoes {
             margin-bottom: 16px;
         }
@@ -12542,7 +12547,7 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entradaAtual.topico)}
                     </div>
-                    <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta escondida">
+                    <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta" hidden>
                         <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
                             ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
                         </div>
@@ -12947,9 +12952,9 @@
         
         // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
         function renderTreinoLivreCard(entrada) {
-            // P2: Verificar se resposta já foi mostrada neste card
-            const indice = window.treinoLivreEstado?.indiceAtual;
-            const respostaJaMostrada = indice !== undefined && window.treinoLivreRespostaMostrada && window.treinoLivreRespostaMostrada[indice] === true;
+            // P2 v2: Verificar se resposta já foi mostrada neste card (usar entrada.id)
+            const chave = String(entrada.id);
+            const respostaJaMostrada = window.treinoLivreRespostaMostrada && window.treinoLivreRespostaMostrada[chave] === true;
             
             return `
                 <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
@@ -12959,7 +12964,7 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
-                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
+                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
                             ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
                         </div>
@@ -12998,7 +13003,7 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
-                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
+                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
                             ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
                         </div>
@@ -13051,25 +13056,27 @@
             const wrapper = document.getElementById('treinoLivreRespostaWrapper');
             if (!wrapper) return;
             
+            // P2 v2: Usar atributo hidden + entrada.id
             const indice = window.treinoLivreEstado?.indiceAtual;
+            const entradaAtual = window.treinoLivreFila && indice !== undefined ? window.treinoLivreFila[indice] : null;
+            const chave = entradaAtual ? String(entradaAtual.id) : null;
             const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
             const btn = document.getElementById('treinoLivreToggleBtn');
             
             // Se está escondida, mostrar
-            if (wrapper.classList.contains('escondida')) {
-                wrapper.classList.remove('escondida');
+            if (wrapper.hidden) {
+                wrapper.hidden = false;
                 
-                // P2: Registrar que resposta foi mostrada neste card
-                if (indice !== undefined) {
+                // P2 v2: Registrar que resposta foi mostrada neste card (usar entrada.id)
+                if (chave) {
                     if (!window.treinoLivreRespostaMostrada) {
                         window.treinoLivreRespostaMostrada = {};
                     }
-                    window.treinoLivreRespostaMostrada[indice] = true;
+                    window.treinoLivreRespostaMostrada[chave] = true;
                 }
                 
                 // Preencher resposta se ainda não foi preenchida
                 if (inner && inner.getAttribute('data-resposta-texto') === 'true') {
-                    const entradaAtual = window.treinoLivreFila && indice !== undefined ? window.treinoLivreFila[indice] : null;
                     if (entradaAtual && entradaAtual.resposta && !inner.textContent.trim()) {
                         inner.textContent = formatarTextoDiario(entradaAtual.resposta);
                     }
@@ -13078,11 +13085,19 @@
                 if (btn) btn.textContent = '🙈 OCULTAR RESPOSTA';
             } else {
                 // Esconder
+<<<<<<< Updated upstream
                 wrapper.classList.add('escondida');
                 
                 // P2: Registrar que resposta foi escondida (opcional, mas mantém consistência)
                 if (indice !== undefined && window.treinoLivreRespostaMostrada) {
                     window.treinoLivreRespostaMostrada[indice] = false;
+=======
+                wrapper.hidden = true;
+                
+                // P2 v2: Registrar que resposta foi escondida (usar entrada.id)
+                if (chave && window.treinoLivreRespostaMostrada) {
+                    window.treinoLivreRespostaMostrada[chave] = false;
+>>>>>>> Stashed changes
                 }
                 
                 if (btn) btn.textContent = '👁️ MOSTRAR RESPOSTA';
@@ -13621,7 +13636,8 @@
         function mostrarRespostaSessaoDiario() {
             const wrapper = document.getElementById('diarioSessaoRespostaWrapper');
             if (wrapper) {
-                wrapper.classList.remove('escondida');
+                // P2 v2: Usar atributo hidden
+                wrapper.hidden = false;
                 // P4: Usar textContent em vez de innerHTML para fidelidade ao editor
                 const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
                 if (inner && inner.getAttribute('data-resposta') === 'true') {

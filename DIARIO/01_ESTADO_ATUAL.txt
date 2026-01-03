@@ -149,5 +149,16 @@ gerenciar agenda de revisões e analisar desempenho através de estatísticas e 
 - Sistema de atualização automática funcionando perfeitamente
 - Integração de áreas completa e funcional
 
+**Última sessão Cursor AI (2026-01-03 01:02):**
+- ⚠️ **CONFLITO GIT ATIVO:** Remoto tem commit `1287bba` (P2 original), local tem mudanças não commitadas (P2 v2). GitHub Desktop bloqueado. Resolver via ChatGPT usando `CASO_PROBLEMA_GIT_CONFLITO_20250103.md`.
+- ✅ P2 v2 implementado localmente (não commitado): usa `hidden` em vez de `.escondida` para esconder box vazio.
+- ⚠️ P1 (ordenação) e P3 (centralização) não implementados ainda.
+- 📝 Documentos criados: `HANDOFF_ERROS_CRITICOS_SESSAO_20250103.md`, `PREVIEW_ANALITICO_P2_V2_CRUZADO_20250103.md`, `CASO_PROBLEMA_GIT_CONFLITO_20250103.md`.
+
+**Próxima sessão:**
+- Resolver conflito Git primeiro
+- Testar P2 v2 no iPhone após resolução
+- Implementar P1 e P3 após validação
+
 ═══════════════════════════════════════════════════════════════
 
