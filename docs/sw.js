@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.65-resposta-alignfix";
+const CACHE_NAME = "vrvs-v5.3.66-treino-livre-box-escondido";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

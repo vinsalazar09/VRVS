@@ -12864,6 +12864,9 @@
                 indiceAtual: 0
             };
             
+            // P2: Inicializar controle de resposta mostrada no modo normal
+            window.treinoLivreRespostaMostrada = {};
+            
             // Se Modo Avaliação ativo, criar estado de avaliação
             if (window.treinoLivreConfig.modoAvaliacao) {
                 window.treinoLivreAvaliacao = {
@@ -12944,6 +12947,10 @@
         
         // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
         function renderTreinoLivreCard(entrada) {
+            // P2: Verificar se resposta já foi mostrada neste card
+            const indice = window.treinoLivreEstado?.indiceAtual;
+            const respostaJaMostrada = indice !== undefined && window.treinoLivreRespostaMostrada && window.treinoLivreRespostaMostrada[indice] === true;
+            
             return `
                 <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
                     <div class="diario-sessao-meta">
@@ -12952,16 +12959,24 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
                         ❓ ${formatarTextoDiario(entrada.topico)}
                     </div>
-                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta escondida">
+                    <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta ${respostaJaMostrada ? '' : 'escondida'}">
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
-                            ${entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
+                            ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
                         </div>
                     </div>
+                    ${!respostaJaMostrada ? `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="toggleRespostaTreinoLivre()" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
                     </div>
+                    ` : `
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
+                        <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="toggleRespostaTreinoLivre()" style="min-height: 44px;">
+                            🙈 OCULTAR RESPOSTA
+                        </button>
+                    </div>
+                    `}
                 </div>
             `;
         }
@@ -13036,6 +13051,7 @@
             const wrapper = document.getElementById('treinoLivreRespostaWrapper');
             if (!wrapper) return;
             
+            const indice = window.treinoLivreEstado?.indiceAtual;
             const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
             const btn = document.getElementById('treinoLivreToggleBtn');
             
@@ -13043,9 +13059,16 @@
             if (wrapper.classList.contains('escondida')) {
                 wrapper.classList.remove('escondida');
                 
+                // P2: Registrar que resposta foi mostrada neste card
+                if (indice !== undefined) {
+                    if (!window.treinoLivreRespostaMostrada) {
+                        window.treinoLivreRespostaMostrada = {};
+                    }
+                    window.treinoLivreRespostaMostrada[indice] = true;
+                }
+                
                 // Preencher resposta se ainda não foi preenchida
                 if (inner && inner.getAttribute('data-resposta-texto') === 'true') {
-                    const indice = window.treinoLivreEstado?.indiceAtual;
                     const entradaAtual = window.treinoLivreFila && indice !== undefined ? window.treinoLivreFila[indice] : null;
                     if (entradaAtual && entradaAtual.resposta && !inner.textContent.trim()) {
                         inner.textContent = formatarTextoDiario(entradaAtual.resposta);
@@ -13056,6 +13079,12 @@
             } else {
                 // Esconder
                 wrapper.classList.add('escondida');
+                
+                // P2: Registrar que resposta foi escondida (opcional, mas mantém consistência)
+                if (indice !== undefined && window.treinoLivreRespostaMostrada) {
+                    window.treinoLivreRespostaMostrada[indice] = false;
+                }
+                
                 if (btn) btn.textContent = '👁️ MOSTRAR RESPOSTA';
             }
         }
@@ -13125,31 +13154,6 @@
             sairTreinoLivre();
         }
         
-        // Toggle resposta do Treino Livre (exclusivo do TL-2, não afeta Sessão Programada)
-        function toggleRespostaTreinoLivre() {
-            const wrapper = document.getElementById('treinoLivreRespostaWrapper');
-            const btn = document.getElementById('treinoLivreToggleBtn');
-            if (!wrapper || !btn) return;
-            
-            const inner = wrapper.querySelector('.diario-sessao-resposta-inner');
-            if (inner && inner.getAttribute('data-resposta-texto') === 'true') {
-                // AJUSTE 3: Usar textContent para preservar formatação (quebras de linha)
-                const indiceAtual = window.treinoLivreEstado?.indiceAtual || 0;
-                const entradaAtual = window.treinoLivreFila && window.treinoLivreFila[indiceAtual];
-                if (entradaAtual && entradaAtual.resposta) {
-                    inner.textContent = formatarTextoDiario(entradaAtual.resposta);
-                }
-            }
-            
-            if (wrapper.classList.contains('escondida')) {
-                wrapper.classList.remove('escondida');
-                btn.textContent = '🙈 OCULTAR RESPOSTA';
-            } else {
-                wrapper.classList.add('escondida');
-                btn.textContent = '👁️ MOSTRAR RESPOSTA';
-            }
-        }
-        
         // Navegação: Próximo
         function treinoLivreProximo() {
             if (!window.treinoLivreEstado?.ativo || !window.treinoLivreFila) return;
@@ -13193,6 +13197,7 @@
             window.treinoLivreEstado = null;
             window.treinoLivreAvaliacao = null; // Limpar avaliação
             window.treinoLivreHistoricoAvaliacoes = null; // Limpar histórico
+            window.treinoLivreRespostaMostrada = null; // P2: Limpar estado de resposta mostrada
             setModoSessaoDiario('livre');
         }
         
@@ -13211,6 +13216,7 @@
             
             window.treinoLivreEstado = null;
             window.treinoLivreAvaliacao = null; // Limpar avaliação
+            window.treinoLivreRespostaMostrada = null; // P2: Limpar estado de resposta mostrada
             renderTreinoLivreFim(total, resultado);
         }
         
