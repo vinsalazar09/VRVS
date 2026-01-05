@@ -13439,12 +13439,76 @@
                 return;
             }
             
-            // Ordenar: mais recentes primeiro (usar data ou criadoEm)
-            entradas.sort((a, b) => {
-                const dataA = new Date(a.data || a.criadoEm || 0);
-                const dataB = new Date(b.data || b.criadoEm || 0);
-                return dataB - dataA; // Mais recente primeiro
+            // Ordenar: mais recentes primeiro + ordem de inserção dentro do mesmo dia
+            // Usar decorate-sort-undecorate para garantir chave estável
+            const entradasComChaves = entradas.map((entrada, indiceOriginal) => {
+                // Chave primária: dia (YYYY-MM-DD) - evitar new Date() como chave principal
+                const obterChaveDia = (entrada) => {
+                    // Normalizar para YYYY-MM-DD (reutilizar lógica de filtrarTreinoLivrePorPeriodo)
+                    const normalizarYMD = (valor) => {
+                        if (!valor) return null;
+                        // Timestamp numérico
+                        const asNum = Number(valor);
+                        if (Number.isFinite(asNum) && asNum > 1000000000000) {
+                            const d = new Date(asNum);
+                            const ano = d.getFullYear();
+                            const mes = String(d.getMonth() + 1).padStart(2, '0');
+                            const dia = String(d.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        }
+                        // String tipo "YYYY-MM-DD" ou "YYYY-MM-DDTHH:MM..."
+                        const s = String(valor);
+                        const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+                        return m ? m[1] : null;
+                    };
+                    
+                    const dataStr = entrada.data || entrada.criadoEm;
+                    const diaNormalizado = normalizarYMD(dataStr);
+                    return diaNormalizado || '0000-00-00';
+                };
+                
+                // Chave secundária: ordem de inserção (didática)
+                const obterChaveInsercao = (entrada, indiceOriginal) => {
+                    // Prioridade 1: Date.parse(criadoEm) se existir e for válido
+                    if (entrada.criadoEm) {
+                        const parsed = Date.parse(entrada.criadoEm);
+                        if (!isNaN(parsed) && isFinite(parsed)) {
+                            return parsed;
+                        }
+                    }
+                    
+                    // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
+                    if (entrada.id) {
+                        const parsedId = parseInt(String(entrada.id), 10);
+                        if (!isNaN(parsedId) && isFinite(parsedId)) {
+                            return parsedId;
+                        }
+                    }
+                    
+                    // Prioridade 3: índice original (fallback para estabilidade)
+                    return indiceOriginal;
+                };
+                
+                return {
+                    entrada: entrada,
+                    chaveDia: obterChaveDia(entrada),
+                    chaveInsercao: obterChaveInsercao(entrada, indiceOriginal)
+                };
             });
+            
+            // Ordenar por chave composta
+            entradasComChaves.sort((a, b) => {
+                // Primeira chave: dia (mais recente primeiro - string compare reverso)
+                if (b.chaveDia !== a.chaveDia) {
+                    return b.chaveDia.localeCompare(a.chaveDia); // '2026-01-03' > '2026-01-02'
+                }
+                
+                // Segunda chave: ordem de inserção (menor = mais antigo = aparece depois)
+                return a.chaveInsercao - b.chaveInsercao;
+            });
+            
+            // Extrair entradas ordenadas
+            entradas = entradasComChaves.map(item => item.entrada);
             
             // Cortar para quantidade solicitada
             const quantidadeSolicitada = config.quantidade || 10;
