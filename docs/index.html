@@ -12403,23 +12403,62 @@
                 }
                 
                 const entradas = getEntradasParaRevisarHojeDiario(filtros);
-                // === PATCH ORDENAÇÃO SESSÃO (2025-01-01) ===
-                const parseData = (entrada) => {
-                    try {
-                        const d = entrada.criadoEm || entrada.data || '1970-01-01';
-                        const t = new Date(d).getTime();
-                        return Number.isFinite(t) ? t : 0;
-                    } catch (e) {
-                        return 0;
+                
+                // P1 Diário: Ordenar: mais recente primeiro + ordem de inserção ASC dentro do mesmo dia
+                // Reutilizar helpers globais: obterDataCriacaoGlobal() e normalizarYMDGlobal()
+                const entradasComChaves = entradas.map((entrada, indiceOriginal) => {
+                    // Chave primária: dia (YYYY-MM-DD) - garantir STRING
+                    const diaRaw = obterDataCriacaoGlobal(entrada) || normalizarYMDGlobal(entrada.data || entrada.criadoEm) || '0000-00-00';
+                    const chaveDia = String(diaRaw);
+                    
+                    // Chave secundária: ordem de inserção ASC (primeiro do dia primeiro)
+                    let chaveInsercao;
+                    // Prioridade 1: Date.parse(criadoEm) se existir e for válido
+                    if (entrada.criadoEm) {
+                        const parsed = Date.parse(entrada.criadoEm);
+                        if (!isNaN(parsed) && isFinite(parsed)) {
+                            chaveInsercao = parsed;
+                        } else {
+                            // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
+                            if (entrada.id) {
+                                const parsedId = parseInt(String(entrada.id), 10);
+                                chaveInsercao = (!isNaN(parsedId) && isFinite(parsedId)) ? parsedId : indiceOriginal;
+                            } else {
+                                chaveInsercao = indiceOriginal;
+                            }
+                        }
+                    } else {
+                        // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
+                        if (entrada.id) {
+                            const parsedId = parseInt(String(entrada.id), 10);
+                            chaveInsercao = (!isNaN(parsedId) && isFinite(parsedId)) ? parsedId : indiceOriginal;
+                        } else {
+                            // Prioridade 3: índice original (fallback para estabilidade)
+                            chaveInsercao = indiceOriginal;
+                        }
                     }
-                };
-                const cmpMaisRecente = (a, b) => {
-                    const diff = parseData(b) - parseData(a);
-                    if (diff !== 0) return diff;
-                    return (Number(b.id) || 0) - (Number(a.id) || 0);
-                };
-                const entradasOrdenadas = [...entradas].sort(cmpMaisRecente);
-                // === FIM PATCH ===
+                    
+                    return {
+                        entrada: entrada,
+                        chaveDia: chaveDia,
+                        chaveInsercao: chaveInsercao,
+                        indiceOriginal: indiceOriginal
+                    };
+                });
+                
+                // Ordenar por chave composta
+                entradasComChaves.sort((a, b) => {
+                    // Primeira chave: dia (mais recente primeiro - string compare reverso)
+                    if (b.chaveDia !== a.chaveDia) {
+                        return b.chaveDia.localeCompare(a.chaveDia); // '2026-01-03' > '2026-01-02'
+                    }
+                    
+                    // Segunda chave: ordem de inserção ASC (menor = mais antigo = aparece primeiro)
+                    return a.chaveInsercao - b.chaveInsercao;
+                });
+                
+                // Extrair entradas ordenadas
+                const entradasOrdenadas = entradasComChaves.map(item => item.entrada);
                 sessaoDiario.filaIds = entradasOrdenadas.map(e => e.id);
                 sessaoDiario.indiceAtual = 0;
                 
