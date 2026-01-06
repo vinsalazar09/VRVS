@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.71-p4-areas-optgroup-origem";
+const CACHE_NAME = "vrvs-v5.3.72-p4-areas-labels-claros";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

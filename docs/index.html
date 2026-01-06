@@ -14147,30 +14147,26 @@
             }
             
             // P4.2: Separar áreas por origem com optgroup
-            const { padrao, custom, detectadas } = obterAreasPorOrigem();
+            const { padrao, custom } = obterAreasPorOrigem();
             
             let html = '<option value="">Selecione...</option>';
             
-            // Grupo 1: Áreas padrão (VRVS)
+            // Grupo 1: Áreas padrão (VRVS — iguais para todos)
             if (padrao.length > 0) {
-                html += '<optgroup label="Áreas padrão (VRVS)">';
+                html += '<optgroup label="Áreas padrão (VRVS — iguais para todos)">';
                 padrao.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
                 html += '</optgroup>';
             }
             
-            // Grupo 2: Minhas áreas (este dispositivo)
+            // Grupo 2: Áreas criadas neste aparelho
             if (custom.length > 0) {
-                html += '<optgroup label="Minhas áreas (este dispositivo)">';
+                html += '<optgroup label="Áreas criadas neste aparelho">';
                 custom.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
                 html += '</optgroup>';
             }
             
-            // Grupo 3: Áreas detectadas em temas
-            if (detectadas.length > 0) {
-                html += '<optgroup label="Áreas detectadas em temas">';
-                detectadas.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
-                html += '</optgroup>';
-            }
+            // P4.2b: Remover grupo "detectadas" do modal de cadastro (reduz ruído e confusão)
+            // obterAreasPorOrigem() mantém detectadas para uso futuro em outros lugares
             
             selectArea.innerHTML = html;
             
