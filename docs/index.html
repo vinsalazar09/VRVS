@@ -4387,6 +4387,17 @@
         if (typeof __vrvsMark === 'function') __vrvsMark(2); // Antes do primeiro carregamento do localStorage
         let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
         let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
+        
+        // P4: Carregar áreas customizadas persistentes
+        let vrvsAreasCustom = JSON.parse(localStorage.getItem('vrvs_areas_custom') || '[]');
+        // Garantir Array, garantir strings, trim, remover vazios, deduplicar, sort
+        if (!Array.isArray(vrvsAreasCustom)) vrvsAreasCustom = [];
+        vrvsAreasCustom = vrvsAreasCustom
+            .map(a => String(a).trim())
+            .filter(a => a.length > 0)
+            .filter((a, i, arr) => arr.indexOf(a) === i) // Deduplicar
+            .sort();
+        window.vrvsAreasCustom = vrvsAreasCustom;
         let lembretes = JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]');
         let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'); // Anotações por tema
         
@@ -4726,12 +4737,11 @@
                 return;
             }
             
-            // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
+            // Popular select de áreas usando helper centralizado
             const editAreaSelect = document.getElementById('editArea');
             if (editAreaSelect) {
-                // Unir AREAS_FIXAS + áreas existentes nos dados
-                const areasExistentes = [...new Set(dados.map(t => t.area).filter(Boolean))];
-                const areasCompletas = [...new Set([...AREAS_FIXAS, ...areasExistentes])].sort();
+                // Usar helper centralizado para obter todas as áreas disponíveis
+                const areasCompletas = obterListaAreasDisponiveis();
                 
                 editAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
                     areasCompletas.map(area => `<option value="${area}">${area}</option>`).join('') +
@@ -5708,9 +5718,8 @@
             const areaSelect = document.getElementById('feedbackArea');
             const temaSelect = document.getElementById('feedbackTema');
             
-            // Usar áreas fixas como base, adicionando áreas existentes que não estão na lista
-            const areasExistentes = [...new Set(dados.map(t => t.area).filter(a => a && a.trim()))];
-            const areasCompletas = [...new Set([...AREAS_FIXAS, ...areasExistentes])].sort();
+            // Usar helper centralizado para obter todas as áreas disponíveis
+            const areasCompletas = obterListaAreasDisponiveis();
             
             areaSelect.innerHTML = '<option value="">Selecione a área...</option>' +
                 areasCompletas.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -7413,10 +7422,9 @@
         // ==================== ANÁLISES DETALHADAS ====================
         
         function atualizarSelectsAnalise() {
-            // Atualizar select de áreas (incluindo AREAS_FIXAS + áreas dos dados)
+            // Atualizar select de áreas usando helper centralizado
             const areaSelect = document.getElementById('analiseFiltroArea');
-            const areasDados = dados.filter(t => t.status !== 'Suspenso').map(t => t.area).filter(a => a);
-            const areas = [...new Set([...AREAS_FIXAS, ...areasDados])].sort();
+            const areas = obterListaAreasDisponiveis();
             areaSelect.innerHTML = '<option value="">Todas as áreas</option>';
             areas.forEach(area => {
                 areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
@@ -8677,9 +8685,8 @@
             const selectTema = document.getElementById('cadernoFiltroTema');
             
             if (selectArea) {
-                // Incluir AREAS_FIXAS + áreas dos dados
-                const areasDados = dados.map(t => t.area).filter(a => a);
-                const areas = [...new Set([...AREAS_FIXAS, ...areasDados])].sort();
+                // Usar helper centralizado para obter todas as áreas disponíveis
+                const areas = obterListaAreasDisponiveis();
                 selectArea.innerHTML = '<option value="">Todas as áreas</option>';
                 areas.forEach(area => {
                     const option = document.createElement('option');
@@ -11460,9 +11467,9 @@
                 topicoInput.addEventListener('input', topicoInput._autoResizeHandler);
             }
             
-            // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
+            // Popular select de áreas usando helper centralizado
             if (areaSelect) {
-                const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])].sort();
+                const areasExistentes = obterListaAreasDisponiveis();
                 areaSelect.innerHTML = '<option value="">Selecione...</option>';
                 areasExistentes.forEach(area => {
                     const option = document.createElement('option');
@@ -12626,6 +12633,41 @@
             }
         }
         
+        // ==================== HELPERS GLOBAIS PARA DATAS (P1) ====================
+        // Funções auxiliares globais para normalização de datas (reutilizáveis)
+        function ymdDeDateGlobal(d) {
+            const ano = d.getFullYear();
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const dia = String(d.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        }
+        
+        function normalizarYMDGlobal(valor) {
+            if (!valor) return null;
+            // Timestamp numérico (number ou string numérica)
+            const asNum = Number(valor);
+            if (Number.isFinite(asNum) && asNum > 1000000000000) {
+                return ymdDeDateGlobal(new Date(asNum));
+            }
+            // String tipo "YYYY-MM-DD" ou "YYYY-MM-DDTHH:MM..."
+            const s = String(valor);
+            const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+            return m ? m[1] : null;
+        }
+        
+        function obterDataCriacaoGlobal(entrada) {
+            // Prioridade 1: criadoEm
+            const c1 = normalizarYMDGlobal(entrada && entrada.criadoEm);
+            if (c1) return c1;
+            // Prioridade 2: data
+            const c2 = normalizarYMDGlobal(entrada && entrada.data);
+            if (c2) return c2;
+            // Prioridade 3: derivar do id se for timestamp
+            const c3 = normalizarYMDGlobal(entrada && entrada.id);
+            if (c3) return c3;
+            return null;
+        }
+        
         // ==================== FILTRO POR PERÍODO (TREINO LIVRE) ====================
         // Compara datas como inteiro YYYYMMDD para evitar bugs de timezone (iOS etc.)
         function filtrarTreinoLivrePorPeriodo(entradas, config) {
@@ -13439,60 +13481,45 @@
                 return;
             }
             
-            // Ordenar: mais recentes primeiro + ordem de inserção dentro do mesmo dia
+            // P1: Ordenar: mais recentes primeiro + ordem de inserção dentro do mesmo dia
             // Usar decorate-sort-undecorate para garantir chave estável
+            // Reutilizar funções auxiliares globais: obterDataCriacaoGlobal() e normalizarYMDGlobal()
             const entradasComChaves = entradas.map((entrada, indiceOriginal) => {
-                // Chave primária: dia (YYYY-MM-DD) - evitar new Date() como chave principal
-                const obterChaveDia = (entrada) => {
-                    // Normalizar para YYYY-MM-DD (reutilizar lógica de filtrarTreinoLivrePorPeriodo)
-                    const normalizarYMD = (valor) => {
-                        if (!valor) return null;
-                        // Timestamp numérico
-                        const asNum = Number(valor);
-                        if (Number.isFinite(asNum) && asNum > 1000000000000) {
-                            const d = new Date(asNum);
-                            const ano = d.getFullYear();
-                            const mes = String(d.getMonth() + 1).padStart(2, '0');
-                            const dia = String(d.getDate()).padStart(2, '0');
-                            return `${ano}-${mes}-${dia}`;
-                        }
-                        // String tipo "YYYY-MM-DD" ou "YYYY-MM-DDTHH:MM..."
-                        const s = String(valor);
-                        const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-                        return m ? m[1] : null;
-                    };
-                    
-                    const dataStr = entrada.data || entrada.criadoEm;
-                    const diaNormalizado = normalizarYMD(dataStr);
-                    return diaNormalizado || '0000-00-00';
-                };
+                // Chave primária: dia (YYYY-MM-DD) - usar obterDataCriacaoGlobal() existente
+                const chaveDia = obterDataCriacaoGlobal(entrada) || normalizarYMDGlobal(entrada.data || entrada.criadoEm) || '0000-00-00';
                 
                 // Chave secundária: ordem de inserção (didática)
-                const obterChaveInsercao = (entrada, indiceOriginal) => {
-                    // Prioridade 1: Date.parse(criadoEm) se existir e for válido
-                    if (entrada.criadoEm) {
-                        const parsed = Date.parse(entrada.criadoEm);
-                        if (!isNaN(parsed) && isFinite(parsed)) {
-                            return parsed;
+                let chaveInsercao;
+                // Prioridade 1: Date.parse(criadoEm) se existir e for válido
+                if (entrada.criadoEm) {
+                    const parsed = Date.parse(entrada.criadoEm);
+                    if (!isNaN(parsed) && isFinite(parsed)) {
+                        chaveInsercao = parsed;
+                    } else {
+                        // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
+                        if (entrada.id) {
+                            const parsedId = parseInt(String(entrada.id), 10);
+                            chaveInsercao = (!isNaN(parsedId) && isFinite(parsedId)) ? parsedId : indiceOriginal;
+                        } else {
+                            chaveInsercao = indiceOriginal;
                         }
                     }
-                    
+                } else {
                     // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
                     if (entrada.id) {
                         const parsedId = parseInt(String(entrada.id), 10);
-                        if (!isNaN(parsedId) && isFinite(parsedId)) {
-                            return parsedId;
-                        }
+                        chaveInsercao = (!isNaN(parsedId) && isFinite(parsedId)) ? parsedId : indiceOriginal;
+                    } else {
+                        // Prioridade 3: índice original (fallback para estabilidade)
+                        chaveInsercao = indiceOriginal;
                     }
-                    
-                    // Prioridade 3: índice original (fallback para estabilidade)
-                    return indiceOriginal;
-                };
+                }
                 
                 return {
                     entrada: entrada,
-                    chaveDia: obterChaveDia(entrada),
-                    chaveInsercao: obterChaveInsercao(entrada, indiceOriginal)
+                    chaveDia: chaveDia,
+                    chaveInsercao: chaveInsercao,
+                    indiceOriginal: indiceOriginal
                 };
             });
             
@@ -13504,7 +13531,11 @@
                 }
                 
                 // Segunda chave: ordem de inserção (menor = mais antigo = aparece depois)
-                return a.chaveInsercao - b.chaveInsercao;
+                const diffInsercao = a.chaveInsercao - b.chaveInsercao;
+                if (diffInsercao !== 0) return diffInsercao;
+                
+                // Fallback: manter ordem original se tudo mais empatar
+                return a.indiceOriginal - b.indiceOriginal;
             });
             
             // Extrair entradas ordenadas
@@ -13955,12 +13986,20 @@
             // Normalizar área
             const areaNormalizada = normalizarArea(nomeArea);
             
-            // Verificar se já existe
-            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])];
+            // Verificar se já existe usando helper centralizado
+            const areasExistentes = obterListaAreasDisponiveis();
             if (areasExistentes.includes(areaNormalizada)) {
                 mostrarNotificacaoFeedback(`⚠️ A área "${areaNormalizada}" já existe!`, 'error');
                 return;
             }
+            
+            // P4: Salvar área customizada no localStorage
+            if (!window.vrvsAreasCustom) window.vrvsAreasCustom = [];
+            window.vrvsAreasCustom.push(areaNormalizada);
+            window.vrvsAreasCustom = window.vrvsAreasCustom
+                .filter((a, i, arr) => arr.indexOf(a) === i) // Deduplicar
+                .sort();
+            localStorage.setItem('vrvs_areas_custom', JSON.stringify(window.vrvsAreasCustom));
             
             // Atualizar TODOS os selects de área na plataforma
             atualizarTodosSelectsArea(areaNormalizada);
@@ -13970,23 +14009,34 @@
             mostrarNotificacaoFeedback(`✅ Área "${areaNormalizada}" adicionada com sucesso! Agora está disponível em todas as abas.`);
         }
         
+        // P4: Helper centralizado para obter lista completa de áreas disponíveis
+        function obterListaAreasDisponiveis() {
+            const areasDados = dados.map(t => t.area).filter(a => a && a.trim());
+            const areasCustom = window.vrvsAreasCustom || [];
+            return [...new Set([...AREAS_FIXAS, ...areasCustom, ...areasDados])].sort();
+        }
+        
         // Função centralizada para atualizar TODOS os selects de área
         function atualizarTodosSelectsArea(novaArea) {
             // Lista de todos os selects que precisam ser atualizados
             const selectsArea = [
-                'modalNovaArea',      // Modal cadastro tema
+                'modalCadastroArea',  // Modal cadastro tema (corrigido: era 'modalNovaArea' incorreto)
                 'editArea',           // Modal edição tema
                 'novaArea',           // Formulário cadastro (aba Dados)
-                'feedbackArea',       // Formulário Feedback
-                'novaDiarioArea',     // Formulário Diário
+                'feedbackArea',        // Formulário Feedback
+                'novaDiarioArea',      // Formulário Diário
                 'analiseFiltroArea',  // Filtro Análises
-                'filtroDiarioArea',   // Filtro Diário
-                'cadernoFiltroArea'   // Filtro Caderno
+                'filtroDiarioArea',    // Filtro Diário
+                'cadernoFiltroArea'    // Filtro Caderno
             ];
             
-            // Obter todas as áreas existentes (fixas + dos dados)
-            const areasExistentes = [...new Set([...AREAS_FIXAS, ...dados.map(t => t.area).filter(a => a)])];
-            const areasCompletas = [...new Set([...areasExistentes, novaArea])].sort();
+            // Obter todas as áreas existentes usando helper centralizado
+            const areasCompletas = obterListaAreasDisponiveis();
+            // Se novaArea não estiver na lista, adicionar temporariamente para atualização
+            if (novaArea && !areasCompletas.includes(novaArea)) {
+                areasCompletas.push(novaArea);
+                areasCompletas.sort();
+            }
             
             // Atualizar cada select
             selectsArea.forEach(selectId => {
@@ -14047,28 +14097,14 @@
         // ==================== MODAL CADASTRO ====================
         
         function abrirModalCadastro() {
-            // Popular select de áreas com AREAS_FIXAS + áreas existentes nos dados
-            let areasExistentes = [];
-            try {
-                if (typeof AREAS_FIXAS !== 'undefined' && Array.isArray(AREAS_FIXAS)) {
-                    areasExistentes = [...AREAS_FIXAS];
-                }
-                if (typeof dados !== 'undefined' && Array.isArray(dados)) {
-                    const areasDosDados = dados.map(t => t.area).filter(a => a);
-                    areasExistentes = [...areasExistentes, ...areasDosDados];
-                }
-                areasExistentes = [...new Set(areasExistentes)].sort();
-            } catch (e) {
-                console.error('[BUG FIX] Erro ao coletar áreas:', e);
-                areasExistentes = AREAS_FIXAS || [];
-            }
-            
+            // Popular select de áreas usando helper centralizado
             const selectArea = document.getElementById('modalCadastroArea');
             if (!selectArea) {
                 console.error('[BUG FIX] Select modalCadastroArea não encontrado!');
                 return;
             }
             
+            const areasExistentes = obterListaAreasDisponiveis();
             selectArea.innerHTML = '<option value="">Selecione...</option>' +
                 areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
             
