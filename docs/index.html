@@ -14096,6 +14096,48 @@
         
         // ==================== MODAL CADASTRO ====================
         
+        // P4.2: Helper para separar áreas por origem (usa variáveis globais)
+        function obterAreasPorOrigem() {
+            // Fonte 1: Áreas padrão (fixas do sistema)
+            const padrao = (AREAS_FIXAS || []).map(a => String(a).trim()).filter(Boolean);
+            
+            // Fonte 2: Áreas custom (criadas pelo usuário neste dispositivo)
+            // Usar window.vrvsAreasCustom (já carregado no boot, linha ~4400)
+            const customRaw = window.vrvsAreasCustom || [];
+            const custom = customRaw.map(a => String(a).trim()).filter(Boolean);
+            
+            // Fonte 3: Áreas detectadas em temas existentes (que não estão em padrão nem custom)
+            // Usar dados global (já carregado no boot, linha ~4387)
+            const dadosArray = dados || [];
+            const todasAreasDados = dadosArray
+                .map(t => t.area)
+                .filter(a => a && String(a).trim())
+                .map(a => String(a).trim());
+            
+            // Normalizar para comparação case-insensitive (evitar "Ombro" vs "ombro")
+            const padraoNormalizado = new Set(padrao.map(a => a.toLowerCase()));
+            const customNormalizado = new Set(custom.map(a => a.toLowerCase()));
+            
+            // Filtrar detectadas: não está em padrão nem custom (case-insensitive)
+            const detectadas = [...new Set(todasAreasDados)].filter(a => {
+                const aLower = a.toLowerCase();
+                return !padraoNormalizado.has(aLower) && !customNormalizado.has(aLower);
+            });
+            
+            return { 
+                padrao: padrao.sort(), 
+                custom: custom.sort(), 
+                detectadas: detectadas.sort() 
+            };
+        }
+        
+        // Helper simples para escape HTML (prevenir XSS em nomes de área)
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         function abrirModalCadastro() {
             // Popular select de áreas usando helper centralizado
             const selectArea = document.getElementById('modalCadastroArea');
@@ -14104,9 +14146,33 @@
                 return;
             }
             
-            const areasExistentes = obterListaAreasDisponiveis();
-            selectArea.innerHTML = '<option value="">Selecione...</option>' +
-                areasExistentes.map(a => `<option value="${a}">${a}</option>`).join('');
+            // P4.2: Separar áreas por origem com optgroup
+            const { padrao, custom, detectadas } = obterAreasPorOrigem();
+            
+            let html = '<option value="">Selecione...</option>';
+            
+            // Grupo 1: Áreas padrão (VRVS)
+            if (padrao.length > 0) {
+                html += '<optgroup label="Áreas padrão (VRVS)">';
+                padrao.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
+                html += '</optgroup>';
+            }
+            
+            // Grupo 2: Minhas áreas (este dispositivo)
+            if (custom.length > 0) {
+                html += '<optgroup label="Minhas áreas (este dispositivo)">';
+                custom.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
+                html += '</optgroup>';
+            }
+            
+            // Grupo 3: Áreas detectadas em temas
+            if (detectadas.length > 0) {
+                html += '<optgroup label="Áreas detectadas em temas">';
+                detectadas.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
+                html += '</optgroup>';
+            }
+            
+            selectArea.innerHTML = html;
             
             // Limpar campos
             const temaInput = document.getElementById('modalNovoTema');
