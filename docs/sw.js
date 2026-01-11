@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.76-p3-template-whitespace";
+const CACHE_NAME = "vrvs-v5.3.77-a2-esquecidos-sem-bloqueio";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

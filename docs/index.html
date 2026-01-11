@@ -13084,9 +13084,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
-                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
-                        ❓ ${formatarTextoDiario(entrada.topico)}
-                    </div>
+                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
                             ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
@@ -13123,9 +13121,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                     </div>
-                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">
-                        ❓ ${formatarTextoDiario(entrada.topico)}
-                    </div>
+                    <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
                             ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
@@ -13515,8 +13511,11 @@
             
             const config = window.treinoLivreConfig;
             
-            // Validação: Modo Avaliação requer tema específico OU filtro por período
-            if (config.modoAvaliacao && !config.tema && (!config.periodo || config.periodo === 'todos')) {
+            // Ajuste 2: Modo "Esquecidos" não precisa de filtro de período/tema
+            const modoEsquecidos = !!config.esquecidos || config.tipoTreino === 'esquecidos' || config.apenasEsquecidos === true;
+            
+            // Validação: Modo Avaliação requer tema específico OU filtro por período (exceto modo Esquecidos)
+            if (config.modoAvaliacao && !modoEsquecidos && !config.tema && (!config.periodo || config.periodo === 'todos')) {
                 mostrarNotificacaoFeedback('⚠️ Para usar Modo Avaliação, selecione um tema específico ou filtre por período.', 'error');
                 return;
             }
