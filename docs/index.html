@@ -10334,12 +10334,17 @@
             if (!texto) return '';
             
             // Normalizar quebras de linha (Windows \r\n, Mac antigo \r, Unicode)
-            return String(texto)
+            let normalizado = String(texto)
                 .replace(/\r\n/g, '\n') // Windows
                 .replace(/\r/g, '\n')   // Mac antigo
                 .replace(/\u2028/g, '\n') // Line Separator (Unicode)
                 .replace(/\u2029/g, '\n') // Paragraph Separator (Unicode)
                 .replace(/\u0085/g, '\n'); // Next Line (Unicode)
+            
+            // P3: Remover whitespace inicial (causa primeira linha centralizada/deslocada)
+            normalizado = normalizado.replace(/^\s+/, '');
+            
+            return normalizado;
         }
         
         // P4: Formatar texto para exibição (mantém compatibilidade, mas prepara para textContent)
@@ -10879,7 +10884,12 @@
                 const bateArea = !filtros.area || e.area === filtros.area;
                 const bateTema = !filtros.tema || e.tema === filtros.tema;
                 const bateFonte = !filtros.fonte || filtros.fonte === 'todas' || isSrsActive(e);
-                return bateArea && bateTema && bateFonte;
+                
+                // Ajuste 2: Filtro "esquecidos" (robusto: case-insensitive + fallback)
+                const bateEsquecidos = !filtros.esquecidos || 
+                    (e.srs && e.srs.ativo && String(e.srs.ultimaResposta || '').toLowerCase() === 'esqueci');
+                
+                return bateArea && bateTema && bateFonte && bateEsquecidos;
             });
         }
         
@@ -12823,12 +12833,22 @@
             const filtros = {
                 area: config.area || null,
                 tema: config.tema || null,
-                fonte: 'srs' // manter comportamento atual (não mexer em flag/atencao aqui)
+                fonte: 'srs', // manter comportamento atual (não mexer em flag/atencao aqui)
+                esquecidos: config.esquecidos || false // Ajuste 2: incluir filtro esquecidos
             };
 
             let entradas = getEntradasTreinoLivreDiario(filtros);
             entradas = filtrarTreinoLivrePorPeriodo(entradas, config);
             return entradas.length;
+        }
+        
+        // Ajuste 2: Contar cards marcados como esquecidos
+        function contarEsquecidosTreinoLivre() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) return 0;
+            
+            return window.diario.entradas.filter(e => 
+                e.srs && e.srs.ativo && String(e.srs.ultimaResposta || '').toLowerCase() === 'esqueci'
+            ).length;
         }
 
         // Renderizar painel de configuração do Treino Livre
@@ -12922,14 +12942,38 @@
                         ` : ''}
                     </div>
                     
+                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,159,64,0.1); border-radius: 8px; border: 1px solid rgba(255,159,64,0.3);">
+                        <label style="display: block; font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 12px;">Tipo de treino:</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.9); cursor: pointer;">
+                                <input type="radio" name="treinoLivreTipo" value="todos" onchange="window.treinoLivreConfig.esquecidos = false; renderConfigTreinoLivre();" ${!window.treinoLivreConfig.esquecidos ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                                <span>○ Todos os cards</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.9); cursor: pointer;">
+                                <input type="radio" name="treinoLivreTipo" value="esquecidos" onchange="window.treinoLivreConfig.esquecidos = true; renderConfigTreinoLivre();" ${window.treinoLivreConfig.esquecidos ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                                <span>● Apenas esquecidos (VRVS 3P)</span>
+                            </label>
+                        </div>
+                        ${window.treinoLivreConfig.esquecidos ? `
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(255,159,64,0.1); border-radius: 6px;">
+                            <span style="font-size: 13px; color: rgba(255,255,255,0.8);">
+                                📊 <strong style="color: #FF9F40;">${contarEsquecidosTreinoLivre()}</strong> cards marcados como esquecido
+                            </span>
+                        </div>
+                        ` : ''}
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px; margin-left: 26px;">
+                            Cards da última revisão programada onde você marcou 'Esqueci'
+                        </div>
+                    </div>
+                    
                     <div style="margin-bottom:16px; padding:12px; background: rgba(0,206,209,0.05); border-radius:8px; text-align:center;">
                         <span style="font-size:14px; color: rgba(255,255,255,0.8);">
                             🔢 <strong style="color: var(--turquesa-light);">${contarEntradasDisponiveisTreinoLivre()}</strong> entradas disponíveis
                         </span>
                     </div>
                     
-                    <button class="btn" onclick="montarTreinoLivre()" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600;">
-                        🎯 Montar Treino
+                    <button class="btn" onclick="montarTreinoLivre()" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600; ${window.treinoLivreConfig.esquecidos && contarEsquecidosTreinoLivre() === 0 ? 'opacity: 0.5; cursor: not-allowed;' : ''}" ${window.treinoLivreConfig.esquecidos && contarEsquecidosTreinoLivre() === 0 ? 'disabled' : ''}>
+                        ${window.treinoLivreConfig.esquecidos && contarEsquecidosTreinoLivre() === 0 ? '🎉 Nenhum card esquecido!' : '▶ Iniciar Treino'}
                     </button>
                 </div>
             `;
@@ -13495,14 +13539,25 @@
                 }
             }
             
+            // Ajuste 2: Verificar se filtro "esquecidos" está ativo
             const filtros = {
                 area: config.area || null,
                 tema: config.tema || null,
-                fonte: 'srs'  // Treino Livre sempre usa apenas VRVS 3P ativo
+                fonte: 'srs',  // Treino Livre sempre usa apenas VRVS 3P ativo
+                esquecidos: config.esquecidos || false // Ajuste 2: novo filtro
             };
             
             // Obter entradas filtradas
             let entradas = getEntradasTreinoLivreDiario(filtros);
+            
+            // Ajuste 2: Validação se filtro "esquecidos" está ativo mas não há esquecidos
+            if (config.esquecidos) {
+                const totalEsquecidos = contarEsquecidosTreinoLivre();
+                if (totalEsquecidos === 0) {
+                    mostrarNotificacaoFeedback('🎉 Nenhum card marcado como "esqueci". Parabéns!', 'success');
+                    return;
+                }
+            }
             
             // Aplicar filtro de período
             entradas = filtrarTreinoLivrePorPeriodo(entradas, config);
