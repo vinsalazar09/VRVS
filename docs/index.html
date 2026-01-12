@@ -4629,8 +4629,9 @@
                 return AREAS_FIXAS[index]; // Retornar versão correta com acentos
             }
             
-            // Fallback: capitalizar primeira letra de cada palavra
-            return area.trim().replace(/\b\w/g, m => m.toUpperCase());
+            // Android Acentos: NÃO usar title-case ASCII (quebra Unicode/acentos)
+            // Retornar exatamente como está salvo (trim apenas)
+            return area.trim();
         }
         
         // Manter função antiga para compatibilidade (chama a nova)
@@ -13435,42 +13436,51 @@
             return `Nota: ${nota}`;
         }
         
-        // A1: Mostrar modal com detalhes por card
-        function mostrarDetalhesPorCard() {
-            const cards = obterCardsOrdenadosPorNota();
-            if (cards.length === 0) {
-                mostrarNotificacaoFeedback('⚠️ Nenhum card disponível para detalhes', 'error');
-                return;
+        // A1: Toggle detalhes por card (função global para onclick)
+        window.toggleDetalhesTreinoFim = function() {
+            const container = document.getElementById('treinoDetalhesBox');
+            const btn = document.getElementById('btnToggleDetalhes');
+            if (!container || !btn) return;
+            
+            const estaVisivel = container.style.display !== 'none';
+            
+            if (estaVisivel) {
+                // Fechar
+                container.style.display = 'none';
+                btn.textContent = '📋 Ver detalhes por card';
+            } else {
+                // Abrir: renderizar lista se ainda não foi renderizada
+                if (!container.hasAttribute('data-renderizado')) {
+                    const cards = obterCardsOrdenadosPorNota();
+                    if (cards.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">Nenhum detalhe disponível</div>';
+                    } else {
+                        let html = '<div style="max-height: 60vh; overflow-y: auto;">';
+                        cards.forEach((item) => {
+                            const { entrada, nota, notaTexto } = item;
+                            html += `
+                                <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 14px; margin-bottom: 12px; border-left: 3px solid ${nota === null ? 'rgba(255,255,255,0.3)' : nota <= 50 ? 'rgba(255,100,100,0.5)' : nota <= 90 ? 'rgba(255,200,100,0.5)' : 'rgba(100,255,100,0.5)'};">
+                                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">
+                                        <strong>${notaTexto}</strong> ${nota !== null ? `(${nota}%)` : ''}
+                                    </div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">
+                                        <strong>${escapeHtml(entrada.area || '')}</strong> • ${escapeHtml(entrada.tema || '')}
+                                    </div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); white-space: pre-wrap; overflow-wrap: break-word;">
+                                        ${entrada.topico ? escapeHtml(entrada.topico.substring(0, 100) + (entrada.topico.length > 100 ? '...' : '')) : '(Sem tópico)'}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        container.innerHTML = html;
+                    }
+                    container.setAttribute('data-renderizado', 'true');
+                }
+                container.style.display = 'block';
+                btn.textContent = '👁️ Ocultar detalhes';
             }
-            
-            let html = `
-                <div style="max-height: 70vh; overflow-y: auto;">
-                    <div style="font-size: 16px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 16px; text-align: center;">
-                        📋 Detalhes por Card (ordenado por pior desempenho primeiro)
-                    </div>
-            `;
-            
-            cards.forEach((item, idx) => {
-                const { entrada, nota, notaTexto } = item;
-                html += `
-                    <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 14px; margin-bottom: 12px; border-left: 3px solid ${nota === null ? 'rgba(255,255,255,0.3)' : nota <= 50 ? 'rgba(255,100,100,0.5)' : nota <= 90 ? 'rgba(255,200,100,0.5)' : 'rgba(100,255,100,0.5)'};">
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">
-                            <strong>${notaTexto}</strong> ${nota !== null ? `(${nota}%)` : ''}
-                        </div>
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">
-                            <strong>${entrada.area}</strong> • ${entrada.tema}
-                        </div>
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); white-space: pre-wrap; overflow-wrap: break-word;">
-                            ${entrada.topico ? entrada.topico.substring(0, 100) + (entrada.topico.length > 100 ? '...' : '') : '(Sem tópico)'}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `</div>`;
-            
-            mostrarModal('Detalhes por Card', html, 'Fechar', () => {});
-        }
+        };
         
         // Renderizar tela final do Treino Livre
         function renderTreinoLivreFim(total, resultado) {
@@ -13524,9 +13534,10 @@
                         </div>
                         
                         ${window.treinoLivreFimDados ? `
-                        <button class="btn" onclick="mostrarDetalhesPorCard()" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px; background: rgba(0, 206, 209, 0.2); border: 1px solid var(--turquesa-main);">
+                        <button id="btnToggleDetalhes" class="btn" onclick="window.toggleDetalhesTreinoFim()" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px; background: rgba(0, 206, 209, 0.2); border: 1px solid var(--turquesa-main);">
                             📋 Ver detalhes por card
                         </button>
+                        <div id="treinoDetalhesBox" style="display: none; margin-bottom: 12px;"></div>
                         ` : ''}
                         
                         <button class="btn" onclick="sairTreinoLivre()" style="width: 100%; padding: 12px; font-size: 14px;">
