@@ -1202,6 +1202,45 @@
         
         /* ==================== FIM SRS ESTILOS ==================== */
         
+        /* ==================== A1-UX: ESTILOS TELA FIM TREINO ==================== */
+        /* Container da tela de fim do treino - isolado para não afetar outras telas */
+        #treinoFimDetalhes .card-detalhe-treino {
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid;
+        }
+        
+        /* Título da nota */
+        #treinoFimDetalhes .card-detalhe-nota {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 4px;
+        }
+        
+        /* Área e tema */
+        #treinoFimDetalhes .card-detalhe-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        /* Pergunta (sem truncar) */
+        #treinoFimDetalhes .card-detalhe-pergunta {
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: pre-wrap;
+        }
+        /* ==================== FIM A1-UX ESTILOS ==================== */
+        
         /* Botões de qualidade da sessão do Diário - estilo VRVS (fundo escuro + glow) */
         /* Base neutra dos três botões */
         .diario-sessao-botoes-qualidade button {
@@ -13455,19 +13494,22 @@
                     if (cards.length === 0) {
                         container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">Nenhum detalhe disponível</div>';
                     } else {
-                        let html = '<div style="max-height: 60vh; overflow-y: auto;">';
+                        // A1-UX: Container com ID específico para CSS isolado
+                        let html = '<div id="treinoFimDetalhes" style="max-height: 60vh; overflow-y: auto;">';
                         cards.forEach((item) => {
                             const { entrada, nota, notaTexto } = item;
+                            // A1-UX: Cor da borda baseada na nota
+                            const corStatus = nota === null ? 'rgba(255,255,255,0.3)' : nota <= 50 ? 'rgba(255,100,100,0.6)' : nota <= 90 ? 'rgba(255,200,100,0.6)' : 'rgba(100,255,100,0.6)';
                             html += `
-                                <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 14px; margin-bottom: 12px; border-left: 3px solid ${nota === null ? 'rgba(255,255,255,0.3)' : nota <= 50 ? 'rgba(255,100,100,0.5)' : nota <= 90 ? 'rgba(255,200,100,0.5)' : 'rgba(100,255,100,0.5)'};">
-                                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">
+                                <div class="card-detalhe-treino" style="border-left-color: ${corStatus};">
+                                    <div class="card-detalhe-nota">
                                         <strong>${notaTexto}</strong> ${nota !== null ? `(${nota}%)` : ''}
                                     </div>
-                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">
-                                        <strong>${escapeHtml(entrada.area || '')}</strong> • ${escapeHtml(entrada.tema || '')}
+                                    <div class="card-detalhe-meta">
+                                        ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
                                     </div>
-                                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); white-space: pre-wrap; overflow-wrap: break-word;">
-                                        ${entrada.topico ? escapeHtml(entrada.topico.substring(0, 100) + (entrada.topico.length > 100 ? '...' : '')) : '(Sem tópico)'}
+                                    <div class="card-detalhe-pergunta">
+                                        ${entrada.topico ? escapeHtml(entrada.topico) : '(Sem tópico)'}
                                     </div>
                                 </div>
                             `;
