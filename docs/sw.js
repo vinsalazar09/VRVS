@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.81-a1-snapshot-detalhes-card";
+const CACHE_NAME = "vrvs-v5.3.82-android-zerado-acentos";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
