@@ -12995,6 +12995,9 @@
             // P2: Inicializar controle de resposta mostrada no modo normal
             window.treinoLivreRespostaMostrada = {};
             
+            // A1: Limpar snapshot de detalhes ao iniciar novo treino
+            window.treinoLivreFimDados = null;
+            
             // Se Modo Avaliação ativo, criar estado de avaliação
             if (window.treinoLivreConfig.modoAvaliacao) {
                 window.treinoLivreAvaliacao = {
@@ -13320,6 +13323,7 @@
             window.treinoLivreAvaliacao = null; // Limpar avaliação
             window.treinoLivreHistoricoAvaliacoes = null; // Limpar histórico
             window.treinoLivreRespostaMostrada = null; // P2: Limpar estado de resposta mostrada
+            window.treinoLivreFimDados = null; // A1: Limpar snapshot de detalhes
             setModoSessaoDiario('livre');
         }
         
@@ -13334,6 +13338,15 @@
             let resultado = null;
             if (modoAvaliacao) {
                 resultado = calcularFeedbackTL3();
+            }
+            
+            // A1: Criar snapshot ANTES de limpar (para detalhes por card)
+            if (modoAvaliacao && window.treinoLivreAvaliacao && window.treinoLivreFila) {
+                window.treinoLivreFimDados = {
+                    fila: [...window.treinoLivreFila], // cópia do array
+                    notas: { ...window.treinoLivreAvaliacao.notas }, // cópia do objeto
+                    config: { ...window.treinoLivreAvaliacao.config } // cópia do objeto
+                };
             }
             
             window.treinoLivreEstado = null;
@@ -13389,6 +13402,76 @@
             return { score, breakdown, avisos };
         }
         
+        // A1: Obter cards ordenados por nota (pior desempenho primeiro)
+        function obterCardsOrdenadosPorNota() {
+            if (!window.treinoLivreFimDados) return [];
+            
+            const { fila, notas, config } = window.treinoLivreFimDados;
+            
+            return fila
+                .map((entrada, indice) => ({
+                    entrada: entrada,
+                    indice: indice,
+                    nota: notas[indice] || null,
+                    notaTexto: obterTextoNota(notas[indice], config)
+                }))
+                .sort((a, b) => {
+                    // Ordenar: menor nota primeiro (pior desempenho primeiro)
+                    // null (pulados) vai pro final
+                    if (a.nota === null && b.nota === null) return 0;
+                    if (a.nota === null) return 1; // null vai pro final
+                    if (b.nota === null) return -1;
+                    return a.nota - b.nota; // ASC: menor primeiro
+                });
+        }
+        
+        // A1: Helper para obter texto da nota
+        function obterTextoNota(nota, config) {
+            if (nota === null || nota === undefined) return '⏭️ Pulado';
+            if (nota === config.naosei) return '❌ NÃO SEI';
+            if (nota === config.entre2) return '🎲 ENTRE 2';
+            if (nota === config.acertaria) return '✅ ACERTARIA';
+            if (nota === config.dominado) return '⭐ DOMINADO';
+            return `Nota: ${nota}`;
+        }
+        
+        // A1: Mostrar modal com detalhes por card
+        function mostrarDetalhesPorCard() {
+            const cards = obterCardsOrdenadosPorNota();
+            if (cards.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Nenhum card disponível para detalhes', 'error');
+                return;
+            }
+            
+            let html = `
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <div style="font-size: 16px; font-weight: 600; color: var(--turquesa-light); margin-bottom: 16px; text-align: center;">
+                        📋 Detalhes por Card (ordenado por pior desempenho primeiro)
+                    </div>
+            `;
+            
+            cards.forEach((item, idx) => {
+                const { entrada, nota, notaTexto } = item;
+                html += `
+                    <div style="background: rgba(20,35,45,0.6); border-radius: 8px; padding: 14px; margin-bottom: 12px; border-left: 3px solid ${nota === null ? 'rgba(255,255,255,0.3)' : nota <= 50 ? 'rgba(255,100,100,0.5)' : nota <= 90 ? 'rgba(255,200,100,0.5)' : 'rgba(100,255,100,0.5)'};">
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">
+                            <strong>${notaTexto}</strong> ${nota !== null ? `(${nota}%)` : ''}
+                        </div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">
+                            <strong>${entrada.area}</strong> • ${entrada.tema}
+                        </div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); white-space: pre-wrap; overflow-wrap: break-word;">
+                            ${entrada.topico ? entrada.topico.substring(0, 100) + (entrada.topico.length > 100 ? '...' : '') : '(Sem tópico)'}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            
+            mostrarModal('Detalhes por Card', html, 'Fechar', () => {});
+        }
+        
         // Renderizar tela final do Treino Livre
         function renderTreinoLivreFim(total, resultado) {
             const container = document.getElementById('diarioSessao');
@@ -13439,6 +13522,12 @@
                         <div style="font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; margin-bottom: 20px; font-style: italic;">
                             Anote o score e registre manualmente na aba Feedback, se quiser.
                         </div>
+                        
+                        ${window.treinoLivreFimDados ? `
+                        <button class="btn" onclick="mostrarDetalhesPorCard()" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px; background: rgba(0, 206, 209, 0.2); border: 1px solid var(--turquesa-main);">
+                            📋 Ver detalhes por card
+                        </button>
+                        ` : ''}
                         
                         <button class="btn" onclick="sairTreinoLivre()" style="width: 100%; padding: 12px; font-size: 14px;">
                             Voltar ao Diário
@@ -14184,9 +14273,25 @@
         // ==================== MODAL CADASTRO ====================
         
         // P4.2: Helper para separar áreas por origem (usa variáveis globais)
+        // P4.4 Android: Heurística para detectar aparelho "zerado" (não mostra AREAS_FIXAS)
         function obterAreasPorOrigem() {
-            // Fonte 1: Áreas padrão (fixas do sistema)
-            const padrao = (AREAS_FIXAS || []).map(a => String(a).trim()).filter(Boolean);
+            // Android Zerado: Heurística para detectar se é aparelho novo/zerado
+            // Se dados não contém nenhum tema com área em AREAS_FIXAS, considerar zerado
+            const dadosArray = dados || [];
+            const areasDados = dadosArray.map(t => String(t.area || '').trim()).filter(Boolean);
+            const padraoLower = (AREAS_FIXAS || []).map(a => String(a).toLowerCase().trim());
+            const temAreasPadrao = areasDados.some(a => padraoLower.includes(a.toLowerCase()));
+            
+            // Verificar também localStorage.vrvs_config (se existir flag modoVRVS)
+            let configVRVS = {};
+            try {
+                const configRaw = localStorage.getItem('vrvs_config');
+                if (configRaw) configVRVS = JSON.parse(configRaw);
+            } catch(e) {}
+            const modoVRVS = configVRVS.modoVRVS === true || temAreasPadrao;
+            
+            // Fonte 1: Áreas padrão (fixas do sistema) - só mostrar se não for zerado
+            const padrao = modoVRVS ? (AREAS_FIXAS || []).map(a => String(a).trim()).filter(Boolean) : [];
             
             // Fonte 2: Áreas custom (criadas pelo usuário neste dispositivo)
             // Usar window.vrvsAreasCustom (já carregado no boot, linha ~4400)
@@ -14195,11 +14300,10 @@
             
             // Fonte 3: Áreas detectadas em temas existentes (que não estão em padrão nem custom)
             // Usar dados global (já carregado no boot, linha ~4387)
-            const dadosArray = dados || [];
             const todasAreasDados = dadosArray
                 .map(t => t.area)
                 .filter(a => a && String(a).trim())
-                .map(a => String(a).trim());
+                .map(a => String(a).trim()); // Android Acentos: Display exatamente como salvo (sem normalização)
             
             // Normalizar para comparação case-insensitive (evitar "Ombro" vs "ombro")
             const padraoNormalizado = new Set(padrao.map(a => a.toLowerCase()));
@@ -14239,12 +14343,14 @@
             
             let html = '<option value="">Selecione...</option>';
             
-            // Grupo 1: Áreas padrão (VRVS — iguais para todos)
+            // Grupo 1: Áreas padrão (VRVS — iguais para todos) - só mostrar se não for zerado
             if (padrao.length > 0) {
                 html += '<optgroup label="Áreas padrão (VRVS — iguais para todos)">';
                 padrao.forEach(a => {
-                    const textoExibido = `VRVS · ${escapeHtml(a)}`;
-                    html += `<option value="${escapeHtml(a)}">${textoExibido}</option>`;
+                    // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
+                    const areaDisplay = String(a).trim(); // Exatamente como está em AREAS_FIXAS
+                    const textoExibido = `VRVS · ${escapeHtml(areaDisplay)}`;
+                    html += `<option value="${escapeHtml(areaDisplay)}">${textoExibido}</option>`;
                 });
                 html += '</optgroup>';
             }
@@ -14253,8 +14359,10 @@
             if (custom.length > 0) {
                 html += '<optgroup label="Áreas criadas neste aparelho">';
                 custom.forEach(a => {
-                    const textoExibido = `Este aparelho · ${escapeHtml(a)}`;
-                    html += `<option value="${escapeHtml(a)}">${textoExibido}</option>`;
+                    // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
+                    const areaDisplay = String(a).trim(); // Exatamente como está salvo
+                    const textoExibido = `Este aparelho · ${escapeHtml(areaDisplay)}`;
+                    html += `<option value="${escapeHtml(areaDisplay)}">${textoExibido}</option>`;
                 });
                 html += '</optgroup>';
             }
