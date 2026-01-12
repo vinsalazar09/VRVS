@@ -14234,6 +14234,7 @@
             }
             
             // P4.2: Separar áreas por origem com optgroup
+            // P4.3 Android: Prefixar texto das options para funcionar mesmo sem optgroup
             const { padrao, custom } = obterAreasPorOrigem();
             
             let html = '<option value="">Selecione...</option>';
@@ -14241,14 +14242,20 @@
             // Grupo 1: Áreas padrão (VRVS — iguais para todos)
             if (padrao.length > 0) {
                 html += '<optgroup label="Áreas padrão (VRVS — iguais para todos)">';
-                padrao.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
+                padrao.forEach(a => {
+                    const textoExibido = `VRVS · ${escapeHtml(a)}`;
+                    html += `<option value="${escapeHtml(a)}">${textoExibido}</option>`;
+                });
                 html += '</optgroup>';
             }
             
             // Grupo 2: Áreas criadas neste aparelho
             if (custom.length > 0) {
                 html += '<optgroup label="Áreas criadas neste aparelho">';
-                custom.forEach(a => html += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
+                custom.forEach(a => {
+                    const textoExibido = `Este aparelho · ${escapeHtml(a)}`;
+                    html += `<option value="${escapeHtml(a)}">${textoExibido}</option>`;
+                });
                 html += '</optgroup>';
             }
             
