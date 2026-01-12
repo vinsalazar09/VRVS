@@ -13086,9 +13086,7 @@
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
-                        <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
-                            ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
-                        </div>
+                        <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                     </div>
                     ${!respostaJaMostrada ? `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
@@ -13123,9 +13121,7 @@
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
-                        <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">
-                            ${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}
-                        </div>
+                        <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                     </div>
                     ${!respostaJaMostrada ? `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
