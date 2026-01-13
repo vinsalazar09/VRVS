@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.87-patch1-2-android-prefixo-a1-pro-colapsavel";
+const CACHE_NAME = "vrvs-v5.3.90-patch3-4-toggle-revisao-excluir-card";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

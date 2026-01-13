@@ -3162,6 +3162,33 @@
                     <button type="button" class="btn" onclick="salvarEntradaDiario()" style="flex: 1;">💾 SALVAR</button>
                     <button type="button" class="btn btn-secondary" onclick="salvarEContinuarDiario()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
                 </div>
+                
+                <div id="btnExcluirEntradaWrapper" style="display: none; margin-top: 16px;">
+                    <button type="button" class="btn btn-danger" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #EF4444;">
+                        🗑️ Apagar este card
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL CONFIRMAR EXCLUSÃO DIÁRIO (PATCH 4) -->
+    <div id="modalConfirmarExclusaoDiario" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">⚠️ Confirmar exclusão</h2>
+                <button class="modal-close" onclick="fecharModalConfirmarExclusaoDiario()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este card?</p>
+                <p id="previewExclusaoDiario" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px; font-style: italic;"></p>
+                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                    Esta ação não pode ser desfeita.
+                </p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 8px; margin-top: 16px;">
+                <button class="btn" onclick="fecharModalConfirmarExclusaoDiario()" style="flex: 1;">Cancelar</button>
+                <button class="btn btn-danger" onclick="executarExcluirEntradaDiario()" style="flex: 1; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #EF4444;">🗑️ Excluir</button>
             </div>
         </div>
     </div>
@@ -11546,6 +11573,12 @@
             document.getElementById('novaDiarioResposta').value = '';
             document.getElementById('novaDiarioAtencao').checked = false;
             
+            // PATCH 4: Ocultar botão de excluir ao criar nova entrada
+            const btnExcluirWrapper = document.getElementById('btnExcluirEntradaWrapper');
+            if (btnExcluirWrapper) {
+                btnExcluirWrapper.style.display = 'none';
+            }
+            
             // Reabilitar selects (caso tenham sido desabilitados)
             const areaSelect = document.getElementById('novaDiarioArea');
             const temaSelect = document.getElementById('novaDiarioTema');
@@ -12225,6 +12258,7 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 6px;">
+                            <button onclick="toggleRevisaoDiario(${entrada.id})" class="btn-toggle-revisao" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
                             <button onclick="editarEntradaDiario(${entrada.id})" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
                         </div>
                     </div>
@@ -12255,6 +12289,108 @@
             if (respostaDiv) {
                 respostaDiv.style.display = respostaDiv.style.display === 'none' ? 'block' : 'none';
             }
+        }
+        
+        // PATCH 3: Toggle revisão ON/OFF na lista do Diário
+        function toggleRevisaoDiario(entradaId) {
+            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+            if (!entrada) {
+                mostrarNotificacaoFeedback('⚠️ Entrada não encontrada!', 'error');
+                return;
+            }
+            
+            // Garantir que srs existe
+            if (!entrada.srs) {
+                const hoje = new Date().toISOString().split('T')[0];
+                entrada.srs = inicializarSrsVRVS3P(hoje);
+            }
+            
+            // Toggle: inverter estado atual
+            entrada.srs.ativo = !entrada.srs.ativo;
+            
+            // Persistir imediatamente
+            salvarDiario();
+            
+            // Re-renderizar lista para atualizar botão
+            renderDiario();
+            
+            // Feedback visual
+            const status = entrada.srs.ativo ? 'ativada' : 'desativada';
+            mostrarNotificacaoFeedback(`✅ Revisão ${status}`, 'success');
+        }
+        
+        // PATCH 4: Confirmar exclusão de entrada do Diário
+        function confirmarExcluirEntradaDiario() {
+            const entradaId = document.getElementById('novaDiarioId')?.value;
+            if (!entradaId) {
+                mostrarNotificacaoFeedback('⚠️ Erro: ID não encontrado!', 'error');
+                return;
+            }
+            
+            // Armazenar ID globalmente para uso no modal de confirmação
+            window.entradaDiarioParaExcluir = entradaId;
+            
+            // Buscar entrada para mostrar preview no modal
+            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+            if (entrada) {
+                // Atualizar modal com preview
+                const preview = document.getElementById('previewExclusaoDiario');
+                if (preview) {
+                    preview.textContent = `"${entrada.topico?.substring(0, 50) || '(Sem tópico)'}..."`;
+                }
+            }
+            
+            // Abrir modal de confirmação
+            const modal = document.getElementById('modalConfirmarExclusaoDiario');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+        
+        // PATCH 4: Executar exclusão após confirmação
+        function executarExcluirEntradaDiario() {
+            const entradaId = window.entradaDiarioParaExcluir;
+            if (!entradaId) {
+                mostrarNotificacaoFeedback('⚠️ Erro: ID não encontrado!', 'error');
+                fecharModalConfirmarExclusaoDiario();
+                return;
+            }
+            
+            // Buscar entrada
+            const indice = window.diario.entradas.findIndex(e => String(e.id) === String(entradaId));
+            if (indice === -1) {
+                mostrarNotificacaoFeedback('⚠️ Entrada não encontrada!', 'error');
+                fecharModalConfirmarExclusaoDiario();
+                return;
+            }
+            
+            // Remover do array
+            window.diario.entradas.splice(indice, 1);
+            
+            // Persistir
+            salvarDiario();
+            
+            // Fechar modais
+            fecharModalConfirmarExclusaoDiario();
+            fecharModalDiario();
+            
+            // Re-renderizar lista
+            renderDiario();
+            
+            // Feedback
+            mostrarNotificacaoFeedback('✅ Card excluído', 'success');
+            
+            // Limpar variável global
+            window.entradaDiarioParaExcluir = null;
+        }
+        
+        // PATCH 4: Fechar modal de confirmação
+        function fecharModalConfirmarExclusaoDiario() {
+            const modal = document.getElementById('modalConfirmarExclusaoDiario');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            window.entradaDiarioParaExcluir = null;
         }
         
         // Editar entrada a partir da sessão (desabilita área/tema)
@@ -12357,6 +12493,12 @@
             // PATCH 4: Marcar checkbox APENAS se entrada tem SRS ativo (não usar atencao legado)
             const temSrsAtivo = entrada.srs && entrada.srs.ativo;
             document.getElementById('novaDiarioAtencao').checked = temSrsAtivo || false;
+            
+            // PATCH 4: Mostrar/ocultar botão de excluir conforme é edição ou nova entrada
+            const btnExcluirWrapper = document.getElementById('btnExcluirEntradaWrapper');
+            if (btnExcluirWrapper) {
+                btnExcluirWrapper.style.display = entradaId ? 'block' : 'none';
+            }
             
             // Mostrar modal
             document.getElementById('modalNovaDiario').classList.add('active');
