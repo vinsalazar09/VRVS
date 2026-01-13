@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.90-patch3-4-toggle-revisao-excluir-card";
+const CACHE_NAME = "vrvs-v5.3.91-refino-ui-01-a1-ios-modal";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

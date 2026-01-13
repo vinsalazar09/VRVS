@@ -1299,6 +1299,65 @@
         .card-resultado[data-nota="null"] {
             border-left-color: rgba(255, 255, 255, 0.3);
         }
+        
+        /* REFINO UI 01 — A1 fim de treino (whitespace + seta) */
+        .card-resultado {
+            overflow: hidden;
+        }
+        
+        .card-resultado-header {
+            padding-right: 30px;
+        }
+        
+        .card-resultado-header::after {
+            content: "▼";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            transition: transform 0.2s;
+            pointer-events: none;
+        }
+        
+        .card-resultado[open] .card-resultado-header::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+        
+        .card-resultado-pergunta {
+            white-space: pre-line !important;
+        }
+        
+        .card-resultado-pergunta,
+        .card-resultado-pergunta * {
+            text-overflow: clip !important;
+            -webkit-line-clamp: unset !important;
+            line-clamp: unset !important;
+            overflow: visible !important;
+        }
+        
+        /* REFINO UI 01 — Modal confirmar exclusão (contraste + sem ellipsis) */
+        #modalConfirmarExclusaoDiario .modal-content {
+            color: rgba(255, 255, 255, 0.92) !important;
+        }
+        
+        #modalConfirmarExclusaoDiario .modal-body,
+        #modalConfirmarExclusaoDiario .modal-body * {
+            color: rgba(255, 255, 255, 0.90) !important;
+        }
+        
+        #modalConfirmarExclusaoDiario #previewExclusaoDiario {
+            color: rgba(255, 255, 255, 0.90) !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            -webkit-line-clamp: unset !important;
+            line-clamp: unset !important;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        
         /* ==================== FIM A1-PRO ==================== */
         
         /* Botões de qualidade da sessão do Diário - estilo VRVS (fundo escuro + glow) */
@@ -3181,7 +3240,7 @@
             </div>
             <div class="modal-body">
                 <p>Tem certeza que deseja excluir este card?</p>
-                <p id="previewExclusaoDiario" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px; font-style: italic;"></p>
+                <p id="previewExclusaoDiario" style="font-size: 12px; color: rgba(255,255,255,0.90); margin-top: 8px; font-style: italic;"></p>
                 <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px;">
                     Esta ação não pode ser desfeita.
                 </p>
@@ -12336,7 +12395,7 @@
                 // Atualizar modal com preview
                 const preview = document.getElementById('previewExclusaoDiario');
                 if (preview) {
-                    preview.textContent = `"${entrada.topico?.substring(0, 50) || '(Sem tópico)'}..."`;
+                    preview.textContent = `"${entrada.topico || '(Sem tópico)'}"`;
                 }
             }
             
@@ -14604,7 +14663,7 @@
             
             // Grupo 1: Áreas padrão (VRVS — iguais para todos) - só mostrar se não for zerado
             if (padrao.length > 0) {
-                html += '<optgroup label="Áreas padrão (VRVS — iguais para todos)">';
+                html += '<optgroup label="Áreas padrão">';
                 padrao.forEach(a => {
                     // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
                     const areaDisplay = String(a).trim(); // Exatamente como está em AREAS_FIXAS
@@ -14616,7 +14675,7 @@
             
             // Grupo 2: Áreas criadas neste aparelho
             if (custom.length > 0) {
-                html += '<optgroup label="Áreas criadas neste aparelho">';
+                html += '<optgroup label="Minhas áreas">';
                 custom.forEach(a => {
                     // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
                     const areaDisplay = String(a).trim(); // Exatamente como está salvo
