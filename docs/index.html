@@ -1241,6 +1241,66 @@
         }
         /* ==================== FIM A1-UX ESTILOS ==================== */
         
+        /* ==================== A1-PRO: CARDS COLAPSÁVEIS ==================== */
+        .card-resultado {
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid;
+            text-align: left;
+        }
+        
+        .card-resultado-header {
+            position: relative;
+            text-align: left;
+            padding: 16px;
+            cursor: pointer;
+            list-style: none;
+        }
+        
+        .card-resultado-header::marker {
+            content: "";
+        }
+        
+        .card-resultado-header::-webkit-details-marker {
+            display: none;
+        }
+        
+        .card-resultado-nota {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 4px;
+        }
+        
+        .card-resultado-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .card-resultado-conteudo {
+            padding: 0 16px 16px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 8px;
+            padding-top: 16px;
+        }
+        
+        .card-resultado-pergunta {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .card-resultado[data-nota="null"] {
+            border-left-color: rgba(255, 255, 255, 0.3);
+        }
+        /* ==================== FIM A1-PRO ==================== */
+        
         /* Botões de qualidade da sessão do Diário - estilo VRVS (fundo escuro + glow) */
         /* Base neutra dos três botões */
         .diario-sessao-botoes-qualidade button {
@@ -13494,24 +13554,28 @@
                     if (cards.length === 0) {
                         container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">Nenhum detalhe disponível</div>';
                     } else {
-                        // A1-UX: Container com ID específico para CSS isolado
+                        // A1-PRO: Container com cards colapsáveis (<details><summary>)
                         let html = '<div id="treinoFimDetalhes" style="max-height: 60vh; overflow-y: auto;">';
                         cards.forEach((item) => {
                             const { entrada, nota, notaTexto } = item;
-                            // A1-UX: Cor da borda baseada na nota
+                            // A1-PRO: Cor da borda baseada na nota (aplicada via data-nota + inline style)
                             const corStatus = nota === null ? 'rgba(255,255,255,0.3)' : nota <= 50 ? 'rgba(255,100,100,0.6)' : nota <= 90 ? 'rgba(255,200,100,0.6)' : 'rgba(100,255,100,0.6)';
                             html += `
-                                <div class="card-detalhe-treino" style="border-left-color: ${corStatus};">
-                                    <div class="card-detalhe-nota">
-                                        <strong>${notaTexto}</strong> ${nota !== null ? `(${nota}%)` : ''}
+                                <details class="card-resultado" data-nota="${nota !== null ? nota : 'null'}" style="border-left-color: ${corStatus};">
+                                    <summary class="card-resultado-header">
+                                        <div class="card-resultado-nota">
+                                            <strong>${notaTexto}</strong> ${nota !== null ? `(${nota}%)` : ''}
+                                        </div>
+                                        <div class="card-resultado-meta">
+                                            ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
+                                        </div>
+                                    </summary>
+                                    <div class="card-resultado-conteudo">
+                                        <div class="card-resultado-pergunta">
+                                            ${entrada.topico ? escapeHtml(entrada.topico) : '(Sem tópico)'}
+                                        </div>
                                     </div>
-                                    <div class="card-detalhe-meta">
-                                        ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
-                                    </div>
-                                    <div class="card-detalhe-pergunta">
-                                        ${entrada.topico ? escapeHtml(entrada.topico) : '(Sem tópico)'}
-                                    </div>
-                                </div>
+                                </details>
                             `;
                         });
                         html += '</div>';
@@ -14402,7 +14466,7 @@
                 padrao.forEach(a => {
                     // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
                     const areaDisplay = String(a).trim(); // Exatamente como está em AREAS_FIXAS
-                    const textoExibido = `VRVS · ${escapeHtml(areaDisplay)}`;
+                    const textoExibido = escapeHtml(areaDisplay);
                     html += `<option value="${escapeHtml(areaDisplay)}">${textoExibido}</option>`;
                 });
                 html += '</optgroup>';
@@ -14414,7 +14478,7 @@
                 custom.forEach(a => {
                     // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
                     const areaDisplay = String(a).trim(); // Exatamente como está salvo
-                    const textoExibido = `Este aparelho · ${escapeHtml(areaDisplay)}`;
+                    const textoExibido = escapeHtml(areaDisplay);
                     html += `<option value="${escapeHtml(areaDisplay)}">${textoExibido}</option>`;
                 });
                 html += '</optgroup>';
