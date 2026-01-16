@@ -10642,6 +10642,9 @@
             const hoje = hojeStr();
             let estagio = srs.estagio ?? 0;
             
+            // VRVS3P TRANSPARÊNCIA 01: Capturar estágio antes das transições (para histórico)
+            const estagioAntes = estagio;
+            
             // Transições de estágio conforme resposta
             if (resposta === 'esqueci') {
                 if (estagio <= 1) {
@@ -10674,6 +10677,26 @@
             if (resposta === 'esqueci') fNova = fAtual - 0.15;
             if (resposta === 'facil') fNova = fAtual + 0.05;
             srs.facilidade = Math.max(1.3, Math.min(fNova, 3.0));
+            
+            // VRVS3P TRANSPARÊNCIA 01: Popular historicoRespostas
+            if (!Array.isArray(srs.historicoRespostas)) {
+                srs.historicoRespostas = [];
+            }
+            
+            srs.historicoRespostas.push({
+                data: hoje,
+                resposta: resposta,
+                estagioAntes: estagioAntes,
+                estagioDepois: estagio,
+                intervalo: intervalo,
+                facilidade: srs.facilidade,
+                timestamp: Date.now()
+            });
+            
+            // Limitar histórico a últimos 100 registros (evitar crescimento infinito)
+            if (srs.historicoRespostas.length > 100) {
+                srs.historicoRespostas = srs.historicoRespostas.slice(-100);
+            }
             
             // Garantir que engine está definido
             if (!srs.engine) {
@@ -12040,6 +12063,13 @@
                 return;
             }
             
+            // TOGGLE FIX 01: Capturar estado de expansão antes do render
+            const estadosExpandidos = new Set();
+            container.querySelectorAll('.area-content:not(.collapsed)').forEach(el => {
+                const id = el.id;
+                if (id) estadosExpandidos.add(id);
+            });
+            
             const filtroVista = document.getElementById('filtroDiarioVista')?.value || 'data';
             const filtroArea = document.getElementById('filtroDiarioArea')?.value || '';
             const filtroData = document.getElementById('filtroDiarioData')?.value || '';
@@ -12077,13 +12107,13 @@
             }
             
             if (filtroVista === 'data') {
-                renderDiarioPorData(entradasFiltradas, container);
+                renderDiarioPorData(entradasFiltradas, container, estadosExpandidos);
             } else {
-                renderDiarioPorTema(entradasFiltradas, container);
+                renderDiarioPorTema(entradasFiltradas, container, estadosExpandidos);
             }
         }
         
-        function renderDiarioPorData(entradas, container) {
+        function renderDiarioPorData(entradas, container, estadosExpandidos = new Set()) {
             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
             const parseData = (entrada) => {
                 try {
@@ -12146,9 +12176,27 @@
             });
             
             container.innerHTML = html;
+            
+            // TOGGLE FIX 01: Restaurar estado de expansão após render
+            estadosExpandidos.forEach(id => {
+                const content = document.getElementById(id);
+                const header = document.querySelector(`[onclick*="${id.replace('area-content-', '')}"]`);
+                if (content && header) {
+                    content.classList.remove('collapsed');
+                    header.classList.remove('collapsed');
+                    // Aplicar lógica de expansão (max-height, display, etc.)
+                    const scrollHeight = content.scrollHeight;
+                    const viewportHeight = window.innerHeight;
+                    const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7);
+                    content.style.maxHeight = maxHeightVH + 'px';
+                    if (content.style.display === 'none') {
+                        content.style.display = '';
+                    }
+                }
+            });
         }
         
-        function renderDiarioPorTema(entradas, container) {
+        function renderDiarioPorTema(entradas, container, estadosExpandidos = new Set()) {
             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
             const parseData = (entrada) => {
                 try {
@@ -12287,6 +12335,24 @@
             });
             
             container.innerHTML = html;
+            
+            // TOGGLE FIX 01: Restaurar estado de expansão após render
+            estadosExpandidos.forEach(id => {
+                const content = document.getElementById(id);
+                const header = document.querySelector(`[onclick*="${id.replace('area-content-', '')}"]`);
+                if (content && header) {
+                    content.classList.remove('collapsed');
+                    header.classList.remove('collapsed');
+                    // Aplicar lógica de expansão (max-height, display, etc.)
+                    const scrollHeight = content.scrollHeight;
+                    const viewportHeight = window.innerHeight;
+                    const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7);
+                    content.style.maxHeight = maxHeightVH + 'px';
+                    if (content.style.display === 'none') {
+                        content.style.display = '';
+                    }
+                }
+            });
         }
         
         function renderEntradaDiario(entrada) {
