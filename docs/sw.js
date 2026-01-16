@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.93-vrvs3p-transparencia-toggle-fix-preservar-estado";
+const CACHE_NAME = "vrvs-v5.3.94-backup-raw-export-ui";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
