@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.102-revert-botao-nao-sei-estilo-original";
+const CACHE_NAME = "vrvs-v5.3.103-revert-mudancas-contraste-desnecessarias";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
