@@ -132,6 +132,35 @@
             setTimeout(vrvsShowRescueOverlayIfStuck, 7000);
         }
         
+        // === VRVS EMERGÊNCIA (PWA preso no splash) - SEMPRE DISPONÍVEL ===
+        window.vrvsDownloadRawStoragePWA = function(){
+            try {
+                var keys = ['vrvs_dados','vrvs_historico','vrvs_anotacoes','vrvs_diario','vrvs_config'];
+                var snap = { ts: new Date().toISOString(), note: 'RAW localStorage (PWA context)', data: {}, allKeys: [] };
+                for (var i=0; i<keys.length; i++){
+                    var k = keys[i];
+                    try { snap.data[k] = localStorage.getItem(k); } catch(e){ snap.data[k] = null; }
+                }
+                try {
+                    for (var j=0; j<localStorage.length; j++){
+                        var kk = localStorage.key(j);
+                        snap.allKeys.push({ key: kk, length: (localStorage.getItem(kk)||'').length });
+                    }
+                } catch(_) {}
+                var blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+                var a = document.createElement('a');
+                var stamp = new Date().toISOString().replace(/[:.]/g,'-');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'VRVS_PWA_RAW_' + stamp + '.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(_){} }, 2000);
+            } catch(e) {
+                alert('Falha ao baixar RAW: ' + String(e));
+            }
+        };
+        
         // Kill-switch SW (desligado por padrão - apenas ativo se VRVS_DEBUG === true)
         // Removido completamente em produção
     </script>
@@ -4032,7 +4061,7 @@
                             <p style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 10px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;">
                                 Exporta todos os dados do localStorage em formato JSON bruto. Inclui histórico de respostas VRVS 3P, configurações e todos os dados da plataforma.
                             </p>
-                            <button class="btn" onclick="vrvsDownloadRawStoragePWA()" style="background: var(--turquesa-main);">
+                            <button class="btn" onclick="window.vrvsDownloadRawStoragePWA()" style="background: var(--turquesa-main);">
                                 📥 Baixar Backup Completo (.json)
                             </button>
                         </div>
