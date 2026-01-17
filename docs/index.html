@@ -37,7 +37,7 @@
             __vrvsMark(1);
             
             // === VRVS EMERGÊNCIA (PWA preso no splash) ===
-            function vrvsDownloadRawStoragePWA(){
+            window.vrvsDownloadRawStoragePWA = function(){
                 try {
                     var keys = ['vrvs_dados','vrvs_historico','vrvs_anotacoes','vrvs_diario','vrvs_config'];
                     var snap = { ts: new Date().toISOString(), note: 'RAW localStorage (PWA context)', data: {}, allKeys: [] };
