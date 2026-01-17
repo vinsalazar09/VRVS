@@ -12552,6 +12552,62 @@
             }
         }
         
+        // B2S: Helper para carregar thumbnail único (sessões)
+        async function diario_carregarThumbnailUnico(entradaId, thumbKey, imgElId, wrapElId) {
+            const imgElement = document.getElementById(imgElId);
+            const wrapElement = document.getElementById(wrapElId);
+            
+            if (!imgElement || !wrapElement) return;
+            
+            // Se já carregado, não recarregar
+            if (imgElement.dataset.loaded === '1') return;
+            
+            // Fallback: se thumbKey vazio, tentar buscar da entrada
+            let thumbKeyFinal = thumbKey;
+            if (!thumbKeyFinal && entradaId) {
+                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                if (entrada && entrada.imagem && entrada.imagem.thumbKey) {
+                    thumbKeyFinal = entrada.imagem.thumbKey;
+                }
+            }
+            
+            // Se ainda não tem thumbKey, esconder wrapper e retornar
+            if (!thumbKeyFinal) {
+                wrapElement.hidden = true;
+                return;
+            }
+            
+            try {
+                const thumbBlob = await b0Img_getBlob(thumbKeyFinal);
+                if (!thumbBlob) {
+                    wrapElement.hidden = true;
+                    return;
+                }
+                
+                // Revogar URL antiga se existir
+                if (imgElement.src && imgElement.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(imgElement.src);
+                }
+                
+                const thumbURL = URL.createObjectURL(thumbBlob);
+                imgElement.src = thumbURL;
+                imgElement.dataset.loaded = '1';
+                imgElement.style.display = 'block';
+                wrapElement.hidden = false;
+                
+                imgElement.onerror = () => {
+                    URL.revokeObjectURL(thumbURL);
+                    imgElement.style.display = 'none';
+                    wrapElement.hidden = true;
+                    imgElement.dataset.loaded = '';
+                };
+            } catch (error) {
+                console.error('Erro ao carregar thumbnail:', error);
+                wrapElement.hidden = true;
+                imgElement.dataset.loaded = '';
+            }
+        }
+        
         // B3: Viewer de imagem (ampliar ao clicar)
         async function diario_abrirViewerImagem(entradaId) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
@@ -12576,7 +12632,7 @@
                     width: 100%;
                     height: 100%;
                     background: rgba(0, 0, 0, 0.95);
-                    z-index: 10000;
+                    z-index: 999999;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -12632,6 +12688,11 @@
                 console.error('Erro ao abrir viewer:', error);
                 mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
             }
+        }
+        
+        // B2S: Garantir que função está no escopo global (backup)
+        if (typeof window.diario_abrirViewerImagem === 'undefined') {
+            window.diario_abrirViewerImagem = diario_abrirViewerImagem;
         }
         
         function toggleRespostaIndividual(entradaId) {
@@ -13305,6 +13366,7 @@
                         <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
                             ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
                         </div>
+                        ${entradaAtual.imagem && entradaAtual.imagem.thumbKey ? `<div id="sd-thumb-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entradaAtual.id})" /></div>` : ''}
                     </div>
                     <div class="diario-sessao-acoes">
                         <button class="btn btn-small" onclick="mostrarRespostaSessaoDiario()">
@@ -13790,6 +13852,7 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
+                        ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>` : ''}
                     </div>
                     ${!respostaJaMostrada ? `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
@@ -13898,6 +13961,16 @@
                     if (entradaAtual && entradaAtual.resposta && !inner.textContent.trim()) {
                         inner.textContent = formatarTextoDiario(entradaAtual.resposta);
                     }
+                }
+                
+                // B2S: Carregar thumbnail quando resposta é mostrada
+                if (entradaAtual && entradaAtual.id) {
+                    diario_carregarThumbnailUnico(
+                        entradaAtual.id,
+                        entradaAtual.imagem?.thumbKey,
+                        `tl-thumb-img-${entradaAtual.id}`,
+                        `tl-thumb-wrap-${entradaAtual.id}`
+                    );
                 }
                 
                 if (btn) btn.textContent = '🙈 OCULTAR RESPOSTA';
@@ -14633,6 +14706,17 @@
                     if (entradaAtual && entradaAtual.resposta) {
                         inner.textContent = normalizarTextoDiario(entradaAtual.resposta);
                     }
+                }
+                
+                // B2S: Carregar thumbnail quando resposta é mostrada
+                const entradaAtual = getEntradaAtualSessao();
+                if (entradaAtual && entradaAtual.id) {
+                    diario_carregarThumbnailUnico(
+                        entradaAtual.id,
+                        entradaAtual.imagem?.thumbKey,
+                        `sd-thumb-img-${entradaAtual.id}`,
+                        `sd-thumb-wrap-${entradaAtual.id}`
+                    );
                 }
             }
         }
