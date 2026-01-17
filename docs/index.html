@@ -3206,6 +3206,20 @@
                     <textarea class="form-textarea" id="novaDiarioResposta" rows="8" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..." style="min-height: 250px; overflow-y: auto;"></textarea>
                 </div>
                 
+                <div class="form-group">
+                    <label class="form-label">📷 Imagem (opcional)</label>
+                    <input type="file" id="novaDiarioImagem" accept="image/*" style="display: none;" onchange="diario_processarImagem(event)">
+                    <div id="novaDiarioImagemPreview" style="display: none; margin-top: 10px;">
+                        <img id="novaDiarioImagemThumb" src="" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="diario_handleImageError(event)">
+                        <div style="margin-top: 8px;">
+                            <button type="button" class="btn btn-secondary" onclick="diario_removerImagem()" style="font-size: 12px; padding: 8px 16px;">🗑️ Remover imagem</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('novaDiarioImagem').click()" id="novaDiarioImagemBtn" style="margin-top: 8px;">
+                        📷 Adicionar imagem
+                    </button>
+                </div>
+                
                 <div class="diario-atencao-container">
                     <input
                         type="checkbox"
@@ -3218,8 +3232,8 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn" onclick="salvarEntradaDiario()" style="flex: 1;">💾 SALVAR</button>
-                    <button type="button" class="btn btn-secondary" onclick="salvarEContinuarDiario()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
+                    <button type="button" class="btn" onclick="(async () => { await salvarEntradaDiario(); })()" style="flex: 1;">💾 SALVAR</button>
+                    <button type="button" class="btn btn-secondary" onclick="(async () => { await salvarEContinuarDiario(); })()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
                 </div>
                 
                 <div id="btnExcluirEntradaWrapper" style="display: none; margin-top: 16px;">
@@ -11760,6 +11774,10 @@
         
         function fecharModalDiario() {
             document.getElementById('modalNovaDiario').classList.remove('active');
+            // B1: Limpar imagem ao fechar modal
+            if (typeof diario_limparImagemModal === 'function') {
+                diario_limparImagemModal();
+            }
             
             // Limpar flag de edição da sessão e reabilitar selects
             if (window.editandoDaSessao) {
@@ -11777,7 +11795,7 @@
             }
         }
         
-        function salvarEntradaDiario() {
+        async function salvarEntradaDiario() {
             try {
                 const entradaId = document.getElementById('novaDiarioId')?.value;
                 const veioDaSessao = window.editandoDaSessao === true;
@@ -11821,6 +11839,53 @@
             
             const hoje = new Date().toISOString().split('T')[0];
             
+            // B1: Gerar ID único UMA vez (para entrada e keys)
+            const id = entradaId ? Number(entradaId) : Date.now();
+            
+            // B1: Processar imagem se houver
+            let imagemData = null;
+            if (typeof diario_imagemBlobAtual !== 'undefined' && diario_imagemBlobAtual && typeof diario_imagemMetadataAtual !== 'undefined' && diario_imagemMetadataAtual) {
+                try {
+                    // Gerar thumbnail
+                    const thumbBlob = await diario_gerarThumbnail(diario_imagemBlobAtual);
+                    
+                    // Salvar imagem completa e thumbnail no IndexedDB (usar ID único)
+                    const fullKey = `diario:${id}:full`;
+                    const thumbKey = `diario:${id}:thumb`;
+                    
+                    await b0Img_putBlob(fullKey, diario_imagemBlobAtual);
+                    await b0Img_putBlob(thumbKey, thumbBlob);
+                    
+                    // Criar objeto imagem para salvar no data model
+                    imagemData = {
+                        thumbKey: thumbKey,
+                        fullKey: fullKey,
+                        tipo: diario_imagemMetadataAtual.tipo,
+                        tamanho: diario_imagemMetadataAtual.tamanho,
+                        largura: diario_imagemMetadataAtual.largura,
+                        altura: diario_imagemMetadataAtual.altura,
+                        dataAdicao: hoje
+                    };
+                    
+                } catch (error) {
+                    mostrarNotificacaoFeedback(`⚠️ Erro ao salvar imagem: ${error.message}`, 'error');
+                    // Continuar salvando entrada mesmo se imagem falhar
+                }
+            } else if (typeof diario_imagemRemovida !== 'undefined' && diario_imagemRemovida && entradaId) {
+                // Se flag de remoção está true e é edição, remover imagem antiga
+                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                if (entrada && entrada.imagem) {
+                    try {
+                        if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
+                        if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
+                    } catch (error) {
+                        console.error('Erro ao remover imagem:', error);
+                        // Continuar salvando entrada mesmo se remoção falhar
+                    }
+                    imagemData = null; // Marcar para remover do data model
+                }
+            }
+            
             if (entradaId) {
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
@@ -11846,6 +11911,31 @@
                     // PATCH 4: Não setar atencao (legado removido)
                     entrada.data = data; // Usar data do campo
                     entrada.ultimaAtualizacao = hoje;
+                    // B1: Atualizar imagem usando flag explícita
+                    if (imagemData) {
+                        // Nova imagem: remover antiga se houver
+                        if (entrada.imagem) {
+                            try {
+                                if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
+                                if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
+                            } catch (error) {
+                                console.error('Erro ao remover imagem antiga:', error);
+                            }
+                        }
+                        entrada.imagem = imagemData;
+                    } else if (typeof diario_imagemRemovida !== 'undefined' && diario_imagemRemovida) {
+                        // Flag explícita: remover imagem
+                        if (entrada.imagem) {
+                            try {
+                                if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
+                                if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
+                            } catch (error) {
+                                console.error('Erro ao remover imagem:', error);
+                            }
+                        }
+                        entrada.imagem = null;
+                    }
+                    // Se não tem imagemData e flag não está true, manter imagem existente
                         
                         // PATCH 4: Gerenciar SRS conforme checkbox (APENAS VRVS 3P, não atencao)
                         if (incluirVRVS3P) {
@@ -11884,7 +11974,7 @@
                     .replace(/\u2029/g, '\n')
                     .replace(/\u0085/g, '\n');
                 const novaEntrada = {
-                    id: Date.now(),
+                    id: id,  // B1: Usar ID único gerado acima (não Date.now() novamente)
                     data: data, // Usar data do campo
                     area: area,
                     tema: tema,
@@ -11892,7 +11982,8 @@
                     resposta: respostaNormalizada,
                     // PATCH 4: Não setar atencao (legado removido)
                     criadoEm: hoje,
-                    ultimaAtualizacao: hoje
+                    ultimaAtualizacao: hoje,
+                    imagem: imagemData || null  // B1: Adicionar campo imagem
                 };
                 
                 // PATCH 4: Se checkbox marcado, inicializar SRS VRVS 3P; senão, não criar SRS
@@ -11907,6 +11998,11 @@
             }
             
             salvarDiario();
+            
+            // B1: Limpar imagem após salvar
+            if (typeof diario_limparImagemModal === 'function') {
+                diario_limparImagemModal();
+            }
                 
                 // Verificar se veio da sessão (já declarado acima, apenas usar)
                 const veioDaSessaoFlag = veioDaSessao;
@@ -12357,7 +12453,7 @@
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <button onclick="toggleRevisaoDiario(${entrada.id})" class="btn-toggle-revisao" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
-                            <button onclick="editarEntradaDiario(${entrada.id})" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
+                            <button onclick="(async () => { await editarEntradaDiario(${entrada.id}); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
                         </div>
                     </div>
                     ${mostrarResposta && entrada.resposta ? `
@@ -12492,7 +12588,7 @@
         }
         
         // Editar entrada a partir da sessão (desabilita área/tema)
-        function editarEntradaSessaoDiario() {
+        async function editarEntradaSessaoDiario() {
             const entradaAtual = getEntradaAtualSessao();
             if (!entradaAtual) return;
             
@@ -12501,10 +12597,10 @@
             window.editandoDaSessao = true;
             
             // Usar função existente de edição
-            editarEntradaDiario(entradaAtual.id);
+            await editarEntradaDiario(entradaAtual.id);
         }
         
-        function editarEntradaDiario(entradaId) {
+        async function editarEntradaDiario(entradaId) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
             if (!entrada) {
                 console.error('[DEBUG VRVS3P] Entrada não encontrada:', entradaId);
@@ -12591,6 +12687,40 @@
             // PATCH 4: Marcar checkbox APENAS se entrada tem SRS ativo (não usar atencao legado)
             const temSrsAtivo = entrada.srs && entrada.srs.ativo;
             document.getElementById('novaDiarioAtencao').checked = temSrsAtivo || false;
+            
+            // B1: Carregar imagem se houver
+            if (entrada.imagem && entrada.imagem.thumbKey) {
+                try {
+                    const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
+                    if (thumbBlob) {
+                        const thumbURL = URL.createObjectURL(thumbBlob);
+                        const thumbImg = document.getElementById('novaDiarioImagemThumb');
+                        const preview = document.getElementById('novaDiarioImagemPreview');
+                        const btnAdd = document.getElementById('novaDiarioImagemBtn');
+                        if (thumbImg) {
+                            thumbImg.src = thumbURL;
+                            thumbImg.onerror = () => {
+                                URL.revokeObjectURL(thumbURL);
+                                diario_handleImageError(event);
+                            };
+                        }
+                        if (preview) preview.style.display = 'block';
+                        if (btnAdd) btnAdd.style.display = 'none';
+                        // Armazenar blob e metadata para possível re-salvamento
+                        window.diario_imagemBlobAtual = null; // Não temos o blob completo, só thumb
+                        window.diario_imagemMetadataAtual = entrada.imagem;
+                        window.diario_imagemRemovida = false;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar imagem:', error);
+                    // Continuar sem imagem se falhar
+                }
+            } else {
+                // Limpar imagem se não houver
+                if (typeof diario_limparImagemModal === 'function') {
+                    diario_limparImagemModal();
+                }
+            }
             
             // PATCH 4: Mostrar/ocultar botão de excluir conforme é edição ou nova entrada
             const btnExcluirWrapper = document.getElementById('btnExcluirEntradaWrapper');
@@ -12937,7 +13067,7 @@
                         <span>${entradaAtual.area} • ${entradaAtual.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
                         ${sessaoDiario.tipo !== 'programado' ? `<span>${indice} / ${total}</span>` : ''}
-                            <button onclick="editarEntradaSessaoDiario()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
+                            <button onclick="(async () => { await editarEntradaSessaoDiario(); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entradaAtual.topico)}</div>
@@ -16353,6 +16483,253 @@
         }
         
         // ==================== FIM B0 SPIKE ====================
+        
+        // ==================== B1 — FUNÇÕES DE IMAGEM DO DIÁRIO ====================
+        
+        // Variáveis globais para controle de imagem no modal
+        window.diario_imagemBlobAtual = null;
+        window.diario_imagemMetadataAtual = null;
+        window.diario_imagemRemovida = false;
+        
+        // Processar imagem selecionada
+        async function diario_processarImagem(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const btnAdd = document.getElementById('novaDiarioImagemBtn');
+            const preview = document.getElementById('novaDiarioImagemPreview');
+            const thumbImg = document.getElementById('novaDiarioImagemThumb');
+            const inputFile = document.getElementById('novaDiarioImagem');
+            
+            if (!btnAdd || !preview || !thumbImg || !inputFile) return;
+            
+            // Desabilitar botão durante processamento
+            btnAdd.disabled = true;
+            btnAdd.textContent = '⏳ Processando...';
+            
+            try {
+                // Validar tipo
+                if (!file.type.startsWith('image/')) {
+                    throw new Error('Arquivo deve ser uma imagem');
+                }
+                
+                // Validar tamanho (limite: 10MB antes de compressão)
+                const MAX_SIZE_BEFORE_COMPRESSION = 10 * 1024 * 1024;
+                if (file.size > MAX_SIZE_BEFORE_COMPRESSION) {
+                    throw new Error('Imagem muito grande (máx. 10MB antes de compressão)');
+                }
+                
+                // Carregar imagem
+                const img = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                    reader.readAsDataURL(file);
+                });
+                
+                // Processar imagem (redimensionar e comprimir)
+                const processedBlob = await diario_processarImagemAdaptativa(img, file.type);
+                
+                if (!processedBlob) {
+                    throw new Error('Erro ao processar imagem');
+                }
+                
+                // Validar tamanho final (limite: 2MB após compressão)
+                const MAX_SIZE_AFTER_COMPRESSION = 2 * 1024 * 1024;
+                if (processedBlob.size > MAX_SIZE_AFTER_COMPRESSION) {
+                    throw new Error('Imagem ainda muito grande após compressão (máx. 2MB)');
+                }
+                
+                // Criar preview thumbnail
+                const thumbBlob = await diario_gerarThumbnail(processedBlob);
+                const thumbURL = URL.createObjectURL(thumbBlob);
+                
+                thumbImg.src = thumbURL;
+                thumbImg.onerror = () => {
+                    URL.revokeObjectURL(thumbURL);
+                    diario_handleImageError(event);
+                };
+                
+                preview.style.display = 'block';
+                btnAdd.style.display = 'none';
+                
+                // Armazenar blob e metadata
+                window.diario_imagemBlobAtual = processedBlob;
+                window.diario_imagemMetadataAtual = {
+                    tipo: file.type,
+                    tamanho: processedBlob.size,
+                    largura: img.width,
+                    altura: img.height
+                };
+                window.diario_imagemRemovida = false;
+                
+                mostrarNotificacaoFeedback('✅ Imagem processada com sucesso!', 'success');
+                
+            } catch (error) {
+                mostrarNotificacaoFeedback(`⚠️ Erro ao processar imagem: ${error.message}`, 'error');
+                // Limpar input
+                inputFile.value = '';
+                // Limpar preview se houver
+                if (preview) preview.style.display = 'none';
+                if (btnAdd) btnAdd.style.display = 'block';
+            } finally {
+                // Reabilitar botão
+                btnAdd.disabled = false;
+                btnAdd.textContent = '📷 Adicionar imagem';
+            }
+        }
+        
+        // Processar imagem com compressão adaptativa
+        async function diario_processarImagemAdaptativa(img, tipoOriginal) {
+            const MAX_WIDTH = 1920;
+            const MAX_HEIGHT = 1920;
+            const TARGET_SIZE = 1.5 * 1024 * 1024; // 1.5MB alvo
+            const MIN_QUALITY = 0.3;
+            
+            let width = img.width;
+            let height = img.height;
+            
+            // Redimensionar se necessário
+            if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+            }
+            
+            // Criar canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Compressão adaptativa: tentar diferentes qualidades
+            let quality = 0.85;
+            let blob = null;
+            
+            while (quality >= MIN_QUALITY) {
+                blob = await new Promise((resolve) => {
+                    canvas.toBlob(resolve, 'image/jpeg', quality);
+                });
+                
+                if (!blob) break;
+                
+                if (blob.size <= TARGET_SIZE) {
+                    break; // Tamanho aceitável
+                }
+                
+                // Reduzir qualidade e tentar novamente
+                quality -= 0.1;
+                
+                // Se ainda não cabe, reduzir dimensões
+                if (quality < MIN_QUALITY && blob.size > TARGET_SIZE) {
+                    width = Math.round(width * 0.9);
+                    height = Math.round(height * 0.9);
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    quality = 0.85; // Resetar qualidade
+                }
+            }
+            
+            return blob;
+        }
+        
+        // Gerar thumbnail (200x200px máximo)
+        async function diario_gerarThumbnail(blob) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const MAX_THUMB_SIZE = 200;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_THUMB_SIZE || height > MAX_THUMB_SIZE) {
+                        const ratio = Math.min(MAX_THUMB_SIZE / width, MAX_THUMB_SIZE / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((thumbBlob) => {
+                        if (thumbBlob) {
+                            resolve(thumbBlob);
+                        } else {
+                            reject(new Error('Erro ao gerar thumbnail'));
+                        }
+                    }, 'image/jpeg', 0.8);
+                };
+                img.onerror = () => reject(new Error('Erro ao carregar imagem para thumbnail'));
+                img.src = URL.createObjectURL(blob);
+            });
+        }
+        
+        // Remover imagem
+        function diario_removerImagem() {
+            const preview = document.getElementById('novaDiarioImagemPreview');
+            const thumbImg = document.getElementById('novaDiarioImagemThumb');
+            const btnAdd = document.getElementById('novaDiarioImagemBtn');
+            const inputFile = document.getElementById('novaDiarioImagem');
+            
+            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(thumbImg.src);
+            }
+            
+            if (preview) preview.style.display = 'none';
+            if (btnAdd) btnAdd.style.display = 'block';
+            if (inputFile) inputFile.value = '';
+            if (thumbImg) thumbImg.src = '';
+            
+            // Limpar variáveis globais
+            window.diario_imagemBlobAtual = null;
+            window.diario_imagemMetadataAtual = null;
+            window.diario_imagemRemovida = true; // Flag explícita
+        }
+        
+        // Limpar imagem do modal (ao fechar)
+        function diario_limparImagemModal() {
+            const preview = document.getElementById('novaDiarioImagemPreview');
+            const thumbImg = document.getElementById('novaDiarioImagemThumb');
+            const btnAdd = document.getElementById('novaDiarioImagemBtn');
+            const inputFile = document.getElementById('novaDiarioImagem');
+            
+            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(thumbImg.src);
+            }
+            
+            if (preview) preview.style.display = 'none';
+            if (btnAdd) btnAdd.style.display = 'block';
+            if (inputFile) inputFile.value = '';
+            if (thumbImg) thumbImg.src = '';
+            
+            // Limpar variáveis globais
+            window.diario_imagemBlobAtual = null;
+            window.diario_imagemMetadataAtual = null;
+            window.diario_imagemRemovida = false;
+        }
+        
+        // Handler de erro de imagem
+        function diario_handleImageError(event) {
+            const thumbImg = event.target;
+            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(thumbImg.src);
+            }
+            mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
+            diario_removerImagem();
+        }
+        
+        // ==================== FIM B1 — FUNÇÕES DE IMAGEM DO DIÁRIO ====================
         
         function renderAjudaLembretes(container) {
             container.innerHTML = `
