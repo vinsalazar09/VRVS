@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.99-rotaA-revert-patch1-patch3-fix-quebra-linha";
+const CACHE_NAME = "vrvs-v5.3.99-ra2b-diario-toggle-prewrap-20260117-1211";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

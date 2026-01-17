@@ -12353,7 +12353,7 @@
                                 ${entrada.area} • ${entrada.tema}
                             </div>
                             ${chipsHTML}
-                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
                                 ❓ ${formatarTextoDiario(entrada.topico)}
                             </div>
                         </div>
@@ -12377,7 +12377,7 @@
                         </button>
                         <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
-                            <span>${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}</span>
+                            <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}</span>
                         </div>
                     `}
                 </div>
