@@ -12283,6 +12283,8 @@
             });
             
             container.innerHTML = html;
+            // B2: Carregar thumbnails após renderizar
+            setTimeout(() => diario_carregarThumbnails(), 100);
         }
         
         function renderDiarioPorTema(entradas, container) {
@@ -12424,6 +12426,8 @@
             });
             
             container.innerHTML = html;
+            // B2: Carregar thumbnails após renderizar
+            setTimeout(() => diario_carregarThumbnails(), 100);
         }
         
         function renderEntradaDiario(entrada) {
@@ -12460,11 +12464,13 @@
                         <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
                             <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${formatarTextoDiario(entrada.resposta)}</span>
+                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" src="" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="this.style.display='none';" /></div>` : ''}
                         </div>
                     ` : mostrarResposta ? `
                         <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
                             (Sem resposta ainda)
                         </div>
+                        ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" src="" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="this.style.display='none';" /></div>` : ''}
                     ` : `
                         <button onclick="toggleRespostaIndividual(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
                             👁️ Ver Resposta
@@ -12472,6 +12478,7 @@
                         <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
                             <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}</span>
+                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" src="" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="this.style.display='none';" /></div>` : ''}
                         </div>
                     `}
                 </div>
