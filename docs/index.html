@@ -12522,6 +12522,9 @@
                 const imgElement = document.getElementById(`diario-img-${entradaId}`);
                 if (!imgElement) continue;
                 
+                // B2-FIX: Não verificar display, apenas se elemento existe e não tem src
+                if (imgElement.src && imgElement.src !== '') continue; // Já carregado
+                
                 const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
                 if (!entrada || !entrada.imagem || !entrada.imagem.thumbKey) {
                     imgElement.style.display = 'none';
@@ -12630,7 +12633,37 @@
         function toggleRespostaIndividual(entradaId) {
             const respostaDiv = document.getElementById(`resposta_${entradaId}`);
             if (respostaDiv) {
+                const estavaOculta = respostaDiv.style.display === 'none';
                 respostaDiv.style.display = respostaDiv.style.display === 'none' ? 'block' : 'none';
+                
+                // B2-FIX: Carregar thumbnail quando resposta é mostrada pela primeira vez
+                if (estavaOculta) {
+                    setTimeout(() => {
+                        const imgElement = document.getElementById(`diario-img-${entradaId}`);
+                        if (imgElement && !imgElement.src) {
+                            // Thumbnail ainda não foi carregado
+                            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                            if (entrada && entrada.imagem && entrada.imagem.thumbKey) {
+                                (async () => {
+                                    try {
+                                        const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
+                                        if (thumbBlob) {
+                                            const thumbURL = URL.createObjectURL(thumbBlob);
+                                            imgElement.src = thumbURL;
+                                            imgElement.onerror = () => {
+                                                URL.revokeObjectURL(thumbURL);
+                                                imgElement.style.display = 'none';
+                                            };
+                                        }
+                                    } catch (error) {
+                                        console.error('Erro ao carregar thumbnail:', error);
+                                        imgElement.style.display = 'none';
+                                    }
+                                })();
+                            }
+                        }
+                    }, 50);
+                }
             }
         }
         
