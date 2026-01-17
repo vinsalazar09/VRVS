@@ -5110,9 +5110,6 @@
             const container = document.getElementById('pendenciasContainer');
             if (!container) return;
             
-            // PATCH 1: Capturar estado antes do render
-            const renderState = vrvsCaptureRenderState(container);
-            
             const pendencias = dados.filter(t => {
                 if (!t.agenda || !t.tema) return false;
                 if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
@@ -5201,11 +5198,6 @@
                 </div>
                 `;
             }).join('');
-            
-            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
-            if (renderState) {
-                vrvsRestoreRenderState(container, renderState);
-            }
         }
         
         // REMOVIDO: inicializarEventListenersPendencias()
@@ -5636,9 +5628,6 @@
             const container = document.getElementById('tarefasContainer');
             if (!container) return;
             
-            // PATCH 1: Capturar estado antes do render
-            const renderState = vrvsCaptureRenderState(container);
-            
             let html = '';
             
             // ===== CALCULAR CONTAGEM DE DIÁRIO ATIVO POR TEMA (uma vez só) =====
@@ -5772,11 +5761,6 @@
             });
             
             container.innerHTML = html;
-            
-            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
-            if (renderState) {
-                vrvsRestoreRenderState(container, renderState);
-            }
         }
         
         // ===== PATCH D - FUNÇÃO DE FILTRO DE TAREFAS =====
@@ -11930,12 +11914,6 @@
                 // Limpar flag
                 window.editandoDaSessao = false;
                 
-                // PATCH 1: Setar âncora antes de renderizar
-                const entradaIdFinal = entradaId || (window.diario.entradas.length > 0 ? window.diario.entradas[window.diario.entradas.length - 1].id : null);
-                if (entradaIdFinal) {
-                    window.__vrvsRenderAnchorSel = `[data-diario-id="${entradaIdFinal}"]`;
-                }
-                
                 // Fechar modal antes de renderizar (evita conflito visual)
             fecharModalDiario();
                 
@@ -12103,9 +12081,6 @@
                 return;
             }
             
-            // PATCH 1: Capturar estado completo (colapsáveis + scroll + âncora)
-            const renderState = vrvsCaptureRenderState(container);
-            
             const filtroVista = document.getElementById('filtroDiarioVista')?.value || 'data';
             const filtroArea = document.getElementById('filtroDiarioArea')?.value || '';
             const filtroData = document.getElementById('filtroDiarioData')?.value || '';
@@ -12143,13 +12118,13 @@
             }
             
             if (filtroVista === 'data') {
-                renderDiarioPorData(entradasFiltradas, container, renderState);
+                renderDiarioPorData(entradasFiltradas, container);
             } else {
-                renderDiarioPorTema(entradasFiltradas, container, renderState);
+                renderDiarioPorTema(entradasFiltradas, container);
             }
         }
         
-        function renderDiarioPorData(entradas, container, renderState = null) {
+        function renderDiarioPorData(entradas, container) {
             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
             const parseData = (entrada) => {
                 try {
@@ -12212,14 +12187,9 @@
             });
             
             container.innerHTML = html;
-            
-            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
-            if (renderState) {
-                vrvsRestoreRenderState(container, renderState);
-            }
         }
         
-        function renderDiarioPorTema(entradas, container, renderState = null) {
+        function renderDiarioPorTema(entradas, container) {
             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
             const parseData = (entrada) => {
                 try {
@@ -12358,11 +12328,6 @@
             });
             
             container.innerHTML = html;
-            
-            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
-            if (renderState) {
-                vrvsRestoreRenderState(container, renderState);
-            }
         }
         
         function renderEntradaDiario(entrada) {
@@ -12400,7 +12365,7 @@
                     ${mostrarResposta && entrada.resposta ? `
                         <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
-                            <span>${formatarTextoDiario(entrada.resposta)}</span>
+                            <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${formatarTextoDiario(entrada.resposta)}</span>
                         </div>
                     ` : mostrarResposta ? `
                         <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
@@ -13917,28 +13882,6 @@
                         </div>
                         ` : ''}
                         
-                        ${window.treinoLivreFimDados && window.treinoLivreFimDados.fila ? `
-                        <details style="margin-top: 20px; margin-bottom: 20px;">
-                            <summary style="cursor: pointer; padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--turquesa-light); user-select: none;">
-                                👁️ Ver respostas (revisão rápida)
-                            </summary>
-                            <div style="margin-top: 12px; padding: 16px; background: rgba(20,35,45,0.6); border-radius: 8px; max-height: 60vh; overflow-y: auto;">
-                                ${window.treinoLivreFimDados.fila.map((entrada, idx) => `
-                                    <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                        <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 8px;">
-                                            ${idx + 1}. ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
-                                        </div>
-                                        <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
-                                            ❓ ${escapeHtml(entrada.topico || '(Sem tópico)')}
-                                        </div>
-                                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
-                                            ✅ ${escapeHtml(entrada.resposta || '(Sem resposta)')}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </details>
-                        ` : ''}
                         
                         <div style="font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; margin-bottom: 20px; font-style: italic;">
                             Anote o score e registre manualmente na aba Feedback, se quiser.
@@ -13989,28 +13932,6 @@
                     <div class="treino-livre-fim-detalhe">${total} itens revisados</div>
                     <div class="treino-livre-fim-disclaimer">(nenhuma alteração salva)</div>
                     
-                    ${window.treinoLivreFimDados && window.treinoLivreFimDados.fila ? `
-                    <details style="margin-top: 20px; margin-bottom: 20px;">
-                        <summary style="cursor: pointer; padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--turquesa-light); user-select: none;">
-                            👁️ Ver respostas (revisão rápida)
-                        </summary>
-                        <div style="margin-top: 12px; padding: 16px; background: rgba(20,35,45,0.6); border-radius: 8px; max-height: 60vh; overflow-y: auto;">
-                            ${window.treinoLivreFimDados.fila.map((entrada, idx) => `
-                                <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 8px;">
-                                        ${idx + 1}. ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
-                                    </div>
-                                    <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
-                                        ❓ ${escapeHtml(entrada.topico || '(Sem tópico)')}
-                                    </div>
-                                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
-                                        ✅ ${escapeHtml(entrada.resposta || '(Sem resposta)')}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </details>
-                    ` : ''}
                     
                     <button class="btn" onclick="sairTreinoLivre()" style="padding: 12px 24px; font-size: 14px;">
                         Voltar ao Diário
@@ -14976,9 +14897,6 @@
             const container = document.getElementById('cadernoAreasContainer');
             if (!container) return;
             
-            // PATCH 1: Capturar estado antes do render
-            const renderState = vrvsCaptureRenderState(container);
-            
             // Recarregar anotações
             try {
                 const anotacoesSalvas = localStorage.getItem('vrvs_anotacoes');
@@ -15132,11 +15050,6 @@
             });
             
             container.innerHTML = html;
-            
-            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
-            if (renderState) {
-                vrvsRestoreRenderState(container, renderState);
-            }
         }
         
         function toggleTemaCaderno(temaId) {
@@ -15160,111 +15073,6 @@
             }
         }
         
-        // ==================== PATCH 1: HELPERS PRESERVAÇÃO DE ESTADO ====================
-        
-        // Variável global para âncora de render
-        window.__vrvsRenderAnchorSel = null;
-        
-        // Capturar estado antes do render (colapsáveis + scroll + âncora)
-        function vrvsCaptureRenderState(container) {
-            if (!container) return null;
-            
-            const state = {
-                colapsaveis: new Set(),
-                temasExpandidos: new Set(), // Para Caderno V2
-                scrollY: window.scrollY,
-                anchorTop: null,
-                anchorSel: window.__vrvsRenderAnchorSel || null
-            };
-            
-            // Capturar áreas expandidas (sem .collapsed)
-            container.querySelectorAll('.area-content:not(.collapsed)').forEach(el => {
-                const id = el.id;
-                if (id) state.colapsaveis.add(id);
-            });
-            
-            // Capturar temas expandidos (Caderno V2)
-            container.querySelectorAll('[id^="tema-conteudo-"]:not(.collapsed)').forEach(el => {
-                const id = el.id;
-                if (id) state.temasExpandidos.add(id);
-            });
-            
-            // Capturar posição da âncora se existir
-            if (state.anchorSel) {
-                const anchorEl = document.querySelector(state.anchorSel);
-                if (anchorEl) {
-                    state.anchorTop = anchorEl.getBoundingClientRect().top + window.scrollY;
-                }
-            }
-            
-            return state;
-        }
-        
-        // Restaurar estado após o render
-        function vrvsRestoreRenderState(container, state) {
-            if (!container || !state) return;
-            
-            // Restaurar áreas expandidas
-            state.colapsaveis.forEach(id => {
-                const content = document.getElementById(id);
-                const header = document.querySelector(`[onclick*="${id.replace('area-content-', '')}"]`);
-                if (content && header) {
-                    content.classList.remove('collapsed');
-                    header.classList.remove('collapsed');
-                    // Aplicar max-height se necessário
-                    if (content.scrollHeight > 0) {
-                        const scrollHeight = content.scrollHeight;
-                        const viewportHeight = window.innerHeight;
-                        const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7);
-                        content.style.maxHeight = maxHeightVH + 'px';
-                    }
-                    if (content.style.display === 'none') {
-                        content.style.display = '';
-                    }
-                }
-            });
-            
-            // Restaurar temas expandidos (Caderno V2)
-            state.temasExpandidos.forEach(id => {
-                const conteudo = document.getElementById(id);
-                if (conteudo) {
-                    conteudo.classList.remove('collapsed');
-                    conteudo.style.maxHeight = '';
-                    conteudo.style.display = 'block';
-                    conteudo.style.overflow = 'visible';
-                }
-            });
-            
-            // Restaurar scroll/âncora
-            if (state.anchorSel && state.anchorTop !== null) {
-                const anchorEl = document.querySelector(state.anchorSel);
-                if (anchorEl) {
-                    const topAfter = anchorEl.getBoundingClientRect().top + window.scrollY;
-                    const delta = topAfter - state.anchorTop;
-                    window.scrollTo({
-                        top: state.scrollY + delta,
-                        behavior: 'instant'
-                    });
-                } else {
-                    // Fallback: restaurar scroll Y original
-                    window.scrollTo({
-                        top: state.scrollY,
-                        behavior: 'instant'
-                    });
-                }
-            } else {
-                // Sem âncora: restaurar scroll Y original
-                window.scrollTo({
-                    top: state.scrollY,
-                    behavior: 'instant'
-                });
-            }
-            
-            // Limpar âncora após uso
-            window.__vrvsRenderAnchorSel = null;
-        }
-        
-        // ==================== FIM PATCH 1 HELPERS ====================
         
         function toggleAreaCaderno(areaId) {
             const header = document.querySelector(`[onclick="toggleAreaCaderno('${areaId}')"]`);
