@@ -15945,8 +15945,436 @@
                         </div>
                     </div>
                 </div>
+                
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(0,206,209,0.2);">
+                    <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">🧪 B0 SPIKE — Teste de Armazenamento de Imagens</h3>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+                        Validação técnica de IndexedDB para armazenamento de imagens no iPhone PWA.
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn" onclick="b0Img_runA()" id="b0Img_btnA">🧪 B0-A (Blobs Sintéticos)</button>
+                        <button class="btn" onclick="b0Img_runB()" id="b0Img_btnB">🧪 B0-B (Canvas JPEG)</button>
+                        <button class="btn btn-secondary" onclick="b0Img_limparTeste()" id="b0Img_btnLimpar">🗑️ Limpar teste</button>
+                    </div>
+                    
+                    <div id="b0Img_status" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 50px; font-size: 13px; color: rgba(255,255,255,0.8); white-space: pre-wrap; word-break: break-word;">
+                        Status: Aguardando teste...
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-secondary" onclick="b0Img_copyReport()" id="b0Img_btnCopy" style="display: none;">📋 Copiar relatório</button>
+                        <textarea id="b0Img_reportText" style="display: none; width: 100%; min-height: 100px; background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.8); border: 1px solid rgba(0,206,209,0.3); border-radius: 8px; padding: 10px; font-size: 12px; font-family: monospace; resize: vertical;"></textarea>
+                    </div>
+                </div>
             `;
         }
+        
+        // ==================== B0 SPIKE — VALIDAÇÃO TÉCNICA DE IMAGENS ====================
+        
+        // Abrir/criar IndexedDB
+        async function b0Img_openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('vrvs_images', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('diario')) {
+                        db.createObjectStore('diario');
+                    }
+                };
+            });
+        }
+        
+        // Salvar blob no IndexedDB
+        async function b0Img_putBlob(key, blob) {
+            const db = await b0Img_openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['diario'], 'readwrite');
+                const store = transaction.objectStore('diario');
+                const request = store.put(blob, key);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => {
+                    if (request.error.name === 'QuotaExceededError') {
+                        reject(new Error('Quota de armazenamento esgotada'));
+                    } else {
+                        reject(request.error);
+                    }
+                };
+            });
+        }
+        
+        // Obter blob do IndexedDB
+        async function b0Img_getBlob(key) {
+            const db = await b0Img_openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['diario'], 'readonly');
+                const store = transaction.objectStore('diario');
+                const request = store.get(key);
+                
+                request.onsuccess = () => {
+                    if (request.result) {
+                        resolve(request.result);
+                    } else {
+                        reject(new Error(`Blob não encontrado: ${key}`));
+                    }
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Deletar key do IndexedDB
+        async function b0Img_deleteKey(key) {
+            const db = await b0Img_openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['diario'], 'readwrite');
+                const store = transaction.objectStore('diario');
+                const request = store.delete(key);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Listar todas as keys de teste
+        async function b0Img_listTestKeys(prefix = 'teste:') {
+            const db = await b0Img_openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['diario'], 'readonly');
+                const store = transaction.objectStore('diario');
+                const request = store.getAllKeys();
+                
+                request.onsuccess = () => {
+                    const allKeys = request.result;
+                    const testKeys = allKeys.filter(key => String(key).startsWith(prefix));
+                    resolve(testKeys);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // B0-A: Criar e salvar blobs sintéticos
+        async function b0Img_runA() {
+            const btnA = document.getElementById('b0Img_btnA');
+            const status = document.getElementById('b0Img_status');
+            const btnB = document.getElementById('b0Img_btnB');
+            const btnLimpar = document.getElementById('b0Img_btnLimpar');
+            
+            // Desabilitar botões durante teste
+            btnA.disabled = true;
+            btnB.disabled = true;
+            btnLimpar.disabled = true;
+            btnA.textContent = '⏳ Testando B0-A...';
+            
+            const runId = Date.now();
+            const keys = [];
+            const quantidade = 10;
+            const tamanhoBytes = 300 * 1024; // 300KB
+            
+            try {
+                status.textContent = 'Status: Criando blobs sintéticos...';
+                
+                // Criar blobs (SEM crypto.getRandomValues para não medir CPU)
+                const blobs = [];
+                for (let i = 0; i < quantidade; i++) {
+                    const dados = new Uint8Array(tamanhoBytes);
+                    // Zerar array (não usar crypto.getRandomValues)
+                    dados.fill(0);
+                    const blob = new Blob([dados], { type: 'image/jpeg' });
+                    blobs.push(blob);
+                }
+                
+                status.textContent = 'Status: Salvando blobs no IndexedDB...';
+                const inicioSalvar = performance.now();
+                
+                // Salvar cada blob
+                for (let i = 0; i < blobs.length; i++) {
+                    const key = `teste:a:${runId}:${i}`;
+                    keys.push(key);
+                    await b0Img_putBlob(key, blobs[i]);
+                }
+                
+                const tempoSalvar = ((performance.now() - inicioSalvar) / 1000).toFixed(2);
+                
+                status.textContent = 'Status: Carregando blobs do IndexedDB...';
+                const inicioCarregar = performance.now();
+                
+                // Carregar e validar
+                let sucessoCarregar = 0;
+                for (const key of keys) {
+                    const blob = await b0Img_getBlob(key);
+                    if (blob && blob.size >= 100 * 1024 && blob.size <= 500 * 1024) {
+                        sucessoCarregar++;
+                    }
+                }
+                
+                const tempoCarregar = ((performance.now() - inicioCarregar) / 1000).toFixed(2);
+                const tamanhoTotalMB = ((keys.length * tamanhoBytes) / (1024 * 1024)).toFixed(2);
+                
+                const resultado = {
+                    tipo: 'B0-A',
+                    sucesso: true,
+                    gravadas: keys.length,
+                    carregadas: sucessoCarregar,
+                    tamanhoTotal: tamanhoTotalMB,
+                    tempoSalvar: tempoSalvar,
+                    tempoCarregar: tempoCarregar,
+                    keys: keys
+                };
+                
+                b0Img_renderReport(resultado);
+                
+            } catch (error) {
+                const resultado = {
+                    tipo: 'B0-A',
+                    sucesso: false,
+                    erro: error.message,
+                    gravadas: keys.length,
+                    keys: keys
+                };
+                b0Img_renderReport(resultado);
+            } finally {
+                // Reabilitar botões
+                btnA.disabled = false;
+                btnB.disabled = false;
+                btnLimpar.disabled = false;
+                btnA.textContent = '🧪 B0-A (Blobs Sintéticos)';
+            }
+        }
+        
+        // B0-B: Criar e salvar JPEG real via canvas
+        async function b0Img_runB() {
+            const btnB = document.getElementById('b0Img_btnB');
+            const status = document.getElementById('b0Img_status');
+            const btnA = document.getElementById('b0Img_btnA');
+            const btnLimpar = document.getElementById('b0Img_btnLimpar');
+            
+            // Desabilitar botões durante teste
+            btnA.disabled = true;
+            btnB.disabled = true;
+            btnLimpar.disabled = true;
+            btnB.textContent = '⏳ Testando B0-B...';
+            
+            const runId = Date.now();
+            const keys = [];
+            const quantidade = 10;
+            
+            try {
+                status.textContent = 'Status: Criando imagens via canvas...';
+                
+                const inicioSalvar = performance.now();
+                
+                // Criar e salvar cada imagem
+                for (let i = 0; i < quantidade; i++) {
+                    const blob = await b0Img_criarJPEGViaCanvas(1280, 960);
+                    
+                    if (blob.size > 500 * 1024) {
+                        throw new Error(`Imagem ${i} muito grande: ${(blob.size / 1024).toFixed(2)}KB`);
+                    }
+                    
+                    const key = `teste:b:${runId}:${i}`;
+                    keys.push(key);
+                    await b0Img_putBlob(key, blob);
+                }
+                
+                const tempoSalvar = ((performance.now() - inicioSalvar) / 1000).toFixed(2);
+                
+                status.textContent = 'Status: Carregando imagens do IndexedDB...';
+                const inicioCarregar = performance.now();
+                
+                // Carregar e validar
+                let sucessoCarregar = 0;
+                let tamanhoTotal = 0;
+                for (const key of keys) {
+                    const blob = await b0Img_getBlob(key);
+                    if (blob && blob.size >= 100 * 1024 && blob.size <= 500 * 1024) {
+                        sucessoCarregar++;
+                        tamanhoTotal += blob.size;
+                    }
+                }
+                
+                const tempoCarregar = ((performance.now() - inicioCarregar) / 1000).toFixed(2);
+                const tamanhoTotalMB = (tamanhoTotal / (1024 * 1024)).toFixed(2);
+                
+                const resultado = {
+                    tipo: 'B0-B',
+                    sucesso: true,
+                    gravadas: keys.length,
+                    carregadas: sucessoCarregar,
+                    tamanhoTotal: tamanhoTotalMB,
+                    tempoSalvar: tempoSalvar,
+                    tempoCarregar: tempoCarregar,
+                    keys: keys
+                };
+                
+                b0Img_renderReport(resultado);
+                
+            } catch (error) {
+                const resultado = {
+                    tipo: 'B0-B',
+                    sucesso: false,
+                    erro: error.message,
+                    gravadas: keys.length,
+                    keys: keys
+                };
+                b0Img_renderReport(resultado);
+            } finally {
+                // Reabilitar botões
+                btnA.disabled = false;
+                btnB.disabled = false;
+                btnLimpar.disabled = false;
+                btnB.textContent = '🧪 B0-B (Canvas JPEG)';
+            }
+        }
+        
+        // Criar JPEG via canvas
+        async function b0Img_criarJPEGViaCanvas(largura = 1280, altura = 960) {
+            const canvas = document.createElement('canvas');
+            canvas.width = largura;
+            canvas.height = altura;
+            const ctx = canvas.getContext('2d');
+            
+            // Preencher fundo branco
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, largura, altura);
+            
+            // Desenhar texto/grade simples (simular foto de resumo)
+            ctx.fillStyle = '#000000';
+            ctx.font = '24px Arial';
+            ctx.fillText('Teste de Imagem VRVS', 50, 50);
+            ctx.fillText('Resumo/Classificação', 50, 100);
+            
+            // Desenhar grade simples
+            ctx.strokeStyle = '#CCCCCC';
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(50, 150 + i * 80);
+                ctx.lineTo(largura - 50, 150 + i * 80);
+                ctx.stroke();
+            }
+            
+            // Converter para JPEG blob
+            return new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        reject(new Error('toBlob retornou null'));
+                    } else {
+                        resolve(blob);
+                    }
+                }, 'image/jpeg', 0.85); // Qualidade 85%
+            });
+        }
+        
+        // Renderizar relatório na tela
+        function b0Img_renderReport(resultado) {
+            const status = document.getElementById('b0Img_status');
+            const btnCopy = document.getElementById('b0Img_btnCopy');
+            const reportText = document.getElementById('b0Img_reportText');
+            
+            let texto = '';
+            
+            if (resultado.sucesso) {
+                texto = `✅ ${resultado.tipo} concluído!\n\n`;
+                texto += `Imagens gravadas: ${resultado.gravadas}/${resultado.gravadas}\n`;
+                texto += `Imagens carregadas: ${resultado.carregadas}/${resultado.gravadas}\n`;
+                texto += `Tamanho total: ~${resultado.tamanhoTotal} MB\n`;
+                texto += `Tempo de salvamento: ${resultado.tempoSalvar}s\n`;
+                texto += `Tempo de carregamento: ${resultado.tempoCarregar}s\n\n`;
+                texto += `Status: Sucesso`;
+            } else {
+                texto = `❌ ${resultado.tipo} falhou\n\n`;
+                texto += `Motivo: ${resultado.erro || 'Erro desconhecido'}\n`;
+                if (resultado.gravadas > 0) {
+                    texto += `Imagens gravadas antes da falha: ${resultado.gravadas}\n`;
+                }
+                texto += `\nStatus: Falha`;
+            }
+            
+            status.textContent = texto;
+            
+            // Gerar texto copiável
+            let textoCopiavel = `B0 SPIKE - ${resultado.tipo}\n`;
+            textoCopiavel += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+            textoCopiavel += `\n${texto}`;
+            if (resultado.keys && resultado.keys.length > 0) {
+                textoCopiavel += `\n\nKeys geradas: ${resultado.keys.length}\n`;
+                textoCopiavel += resultado.keys.slice(0, 5).join('\n');
+                if (resultado.keys.length > 5) {
+                    textoCopiavel += `\n... e mais ${resultado.keys.length - 5} keys`;
+                }
+            }
+            
+            reportText.value = textoCopiavel;
+            btnCopy.style.display = 'block';
+            reportText.style.display = 'block';
+        }
+        
+        // Copiar relatório para clipboard
+        async function b0Img_copyReport() {
+            const reportText = document.getElementById('b0Img_reportText');
+            
+            try {
+                await navigator.clipboard.writeText(reportText.value);
+                const btnCopy = document.getElementById('b0Img_btnCopy');
+                const textoOriginal = btnCopy.textContent;
+                btnCopy.textContent = '✅ Copiado!';
+                setTimeout(() => {
+                    btnCopy.textContent = textoOriginal;
+                }, 2000);
+            } catch (error) {
+                // Fallback: selecionar textarea
+                reportText.select();
+                reportText.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+                const btnCopy = document.getElementById('b0Img_btnCopy');
+                btnCopy.textContent = '✅ Copiado (fallback)!';
+                setTimeout(() => {
+                    btnCopy.textContent = '📋 Copiar relatório';
+                }, 2000);
+            }
+        }
+        
+        // Limpar teste (remover todas as keys de teste)
+        async function b0Img_limparTeste() {
+            const btnLimpar = document.getElementById('b0Img_btnLimpar');
+            const status = document.getElementById('b0Img_status');
+            
+            btnLimpar.disabled = true;
+            btnLimpar.textContent = '⏳ Limpando...';
+            
+            try {
+                const keys = await b0Img_listTestKeys('teste:');
+                
+                if (keys.length === 0) {
+                    status.textContent = 'Status: Nenhuma imagem de teste encontrada.';
+                    return;
+                }
+                
+                for (const key of keys) {
+                    await b0Img_deleteKey(key);
+                }
+                
+                status.textContent = `✅ ${keys.length} imagens de teste removidas.`;
+                
+                // Limpar UI
+                const btnCopy = document.getElementById('b0Img_btnCopy');
+                const reportText = document.getElementById('b0Img_reportText');
+                btnCopy.style.display = 'none';
+                reportText.style.display = 'none';
+                
+            } catch (error) {
+                status.textContent = `⚠️ Erro ao limpar teste: ${error.message}`;
+            } finally {
+                btnLimpar.disabled = false;
+                btnLimpar.textContent = '🗑️ Limpar teste';
+            }
+        }
+        
+        // ==================== FIM B0 SPIKE ====================
         
         function renderAjudaLembretes(container) {
             container.innerHTML = `
