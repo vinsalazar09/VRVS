@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.99-ra2b-diario-toggle-prewrap-20260117-1211";
+const CACHE_NAME = "vrvs-v5.3.99-ra2b-topico-resposta-prewrap-20260117-1220";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

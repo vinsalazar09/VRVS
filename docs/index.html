@@ -12353,9 +12353,7 @@
                                 ${entrada.area} • ${entrada.tema}
                             </div>
                             ${chipsHTML}
-                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px;">
-                                ❓ ${formatarTextoDiario(entrada.topico)}
-                            </div>
+                            <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <button onclick="toggleRevisaoDiario(${entrada.id})" class="btn-toggle-revisao" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
