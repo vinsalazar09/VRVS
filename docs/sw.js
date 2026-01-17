@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.100-fix-contraste-botoes-vermelhos-completo";
+const CACHE_NAME = "vrvs-v5.3.99-b1-fix-persistencia-imagem-20260117-1840";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

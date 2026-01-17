@@ -3213,7 +3213,7 @@
                     <label class="form-label">📷 Imagem (opcional)</label>
                     <input type="file" id="novaDiarioImagem" accept="image/*" style="display: none;" onchange="diario_processarImagem(event)">
                     <div id="novaDiarioImagemPreview" style="display: none; margin-top: 10px;">
-                        <img id="novaDiarioImagemThumb" src="" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="diario_handleImageError(event)">
+                        <img id="novaDiarioImagemThumb" src="" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);">
                         <div style="margin-top: 8px;">
                             <button type="button" class="btn btn-secondary" onclick="diario_removerImagem()" style="font-size: 12px; padding: 8px 16px;">🗑️ Remover imagem</button>
                         </div>
@@ -3221,6 +3221,9 @@
                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('novaDiarioImagem').click()" id="novaDiarioImagemBtn" style="margin-top: 8px;">
                         📷 Adicionar imagem
                     </button>
+                    <div id="novaDiarioImagemStatus" style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; font-style: italic;">
+                        📷 imagem: —
+                    </div>
                 </div>
                 
                 <div class="diario-atencao-container">
@@ -11684,6 +11687,12 @@
             // Limpar flag de edição da sessão
             window.editandoDaSessao = false;
             
+            // B1-FIX: Resetar flag de imagem ao abrir modal para nova entrada
+            if (typeof diario_limparImagemModal === 'function') {
+                diario_limparImagemModal();
+            }
+            window.diario_imagemNovaSelecionada = false; // Garantir estado limpo
+            
             // Limpar campos
             document.getElementById('novaDiarioId').value = '';
             document.getElementById('novaDiarioTopico').value = '';
@@ -11847,7 +11856,10 @@
             
             // B1: Processar imagem se houver
             let imagemData = null;
-            if (typeof diario_imagemBlobAtual !== 'undefined' && diario_imagemBlobAtual && typeof diario_imagemMetadataAtual !== 'undefined' && diario_imagemMetadataAtual) {
+            // B1-FIX: Só gerar imagemData se usuário realmente selecionou nova imagem
+            if (typeof diario_imagemNovaSelecionada !== 'undefined' && diario_imagemNovaSelecionada === true &&
+                typeof diario_imagemBlobAtual !== 'undefined' && diario_imagemBlobAtual && 
+                typeof diario_imagemMetadataAtual !== 'undefined' && diario_imagemMetadataAtual) {
                 try {
                     // Gerar thumbnail
                     const thumbBlob = await diario_gerarThumbnail(diario_imagemBlobAtual);
@@ -11889,6 +11901,9 @@
                 }
             }
             
+            // B1-FIX: Resetar flag após processar (sucesso ou falha)
+            window.diario_imagemNovaSelecionada = false;
+            
             if (entradaId) {
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
@@ -11916,14 +11931,22 @@
                     entrada.ultimaAtualizacao = hoje;
                     // B1: Atualizar imagem usando flag explícita
                     if (imagemData) {
-                        // Nova imagem: remover antiga se houver
+                        // Nova imagem: remover antiga APENAS se keys forem diferentes
                         if (entrada.imagem) {
-                            try {
-                                if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
-                                if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
-                            } catch (error) {
-                                console.error('Erro ao remover imagem antiga:', error);
+                            // B1-FIX: Comparar keys antes de deletar (prevenir auto-delete)
+                            const keysDiferentes = entrada.imagem.fullKey !== imagemData.fullKey || 
+                                                   entrada.imagem.thumbKey !== imagemData.thumbKey;
+                            
+                            if (keysDiferentes) {
+                                // Keys diferentes: deletar antigas antes de salvar novas
+                                try {
+                                    if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
+                                    if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
+                                } catch (error) {
+                                    console.error('Erro ao remover imagem antiga:', error);
+                                }
                             }
+                            // Se keys forem iguais, não deletar (putBlob já sobrescreveu)
                         }
                         entrada.imagem = imagemData;
                     } else if (typeof diario_imagemRemovida !== 'undefined' && diario_imagemRemovida) {
@@ -11937,8 +11960,13 @@
                             }
                         }
                         entrada.imagem = null;
+                    } else {
+                        // B1-FIX: Se não tem imagemData e flag não está true, MANTER imagem existente
+                        // Não fazer nada - entrada.imagem já está preservado
+                        if (!entrada.imagem) {
+                            entrada.imagem = null;
+                        }
                     }
-                    // Se não tem imagemData e flag não está true, manter imagem existente
                         
                         // PATCH 4: Gerenciar SRS conforme checkbox (APENAS VRVS 3P, não atencao)
                         if (incluirVRVS3P) {
@@ -12814,6 +12842,7 @@
             // B1: Carregar imagem se houver
             if (entrada.imagem && entrada.imagem.thumbKey) {
                 try {
+                    // Carregar thumbnail para preview
                     const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
                     if (thumbBlob) {
                         const thumbURL = URL.createObjectURL(thumbBlob);
@@ -12822,21 +12851,60 @@
                         const btnAdd = document.getElementById('novaDiarioImagemBtn');
                         if (thumbImg) {
                             thumbImg.src = thumbURL;
-                            thumbImg.onerror = () => {
+                            // B1-FIX: MICRO-FIX onerror/onload (evitar memory leak e usar ev correto)
+                            thumbImg.onerror = (ev) => {
                                 URL.revokeObjectURL(thumbURL);
-                                diario_handleImageError(event);
+                                diario_handleImageError(ev);
+                            };
+                            thumbImg.onload = () => {
+                                // Não revogar aqui, apenas quando remover ou erro
                             };
                         }
                         if (preview) preview.style.display = 'block';
                         if (btnAdd) btnAdd.style.display = 'none';
-                        // Armazenar blob e metadata para possível re-salvamento
-                        window.diario_imagemBlobAtual = null; // Não temos o blob completo, só thumb
-                        window.diario_imagemMetadataAtual = entrada.imagem;
-                        window.diario_imagemRemovida = false;
+                        
+                        // B1-FIX: Carregar blob completo para viewer, mas NÃO marcar como nova seleção
+                        if (entrada.imagem.fullKey) {
+                            try {
+                                const fullBlob = await b0Img_getBlob(entrada.imagem.fullKey);
+                                if (fullBlob) {
+                                    window.diario_imagemBlobAtual = fullBlob;
+                                    window.diario_imagemMetadataAtual = entrada.imagem;
+                                    window.diario_imagemRemovida = false;
+                                    window.diario_imagemNovaSelecionada = false; // B1-FIX: NÃO é nova seleção
+                                } else {
+                                    // Se blob não encontrado
+                                    window.diario_imagemBlobAtual = null;
+                                    window.diario_imagemMetadataAtual = null;
+                                    window.diario_imagemRemovida = true;
+                                    window.diario_imagemNovaSelecionada = false;
+                                }
+                            } catch (error) {
+                                console.error('Erro ao carregar blob completo:', error);
+                                window.diario_imagemBlobAtual = null;
+                                window.diario_imagemMetadataAtual = entrada.imagem;
+                                window.diario_imagemRemovida = false;
+                                window.diario_imagemNovaSelecionada = false;
+                            }
+                        } else {
+                            window.diario_imagemBlobAtual = null;
+                            window.diario_imagemMetadataAtual = entrada.imagem;
+                            window.diario_imagemRemovida = false;
+                            window.diario_imagemNovaSelecionada = false;
+                        }
+                        
+                        // Atualizar indicador visual
+                        const statusEl = document.getElementById('novaDiarioImagemStatus');
+                        if (statusEl) {
+                            const tamanhoKB = entrada.imagem.tamanho ? Math.round(entrada.imagem.tamanho / 1024) : '?';
+                            statusEl.textContent = `📷 imagem: OK (${tamanhoKB}KB)`;
+                            statusEl.style.color = 'rgba(0,206,209,0.8)';
+                        }
                     }
                 } catch (error) {
                     console.error('Erro ao carregar imagem:', error);
                     // Continuar sem imagem se falhar
+                    window.diario_imagemNovaSelecionada = false;
                 }
             } else {
                 // Limpar imagem se não houver
@@ -16613,6 +16681,7 @@
         window.diario_imagemBlobAtual = null;
         window.diario_imagemMetadataAtual = null;
         window.diario_imagemRemovida = false;
+        window.diario_imagemNovaSelecionada = false; // B1-FIX: Flag para distinguir nova seleção vs carregamento
         
         // Processar imagem selecionada
         async function diario_processarImagem(event) {
@@ -16673,9 +16742,15 @@
                 const thumbURL = URL.createObjectURL(thumbBlob);
                 
                 thumbImg.src = thumbURL;
-                thumbImg.onerror = () => {
+                // B1-FIX: MICRO-FIX onerror (usar ev correto)
+                thumbImg.onerror = (ev) => {
                     URL.revokeObjectURL(thumbURL);
-                    diario_handleImageError(event);
+                    diario_handleImageError(ev);
+                };
+                // B1-FIX: onload para evitar memory leak (revogar quando imagem carregar com sucesso)
+                thumbImg.onload = () => {
+                    // Não revogar aqui, apenas quando remover ou erro
+                    // URL será revogada em diario_limparImagemModal() ou diario_removerImagem()
                 };
                 
                 preview.style.display = 'block';
@@ -16690,6 +16765,15 @@
                     altura: img.height
                 };
                 window.diario_imagemRemovida = false;
+                window.diario_imagemNovaSelecionada = true; // B1-FIX: Usuário selecionou nova imagem
+                
+                // Atualizar indicador visual
+                const statusEl = document.getElementById('novaDiarioImagemStatus');
+                if (statusEl) {
+                    const tamanhoKB = Math.round(processedBlob.size / 1024);
+                    statusEl.textContent = `📷 imagem: OK (${tamanhoKB}KB)`;
+                    statusEl.style.color = 'rgba(0,206,209,0.8)';
+                }
                 
                 mostrarNotificacaoFeedback('✅ Imagem processada com sucesso!', 'success');
                 
@@ -16818,6 +16902,14 @@
             window.diario_imagemBlobAtual = null;
             window.diario_imagemMetadataAtual = null;
             window.diario_imagemRemovida = true; // Flag explícita
+            window.diario_imagemNovaSelecionada = false; // B1-FIX: Resetar flag
+            
+            // Atualizar indicador visual
+            const statusEl = document.getElementById('novaDiarioImagemStatus');
+            if (statusEl) {
+                statusEl.textContent = '📷 imagem: —';
+                statusEl.style.color = 'rgba(255,255,255,0.6)';
+            }
         }
         
         // Limpar imagem do modal (ao fechar)
@@ -16840,6 +16932,14 @@
             window.diario_imagemBlobAtual = null;
             window.diario_imagemMetadataAtual = null;
             window.diario_imagemRemovida = false;
+            window.diario_imagemNovaSelecionada = false; // B1-FIX: Resetar flag
+            
+            // Atualizar indicador visual
+            const statusEl = document.getElementById('novaDiarioImagemStatus');
+            if (statusEl) {
+                statusEl.textContent = '📷 imagem: —';
+                statusEl.style.color = 'rgba(255,255,255,0.6)';
+            }
         }
         
         // Handler de erro de imagem
@@ -16850,6 +16950,34 @@
             }
             mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
             diario_removerImagem();
+        }
+        
+        // B1-FIX: Adicionar handler onerror para elemento HTML inline após DOM carregar
+        if (typeof window !== 'undefined') {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    const thumbImgInline = document.getElementById('novaDiarioImagemThumb');
+                    if (thumbImgInline && !thumbImgInline.onerror) {
+                        thumbImgInline.onerror = (ev) => {
+                            if (thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
+                                URL.revokeObjectURL(thumbImgInline.src);
+                            }
+                            diario_handleImageError(ev);
+                        };
+                    }
+                });
+            } else {
+                // DOM já carregado
+                const thumbImgInline = document.getElementById('novaDiarioImagemThumb');
+                if (thumbImgInline && !thumbImgInline.onerror) {
+                    thumbImgInline.onerror = (ev) => {
+                        if (thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
+                            URL.revokeObjectURL(thumbImgInline.src);
+                        }
+                        diario_handleImageError(ev);
+                    };
+                }
+            }
         }
         
         // ==================== FIM B1 — FUNÇÕES DE IMAGEM DO DIÁRIO ====================
