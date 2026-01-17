@@ -13365,7 +13365,7 @@
                         <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
                             ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
                         </div>
-                        ${entradaAtual.imagem && entradaAtual.imagem.thumbKey ? `<div id="sd-thumb-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entradaAtual.id})" /></div>` : ''}
+                        <div id="sd-thumb-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entradaAtual.id})" /></div>
                     </div>
                     <div class="diario-sessao-acoes">
                         <button class="btn btn-small" onclick="mostrarRespostaSessaoDiario()">
@@ -13851,7 +13851,7 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
-                        ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>` : ''}
+                        <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
                     </div>
                     ${!respostaJaMostrada ? `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
@@ -13962,14 +13962,16 @@
                     }
                 }
                 
-                // B2S: Carregar thumbnail quando resposta é mostrada
+                // B2S-FIX: Carregar thumbnail quando resposta é mostrada (com setTimeout)
                 if (entradaAtual && entradaAtual.id) {
-                    diario_carregarThumbnailUnico(
-                        entradaAtual.id,
-                        entradaAtual.imagem?.thumbKey,
-                        `tl-thumb-img-${entradaAtual.id}`,
-                        `tl-thumb-wrap-${entradaAtual.id}`
-                    );
+                    setTimeout(() => {
+                        diario_carregarThumbnailUnico(
+                            entradaAtual.id,
+                            null, // Loader busca da entrada via fallback
+                            `tl-thumb-img-${entradaAtual.id}`,
+                            `tl-thumb-wrap-${entradaAtual.id}`
+                        );
+                    }, 50);
                 }
                 
                 if (btn) btn.textContent = '🙈 OCULTAR RESPOSTA';
@@ -14707,15 +14709,17 @@
                     }
                 }
                 
-                // B2S: Carregar thumbnail quando resposta é mostrada
+                // B2S-FIX: Carregar thumbnail quando resposta é mostrada (com setTimeout)
                 const entradaAtual = getEntradaAtualSessao();
                 if (entradaAtual && entradaAtual.id) {
-                    diario_carregarThumbnailUnico(
-                        entradaAtual.id,
-                        entradaAtual.imagem?.thumbKey,
-                        `sd-thumb-img-${entradaAtual.id}`,
-                        `sd-thumb-wrap-${entradaAtual.id}`
-                    );
+                    setTimeout(() => {
+                        diario_carregarThumbnailUnico(
+                            entradaAtual.id,
+                            null, // Loader busca da entrada via fallback
+                            `sd-thumb-img-${entradaAtual.id}`,
+                            `sd-thumb-wrap-${entradaAtual.id}`
+                        );
+                    }, 50);
                 }
             }
         }
