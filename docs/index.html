@@ -12493,7 +12493,7 @@
                         <div style="background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
                             <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${formatarTextoDiario(entrada.resposta)}</span>
-                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" src="" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="this.style.display='none';" /></div>` : ''}
+                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                         </div>
                     ` : mostrarResposta ? `
                         <div style="color: rgba(255,255,255,0.5); font-size: 12px; font-style: italic; margin-top: 8px;">
@@ -12507,7 +12507,7 @@
                         <div id="resposta_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                             <span style="font-size: 13px;">✅</span><br>
                             <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}</span>
-                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" src="" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" onerror="this.style.display='none';" /></div>` : ''}
+                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                         </div>
                     `}
                 </div>
@@ -12522,8 +12522,8 @@
                 const imgElement = document.getElementById(`diario-img-${entradaId}`);
                 if (!imgElement) continue;
                 
-                // B2-FIX: Não verificar display, apenas se elemento existe e não tem src
-                if (imgElement.src && imgElement.src !== '') continue; // Já carregado
+                // B2-FIX-2: Usar dataset.loaded para evitar re-carregar
+                if (imgElement.dataset.loaded === '1') continue; // Já carregado
                 
                 const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
                 if (!entrada || !entrada.imagem || !entrada.imagem.thumbKey) {
@@ -12536,14 +12536,18 @@
                     if (thumbBlob) {
                         const thumbURL = URL.createObjectURL(thumbBlob);
                         imgElement.src = thumbURL;
+                        imgElement.dataset.loaded = '1'; // Marcar como carregado
+                        imgElement.style.display = 'block'; // B2-FIX-2: Forçar exibição
                         imgElement.onerror = () => {
                             URL.revokeObjectURL(thumbURL);
                             imgElement.style.display = 'none';
+                            imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                         };
                     }
                 } catch (error) {
                     console.error('Erro ao carregar thumbnail:', error);
                     imgElement.style.display = 'none';
+                    imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                 }
             }
         }
@@ -12636,11 +12640,11 @@
                 const estavaOculta = respostaDiv.style.display === 'none';
                 respostaDiv.style.display = respostaDiv.style.display === 'none' ? 'block' : 'none';
                 
-                // B2-FIX: Carregar thumbnail quando resposta é mostrada pela primeira vez
+                // B2-FIX-2: Carregar thumbnail quando resposta é mostrada pela primeira vez
                 if (estavaOculta) {
                     setTimeout(() => {
                         const imgElement = document.getElementById(`diario-img-${entradaId}`);
-                        if (imgElement && !imgElement.src) {
+                        if (imgElement && imgElement.dataset.loaded !== '1') {
                             // Thumbnail ainda não foi carregado
                             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
                             if (entrada && entrada.imagem && entrada.imagem.thumbKey) {
@@ -12650,14 +12654,18 @@
                                         if (thumbBlob) {
                                             const thumbURL = URL.createObjectURL(thumbBlob);
                                             imgElement.src = thumbURL;
+                                            imgElement.dataset.loaded = '1'; // Marcar como carregado
+                                            imgElement.style.display = 'block'; // B2-FIX-2: Forçar exibição
                                             imgElement.onerror = () => {
                                                 URL.revokeObjectURL(thumbURL);
                                                 imgElement.style.display = 'none';
+                                                imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                                             };
                                         }
                                     } catch (error) {
                                         console.error('Erro ao carregar thumbnail:', error);
                                         imgElement.style.display = 'none';
+                                        imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                                     }
                                 })();
                             }
