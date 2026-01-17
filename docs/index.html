@@ -1063,18 +1063,16 @@
         }
         
         .sessao-opcao-excluir {
-            background: #EF4444;
-            border: 1px solid #EF4444;
-            color: #FFFFFF;
-            font-weight: 800;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: rgba(220, 53, 69, 0.8);
             width: 100%;
         }
         
         .sessao-opcao-excluir:hover,
         .sessao-opcao-excluir:active {
-            background: #DC2626;
-            border-color: #DC2626;
-            color: #FFFFFF;
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
         }
         
         /* ==================== TL-2: TREINO LIVRE RUNNER ==================== */
@@ -14674,6 +14672,12 @@
         function desativarSessaoDiarioAtual() {
             const entradaAtual = getEntradaAtualSessao();
             if (!entradaAtual || !entradaAtual.srs) return;
+            
+            // Confirmação antes de desativar
+            const preview = (entradaAtual.topico || '').substring(0, 50) + ((entradaAtual.topico || '').length > 50 ? '...' : '');
+            const confirmar = confirm(`🚫 NÃO REVISAR MAIS ESTE CARD?\n\nTópico: "${preview}"\nÁrea: ${entradaAtual.area || 'N/A'}\nTema: ${entradaAtual.tema || 'N/A'}\n\nEste card será removido da revisão programada.`);
+            
+            if (!confirmar) return;
             
             entradaAtual.srs.ativo = false;
             salvarDiario();
