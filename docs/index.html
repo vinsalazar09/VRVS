@@ -11969,6 +11969,42 @@
                         entrada.ultimaAtualizacao = hoje;
                         // NÃO mexer em área, tema, atencao, data
                         // NÃO resetar SRS (manter estágio, intervalo, proximaRevisao, historicoRespostas)
+                        
+                        // S1-FIX: Atualizar imagem se houver nova seleção ou remoção (reutilizar lógica do bloco else)
+                        if (imagemData) {
+                            // Nova imagem: remover antiga APENAS se keys forem diferentes
+                            if (entrada.imagem) {
+                                // S1-FIX: Comparar keys antes de deletar (prevenir auto-delete)
+                                const keysDiferentes = entrada.imagem.fullKey !== imagemData.fullKey || 
+                                                       entrada.imagem.thumbKey !== imagemData.thumbKey;
+                                
+                                if (keysDiferentes) {
+                                    // Keys diferentes: deletar antigas antes de salvar novas
+                                    try {
+                                        if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
+                                        if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
+                                    } catch (error) {
+                                        console.error('Erro ao remover imagem antiga:', error);
+                                    }
+                                }
+                                // Se keys forem iguais, não deletar (putBlob já sobrescreveu)
+                            }
+                            entrada.imagem = imagemData;
+                        } else if (typeof diario_imagemRemovida !== 'undefined' && diario_imagemRemovida) {
+                            // Flag explícita: remover imagem
+                            if (entrada.imagem) {
+                                try {
+                                    if (entrada.imagem.fullKey) await b0Img_deleteKey(entrada.imagem.fullKey);
+                                    if (entrada.imagem.thumbKey) await b0Img_deleteKey(entrada.imagem.thumbKey);
+                                } catch (error) {
+                                    console.error('Erro ao remover imagem:', error);
+                                }
+                            }
+                            entrada.imagem = null;
+                        } else {
+                            // S1-FIX: Se não tem imagemData e flag não está true, MANTER imagem existente
+                            // Não fazer nada - entrada.imagem já está preservado
+                        }
                     } else {
                         // Edição normal da Lista: atualizar tudo
                     // BUG C: Normalizar quebras de linha Unicode antes de salvar
