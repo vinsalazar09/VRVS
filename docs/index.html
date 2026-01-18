@@ -635,6 +635,42 @@
                 max-height: 400px;
             }
             
+            /* P1 DEBUG START - Instrumentação visual do caret (removível) */
+            #p1-debug-caret-pill {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: rgba(0, 0, 0, 0.95);
+                color: #00FFE0;
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-size: 11px;
+                font-family: 'Courier New', monospace;
+                z-index: 999999;
+                max-width: 320px;
+                border: 2px solid rgba(0, 206, 209, 0.6);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                display: none; /* Default OFF */
+                line-height: 1.4;
+                word-break: break-word;
+            }
+            
+            #p1-debug-caret-pill.active {
+                display: block;
+            }
+            
+            #p1-debug-caret-pill .p1-debug-label {
+                font-weight: bold;
+                color: #00CED1;
+                margin-bottom: 4px;
+            }
+            
+            #p1-debug-caret-pill .p1-debug-value {
+                color: #FFFFFF;
+                margin-left: 8px;
+            }
+            /* P1 DEBUG END */
+            
             /* OTIMIZAÇÃO GERAL: Modais ocupam quase tela toda no mobile */
             .modal-content {
                 max-height: 95vh !important; /* Quase tela toda no mobile */
@@ -3205,6 +3241,27 @@
                     <label class="form-label">✅ Resposta</label>
                     <textarea class="form-textarea" id="novaDiarioResposta" rows="8" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..." style="min-height: 250px; overflow-y: auto;"></textarea>
                 </div>
+                
+                <!-- P1 DEBUG START - Botão toggle debug (removível) -->
+                <div style="margin-top: 12px; text-align: right;">
+                    <button type="button" 
+                            id="p1-debug-toggle" 
+                            onclick="toggleP1DebugCaret()"
+                            style="background: rgba(0, 206, 209, 0.2); 
+                                   border: 1px solid rgba(0, 206, 209, 0.4); 
+                                   color: var(--cobre-main); 
+                                   padding: 6px 12px; 
+                                   border-radius: 6px; 
+                                   font-size: 12px; 
+                                   cursor: pointer;">
+                        🐞 Debug Caret
+                    </button>
+                </div>
+                <!-- P1 DEBUG END -->
+                
+                <!-- P1 DEBUG START - Debug pill (removível) -->
+                <div id="p1-debug-caret-pill"></div>
+                <!-- P1 DEBUG END -->
                 
                 <div class="form-group">
                     <label class="form-label">📷 Imagem (opcional)</label>
@@ -16988,6 +17045,85 @@
             
             return blob;
         }
+        
+        // P1 DEBUG START - Instrumentação visual do caret (removível)
+        let p1DebugCaretAtivo = false;
+        
+        function toggleP1DebugCaret() {
+            p1DebugCaretAtivo = !p1DebugCaretAtivo;
+            const pill = document.getElementById('p1-debug-caret-pill');
+            const btn = document.getElementById('p1-debug-toggle');
+            
+            if (pill) {
+                if (p1DebugCaretAtivo) {
+                    pill.classList.add('active');
+                    if (btn) {
+                        btn.textContent = '🐞 Debug ON';
+                        btn.style.background = 'rgba(0, 206, 209, 0.4)';
+                    }
+                } else {
+                    pill.classList.remove('active');
+                    pill.textContent = '';
+                    if (btn) {
+                        btn.textContent = '🐞 Debug Caret';
+                        btn.style.background = 'rgba(0, 206, 209, 0.2)';
+                    }
+                }
+            }
+        }
+        
+        function atualizarP1DebugCaret(el) {
+            if (!p1DebugCaretAtivo || !el) return;
+            
+            const pill = document.getElementById('p1-debug-caret-pill');
+            if (!pill) return;
+            
+            const computed = window.getComputedStyle(el);
+            const parent = el.parentElement;
+            const parentComputed = parent ? window.getComputedStyle(parent) : null;
+            const grandParent = parent?.parentElement;
+            const grandParentComputed = grandParent ? window.getComputedStyle(grandParent) : null;
+            
+            const info = `
+<span class="p1-debug-label">ID:</span><span class="p1-debug-value">${el.id || 'N/A'}</span><br>
+<span class="p1-debug-label">font-size:</span><span class="p1-debug-value">${computed.fontSize}</span><br>
+<span class="p1-debug-label">line-height:</span><span class="p1-debug-value">${computed.lineHeight}</span><br>
+<span class="p1-debug-label">transform:</span><span class="p1-debug-value">${computed.transform === 'none' ? 'none' : computed.transform}</span><br>
+<span class="p1-debug-label">parent backdrop-filter:</span><span class="p1-debug-value">${parentComputed?.backdropFilter || 'none'}</span><br>
+<span class="p1-debug-label">parent overflow:</span><span class="p1-debug-value">${parentComputed?.overflow || 'none'}</span><br>
+<span class="p1-debug-label">grandparent backdrop-filter:</span><span class="p1-debug-value">${grandParentComputed?.backdropFilter || 'none'}</span><br>
+<span class="p1-debug-label">grandparent transform:</span><span class="p1-debug-value">${grandParentComputed?.transform === 'none' ? 'none' : grandParentComputed?.transform || 'none'}</span>
+            `.trim();
+            
+            pill.innerHTML = info;
+        }
+        
+        // Adicionar listeners quando modal abrir
+        document.addEventListener('DOMContentLoaded', () => {
+            const topico = document.getElementById('novaDiarioTopico');
+            const resposta = document.getElementById('novaDiarioResposta');
+            
+            if (topico) {
+                topico.addEventListener('focus', () => atualizarP1DebugCaret(topico));
+                topico.addEventListener('blur', () => {
+                    const pill = document.getElementById('p1-debug-caret-pill');
+                    if (pill && p1DebugCaretAtivo) {
+                        pill.innerHTML = '<span class="p1-debug-label">—</span>';
+                    }
+                });
+            }
+            
+            if (resposta) {
+                resposta.addEventListener('focus', () => atualizarP1DebugCaret(resposta));
+                resposta.addEventListener('blur', () => {
+                    const pill = document.getElementById('p1-debug-caret-pill');
+                    if (pill && p1DebugCaretAtivo) {
+                        pill.innerHTML = '<span class="p1-debug-label">—</span>';
+                    }
+                });
+            }
+        });
+        // P1 DEBUG END
         
         // Gerar thumbnail (200x200px máximo)
         async function diario_gerarThumbnail(blob) {
