@@ -13949,6 +13949,9 @@
                 <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button onclick="(async () => { await editarEntradaTreinoLivre(); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
+                        </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
@@ -13985,6 +13988,9 @@
                 <div class="diario-sessao-card" style="display:flex; flex-direction:column; align-items:stretch !important; justify-content:flex-start !important; text-align:left !important;">
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button onclick="(async () => { await editarEntradaTreinoLivre(); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
+                        </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
@@ -14088,6 +14094,22 @@
                 
                 if (btn) btn.textContent = '👁️ MOSTRAR RESPOSTA';
             }
+        }
+        
+        // S1-EXT: Editar entrada durante Treino Livre (reutiliza pipeline de sessão)
+        async function editarEntradaTreinoLivre() {
+            const indice = window.treinoLivreEstado?.indiceAtual;
+            if (indice === undefined || !window.treinoLivreFila) return;
+            
+            const entradaAtual = window.treinoLivreFila[indice];
+            if (!entradaAtual) return;
+            
+            // CRÍTICO: Marcar flag ANTES de chamar editarEntradaDiario
+            // Isso garante que a função sabe que veio da sessão (Treino Livre)
+            window.editandoDaSessao = true;
+            
+            // Usar função existente de edição (mesma da Sessão de Revisão)
+            await editarEntradaDiario(entradaAtual.id);
         }
         
         // Avaliar card
