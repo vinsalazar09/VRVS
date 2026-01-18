@@ -12139,6 +12139,10 @@
                 // Fechar modal antes de renderizar (evita conflito visual)
             fecharModalDiario();
                 
+                // S3: Salvar ID da entrada editada antes de re-renderizar
+                const entradaIdSalva = entradaId || id; // Usar ID da entrada salva
+                window.diario_lastSavedId = entradaIdSalva; // Guardar globalmente
+                
                 // Pequeno delay para garantir que modal fechou antes de renderizar (especialmente mobile)
                 setTimeout(() => {
                     if (veioDaSessaoFlag) {
@@ -12150,6 +12154,18 @@
                     } else {
                         // Edição normal: renderizar lista completa
             renderDiario();
+                        
+                        // S3: Após renderizar, voltar para o card salvo
+                        if (window.diario_lastSavedId) {
+                            setTimeout(() => {
+                                const cardElement = document.querySelector(`[data-diario-id="${window.diario_lastSavedId}"]`);
+                                if (cardElement) {
+                                    cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                                // Limpar flag após usar
+                                window.diario_lastSavedId = null;
+                            }, 100); // Delay para garantir DOM pronto
+                        }
                     }
                     // Atualizar chip VRVS 3P e indicadores após salvar (PATCH 2)
                     atualizarChipVrvs3p();
