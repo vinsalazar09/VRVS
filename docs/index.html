@@ -3264,7 +3264,7 @@
             </div>
             <div class="modal-footer" style="display: flex; gap: 8px; margin-top: 16px;">
                 <button class="btn" onclick="fecharModalConfirmarExclusaoDiario()" style="flex: 1;">Cancelar</button>
-                <button class="btn btn-danger" onclick="executarExcluirEntradaDiario()" style="flex: 1; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #EF4444;">🗑️ Excluir</button>
+                <button class="btn btn-danger" onclick="executarExcluirEntradaDiario()" style="flex: 1; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #FFFFFF;">🗑️ Excluir</button>
             </div>
         </div>
     </div>
@@ -4258,7 +4258,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                const hoje = new Date().toISOString().split('T')[0];
+                const hoje = obterYMDLocal();
                 const hora = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
                 a.download = `vrvs_backup_${hoje}_${hora}.json`;
                 document.body.appendChild(a);
@@ -5800,7 +5800,7 @@
         }
         
         function renderAgenda() {
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             
             // Período: inputs ou default próximos 7 dias
             const inputInicio = document.getElementById('agendaDataInicio');
@@ -7499,13 +7499,13 @@
         
         function exportarDados() {
             const csv = dados2CSV(dados);
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             downloadCSV(csv, `VRVS_DADOS_${hoje}.csv`);
         }
         
         function exportarHistorico() {
             const csv = dados2CSV(historico);
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             downloadCSV(csv, `VRVS_HISTORICO_${hoje}.csv`);
         }
         
@@ -7522,7 +7522,7 @@
             }
             
             const csv = dados2CSV(anotacoesComConteudo);
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             downloadCSV(csv, `VRVS_ANOTACOES_${hoje}.csv`);
             mostrarNotificacaoFeedback(`✅ ${anotacoesComConteudo.length} anotação(ões) exportadas!`);
         }
@@ -8684,7 +8684,7 @@
             const container = document.getElementById('lembretesContainer');
             if (!container) return;
             
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             
             // Separar lembretes ativos e concluídos
             const lembretesAtivos = lembretes.filter(l => !l.concluido && (!l.proximaData || l.proximaData <= hoje));
@@ -8788,7 +8788,7 @@
                 lembrete.concluido = true;
             } else {
                 // Atualizar última data e calcular próxima
-                const hoje = new Date().toISOString().split('T')[0];
+                const hoje = obterYMDLocal();
                 lembrete.ultimaData = hoje;
                 lembrete.proximaData = calcularProximaDataLembrete(lembrete);
             }
@@ -10513,7 +10513,7 @@
         
         // Funções utilitárias de data
         function hojeStr() {
-            return new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+            return obterYMDLocal(); // 'YYYY-MM-DD' (timezone local)
         }
         
         // BUG D: Helpers de data local (timezone do dispositivo, não UTC)
@@ -11715,7 +11715,7 @@
             }
             
             // Definir data padrão (hoje)
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             const dataInput = document.getElementById('novaDiarioData');
             if (dataInput) {
                 dataInput.value = hoje;
@@ -11836,7 +11836,7 @@
                 // PATCH 4: Checkbox agora controla APENAS VRVS 3P (não atencao)
                 const incluirVRVS3P = document.getElementById('novaDiarioAtencao')?.checked || false;
             const dataInput = document.getElementById('novaDiarioData');
-            const data = dataInput ? dataInput.value : new Date().toISOString().split('T')[0];
+            const data = dataInput ? dataInput.value : obterYMDLocal();
             
                 // Validação: área e tema são obrigatórios
             if (!area || !tema || !topico) {
@@ -11846,7 +11846,7 @@
                 return;
             }
             
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterYMDLocal();
             
             // B1: Gerar ID único UMA vez (para entrada e keys)
             const id = entradaId ? Number(entradaId) : Date.now();
@@ -12745,7 +12745,7 @@
             
             // Garantir que srs existe
             if (!entrada.srs) {
-                const hoje = new Date().toISOString().split('T')[0];
+                const hoje = obterYMDLocal();
                 entrada.srs = inicializarSrsVRVS3P(hoje);
             }
             
@@ -12869,7 +12869,7 @@
             document.getElementById('novaDiarioId').value = entrada.id;
             const dataInput = document.getElementById('novaDiarioData');
             if (dataInput) {
-                dataInput.value = entrada.data || new Date().toISOString().split('T')[0];
+                dataInput.value = entrada.data || obterYMDLocal();
             }
             
             // Popular select de áreas com TODAS as áreas existentes (AREAS_FIXAS + áreas dos dados + área da entrada)
@@ -13444,6 +13444,15 @@
         // ==================== HELPERS GLOBAIS PARA DATAS (P1) ====================
         // Funções auxiliares globais para normalização de datas (reutilizáveis)
         function ymdDeDateGlobal(d) {
+            const ano = d.getFullYear();
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const dia = String(d.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        }
+        
+        // P2: Helper para obter YYYY-MM-DD usando data LOCAL (não UTC)
+        function obterYMDLocal() {
+            const d = new Date();
             const ano = d.getFullYear();
             const mes = String(d.getMonth() + 1).padStart(2, '0');
             const dia = String(d.getDate()).padStart(2, '0');
