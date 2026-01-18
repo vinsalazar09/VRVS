@@ -4032,6 +4032,8 @@
                     
                     <!-- Filtros -->
                     <div class="diario-filtros" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <input type="text" class="form-input form-input-sm" id="filtroDiarioBusca" placeholder="🔍 Buscar (tópico, tema)..." oninput="filtrarDiarioPorBusca()" style="font-size: 13px; padding: 8px; flex: 1; min-width: 200px;">
+                        <button class="btn btn-small btn-secondary" onclick="limparBuscaDiario()" id="btnLimparBuscaDiario" style="display: none; font-size: 13px; padding: 8px;">✕ Limpar</button>
                         <select class="form-select form-select-sm" id="filtroDiarioVista" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
                             <option value="data">📅 Por Data</option>
                             <option value="tema">📁 Por Tema</option>
@@ -4040,6 +4042,9 @@
                             <option value="">Todas as áreas</option>
                         </select>
                         <input type="date" class="form-input form-input-sm" id="filtroDiarioData" onchange="renderDiario()" style="font-size: 13px; padding: 8px;">
+                    </div>
+                    <div id="diarioBuscaResultados" style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 12px; display: none;">
+                        <span id="diarioBuscaContador">0</span> resultado(s) encontrado(s)
                     </div>
                     
                     <!-- Seção "Revisar Hoje" (itens com ⚠️) -->
@@ -12334,6 +12339,13 @@
                 revisarHoje.style.display = 'none';
             }
             
+            // S4: Limpar busca ao re-renderizar (filtros mudaram)
+            const buscaInput = document.getElementById('filtroDiarioBusca');
+            if (buscaInput) {
+                buscaInput.value = '';
+                limparBuscaDiario();
+            }
+            
             if (filtroVista === 'data') {
                 renderDiarioPorData(entradasFiltradas, container);
             } else {
@@ -12567,7 +12579,7 @@
             const chipsHTML = chips.length > 0 ? `<div style="display: flex; gap: 4px; align-items: center; margin-bottom: 4px;">${chips.join('')}</div>` : '';
             
             return `
-                <div data-diario-id="${entrada.id}" style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255,127,80,0.2);">
+                <div class="diario-entrada-card" data-diario-id="${entrada.id}" data-busca-topico="${(entrada.topico || '').toLowerCase()}" data-busca-tema="${(entrada.tema || '').toLowerCase()}" data-busca-area="${(entrada.area || '').toLowerCase()}" style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255,127,80,0.2);">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
                         <div style="flex: 1;">
                             <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 4px;">
@@ -12641,6 +12653,99 @@
                     imgElement.style.display = 'none';
                     imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                 }
+            }
+        }
+        
+        // S4: Busca no Diário (tópico + tema + área)
+        let diarioBuscaTimeout = null;
+        
+        function filtrarDiarioPorBusca() {
+            const buscaInput = document.getElementById('filtroDiarioBusca');
+            const btnLimpar = document.getElementById('btnLimparBuscaDiario');
+            const resultadosDiv = document.getElementById('diarioBuscaResultados');
+            const contadorEl = document.getElementById('diarioBuscaContador');
+            
+            if (!buscaInput) return;
+            
+            const termo = buscaInput.value.trim().toLowerCase();
+            
+            // Mostrar/ocultar botão limpar
+            if (btnLimpar) {
+                btnLimpar.style.display = termo ? 'inline-block' : 'none';
+            }
+            
+            // Debounce 200ms
+            clearTimeout(diarioBuscaTimeout);
+            diarioBuscaTimeout = setTimeout(() => {
+                if (!termo) {
+                    // Limpar busca: mostrar todos os cards
+                    const cards = document.querySelectorAll('.diario-entrada-card');
+                    cards.forEach(card => {
+                        card.style.display = '';
+                    });
+                    
+                    // Esconder grupos/datas vazios (se houver)
+                    const grupos = document.querySelectorAll('.diario-data-group, .area-content');
+                    grupos.forEach(grupo => {
+                        const cardsVisiveis = grupo.querySelectorAll('.diario-entrada-card:not([style*="display: none"])');
+                        if (cardsVisiveis.length === 0 && grupo.querySelectorAll('.diario-entrada-card').length > 0) {
+                            grupo.style.display = 'none';
+                        } else {
+                            grupo.style.display = '';
+                        }
+                    });
+                    
+                    if (resultadosDiv) resultadosDiv.style.display = 'none';
+                    return;
+                }
+                
+                // Filtrar cards
+                const cards = document.querySelectorAll('.diario-entrada-card');
+                let contador = 0;
+                
+                cards.forEach(card => {
+                    const topico = card.getAttribute('data-busca-topico') || '';
+                    const tema = card.getAttribute('data-busca-tema') || '';
+                    const area = card.getAttribute('data-busca-area') || '';
+                    const textoCompleto = `${topico} ${tema} ${area}`;
+                    
+                    if (textoCompleto.includes(termo)) {
+                        card.style.display = '';
+                        contador++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Esconder grupos/datas sem cards visíveis
+                const grupos = document.querySelectorAll('.diario-data-group, .area-content');
+                grupos.forEach(grupo => {
+                    const cardsVisiveis = grupo.querySelectorAll('.diario-entrada-card:not([style*="display: none"])');
+                    if (cardsVisiveis.length === 0 && grupo.querySelectorAll('.diario-entrada-card').length > 0) {
+                        grupo.style.display = 'none';
+                    } else {
+                        grupo.style.display = '';
+                    }
+                });
+                
+                // Atualizar contador
+                if (resultadosDiv) {
+                    if (contador > 0) {
+                        resultadosDiv.style.display = 'block';
+                        if (contadorEl) contadorEl.textContent = contador;
+                    } else {
+                        resultadosDiv.style.display = 'block';
+                        if (contadorEl) contadorEl.textContent = '0';
+                    }
+                }
+            }, 200);
+        }
+        
+        function limparBuscaDiario() {
+            const buscaInput = document.getElementById('filtroDiarioBusca');
+            if (buscaInput) {
+                buscaInput.value = '';
+                filtrarDiarioPorBusca();
             }
         }
         

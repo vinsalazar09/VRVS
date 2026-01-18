@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.99-s1-ext-modal-edicao-treino-livre-20260118-1900";
+const CACHE_NAME = "vrvs-v5.3.99-s4-busca-diario-20260118-2000";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
