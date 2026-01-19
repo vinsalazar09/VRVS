@@ -1111,6 +1111,29 @@
             color: #dc3545;
         }
         
+        /* S5-UX: Botão Próximo na sessão */
+        .sessao-nav-proximo {
+            background: rgba(0, 206, 209, 0.1);
+            border: 1px solid rgba(0, 206, 209, 0.4);
+            color: rgba(0, 206, 209, 0.9);
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            min-height: 44px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sessao-nav-proximo:hover {
+            background: rgba(0, 206, 209, 0.15);
+            border-color: rgba(0, 206, 209, 0.5);
+        }
+
+        .sessao-nav-proximo:active {
+            background: rgba(0, 206, 209, 0.2);
+        }
+        
         /* ==================== TL-2: TREINO LIVRE RUNNER ==================== */
         
         .treino-livre-runner-wrapper {
@@ -12756,24 +12779,17 @@
             clearTimeout(diarioBuscaTimeout);
             diarioBuscaTimeout = setTimeout(() => {
                 if (!termo) {
-                    // Limpar busca: mostrar todos os cards
-                    const cards = document.querySelectorAll('.diario-entrada-card');
-                    cards.forEach(card => {
-                        card.style.display = '';
-                    });
-                    
-                    // Esconder grupos/datas vazios (se houver)
-                    const grupos = document.querySelectorAll('.diario-data-group, .area-content');
-                    grupos.forEach(grupo => {
-                        const cardsVisiveis = grupo.querySelectorAll('.diario-entrada-card:not([style*="display: none"])');
-                        if (cardsVisiveis.length === 0 && grupo.querySelectorAll('.diario-entrada-card').length > 0) {
-                            grupo.style.display = 'none';
-                        } else {
-                            grupo.style.display = '';
-                        }
-                    });
-                    
+                    // S4-MICRO: termo vazio (backspace) deve normalizar 100% sem trocar vista
                     if (resultadosDiv) resultadosDiv.style.display = 'none';
+                    
+                    // Re-render completo para desfazer wrappers/grupos ocultados pela busca
+                    if (typeof renderDiario === 'function') {
+                        renderDiario();
+                    } else {
+                        // fallback ultra mínimo: mostrar todos os cards (se renderDiario não existir por algum motivo)
+                        document.querySelectorAll('.diario-entrada-card').forEach(c => c.style.display = '');
+                        document.querySelectorAll('.diario-data-group, .area-content').forEach(g => g.style.display = '');
+                    }
                     return;
                 }
                 
@@ -13464,6 +13480,13 @@
                     window.sessaoFiltradaPreMontada.filaIds.length > 0) {
                     
                     sessaoDiario.filaIds = window.sessaoFiltradaPreMontada.filaIds;
+                    
+                    // S5-UX: Filtrar cards pulados hoje (skipToday) também para sessão pré-montada
+                    const skipKey = getSkipKeyHoje();
+                    const skipSet = lerSkipHojeSet(skipKey);
+                    sessaoDiario.skipKeyHoje = skipKey;
+                    sessaoDiario.filaIds = (sessaoDiario.filaIds || []).filter(id => !skipSet.has(String(id)));
+                    
                     sessaoDiario.indiceAtual = 0;
                     
                     // Manter filtros para UI (mostrar "Filtrado: X")
@@ -13557,6 +13580,13 @@
                 // Extrair entradas ordenadas
                 const entradasOrdenadas = entradasComChaves.map(item => item.entrada);
                 sessaoDiario.filaIds = entradasOrdenadas.map(e => e.id);
+                
+                // S5-UX: Filtrar cards pulados hoje (skipToday)
+                const skipKey = getSkipKeyHoje();
+                const skipSet = lerSkipHojeSet(skipKey);
+                sessaoDiario.skipKeyHoje = skipKey;
+                sessaoDiario.filaIds = (sessaoDiario.filaIds || []).filter(id => !skipSet.has(String(id)));
+                
                 sessaoDiario.indiceAtual = 0;
                 
                 if (!sessaoDiario.filaIds.length) {
@@ -13663,9 +13693,14 @@
             container.innerHTML = `
                 ${sessaoDiario.tipo === 'programado' ? `
                 <div class="sessao-programada-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <button class="sessao-nav-anterior" onclick="voltarCardAnteriorSessao()" ${!podeVerAnterior ? 'disabled' : ''} style="background: ${!podeVerAnterior ? 'transparent' : 'rgba(0, 206, 209, 0.1)'}; border: 1px solid rgba(0, 206, 209, ${!podeVerAnterior ? '0.2' : '0.4'}); color: rgba(0, 206, 209, ${!podeVerAnterior ? '0.4' : '0.9'}); font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: ${!podeVerAnterior ? 'not-allowed' : 'pointer'}; min-height: 44px; font-weight: 500; transition: all 0.2s ease;">
-                        ← Anterior
-                    </button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="sessao-nav-anterior" onclick="voltarCardAnteriorSessao()" ${!podeVerAnterior ? 'disabled' : ''} style="background: ${!podeVerAnterior ? 'transparent' : 'rgba(0, 206, 209, 0.1)'}; border: 1px solid rgba(0, 206, 209, ${!podeVerAnterior ? '0.2' : '0.4'}); color: rgba(0, 206, 209, ${!podeVerAnterior ? '0.4' : '0.9'}); font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: ${!podeVerAnterior ? 'not-allowed' : 'pointer'}; min-height: 44px; font-weight: 500; transition: all 0.2s ease;">
+                            ← Anterior
+                        </button>
+                        <button class="sessao-nav-proximo" onclick="proximoCardSessaoDiario()" style="background: rgba(0, 206, 209, 0.1); border: 1px solid rgba(0, 206, 209, 0.4); color: rgba(0, 206, 209, 0.9); font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: pointer; min-height: 44px; font-weight: 500; transition: all 0.2s ease;">
+                            Próximo →
+                        </button>
+                    </div>
                     <span class="sessao-nav-progresso" style="font-size: 14px; color: rgba(0, 206, 209, 0.7);">${indice} / ${total}</span>
                 </div>
                 ${temFiltro ? `
@@ -15126,27 +15161,102 @@
             }
         }
         
-        // Pular card (sem alterar SRS)
-        function pularSessaoDiario() {
-            const entradaAtual = getEntradaAtualSessao();
+        // S5-UX: Helpers para skipToday (por data local, sem UTC)
+        function getDataLocalYYYYMMDD(d = new Date()) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function getSkipKeyHoje() {
+            return `vrvs_skip_cards_${getDataLocalYYYYMMDD(new Date())}`;
+        }
+
+        function lerSkipHojeSet(skipKey) {
+            try {
+                const arr = JSON.parse(localStorage.getItem(skipKey) || '[]');
+                return new Set(arr.map(x => String(x)));
+            } catch(e) {
+                return new Set();
+            }
+        }
+
+        function gravarSkipHojeSet(skipKey, setIds) {
+            try {
+                localStorage.setItem(skipKey, JSON.stringify(Array.from(setIds)));
+            } catch(e) {}
+        }
+
+        // S5-UX: Navegar para próximo card (sem registrar resposta/VRVS)
+        function proximoCardSessaoDiario() {
+            if (!sessaoDiario || !Array.isArray(sessaoDiario.filaIds)) return;
             
-            // BUG B: Se for sessão programada, salvar action ANTES de avançar
+            const entradaAtual = typeof getEntradaAtualSessao === 'function' ? getEntradaAtualSessao() : null;
+            
+            // Registrar no histórico (programado) para permitir "Anterior" desfazer
             if (sessaoDiario.tipo === 'programado' && entradaAtual) {
-                const action = {
-                    tipo: 'pulo',
+                window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico || [];
+                window.sessaoProgramadaHistorico.push({
+                    tipo: 'proximo',
                     entradaId: entradaAtual.id,
-                    srsAntes: entradaAtual.srs ? JSON.parse(JSON.stringify(entradaAtual.srs)) : null, // deep clone
                     indiceAntes: sessaoDiario.indiceAtual,
                     timestamp: Date.now()
-                };
-                window.sessaoProgramadaHistorico.push(action);
+                });
                 // Limitar histórico a últimos 10
                 if (window.sessaoProgramadaHistorico.length > 10) {
-                    window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico.slice(-10);
+                    window.sessaoProgramadaHistorico.shift();
                 }
             }
             
+            // Avançar índice
             sessaoDiario.indiceAtual++;
+            
+            // Renderizar próximo ou fim da sessão
+            if (sessaoDiario.indiceAtual >= sessaoDiario.filaIds.length) {
+                renderSessaoDiario(null);
+            } else {
+                renderSessaoDiario(getEntradaAtualSessao());
+            }
+        }
+
+        // S5-UX: Pular card com confirm + skipToday (remove da sessão hoje, volta amanhã)
+        function pularSessaoDiario() {
+            const entradaAtual = typeof getEntradaAtualSessao === 'function' ? getEntradaAtualSessao() : null;
+            if (!sessaoDiario || !entradaAtual || !Array.isArray(sessaoDiario.filaIds)) return;
+            
+            // S5-UX: Confirmar antes de pular
+            const ok = confirm('Pular este card por hoje?\n\nEle sai da sessão de hoje e volta amanhã.');
+            if (!ok) return;
+            
+            // Adicionar ao skipToday (localStorage por data local)
+            const skipKey = sessaoDiario.skipKeyHoje || getSkipKeyHoje();
+            const skipSet = lerSkipHojeSet(skipKey);
+            skipSet.add(String(entradaAtual.id));
+            gravarSkipHojeSet(skipKey, skipSet);
+            
+            // Remover imediatamente da sessão de hoje
+            const removedIndex = sessaoDiario.indiceAtual;
+            sessaoDiario.filaIds.splice(removedIndex, 1);
+            
+            // Registrar histórico (programado) para permitir "Anterior" desfazer o pulo
+            if (sessaoDiario.tipo === 'programado') {
+                window.sessaoProgramadaHistorico = window.sessaoProgramadaHistorico || [];
+                window.sessaoProgramadaHistorico.push({
+                    tipo: 'pulo',
+                    entradaId: entradaAtual.id,
+                    indiceAntes: removedIndex,
+                    removedIndex: removedIndex,
+                    skipKey: skipKey,
+                    timestamp: Date.now()
+                });
+                // Limitar histórico a últimos 10
+                if (window.sessaoProgramadaHistorico.length > 10) {
+                    window.sessaoProgramadaHistorico.shift();
+                }
+            }
+            
+            // Renderizar próximo (mesmo índice, pois removemos o atual)
             if (sessaoDiario.indiceAtual >= sessaoDiario.filaIds.length) {
                 renderSessaoDiario(null);
             } else {
@@ -15241,6 +15351,32 @@
                 return;
             }
             
+            // S5-UX: Tratar desfazer pulo (remover do skipToday e reinserir na fila)
+            if (action.tipo === 'pulo') {
+                try {
+                    const key = action.skipKey || sessaoDiario.skipKeyHoje || getSkipKeyHoje();
+                    const set = lerSkipHojeSet(key);
+                    set.delete(String(action.entradaId));
+                    gravarSkipHojeSet(key, set);
+                } catch(e) {
+                    console.error('Erro ao remover do skipToday:', e);
+                }
+                
+                if (Array.isArray(sessaoDiario.filaIds)) {
+                    const idx = (typeof action.removedIndex === 'number') ? action.removedIndex : action.indiceAntes;
+                    sessaoDiario.filaIds.splice(idx, 0, action.entradaId);
+                    sessaoDiario.indiceAtual = idx;
+                    
+                    const entrada = window.diario.entradas.find(e => String(e.id) === String(action.entradaId));
+                    if (entrada) {
+                        renderSessaoDiario(entrada);
+                        return;
+                    }
+                }
+                mostrarNotificacaoFeedback('⚠️ Erro ao desfazer pulo.', 'error');
+                return;
+            }
+            
             // Encontrar entrada no diário
             const entrada = window.diario.entradas.find(e => String(e.id) === String(action.entradaId));
             if (!entrada) {
@@ -15253,11 +15389,13 @@
                 entrada.srs = JSON.parse(JSON.stringify(action.srsAntes)); // deep clone
             }
             
-            // Restaurar índice
+            // Restaurar índice (para 'proximo' e 'avaliacao')
             sessaoDiario.indiceAtual = Math.max(0, action.indiceAntes);
             
-            // Salvar diário com SRS restaurado
-            salvarDiario();
+            // Salvar diário com SRS restaurado (se necessário)
+            if (action.tipo === 'avaliacao') {
+                salvarDiario();
+            }
             
             // Atualizar chip VRVS 3P após restaurar
             atualizarChipVrvs3p();
