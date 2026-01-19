@@ -12477,12 +12477,9 @@
                 revisarHoje.style.display = 'none';
             }
             
-            // S4: Limpar busca ao re-renderizar (filtros mudaram)
-            const buscaInput = document.getElementById('filtroDiarioBusca');
-            if (buscaInput) {
-                buscaInput.value = '';
-                limparBuscaDiario();
-            }
+            // HOTFIX S6-DIARIO-TRAVA: Remover limparBuscaDiario() que causava loop recursivo
+            // A busca deve ser limpa apenas quando o usuário explicitamente limpar ou mudar filtros
+            // Não limpar automaticamente ao renderizar para evitar loop infinito
             
             if (filtroVista === 'data') {
                 renderDiarioPorData(entradasFiltradas, container);
