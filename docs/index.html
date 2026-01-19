@@ -7665,25 +7665,6 @@
         
         function showSection(sectionId) {
             if (typeof __vrvsMark === 'function') __vrvsMark(4); // Antes de montar/renderizar a UI principal
-            
-            // S6-NAV: Cancelar requestAnimationFrame pendente da busca (evita callback executar em contexto errado)
-            if (diarioBuscaRAF !== null) {
-                cancelAnimationFrame(diarioBuscaRAF);
-                diarioBuscaRAF = null;
-            }
-            
-            // S6-NAV: Limpar estilos deixados pela busca (wrapper/header com display:none)
-            document.querySelectorAll('.area-content').forEach(content => {
-                const wrapper = content.parentElement;
-                if (wrapper && wrapper.style && wrapper.style.display === 'none') {
-                    wrapper.style.display = '';
-                }
-                const header = content.previousElementSibling;
-                if (header && header.classList && header.classList.contains('area-header') && header.style.display === 'none') {
-                    header.style.display = '';
-                }
-            });
-            
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             
@@ -7692,63 +7673,55 @@
                 section.classList.add('active');
             }
             
-            // S6-NAV: Marcar aba ativa sem depender de event (iOS/PWA-safe)
-            const tabAtiva = document.querySelector(`.tab[onclick*="showSection('${sectionId}')"]`);
-            if (tabAtiva) tabAtiva.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             
-            // S6-NAV: Proteger renderizações para não derrubar UI caso alguma função lance erro
-            try {
-                if (sectionId === 'dados') renderDados();
-                if (sectionId === 'tarefa') {
-                    renderTarefas();
+            if (sectionId === 'dados') renderDados();
+            if (sectionId === 'tarefa') {
+                renderTarefas();
+            }
+            if (sectionId === 'agenda') renderAgendaUnificada();
+            if (sectionId === 'stats') updateStats();
+            if (sectionId === 'historico') renderHistorico();
+            if (sectionId === 'pendencias') renderPendencias();
+            if (sectionId === 'lembretes') {
+                atualizarSelectsLembrete();
+                renderLembretes();
+            }
+            if (sectionId === 'caderno') {
+                renderCadernoV2();
+            }
+            if (sectionId === 'diario') {
+                renderDiario();
+                // Atualizar chip VRVS 3P quando abrir aba Diário
+                setTimeout(() => {
+                    atualizarChipVrvs3p();
+                }, 50);
+            }
+            if (sectionId === 'analises') {
+                atualizarSelectsAnalise();
+                // Garantir que diário está carregado antes de calcular análises
+                if (!window.diario) {
+                    carregarDiario();
                 }
-                if (sectionId === 'agenda') renderAgendaUnificada();
-                if (sectionId === 'stats') updateStats();
-                if (sectionId === 'historico') renderHistorico();
-                if (sectionId === 'pendencias') renderPendencias();
-                if (sectionId === 'lembretes') {
-                    atualizarSelectsLembrete();
-                    renderLembretes();
+                atualizarAnalises();
+            }
+            // Novas seções consolidadas
+            if (sectionId === 'analytics') {
+                // Garantir que diário está carregado antes de renderizar Analytics
+                if (!window.diario) {
+                    carregarDiario();
                 }
-                if (sectionId === 'caderno') {
-                    renderCadernoV2();
-                }
-                if (sectionId === 'diario') {
-                    renderDiario();
-                    // Atualizar chip VRVS 3P quando abrir aba Diário
-                    setTimeout(() => {
-                        atualizarChipVrvs3p();
-                    }, 50);
-                }
-                if (sectionId === 'analises') {
-                    atualizarSelectsAnalise();
-                    // Garantir que diário está carregado antes de calcular análises
-                    if (!window.diario) {
-                        carregarDiario();
-                    }
-                    atualizarAnalises();
-                }
-                // Novas seções consolidadas
-                if (sectionId === 'analytics') {
-                    // Garantir que diário está carregado antes de renderizar Analytics
-                    if (!window.diario) {
-                        carregarDiario();
-                    }
-                    // Garantir que a vista inicial seja renderizada
-                    if (!vistaAnalytics) vistaAnalytics = 'resumo';
-                    renderAnalytics();
-                }
-                if (sectionId === 'backup') {
-                    // Nada especial para renderizar
-                }
-                if (sectionId === 'ajuda') {
-                    renderAjuda();
-                }
-            } catch (e) {
-                // S6-NAV: Não pedir console; só evitar crash e dar feedback visual simples
-                try { 
-                    mostrarNotificacaoFeedback('⚠️ Erro ao trocar de aba. Tente novamente.', 'error'); 
-                } catch (_) {}
+                // Garantir que a vista inicial seja renderizada
+                if (!vistaAnalytics) vistaAnalytics = 'resumo';
+                renderAnalytics();
+            }
+            if (sectionId === 'backup') {
+                // Nada especial para renderizar
+            }
+            if (sectionId === 'ajuda') {
+                renderAjuda();
             }
         }
         
@@ -12786,7 +12759,6 @@
         
         // S4: Busca no Diário (tópico + tema + área)
         let diarioBuscaTimeout = null;
-        let diarioBuscaRAF = null; // S6-NAV: Armazenar ID do requestAnimationFrame para cancelar se necessário
         
         function filtrarDiarioPorBusca() {
             const buscaInput = document.getElementById('filtroDiarioBusca');
@@ -12840,8 +12812,7 @@
                 });
                 
                 // S4-FIX2: Esconder grupos sem cards visíveis E EXPANDIR (usando toggleAreaCaderno) dos grupos que contêm cards visíveis
-                // S6-NAV: Armazenar ID do RAF para permitir cancelamento ao trocar de aba
-                diarioBuscaRAF = requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
                     // Helper local para abrir grupo usando mecanismo oficial
                     const ensureGrupoAberto = (id) => {
                         const content = document.getElementById(`area-content-${id}`);
@@ -12900,7 +12871,6 @@
                             }
                         }
                     });
-                    diarioBuscaRAF = null; // S6-NAV: Limpar após executar
                 });
                 
                 // Atualizar contador
