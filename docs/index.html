@@ -12153,18 +12153,80 @@
                         }
                     } else {
                         // Edição normal: renderizar lista completa
-            renderDiario();
                         
-                        // S3: Após renderizar, voltar para o card salvo
+                        // S3-FIX: Capturar estado antes de re-renderizar
+                        const diarioContainer = document.getElementById('diarioContainer');
+                        const scrollEl = document.scrollingElement || document.documentElement;
+                        const scrollTopAntes = scrollEl ? scrollEl.scrollTop : 0;
+                        const gruposAbertosAntes = new Set();
+                        
+                        if (diarioContainer) {
+                            diarioContainer.querySelectorAll('.area-content:not(.collapsed)[id^="area-content-"]').forEach(el => {
+                                const id = el.id.replace('area-content-', '');
+                                if (id) gruposAbertosAntes.add(id);
+                            });
+                        }
+                        
+                        // S3-FIX: Helper local para abrir grupo
+                        const ensureOpen = (id) => {
+                            const content = document.getElementById('area-content-' + id);
+                            const header = document.querySelector("div[onclick=\"toggleAreaCaderno('" + id + "')\"]");
+                            
+                            if (content) {
+                                content.classList.remove('collapsed');
+                                if (content.style.display === 'none') {
+                                    content.style.display = '';
+                                }
+                            }
+                            
+                            if (header) {
+                                header.classList.remove('collapsed');
+                                const t = header.querySelector('.area-header-toggle');
+                                if (t) {
+                                    t.textContent = '▲';
+                                }
+                            }
+                        };
+                        
+                        renderDiario();
+                        
+                        // S3-FIX: Restaurar grupos abertos imediatamente após renderizar
+                        gruposAbertosAntes.forEach(ensureOpen);
+                        
+                        // S3-FIX: Após renderizar, voltar para o card salvo (abrindo ancestrais antes)
                         if (window.diario_lastSavedId) {
                             setTimeout(() => {
+                                // Reabrir grupos capturados (garante layout)
+                                gruposAbertosAntes.forEach(ensureOpen);
+                                
                                 const cardElement = document.querySelector(`[data-diario-id="${window.diario_lastSavedId}"]`);
+                                
                                 if (cardElement) {
+                                    // Abrir ancestrais colapsados do card antes de scrollIntoView
+                                    let p = cardElement.closest('.area-content');
+                                    while (p) {
+                                        if (p.classList.contains('collapsed') && p.id.startsWith('area-content-')) {
+                                            const pid = p.id.replace('area-content-', '');
+                                            if (pid) ensureOpen(pid);
+                                        }
+                                        p = p.parentElement ? p.parentElement.closest('.area-content') : null;
+                                    }
+                                    
+                                    // Só então fazer scrollIntoView
                                     cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                } else {
+                                    // Fallback: restaurar scroll anterior
+                                    if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
                                 }
+                                
                                 // Limpar flag após usar
                                 window.diario_lastSavedId = null;
                             }, 100); // Delay para garantir DOM pronto
+                        } else {
+                            // Se não há lastSavedId, restaurar scroll anterior
+                            setTimeout(() => {
+                                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
+                            }, 100);
                         }
                     }
                     // Atualizar chip VRVS 3P e indicadores após salvar (PATCH 2)
