@@ -7665,6 +7665,13 @@
         
         function showSection(sectionId) {
             if (typeof __vrvsMark === 'function') __vrvsMark(4); // Antes de montar/renderizar a UI principal
+            
+            // S6-NAV-FIX2: Cancelar RAF pendente da busca ao trocar de aba
+            if (diarioBuscaRAF !== null) {
+                cancelAnimationFrame(diarioBuscaRAF);
+                diarioBuscaRAF = null;
+            }
+            
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             
@@ -7694,10 +7701,17 @@
                 renderCadernoV2();
             }
             if (sectionId === 'diario') {
+                // S6-NAV-FIX2: Limpar setTimeout pendente antes de criar novo
+                if (diarioChipVrvs3pTimeout !== null) {
+                    clearTimeout(diarioChipVrvs3pTimeout);
+                    diarioChipVrvs3pTimeout = null;
+                }
+                
                 renderDiario();
                 // Atualizar chip VRVS 3P quando abrir aba Diário
-                setTimeout(() => {
+                diarioChipVrvs3pTimeout = setTimeout(() => {
                     atualizarChipVrvs3p();
+                    diarioChipVrvs3pTimeout = null; // Limpar após executar
                 }, 50);
             }
             if (sectionId === 'analises') {
@@ -12389,8 +12403,19 @@
         }
         
         function renderDiario() {
-            const container = document.getElementById('diarioContainer');
-            if (!container) return;
+            // S6-NAV-FIX2: Prevenir múltiplas renderizações simultâneas
+            if (diarioRenderando) {
+                return; // Já está renderizando, ignorar chamada
+            }
+            
+            diarioRenderando = true;
+            
+            try {
+                const container = document.getElementById('diarioContainer');
+                if (!container) {
+                    diarioRenderando = false;
+                    return;
+                }
             
             // Atualizar chip VRVS 3P e indicadores (PATCH 2)
             atualizarChipVrvs3p();
@@ -12402,6 +12427,7 @@
                 const revisarHoje = document.getElementById('diarioRevisarHoje');
                 if (revisarHoje) revisarHoje.style.display = 'none';
                 
+                diarioRenderando = false; // S6-NAV-FIX2: Liberar flag antes de return
                 return;
             }
             
@@ -12452,6 +12478,10 @@
                 renderDiarioPorData(entradasFiltradas, container);
             } else {
                 renderDiarioPorTema(entradasFiltradas, container);
+            }
+            } finally {
+                // S6-NAV-FIX2: Sempre liberar flag, mesmo em caso de erro
+                diarioRenderando = false;
             }
         }
         
@@ -12760,6 +12790,9 @@
         
         // S4: Busca no Diário (tópico + tema + área)
         let diarioBuscaTimeout = null;
+        let diarioBuscaRAF = null; // S6-NAV-FIX2: Armazenar ID do RAF para cancelar
+        let diarioChipVrvs3pTimeout = null; // S6-NAV-FIX2: Armazenar ID do setTimeout do chip
+        let diarioRenderando = false; // S6-NAV-FIX2: Flag para prevenir múltiplas renderizações simultâneas
         
         function filtrarDiarioPorBusca() {
             const buscaInput = document.getElementById('filtroDiarioBusca');
@@ -12813,7 +12846,8 @@
                 });
                 
                 // S4-FIX2: Esconder grupos sem cards visíveis E EXPANDIR (usando toggleAreaCaderno) dos grupos que contêm cards visíveis
-                requestAnimationFrame(() => {
+                // S6-NAV-FIX2: Armazenar ID do RAF para permitir cancelamento
+                diarioBuscaRAF = requestAnimationFrame(() => {
                     // Helper local para abrir grupo usando mecanismo oficial
                     const ensureGrupoAberto = (id) => {
                         const content = document.getElementById(`area-content-${id}`);
@@ -12872,6 +12906,7 @@
                             }
                         }
                     });
+                    diarioBuscaRAF = null; // S6-NAV-FIX2: Limpar após executar
                 });
                 
                 // Atualizar contador
