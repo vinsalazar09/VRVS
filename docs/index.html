@@ -3161,7 +3161,7 @@
         align-items: flex-end;
         gap: 8px;
     ">
-        <button id="btnAjudaFlutuante" onclick="showSection('tutorial')" style="
+        <button id="btnAjudaFlutuante" onclick="showSection('tutorial', event)" style="
             width: 56px;
             height: 56px;
             border-radius: 50%;
@@ -3534,18 +3534,18 @@
         
         <div class="tabs">
             <!-- ESTUDO (uso diário) -->
-            <div class="tab" onclick="showSection('tarefa')">📋 Tarefa</div>
-            <div class="tab" onclick="showSection('feedback')">📝 Feedback</div>
-            <div class="tab" onclick="showSection('diario')">📔 Diário</div>
-            <div class="tab" onclick="showSection('caderno')">📓 Caderno</div>
+            <div class="tab" onclick="showSection('tarefa', event)">📋 Tarefa</div>
+            <div class="tab" onclick="showSection('feedback', event)">📝 Feedback</div>
+            <div class="tab" onclick="showSection('diario', event)">📔 Diário</div>
+            <div class="tab" onclick="showSection('caderno', event)">📓 Caderno</div>
             <!-- PLANEJAMENTO -->
-            <div class="tab" onclick="showSection('agenda')">📅 Agenda</div>
-            <div class="tab active" onclick="showSection('dados')">📊 Dados</div>
+            <div class="tab" onclick="showSection('agenda', event)">📅 Agenda</div>
+            <div class="tab active" onclick="showSection('dados', event)">📊 Dados</div>
             <!-- ANÁLISE -->
-            <div class="tab" onclick="showSection('analytics')">📈 Análises</div>
+            <div class="tab" onclick="showSection('analytics', event)">📈 Análises</div>
             <!-- SISTEMA -->
-            <div class="tab" onclick="showSection('backup')">💾 Backup</div>
-            <div class="tab" onclick="showSection('ajuda')">❓ Ajuda</div>
+            <div class="tab" onclick="showSection('backup', event)">💾 Backup</div>
+            <div class="tab" onclick="showSection('ajuda', event)">❓ Ajuda</div>
         </div>
         
         <div class="content">
@@ -7663,7 +7663,7 @@
         
         // ==================== NAVEGAÇÃO ====================
         
-        function showSection(sectionId) {
+        function showSection(sectionId, evt) {
             if (typeof __vrvsMark === 'function') __vrvsMark(4); // Antes de montar/renderizar a UI principal
             
             // S6-NAV-FIX2: Cancelar RAF pendente da busca ao trocar de aba
@@ -7680,10 +7680,20 @@
                 section.classList.add('active');
             }
             
-            // S6-NAV-HOTFIX: Marcar aba ativa sem depender de event (iOS/PWA-safe)
-            const tabs = Array.from(document.querySelectorAll('.tab'));
-            const tab = tabs.find(el => (el.getAttribute('onclick') || '').includes(`showSection('${sectionId}')`));
-            if (tab) tab.classList.add('active');
+            // HOTFIX S6-DIARIO-TRAVA: Marcar aba ativa de forma event-safe (iOS/PWA)
+            const e = evt || null;
+            const tabEl = (e && e.currentTarget) ? e.currentTarget :
+                          (e && e.target && e.target.closest) ? e.target.closest('.tab') :
+                          null;
+            
+            if (tabEl) {
+                tabEl.classList.add('active');
+            } else {
+                // Fallback: encontrar tab pelo onclick (mínimo, sem refactor)
+                const fallback = document.querySelector(`.tab[onclick*="showSection('${sectionId}')"]`) ||
+                                 document.querySelector(`.tab[onclick*="showSection(\\"${sectionId}\\")"]`);
+                if (fallback) fallback.classList.add('active');
+            }
             
             if (sectionId === 'dados') renderDados();
             if (sectionId === 'tarefa') {
