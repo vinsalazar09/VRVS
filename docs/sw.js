@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.99-s3-diario-scrollstate-20260118-2338";
+const CACHE_NAME = "vrvs-v5.3.99-s4-busca-expande-grupos-20260118-2355";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

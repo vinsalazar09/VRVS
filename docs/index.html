@@ -12795,14 +12795,43 @@
                     }
                 });
                 
-                // Esconder grupos/datas sem cards visíveis
+                // S4-FIX: Esconder grupos sem cards visíveis E EXPANDIR (remover .collapsed) dos grupos que contêm cards visíveis
                 const grupos = document.querySelectorAll('.diario-data-group, .area-content');
+                
                 grupos.forEach(grupo => {
                     const cardsVisiveis = grupo.querySelectorAll('.diario-entrada-card:not([style*="display: none"])');
-                    if (cardsVisiveis.length === 0 && grupo.querySelectorAll('.diario-entrada-card').length > 0) {
+                    const totalCards = grupo.querySelectorAll('.diario-entrada-card').length;
+                    
+                    if (cardsVisiveis.length === 0 && totalCards > 0) {
+                        // Grupo tem cards, mas nenhum visível -> esconder
                         grupo.style.display = 'none';
-                    } else {
-                        grupo.style.display = '';
+                        return;
+                    }
+                    
+                    // Caso contrário, mostrar (inclusive grupo vazio estrutural)
+                    grupo.style.display = '';
+                    
+                    // Se tem cards visíveis, garantir expansão (remover .collapsed) do container e do header
+                    if (cardsVisiveis.length > 0) {
+                        // 1) Expandir container se for .area-content
+                        if (grupo.classList.contains('area-content')) {
+                            grupo.classList.remove('collapsed');
+                            
+                            // 2) Expandir header correspondente e atualizar seta
+                            const gid = grupo.id || '';
+                            if (gid.startsWith('area-content-')) {
+                                const id = gid.replace('area-content-', '');
+                                const header = document.querySelector(`div[onclick="toggleAreaCaderno('${id}')"]`);
+                                if (header) {
+                                    header.classList.remove('collapsed');
+                                    const toggle = header.querySelector('.area-header-toggle');
+                                    if (toggle) toggle.textContent = '▲';
+                                }
+                            }
+                        } else {
+                            // Se for .diario-data-group, não tem .collapsed relevante; quem expande é o .area-content interno
+                            // (Nada a fazer aqui)
+                        }
                     }
                 });
                 
