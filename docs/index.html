@@ -7673,9 +7673,10 @@
                 section.classList.add('active');
             }
             
-            if (event && event.target) {
-                event.target.classList.add('active');
-            }
+            // S6-NAV-HOTFIX: Marcar aba ativa sem depender de event (iOS/PWA-safe)
+            const tabs = Array.from(document.querySelectorAll('.tab'));
+            const tab = tabs.find(el => (el.getAttribute('onclick') || '').includes(`showSection('${sectionId}')`));
+            if (tab) tab.classList.add('active');
             
             if (sectionId === 'dados') renderDados();
             if (sectionId === 'tarefa') {
