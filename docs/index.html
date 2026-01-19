@@ -12795,44 +12795,66 @@
                     }
                 });
                 
-                // S4-FIX: Esconder grupos sem cards visíveis E EXPANDIR (remover .collapsed) dos grupos que contêm cards visíveis
-                const grupos = document.querySelectorAll('.diario-data-group, .area-content');
-                
-                grupos.forEach(grupo => {
-                    const cardsVisiveis = grupo.querySelectorAll('.diario-entrada-card:not([style*="display: none"])');
-                    const totalCards = grupo.querySelectorAll('.diario-entrada-card').length;
+                // S4-FIX2: Esconder grupos sem cards visíveis E EXPANDIR (usando toggleAreaCaderno) dos grupos que contêm cards visíveis
+                requestAnimationFrame(() => {
+                    // Helper local para abrir grupo usando mecanismo oficial
+                    const ensureGrupoAberto = (id) => {
+                        const content = document.getElementById(`area-content-${id}`);
+                        if (!content) return;
+                        if (content.classList.contains('collapsed')) {
+                            if (typeof toggleAreaCaderno === 'function') {
+                                toggleAreaCaderno(id);
+                            } else {
+                                content.classList.remove('collapsed');
+                            }
+                        }
+                    };
                     
-                    if (cardsVisiveis.length === 0 && totalCards > 0) {
-                        // Grupo tem cards, mas nenhum visível -> esconder
-                        grupo.style.display = 'none';
-                        return;
-                    }
+                    // Coletar IDs ancestrais a partir dos cards realmente visíveis
+                    const idsParaAbrir = new Set();
+                    document.querySelectorAll('.diario-entrada-card').forEach(card => {
+                        if (card.style.display === 'none') return;
+                        let p = card.closest('.area-content');
+                        while (p) {
+                            if (p.id && p.id.startsWith('area-content-')) {
+                                idsParaAbrir.add(p.id.replace('area-content-', ''));
+                            }
+                            p = p.parentElement ? p.parentElement.closest('.area-content') : null;
+                        }
+                    });
                     
-                    // Caso contrário, mostrar (inclusive grupo vazio estrutural)
-                    grupo.style.display = '';
+                    // Abrir grupos ancestrais dos cards visíveis
+                    idsParaAbrir.forEach(ensureGrupoAberto);
                     
-                    // Se tem cards visíveis, garantir expansão (remover .collapsed) do container e do header
-                    if (cardsVisiveis.length > 0) {
-                        // 1) Expandir container se for .area-content
-                        if (grupo.classList.contains('area-content')) {
-                            grupo.classList.remove('collapsed');
-                            
-                            // 2) Expandir header correspondente e atualizar seta
-                            const gid = grupo.id || '';
-                            if (gid.startsWith('area-content-')) {
-                                const id = gid.replace('area-content-', '');
-                                const header = document.querySelector(`div[onclick="toggleAreaCaderno('${id}')"]`);
-                                if (header) {
-                                    header.classList.remove('collapsed');
-                                    const toggle = header.querySelector('.area-header-toggle');
-                                    if (toggle) toggle.textContent = '▲';
-                                }
+                    // Esconder/mostrar grupos pelo wrapper correto
+                    const grupos = document.querySelectorAll('.area-content[id^="area-content-"]');
+                    grupos.forEach(content => {
+                        const totalCards = content.querySelectorAll('.diario-entrada-card').length;
+                        const visiveis = Array.from(content.querySelectorAll('.diario-entrada-card')).filter(card => card.style.display !== 'none').length;
+                        
+                        if (totalCards > 0 && visiveis === 0) {
+                            // Esconder wrapper pai que contém header+content
+                            const wrapper = content.parentElement;
+                            if (wrapper && wrapper.style) {
+                                wrapper.style.display = 'none';
+                            }
+                            // Se não for o wrapper correto, esconder também o header irmão
+                            const header = content.previousElementSibling;
+                            if (header && header.classList.contains('area-header')) {
+                                header.style.display = 'none';
                             }
                         } else {
-                            // Se for .diario-data-group, não tem .collapsed relevante; quem expande é o .area-content interno
-                            // (Nada a fazer aqui)
+                            // Mostrar wrapper e header
+                            const wrapper = content.parentElement;
+                            if (wrapper && wrapper.style) {
+                                wrapper.style.display = '';
+                            }
+                            const header = content.previousElementSibling;
+                            if (header && header.classList.contains('area-header')) {
+                                header.style.display = '';
+                            }
                         }
-                    }
+                    });
                 });
                 
                 // Atualizar contador
