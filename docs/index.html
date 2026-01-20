@@ -14073,10 +14073,11 @@
                         </div>
                         <div id="sd-thumb-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entradaAtual.id})" /></div>
                     </div>
-                    <div class="diario-sessao-acoes">
+                    <div class="diario-sessao-acoes" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
                         <button class="btn btn-small" onclick="mostrarRespostaSessaoDiario()">
                             🔍 MOSTRAR RESPOSTA
                         </button>
+                        ${gerarBadgeSRS(entradaAtual)}
                     </div>
                     <div class="diario-sessao-botoes-qualidade">
                         <button class="btn btn-esqueci btn-danger" onclick="responderSessaoDiario('esqueci')" title="Não lembrei ou errei. Vou revisar em breve.">❌ ESQUECI</button>
@@ -14572,10 +14573,11 @@
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
                     </div>
                     ${!respostaJaMostrada ? `
-                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="toggleRespostaTreinoLivre()" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
+                        ${gerarBadgeSRS(entrada)}
                     </div>
                     ` : `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
@@ -14610,10 +14612,11 @@
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                     </div>
                     ${!respostaJaMostrada ? `
-                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="mostrarRespostaAvaliacao(${indice})" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
+                        ${gerarBadgeSRS(entrada)}
                     </div>
                     ` : `
                     <div style="margin: 16px 0;">
