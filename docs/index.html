@@ -3100,56 +3100,84 @@
         /* === FIM HOTFIX === */
         
         /* ========================================
-           RAW FASE 2 - Visualização VRVS 3P
+           RAW FASE 2.1 (V2 COMPATÍVEL) - Visualização VRVS 3P
+           Refinamento visual + Progressive Enhancement (iPhone safe)
+           Mantém classes existentes: .srs-* e .modal-srs-*
            ======================================== */
-        
-        /* Badge indicador no card do Diário */
+
+        /* -----------------------------
+           BADGE (card do Diário)
+           ----------------------------- */
         .srs-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 6px 10px;
-            background: rgba(0, 206, 209, 0.15);
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 12px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
             margin-top: 8px;
-            border: 1px solid rgba(0, 206, 209, 0.3);
+            border: 1px solid rgba(0, 206, 209, 0.28);
+            background: rgba(0, 206, 209, 0.12);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        
+
         .srs-badge:hover {
-            background: rgba(0, 206, 209, 0.25);
+            background: rgba(0, 206, 209, 0.18);
             transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
         }
-        
+
         .srs-badge:active {
             transform: translateY(0);
         }
-        
+
         .srs-estrelas {
             letter-spacing: 1px;
+            font-weight: 900;
         }
-        
+
         .srs-taxa {
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 700;
         }
-        
+
         .srs-icone-detalhe {
             color: var(--turquesa-light);
             font-size: 14px;
+            opacity: 0.95;
         }
-        
-        /* Cores por estágio */
-        .srs-estagio-0 { border-color: #ff4444; background: rgba(255, 68, 68, 0.15); }
-        .srs-estagio-1 { border-color: #ff8800; background: rgba(255, 136, 0, 0.15); }
-        .srs-estagio-2 { border-color: #ffcc00; background: rgba(255, 204, 0, 0.15); }
-        .srs-estagio-3 { border-color: #88cc00; background: rgba(136, 204, 0, 0.15); }
-        .srs-estagio-4 { border-color: #44bb44; background: rgba(68, 187, 68, 0.15); }
-        .srs-estagio-5 { border-color: #00aa00; background: rgba(0, 170, 0, 0.15); }
-        
-        /* Modal de histórico SRS */
+
+        /* Cores por estágio (mantidas) */
+        .srs-estagio-0 { border-color: #ff4444; background: rgba(255, 68, 68, 0.12); }
+        .srs-estagio-1 { border-color: #ff8800; background: rgba(255, 136, 0, 0.12); }
+        .srs-estagio-2 { border-color: #ffcc00; background: rgba(255, 204, 0, 0.12); }
+        .srs-estagio-3 { border-color: #88cc00; background: rgba(136, 204, 0, 0.12); }
+        .srs-estagio-4 { border-color: #44bb44; background: rgba(68, 187, 68, 0.12); }
+        .srs-estagio-5 { border-color: #00aa00; background: rgba(0, 170, 0, 0.12); }
+
+        /* Pequeno "glow" por estágio (suave, sem exagero) */
+        .srs-badge.srs-estagio-0 { box-shadow: 0 10px 26px rgba(255, 68, 68, 0.12); }
+        .srs-badge.srs-estagio-1 { box-shadow: 0 10px 26px rgba(255, 136, 0, 0.12); }
+        .srs-badge.srs-estagio-2 { box-shadow: 0 10px 26px rgba(255, 204, 0, 0.10); }
+        .srs-badge.srs-estagio-3 { box-shadow: 0 10px 26px rgba(136, 204, 0, 0.10); }
+        .srs-badge.srs-estagio-4 { box-shadow: 0 10px 26px rgba(68, 187, 68, 0.10); }
+        .srs-badge.srs-estagio-5 { box-shadow: 0 10px 26px rgba(0, 170, 0, 0.10); }
+
+        /* Progressive enhancement: se existir .srs-taxa dentro do badge, ajustar alinhamento */
+        @supports selector(:has(*)) {
+            .srs-badge:has(.srs-taxa) {
+                gap: 10px;
+            }
+        }
+
+        /* -----------------------------
+           MODAL (overlay + content)
+           ----------------------------- */
         .modal-srs-overlay {
             display: none;
             position: fixed;
@@ -3157,166 +3185,211 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
             z-index: 10000;
             justify-content: center;
             align-items: center;
             padding: 20px;
             box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.70);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
-        
+
+        /* Fallback para browsers sem backdrop-filter */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .modal-srs-overlay {
+                background: rgba(0, 0, 0, 0.85);
+            }
+        }
+
         .modal-srs-overlay.active {
             display: flex;
         }
-        
+
         .modal-srs-content {
-            background: linear-gradient(135deg, #1a2f35 0%, #0a1a1f 100%);
-            border-radius: 16px;
-            max-width: 400px;
+            background: linear-gradient(135deg, #13262c 0%, #09161a 100%);
+            border-radius: 18px;
+            max-width: 420px;
             width: 100%;
             max-height: 80vh;
             overflow-y: auto;
-            border: 1px solid rgba(0, 206, 209, 0.3);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid rgba(0, 206, 209, 0.28);
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
         }
-        
+
         .modal-srs-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            background: linear-gradient(135deg, #1a2f35 0%, #0a1a1f 100%);
+            background: rgba(10, 26, 31, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 1;
         }
-        
+
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .modal-srs-header {
+                background: rgba(10, 26, 31, 0.95);
+            }
+        }
+
         .modal-srs-header h3 {
             margin: 0;
-            font-size: 16px;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 0.3px;
             color: var(--turquesa-light);
         }
-        
+
         .modal-srs-close {
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 24px;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 26px;
             cursor: pointer;
             padding: 0;
             line-height: 1;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            transition: background 0.15s ease, color 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-        
+
         .modal-srs-close:hover {
             color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.10);
         }
-        
+
         .modal-srs-body {
-            padding: 20px;
+            padding: 18px;
+            padding-bottom: calc(18px + env(safe-area-inset-bottom));
         }
-        
-        /* Seção de resumo */
+
+        /* -----------------------------
+           RESUMO
+           ----------------------------- */
         .srs-resumo {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
-        
+
         .srs-resumo-item {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.28);
             padding: 12px;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
-        
+
         .srs-resumo-item.full-width {
             grid-column: 1 / -1;
         }
-        
+
         .srs-resumo-label {
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.55);
             text-transform: uppercase;
-            margin-bottom: 4px;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+            font-weight: 800;
         }
-        
+
         .srs-resumo-valor {
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 900;
             color: #fff;
         }
-        
+
         .srs-resumo-valor.estrelas {
             letter-spacing: 2px;
         }
-        
-        /* Timeline de histórico */
+
+        /* -----------------------------
+           HISTÓRICO
+           ----------------------------- */
         .srs-historico-titulo {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 900;
         }
-        
+
         .srs-historico-lista {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        
+
         .srs-historico-item {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 10px 12px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.22);
+            border-radius: 12px;
             font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
-        
+
         .srs-historico-data {
-            color: rgba(255, 255, 255, 0.5);
-            min-width: 50px;
+            color: rgba(255, 255, 255, 0.55);
+            min-width: 56px;
+            font-weight: 700;
         }
-        
+
         .srs-historico-resposta {
-            min-width: 80px;
+            min-width: 88px;
+            font-weight: 900;
         }
-        
+
         .srs-historico-resposta.esqueci { color: #ff6b6b; }
         .srs-historico-resposta.lembrei { color: #4ecdc4; }
         .srs-historico-resposta.facil { color: #95e77e; }
-        
+
         .srs-historico-transicao {
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.45);
             font-size: 12px;
+            font-weight: 700;
         }
-        
+
         .srs-historico-vazio {
             text-align: center;
-            color: rgba(255, 255, 255, 0.4);
-            padding: 20px;
+            color: rgba(255, 255, 255, 0.45);
+            padding: 18px 10px;
             font-style: italic;
         }
-        
-        /* Responsivo */
+
+        /* -----------------------------
+           RESPONSIVO (iPhone)
+           ----------------------------- */
         @media (max-width: 480px) {
             .modal-srs-content {
                 max-height: 90vh;
                 margin: 10px;
             }
-            
+
             .srs-resumo {
                 grid-template-columns: 1fr;
             }
-            
+
             .srs-resumo-item.full-width {
                 grid-column: 1;
             }
         }
+
+        /* ========================================
+           FIM RAW FASE 2.1 (V2 COMPATÍVEL)
+           ======================================== */
     </style>
 </head>
 <body class="splash-loading">
