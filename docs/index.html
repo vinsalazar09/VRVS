@@ -3098,6 +3098,225 @@
             align-items: stretch !important;
         }
         /* === FIM HOTFIX === */
+        
+        /* ========================================
+           RAW FASE 2 - Visualização VRVS 3P
+           ======================================== */
+        
+        /* Badge indicador no card do Diário */
+        .srs-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(0, 206, 209, 0.15);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+            border: 1px solid rgba(0, 206, 209, 0.3);
+        }
+        
+        .srs-badge:hover {
+            background: rgba(0, 206, 209, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        .srs-badge:active {
+            transform: translateY(0);
+        }
+        
+        .srs-estrelas {
+            letter-spacing: 1px;
+        }
+        
+        .srs-taxa {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        .srs-icone-detalhe {
+            color: var(--turquesa-light);
+            font-size: 14px;
+        }
+        
+        /* Cores por estágio */
+        .srs-estagio-0 { border-color: #ff4444; background: rgba(255, 68, 68, 0.15); }
+        .srs-estagio-1 { border-color: #ff8800; background: rgba(255, 136, 0, 0.15); }
+        .srs-estagio-2 { border-color: #ffcc00; background: rgba(255, 204, 0, 0.15); }
+        .srs-estagio-3 { border-color: #88cc00; background: rgba(136, 204, 0, 0.15); }
+        .srs-estagio-4 { border-color: #44bb44; background: rgba(68, 187, 68, 0.15); }
+        .srs-estagio-5 { border-color: #00aa00; background: rgba(0, 170, 0, 0.15); }
+        
+        /* Modal de histórico SRS */
+        .modal-srs-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .modal-srs-overlay.active {
+            display: flex;
+        }
+        
+        .modal-srs-content {
+            background: linear-gradient(135deg, #1a2f35 0%, #0a1a1f 100%);
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-srs-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #1a2f35 0%, #0a1a1f 100%);
+            z-index: 1;
+        }
+        
+        .modal-srs-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--turquesa-light);
+        }
+        
+        .modal-srs-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .modal-srs-close:hover {
+            color: #ff6b6b;
+        }
+        
+        .modal-srs-body {
+            padding: 20px;
+        }
+        
+        /* Seção de resumo */
+        .srs-resumo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .srs-resumo-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .srs-resumo-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .srs-resumo-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .srs-resumo-valor {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .srs-resumo-valor.estrelas {
+            letter-spacing: 2px;
+        }
+        
+        /* Timeline de histórico */
+        .srs-historico-titulo {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .srs-historico-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .srs-historico-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        
+        .srs-historico-data {
+            color: rgba(255, 255, 255, 0.5);
+            min-width: 50px;
+        }
+        
+        .srs-historico-resposta {
+            min-width: 80px;
+        }
+        
+        .srs-historico-resposta.esqueci { color: #ff6b6b; }
+        .srs-historico-resposta.lembrei { color: #4ecdc4; }
+        .srs-historico-resposta.facil { color: #95e77e; }
+        
+        .srs-historico-transicao {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+        }
+        
+        .srs-historico-vazio {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 20px;
+            font-style: italic;
+        }
+        
+        /* Responsivo */
+        @media (max-width: 480px) {
+            .modal-srs-content {
+                max-height: 90vh;
+                margin: 10px;
+            }
+            
+            .srs-resumo {
+                grid-template-columns: 1fr;
+            }
+            
+            .srs-resumo-item.full-width {
+                grid-column: 1;
+            }
+        }
     </style>
 </head>
 <body class="splash-loading">
@@ -12761,6 +12980,7 @@
                             ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="diario-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="diario-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                         </div>
                     `}
+                    ${gerarBadgeSRS(entrada)}
                 </div>
             `;
         }
@@ -18232,7 +18452,231 @@
                 buildTagEl.style.display = 'none'; // P1: Ocultar build tag
             }
         });
+        
+        // ========================================
+        // RAW FASE 2 - Visualização VRVS 3P
+        // ========================================
+        
+        /**
+         * Gera as estrelas baseado no estágio (0-5)
+         * @param {number} estagio - Estágio atual (0-5)
+         * @returns {string} String de estrelas
+         */
+        function gerarEstrelasVRVS(estagio) {
+            const total = 5;
+            const cheias = Math.min(Math.max(estagio || 0, 0), total);
+            return '★'.repeat(cheias) + '☆'.repeat(total - cheias);
+        }
+        
+        /**
+         * Calcula taxa de acerto do histórico de respostas
+         * @param {Array} historicoRespostas - Array de respostas
+         * @returns {Object|null} {taxa, acertos, total} ou null se vazio
+         */
+        function calcularTaxaAcertoVRVS(historicoRespostas) {
+            if (!historicoRespostas || historicoRespostas.length === 0) {
+                return null;
+            }
+            
+            const acertos = historicoRespostas.filter(r => 
+                r.resposta === 'lembrei' || r.resposta === 'facil'
+            ).length;
+            
+            return {
+                taxa: Math.round((acertos / historicoRespostas.length) * 100),
+                acertos: acertos,
+                total: historicoRespostas.length
+            };
+        }
+        
+        /**
+         * Formata timestamp para data legível
+         * @param {number} timestamp - Timestamp em ms
+         * @returns {string} Data formatada (DD/MM)
+         */
+        function formatarDataSRS(timestamp) {
+            if (!timestamp) return '--';
+            const d = new Date(timestamp);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        }
+        
+        /**
+         * Gera o HTML do badge SRS para o card do Diário
+         * @param {Object} entrada - Entrada do diário com srs
+         * @returns {string} HTML do badge ou string vazia
+         */
+        function gerarBadgeSRS(entrada) {
+            // Só exibe se SRS está ativo
+            if (!entrada.srs || !entrada.srs.ativo) {
+                return '';
+            }
+            
+            const estagio = entrada.srs.estagio || 0;
+            const estrelas = gerarEstrelasVRVS(estagio);
+            const taxaInfo = calcularTaxaAcertoVRVS(entrada.srs.historicoRespostas);
+            
+            let taxaTexto = '';
+            if (taxaInfo) {
+                taxaTexto = `<span class="srs-taxa">${taxaInfo.taxa}%</span>`;
+            }
+            
+            // ESCAPE: entrada.id pode conter caracteres especiais
+            const entradaIdEscapado = String(entrada.id || '').replace(/'/g, "\\'");
+            
+            return `
+                <div class="srs-badge srs-estagio-${estagio}" 
+                     onclick="if(event) event.stopPropagation(); abrirModalSRS('${entradaIdEscapado}')"
+                     title="Clique para ver histórico">
+                    <span class="srs-estrelas">${estrelas}</span>
+                    ${taxaTexto}
+                    <span class="srs-icone-detalhe">📊</span>
+                </div>
+            `;
+        }
+        
+        /**
+         * Abre o modal com histórico detalhado da entrada
+         * @param {string|number} entradaId - ID da entrada do diário
+         */
+        function abrirModalSRS(entradaId) {
+            try {
+                // Buscar entrada no diário (tolerar {entradas:[]} OU [] direto)
+                const raw = localStorage.getItem('vrvs_diario') || '{"entradas":[]}';
+                const parsed = JSON.parse(raw);
+                const entradas = Array.isArray(parsed) ? parsed : (parsed.entradas || []);
+                
+                const entrada = entradas.find(e => String(e.id) === String(entradaId));
+                
+                if (!entrada || !entrada.srs) {
+                    console.warn('Entrada não encontrada ou sem SRS:', entradaId);
+                    return;
+                }
+                
+                const srs = entrada.srs;
+                const estagio = srs.estagio || 0;
+                const estrelas = gerarEstrelasVRVS(estagio);
+                const taxaInfo = calcularTaxaAcertoVRVS(srs.historicoRespostas);
+                
+                // Construir HTML do resumo
+                let resumoHTML = `
+                    <div class="srs-resumo">
+                        <div class="srs-resumo-item">
+                            <div class="srs-resumo-label">Estágio</div>
+                            <div class="srs-resumo-valor estrelas">${estrelas}</div>
+                        </div>
+                        <div class="srs-resumo-item">
+                            <div class="srs-resumo-label">Taxa de Acerto</div>
+                            <div class="srs-resumo-valor">${taxaInfo ? taxaInfo.taxa + '%' : '--'}</div>
+                        </div>
+                        <div class="srs-resumo-item">
+                            <div class="srs-resumo-label">Revisões</div>
+                            <div class="srs-resumo-valor">${taxaInfo ? taxaInfo.total : 0}</div>
+                        </div>
+                        <div class="srs-resumo-item">
+                            <div class="srs-resumo-label">Facilidade</div>
+                            <div class="srs-resumo-valor">${(srs.facilidade || 2.5).toFixed(2)}</div>
+                        </div>
+                        <div class="srs-resumo-item full-width">
+                            <div class="srs-resumo-label">Próxima Revisão</div>
+                            <div class="srs-resumo-valor">${srs.proximaRevisao || '--'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Construir HTML do histórico
+                let historicoHTML = '';
+                if (srs.historicoRespostas && srs.historicoRespostas.length > 0) {
+                    // Ordenar por timestamp decrescente (mais recente primeiro)
+                    const historicoOrdenado = [...srs.historicoRespostas].sort((a, b) => 
+                        (b.timestamp || 0) - (a.timestamp || 0)
+                    );
+                    
+                    // Limitar a 20 mais recentes na visualização
+                    const historicoLimitado = historicoOrdenado.slice(0, 20);
+                    
+                    historicoHTML = `
+                        <div class="srs-historico-titulo">Histórico de Revisões</div>
+                        <div class="srs-historico-lista">
+                            ${historicoLimitado.map(h => {
+                                const emoji = h.resposta === 'esqueci' ? '❌' : 
+                                              h.resposta === 'lembrei' ? '👍' : '😌';
+                                const label = h.resposta === 'esqueci' ? 'Esqueci' : 
+                                              h.resposta === 'lembrei' ? 'Lembrei' : 'Fácil';
+                                // ESCAPE: validar resposta antes de usar em classe CSS
+                                const respostaClasse = (h.resposta === 'esqueci' || h.resposta === 'lembrei' || h.resposta === 'facil') 
+                                    ? h.resposta 
+                                    : 'esqueci';
+                                return `
+                                    <div class="srs-historico-item">
+                                        <span class="srs-historico-data">${formatarDataSRS(h.timestamp)}</span>
+                                        <span class="srs-historico-resposta ${respostaClasse}">${emoji} ${label}</span>
+                                        <span class="srs-historico-transicao">⭐${h.estagioAntes || 0}→${h.estagioDepois || 0}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        ${historicoOrdenado.length > 20 ? 
+                            `<p style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 12px;">
+                                Mostrando 20 de ${historicoOrdenado.length} revisões
+                            </p>` : ''
+                        }
+                    `;
+                } else {
+                    historicoHTML = `
+                        <div class="srs-historico-vazio">
+                            Nenhuma revisão registrada ainda
+                        </div>
+                    `;
+                }
+                
+                // Preencher e abrir modal
+                document.getElementById('modalSRSBody').innerHTML = resumoHTML + historicoHTML;
+                document.getElementById('modalHistoricoSRS').classList.add('active');
+                
+                // Prevenir scroll do body
+                document.body.style.overflow = 'hidden';
+            } catch (error) {
+                console.error('Erro ao abrir modal SRS:', error);
+            }
+        }
+        
+        /**
+         * Fecha o modal de histórico SRS
+         * @param {Event} event - Evento de clique (opcional)
+         */
+        function fecharModalSRS(event) {
+            // Se clicou no overlay (fora do content), fecha
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+            
+            document.getElementById('modalHistoricoSRS').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Fechar modal com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('modalHistoricoSRS');
+                if (modal && modal.classList.contains('active')) {
+                    fecharModalSRS();
+                }
+            }
+        });
     </script>
+    
+    <!-- Modal Histórico SRS - RAW FASE 2 -->
+    <div id="modalHistoricoSRS" class="modal-srs-overlay" onclick="if(event) event.stopPropagation(); fecharModalSRS(event)">
+        <div class="modal-srs-content" onclick="if(event) event.stopPropagation()">
+            <div class="modal-srs-header">
+                <h3>📊 Desempenho VRVS 3P</h3>
+                <button class="modal-srs-close" onclick="fecharModalSRS()">&times;</button>
+            </div>
+            <div class="modal-srs-body" id="modalSRSBody">
+                <!-- Preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 
