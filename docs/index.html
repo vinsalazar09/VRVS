@@ -12292,7 +12292,11 @@
                     };
                     
                 } catch (error) {
-                    mostrarNotificacaoFeedback(`⚠️ Erro ao salvar imagem: ${error.message}`, 'error');
+                    // PATCH: Só mostrar toast se realmente havia tentativa de salvar imagem
+                    if (typeof diario_imagemNovaSelecionada !== 'undefined' && diario_imagemNovaSelecionada === true &&
+                        typeof diario_imagemBlobAtual !== 'undefined' && diario_imagemBlobAtual) {
+                        mostrarNotificacaoFeedback(`⚠️ Erro ao salvar imagem: ${error.message}`, 'error');
+                    }
                     // Continuar salvando entrada mesmo se imagem falhar
                 }
             } else if (typeof diario_imagemRemovida !== 'undefined' && diario_imagemRemovida && entradaId) {
@@ -13640,10 +13644,13 @@
                         if (thumbImg) {
                             thumbImg.src = thumbURL;
                             // B1-FIX: MICRO-FIX onerror/onload (evitar memory leak e usar ev correto)
-                            thumbImg.onerror = (ev) => {
-                                URL.revokeObjectURL(thumbURL);
-                                diario_handleImageError(ev);
-                            };
+                            // PATCH: Só adicionar handler se src é válido (blob URL)
+                            if (thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                                thumbImg.onerror = (ev) => {
+                                    URL.revokeObjectURL(thumbURL);
+                                    diario_handleImageError(ev);
+                                };
+                            }
                             thumbImg.onload = () => {
                                 // Não revogar aqui, apenas quando remover ou erro
                             };
@@ -13698,6 +13705,12 @@
                 // Limpar imagem se não houver
                 if (typeof diario_limparImagemModal === 'function') {
                     diario_limparImagemModal();
+                }
+                // PATCH: Reset defensivo de src para evitar onerror
+                const thumbImg = document.getElementById('novaDiarioImagemThumb');
+                if (thumbImg) {
+                    thumbImg.src = '';
+                    thumbImg.onerror = null; // Remover handler se existir
                 }
             }
             
@@ -18015,9 +18028,10 @@
         // Handler de erro de imagem
         function diario_handleImageError(event) {
             const thumbImg = event.target;
-            // PATCH 1: Guard clause - só processar se existe imagem válida
-            if (!thumbImg || !thumbImg.src || thumbImg.src === '' || thumbImg.src === 'data:') {
-                return; // Não disparar toast se não há imagem
+            // PATCH: Guard clause - só processar se existe imagem válida (URL válida)
+            if (!thumbImg || !thumbImg.src || thumbImg.src === '' || thumbImg.src === 'data:' || 
+                (!thumbImg.src.startsWith('blob:') && !thumbImg.src.startsWith('http') && !thumbImg.src.startsWith('data:'))) {
+                return; // Não disparar toast se não há imagem válida
             }
             if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
                 URL.revokeObjectURL(thumbImg.src);

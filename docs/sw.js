@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.110-ajustes-20-01-20260121-0011";
+const CACHE_NAME = "vrvs-v5.3.111-fix-toast-imagem-salvar-20260121-0044";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
