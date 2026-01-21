@@ -11491,6 +11491,73 @@
         }
         
         // Selecionar entradas programadas para HOJE (modo FSRS)
+        // Funções auxiliares para ordenação hierárquica de prioridades VRVS
+        function ultimaRespostaFoiEsqueciOntem(entrada, ontem) {
+            if (!entrada.srs || !entrada.srs.historicoRespostas) return false;
+            
+            // Buscar respostas de ontem
+            const respostasOntem = entrada.srs.historicoRespostas.filter(r => {
+                if (!r.data) return false;
+                const dataResposta = normalizarYMDGlobal(r.data);
+                return dataResposta === ontem;
+            });
+            
+            if (respostasOntem.length === 0) return false;
+            
+            // Última resposta de ontem foi "esqueci"?
+            const ultima = respostasOntem[respostasOntem.length - 1];
+            return ultima.resposta === 'esqueci';
+        }
+        
+        function obterNotaPior(entrada) {
+            if (!entrada.srs || !entrada.srs.ultimaResposta) return 2; // Default: "lembrei"
+            
+            const resposta = entrada.srs.ultimaResposta.toLowerCase();
+            if (resposta === 'esqueci') return 1; // Pior
+            if (resposta === 'lembrei') return 2; // Média
+            if (resposta === 'facil') return 3; // Melhor
+            
+            return 2; // Fallback
+        }
+        
+        function compararPrioridadeVRVS(a, b) {
+            const hoje = hojeStrLocal();
+            const ontem = ontemStrLocal();
+            
+            // PRIORIDADE 1: Criados ontem
+            const dataA = obterDataCriacaoGlobal(a) || normalizarYMDGlobal(a.data || a.criadoEm) || '0000-00-00';
+            const dataB = obterDataCriacaoGlobal(b) || normalizarYMDGlobal(b.data || b.criadoEm) || '0000-00-00';
+            const aCriadoOntem = dataA === ontem;
+            const bCriadoOntem = dataB === ontem;
+            if (aCriadoOntem !== bCriadoOntem) {
+                return aCriadoOntem ? -1 : 1; // a primeiro se criado ontem
+            }
+            
+            // PRIORIDADE 2: Esquecidos na sessão anterior (ontem)
+            const aEsquecidoOntem = ultimaRespostaFoiEsqueciOntem(a, ontem);
+            const bEsquecidoOntem = ultimaRespostaFoiEsqueciOntem(b, ontem);
+            if (aEsquecidoOntem !== bEsquecidoOntem) {
+                return aEsquecidoOntem ? -1 : 1; // a primeiro se esquecido ontem
+            }
+            
+            // PRIORIDADE 3: Pior nota (esqueci < lembrei < facil)
+            const notaA = obterNotaPior(a);
+            const notaB = obterNotaPior(b);
+            if (notaA !== notaB) {
+                return notaA - notaB; // menor = pior = primeiro
+            }
+            
+            // PRIORIDADE 4: Mais antigos
+            if (dataA !== dataB) {
+                return dataA.localeCompare(dataB); // mais antigo primeiro
+            }
+            
+            // PRIORIDADE 5: Menos revisões
+            const revisoesA = a.srs?.repeticoes || 0;
+            const revisoesB = b.srs?.repeticoes || 0;
+            return revisoesA - revisoesB; // menos revisões primeiro
+        }
+        
         function getEntradasParaRevisarHojeDiario(filtros) {
             if (!window.diario || !Array.isArray(window.diario.entradas)) return [];
             
@@ -13916,61 +13983,13 @@
                 
                 const entradas = getEntradasParaRevisarHojeDiario(filtros);
                 
-                // P1 Diário: Ordenar: mais recente primeiro + ordem de inserção ASC dentro do mesmo dia
-                // Reutilizar helpers globais: obterDataCriacaoGlobal() e normalizarYMDGlobal()
-                const entradasComChaves = entradas.map((entrada, indiceOriginal) => {
-                    // Chave primária: dia (YYYY-MM-DD) - garantir STRING
-                    const diaRaw = obterDataCriacaoGlobal(entrada) || normalizarYMDGlobal(entrada.data || entrada.criadoEm) || '0000-00-00';
-                    const chaveDia = String(diaRaw);
-                    
-                    // Chave secundária: ordem de inserção ASC (primeiro do dia primeiro)
-                    let chaveInsercao;
-                    // Prioridade 1: Date.parse(criadoEm) se existir e for válido
-                    if (entrada.criadoEm) {
-                        const parsed = Date.parse(entrada.criadoEm);
-                        if (!isNaN(parsed) && isFinite(parsed)) {
-                            chaveInsercao = parsed;
-                        } else {
-                            // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
-                            if (entrada.id) {
-                                const parsedId = parseInt(String(entrada.id), 10);
-                                chaveInsercao = (!isNaN(parsedId) && isFinite(parsedId)) ? parsedId : indiceOriginal;
-                            } else {
-                                chaveInsercao = indiceOriginal;
-                            }
-                        }
-                    } else {
-                        // Prioridade 2: parseInt(String(id), 10) - NÃO usar Number(id)
-                        if (entrada.id) {
-                            const parsedId = parseInt(String(entrada.id), 10);
-                            chaveInsercao = (!isNaN(parsedId) && isFinite(parsedId)) ? parsedId : indiceOriginal;
-                        } else {
-                            // Prioridade 3: índice original (fallback para estabilidade)
-                            chaveInsercao = indiceOriginal;
-                        }
-                    }
-                    
-                    return {
-                        entrada: entrada,
-                        chaveDia: chaveDia,
-                        chaveInsercao: chaveInsercao,
-                        indiceOriginal: indiceOriginal
-                    };
-                });
-                
-                // Ordenar por chave composta
-                entradasComChaves.sort((a, b) => {
-                    // Primeira chave: dia (mais recente primeiro - string compare reverso)
-                    if (b.chaveDia !== a.chaveDia) {
-                        return b.chaveDia.localeCompare(a.chaveDia); // '2026-01-03' > '2026-01-02'
-                    }
-                    
-                    // Segunda chave: ordem de inserção ASC (menor = mais antigo = aparece primeiro)
-                    return a.chaveInsercao - b.chaveInsercao;
-                });
-                
-                // Extrair entradas ordenadas
-                const entradasOrdenadas = entradasComChaves.map(item => item.entrada);
+                // Ordenação hierárquica de prioridades VRVS:
+                // 1. Criados ontem (sempre primeiro)
+                // 2. Esquecidos na sessão anterior (ontem)
+                // 3. Pior nota (esqueci < lembrei < facil)
+                // 4. Mais antigos
+                // 5. Menos revisões
+                const entradasOrdenadas = [...entradas].sort(compararPrioridadeVRVS);
                 sessaoDiario.filaIds = entradasOrdenadas.map(e => e.id);
                 
                 // S5-UX: Filtrar cards pulados hoje (skipToday)
