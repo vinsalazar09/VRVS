@@ -14110,6 +14110,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entradaAtual.area} • ${entradaAtual.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
+                        ${gerarBadgeSRS(entradaAtual)}
                         ${sessaoDiario.tipo !== 'programado' ? `<span>${indice} / ${total}</span>` : ''}
                             <button onclick="(async () => { await editarEntradaSessaoDiario(); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
@@ -14125,7 +14126,6 @@
                         <button class="btn btn-small" onclick="mostrarRespostaSessaoDiario()">
                             🔍 MOSTRAR RESPOSTA
                         </button>
-                        ${gerarBadgeSRS(entradaAtual)}
                     </div>
                     <div class="diario-sessao-botoes-qualidade">
                         <button class="btn btn-esqueci btn-danger" onclick="responderSessaoDiario('esqueci')" title="Não lembrei ou errei. Vou revisar em breve.">❌ ESQUECI</button>
@@ -14612,6 +14612,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
+                            ${gerarBadgeSRS(entrada)}
                             <button onclick="(async () => { await editarEntradaTreinoLivre(); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
@@ -14625,7 +14626,6 @@
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="toggleRespostaTreinoLivre()" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
-                        ${gerarBadgeSRS(entrada)}
                     </div>
                     ` : `
                     <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center;">
@@ -14652,6 +14652,7 @@
                     <div class="diario-sessao-meta">
                         <span>${entrada.area} • ${entrada.tema}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
+                            ${gerarBadgeSRS(entrada)}
                             <button onclick="(async () => { await editarEntradaTreinoLivre(); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 16px; padding: 4px 8px; display: flex; align-items: center;" title="Editar pergunta/resposta">✏️</button>
                         </div>
                     </div>
@@ -14665,7 +14666,6 @@
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="mostrarRespostaAvaliacao(${indice})" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
-                        ${gerarBadgeSRS(entrada)}
                     </div>
                     ` : `
                     <div style="margin: 16px 0;">
