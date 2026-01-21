@@ -12787,18 +12787,48 @@
             // A busca deve ser limpa apenas quando o usuário explicitamente limpar ou mudar filtros
             // Não limpar automaticamente ao renderizar para evitar loop infinito
             
-            if (filtroVista === 'data') {
-                renderDiarioPorData(entradasFiltradas, container);
-            } else {
-                renderDiarioPorTema(entradasFiltradas, container);
+            // PATCH: Capturar estado de grupos abertos ANTES de renderizar
+            const gruposAbertosAntes = new Set();
+            if (container) {
+                container.querySelectorAll('.area-content:not(.collapsed)[id^="area-content-"]').forEach(el => {
+                    const id = el.id.replace('area-content-', '');
+                    if (id) gruposAbertosAntes.add(id);
+                });
             }
+            
+            if (filtroVista === 'data') {
+                renderDiarioPorData(entradasFiltradas, container, gruposAbertosAntes);
+            } else {
+                renderDiarioPorTema(entradasFiltradas, container, gruposAbertosAntes);
+            }
+            
+            // PATCH: Restaurar grupos abertos após renderizar
+            requestAnimationFrame(() => {
+                gruposAbertosAntes.forEach(id => {
+                    const content = document.getElementById('area-content-' + id);
+                    const header = document.querySelector("div[onclick=\"toggleAreaCaderno('" + id + "')\"]");
+                    if (content) {
+                        content.classList.remove('collapsed');
+                        if (content.style.display === 'none') {
+                            content.style.display = '';
+                        }
+                    }
+                    if (header) {
+                        header.classList.remove('collapsed');
+                        const t = header.querySelector('.area-header-toggle');
+                        if (t) {
+                            t.textContent = '▲';
+                        }
+                    }
+                });
+            });
             } finally {
                 // S6-NAV-FIX2: Sempre liberar flag, mesmo em caso de erro
                 diarioRenderando = false;
             }
         }
         
-        function renderDiarioPorData(entradas, container) {
+        function renderDiarioPorData(entradas, container, gruposAbertosAntes = new Set()) {
             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
             const parseData = (entrada) => {
                 try {
@@ -12846,15 +12876,16 @@
             let html = '';
             datasOrdenadas.forEach((data, idx) => {
                 const dataId = `diario-data-${data.replace(/-/g, '')}`;
+                const estaAberta = gruposAbertosAntes.has(dataId);
                 html += `<div style="margin-bottom: 24px;">
-                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${dataId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                    <div class="area-header ${estaAberta ? '' : 'collapsed'}" onclick="toggleAreaCaderno('${dataId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
                         <div class="area-header-left">
                             <span class="area-header-title">📅 ${formatarDataCompleta(data)}</span>
                             <span class="area-header-count">${porData[data].length} entrada${porData[data].length > 1 ? 's' : ''}</span>
                         </div>
-                        <span class="area-header-toggle">▼</span>
+                        <span class="area-header-toggle">${estaAberta ? '▲' : '▼'}</span>
                     </div>
-                    <div class="area-content collapsed" id="area-content-${dataId}">
+                    <div class="area-content ${estaAberta ? '' : 'collapsed'}" id="area-content-${dataId}">
                         ${porData[data].map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
@@ -12865,7 +12896,7 @@
             setTimeout(() => diario_carregarThumbnails(), 100);
         }
         
-        function renderDiarioPorTema(entradas, container) {
+        function renderDiarioPorTema(entradas, container, gruposAbertosAntes = new Set()) {
             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
             const parseData = (entrada) => {
                 try {
@@ -12949,15 +12980,16 @@
                 }, 0);
                 
                 // Box da ÁREA (colapsável)
+                const areaEstaAberta = gruposAbertosAntes.has(areaId);
                 html += `<div style="margin-bottom: 24px;">
-                    <div class="area-header collapsed" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
+                    <div class="area-header ${areaEstaAberta ? '' : 'collapsed'}" onclick="toggleAreaCaderno('${areaId}')" style="cursor: pointer; padding: 8px 0; margin-bottom: 8px;">
                         <div class="area-header-left">
                             <span class="area-header-title">📁 ${areaKey}</span>
                             <span class="area-header-count">${totalEntradasArea} entrada${totalEntradasArea > 1 ? 's' : ''}</span>
                         </div>
-                        <span class="area-header-toggle">▼</span>
+                        <span class="area-header-toggle">${areaEstaAberta ? '▲' : '▼'}</span>
                     </div>
-                    <div class="area-content collapsed" id="area-content-${areaId}">`;
+                    <div class="area-content ${areaEstaAberta ? '' : 'collapsed'}" id="area-content-${areaId}">`;
                 
                 // Temas dentro da área (também colapsáveis) - ordenar por temaOriginal
                 const temasOrdenados = temasDaArea.sort((a, b) => {
@@ -12985,16 +13017,17 @@
                     grupoTema.entradas.sort(cmp);
                     /* === FIM PATCH DESEMPATE === */
                     
+                    const temaEstaAberto = gruposAbertosAntes.has(temaId);
                     html += `
                         <div style="margin-bottom: 16px; margin-left: 12px;">
-                            <div class="area-header collapsed" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
+                            <div class="area-header ${temaEstaAberto ? '' : 'collapsed'}" onclick="toggleAreaCaderno('${temaId}')" style="cursor: pointer; padding: 6px 0; margin-bottom: 6px;">
                                 <div class="area-header-left">
                                     <span class="area-header-title">📄 ${temaOriginal}</span>
                                     <span class="area-header-count">${grupoTema.entradas.length} entrada${grupoTema.entradas.length > 1 ? 's' : ''}</span>
                         </div>
-                        <span class="area-header-toggle">▼</span>
+                        <span class="area-header-toggle">${temaEstaAberto ? '▲' : '▼'}</span>
                     </div>
-                    <div class="area-content collapsed" id="area-content-${temaId}">
+                    <div class="area-content ${temaEstaAberto ? '' : 'collapsed'}" id="area-content-${temaId}">
                                 ${grupoTema.entradas.map(e => renderEntradaDiario(e)).join('')}
                     </div>
                 </div>`;
