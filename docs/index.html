@@ -3109,6 +3109,8 @@
            BADGE (card do Diário)
            ----------------------------- */
         .srs-badge {
+            flex-shrink: 0;
+            flex-grow: 0;
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -14073,7 +14075,7 @@
                         </div>
                         <div id="sd-thumb-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entradaAtual.id})" /></div>
                     </div>
-                    <div class="diario-sessao-acoes" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <div class="diario-sessao-acoes" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-start;">
                         <button class="btn btn-small" onclick="mostrarRespostaSessaoDiario()">
                             🔍 MOSTRAR RESPOSTA
                         </button>
@@ -14573,7 +14575,7 @@
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
                     </div>
                     ${!respostaJaMostrada ? `
-                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-start;">
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="toggleRespostaTreinoLivre()" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
@@ -14610,9 +14612,10 @@
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
+                        <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
                     </div>
                     ${!respostaJaMostrada ? `
-                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <div class="treino-livre-toggle-container" style="margin: 16px 0; text-align: center; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-start;">
                         <button id="treinoLivreToggleBtn" class="btn btn-small" onclick="mostrarRespostaAvaliacao(${indice})" style="min-height: 44px;">
                             👁️ MOSTRAR RESPOSTA
                         </button>
@@ -14653,6 +14656,19 @@
             // Setar estado e deixar o re-render preencher via template
             window.treinoLivreAvaliacao.respostaMostrada[indice] = true;
             renderTreinoLivreRunner();
+            
+            // PATCH 2: Carregar thumbnail após mostrar resposta
+            const entrada = window.treinoLivreFila && window.treinoLivreFila[indice];
+            if (entrada && entrada.id) {
+                setTimeout(() => {
+                    diario_carregarThumbnailUnico(
+                        entrada.id,
+                        null, // Loader busca da entrada via fallback
+                        `tl-thumb-img-${entrada.id}`,
+                        `tl-thumb-wrap-${entrada.id}`
+                    );
+                }, 50);
+            }
         }
         
         // Toggle mostrar/esconder resposta no Treino Livre (modo normal)
@@ -17999,6 +18015,10 @@
         // Handler de erro de imagem
         function diario_handleImageError(event) {
             const thumbImg = event.target;
+            // PATCH 1: Guard clause - só processar se existe imagem válida
+            if (!thumbImg || !thumbImg.src || thumbImg.src === '' || thumbImg.src === 'data:') {
+                return; // Não disparar toast se não há imagem
+            }
             if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
                 URL.revokeObjectURL(thumbImg.src);
             }
@@ -18011,7 +18031,8 @@
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
                     const thumbImgInline = document.getElementById('novaDiarioImagemThumb');
-                    if (thumbImgInline && !thumbImgInline.onerror) {
+                    // PATCH 1: Só adicionar handler se elemento existe E tem src válido
+                    if (thumbImgInline && !thumbImgInline.onerror && thumbImgInline.src && thumbImgInline.src !== '' && thumbImgInline.src !== 'data:') {
                         thumbImgInline.onerror = (ev) => {
                             if (thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
                                 URL.revokeObjectURL(thumbImgInline.src);
@@ -18023,7 +18044,8 @@
             } else {
                 // DOM já carregado
                 const thumbImgInline = document.getElementById('novaDiarioImagemThumb');
-                if (thumbImgInline && !thumbImgInline.onerror) {
+                // PATCH 1: Só adicionar handler se elemento existe E tem src válido
+                if (thumbImgInline && !thumbImgInline.onerror && thumbImgInline.src && thumbImgInline.src !== '' && thumbImgInline.src !== 'data:') {
                     thumbImgInline.onerror = (ev) => {
                         if (thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
                             URL.revokeObjectURL(thumbImgInline.src);
