@@ -18024,6 +18024,12 @@
             const btnAdd = document.getElementById('novaDiarioImagemBtn');
             const inputFile = document.getElementById('novaDiarioImagem');
             
+            // B1-FIX: desarmar handlers antes de mexer em src/revoke (evita toast fora de contexto)
+            if (thumbImg) {
+                thumbImg.onerror = null;
+                thumbImg.onload = null;
+            }
+            
             if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
                 URL.revokeObjectURL(thumbImg.src);
             }
@@ -18053,6 +18059,12 @@
             const thumbImg = document.getElementById('novaDiarioImagemThumb');
             const btnAdd = document.getElementById('novaDiarioImagemBtn');
             const inputFile = document.getElementById('novaDiarioImagem');
+            
+            // B1-FIX: desarmar handlers antes de mexer em src/revoke (evita toast fora de contexto)
+            if (thumbImg) {
+                thumbImg.onerror = null;
+                thumbImg.onload = null;
+            }
             
             if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
                 URL.revokeObjectURL(thumbImg.src);
@@ -18085,6 +18097,15 @@
                 (!thumbImg.src.startsWith('blob:') && !thumbImg.src.startsWith('http') && !thumbImg.src.startsWith('data:'))) {
                 return; // Não disparar toast se não há imagem válida
             }
+            
+            // B1-FIX: se o modal do Diário não está ativo, ignorar erro (evento stale/cleanup)
+            if (thumbImg && thumbImg.id === 'novaDiarioImagemThumb') {
+                const modal = document.getElementById('modalNovaDiario');
+                if (!modal || !modal.classList.contains('active')) {
+                    return;
+                }
+            }
+            
             if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
                 URL.revokeObjectURL(thumbImg.src);
             }
@@ -18098,7 +18119,7 @@
                 document.addEventListener('DOMContentLoaded', () => {
                     const thumbImgInline = document.getElementById('novaDiarioImagemThumb');
                     // PATCH 1: Só adicionar handler se elemento existe E tem src válido
-                    if (thumbImgInline && !thumbImgInline.onerror && thumbImgInline.src && thumbImgInline.src !== '' && thumbImgInline.src !== 'data:') {
+                    if (thumbImgInline && !thumbImgInline.onerror && thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
                         thumbImgInline.onerror = (ev) => {
                             if (thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
                                 URL.revokeObjectURL(thumbImgInline.src);
@@ -18111,7 +18132,7 @@
                 // DOM já carregado
                 const thumbImgInline = document.getElementById('novaDiarioImagemThumb');
                 // PATCH 1: Só adicionar handler se elemento existe E tem src válido
-                if (thumbImgInline && !thumbImgInline.onerror && thumbImgInline.src && thumbImgInline.src !== '' && thumbImgInline.src !== 'data:') {
+                if (thumbImgInline && !thumbImgInline.onerror && thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
                     thumbImgInline.onerror = (ev) => {
                         if (thumbImgInline.src && thumbImgInline.src.startsWith('blob:')) {
                             URL.revokeObjectURL(thumbImgInline.src);
