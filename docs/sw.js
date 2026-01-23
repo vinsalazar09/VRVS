@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.139-p3a-completo-imagem-pergunta-20260123-0600";
+const CACHE_NAME = "vrvs-v5.3.140-p3a-completo-imagem-pergunta-final-20260123-0615";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
