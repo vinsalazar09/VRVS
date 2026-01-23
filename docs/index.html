@@ -12786,12 +12786,14 @@
                     }
                 }
                 
-                // P2: Restaurar scroll após toggle (usar requestAnimationFrame para garantir que DOM atualizou)
+                // P2: Restaurar scroll após toggle (usar requestAnimationFrame + setTimeout para garantir que navegador terminou scroll automático)
                 requestAnimationFrame(() => {
-                    window.scrollTo({
-                        top: scrollYAntes,
-                        behavior: 'auto' // instantâneo, não smooth (evita conflito)
-                    });
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: scrollYAntes,
+                            behavior: 'auto' // instantâneo, não smooth (evita conflito)
+                        });
+                    }, 10); // Pequeno delay para garantir que navegador terminou scroll automático
                 });
             }
         }
