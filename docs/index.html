@@ -12772,8 +12772,9 @@
             const caret = painel ? painel.querySelector('.vrvs3p-caret') : null;
             
             if (painel && body) {
-                // P2: Preservar scroll antes do toggle
-                const scrollYAntes = window.scrollY || document.documentElement.scrollTop;
+                // P2: Preservar scroll antes do toggle (usar padrão do Diário que funciona)
+                const scrollEl = document.scrollingElement || document.documentElement;
+                const scrollTopAntes = scrollEl ? scrollEl.scrollTop : 0;
                 
                 painel.classList.toggle('vrvs3p-collapsed');
                 
@@ -12786,15 +12787,15 @@
                     }
                 }
                 
-                // P2: Restaurar scroll após toggle (usar requestAnimationFrame + setTimeout para garantir que navegador terminou scroll automático)
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        window.scrollTo({
-                            top: scrollYAntes,
-                            behavior: 'auto' // instantâneo, não smooth (evita conflito)
-                        });
-                    }, 10); // Pequeno delay para garantir que navegador terminou scroll automático
-                });
+                // P2: Restaurar scroll após toggle (usar padrão do Diário: setTimeout direto, atribuição direta)
+                setTimeout(() => {
+                    if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
+                }, 100);
+                
+                // P2: Rede de segurança (iOS pode aplicar scroll automático depois)
+                setTimeout(() => {
+                    if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
+                }, 250);
             }
         }
         
