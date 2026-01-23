@@ -13528,6 +13528,13 @@
             }
         }
         
+        function toggleRespostaTreinoFim(entradaId) {
+            const el = document.getElementById(`resposta_treino_${entradaId}`);
+            if (!el) return;
+            const atual = (el.style.display || 'none');
+            el.style.display = (atual === 'none') ? 'block' : 'none';
+        }
+        
         // PATCH 3: Toggle revisão ON/OFF na lista do Diário
         function toggleRevisaoDiario(entradaId) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
@@ -15073,6 +15080,15 @@
                                     <div class="card-resultado-conteudo">
                                         <div class="card-resultado-pergunta">
                                             ${entrada.topico ? escapeHtml(entrada.topico) : '(Sem tópico)'}
+                                        </div>
+                                        <button onclick="toggleRespostaTreinoFim(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
+                                            👁️ Ver Resposta
+                                        </button>
+                                        <div id="resposta_treino_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                                            <span style="font-size: 13px;">✅</span><br>
+                                            <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
+                                                ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}
+                                            </span>
                                         </div>
                                     </div>
                                 </details>
