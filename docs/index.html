@@ -12772,6 +12772,9 @@
             const caret = painel ? painel.querySelector('.vrvs3p-caret') : null;
             
             if (painel && body) {
+                // P2: Preservar scroll antes do toggle
+                const scrollYAntes = window.scrollY || document.documentElement.scrollTop;
+                
                 painel.classList.toggle('vrvs3p-collapsed');
                 
                 // Rotacionar caret
@@ -12782,6 +12785,14 @@
                         caret.style.transform = 'rotate(0deg)';
                     }
                 }
+                
+                // P2: Restaurar scroll após toggle (usar requestAnimationFrame para garantir que DOM atualizou)
+                requestAnimationFrame(() => {
+                    window.scrollTo({
+                        top: scrollYAntes,
+                        behavior: 'auto' // instantâneo, não smooth (evita conflito)
+                    });
+                });
             }
         }
         
