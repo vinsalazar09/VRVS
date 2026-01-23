@@ -3588,24 +3588,7 @@
                 <!-- P1 DEBUG END -->
                 
                 <div class="form-group">
-                    <label class="form-label">📷 Imagem na Pergunta (opcional)</label>
-                    <input type="file" id="novaDiarioImagemPergunta" accept="image/*" style="display: none;" onchange="diario_processarImagemPergunta(event)">
-                    <div id="novaDiarioImagemPreviewPergunta" style="display: none; margin-top: 10px;">
-                        <img id="novaDiarioImagemThumbPergunta" src="" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);">
-                        <div style="margin-top: 8px;">
-                            <button type="button" class="btn btn-secondary" onclick="diario_removerImagemPergunta()" style="font-size: 12px; padding: 8px 16px;">🗑️ Remover imagem</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('novaDiarioImagemPergunta').click()" id="novaDiarioImagemBtnPergunta" style="margin-top: 8px;">
-                        📷 Adicionar imagem na pergunta
-                    </button>
-                    <div id="novaDiarioImagemStatusPergunta" style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; font-style: italic;">
-                        📷 imagem pergunta: —
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">📷 Imagem na Resposta (opcional)</label>
+                    <label class="form-label">📷 Imagem (opcional)</label>
                     <input type="file" id="novaDiarioImagem" accept="image/*" style="display: none;" onchange="diario_processarImagem(event)">
                     <div id="novaDiarioImagemPreview" style="display: none; margin-top: 10px;">
                         <img id="novaDiarioImagemThumb" src="" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);">
@@ -3614,10 +3597,10 @@
                         </div>
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('novaDiarioImagem').click()" id="novaDiarioImagemBtn" style="margin-top: 8px;">
-                        📷 Adicionar imagem na resposta
+                        📷 Adicionar imagem
                     </button>
                     <div id="novaDiarioImagemStatus" style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; font-style: italic;">
-                        📷 imagem resposta: —
+                        📷 imagem: —
                     </div>
                 </div>
                 
@@ -12446,59 +12429,6 @@
             // B1-FIX: Resetar flag após processar (sucesso ou falha)
             window.diario_imagemNovaSelecionada = false;
             
-            // P3A1: Processar imagem pergunta se houver
-            let imagemDataPergunta = null;
-            if (typeof diario_imagemNovaSelecionadaPergunta !== 'undefined' && diario_imagemNovaSelecionadaPergunta === true &&
-                typeof diario_imagemBlobPerguntaAtual !== 'undefined' && diario_imagemBlobPerguntaAtual && 
-                typeof diario_imagemMetadataPerguntaAtual !== 'undefined' && diario_imagemMetadataPerguntaAtual) {
-                try {
-                    // Gerar thumbnail
-                    const thumbBlobPergunta = await diario_gerarThumbnail(diario_imagemBlobPerguntaAtual);
-                    
-                    // Salvar imagem completa e thumbnail no IndexedDB (usar keys distintas para pergunta)
-                    const fullKeyPergunta = `diario:${id}:pergunta:full`;
-                    const thumbKeyPergunta = `diario:${id}:pergunta:thumb`;
-                    
-                    await b0Img_putBlob(fullKeyPergunta, diario_imagemBlobPerguntaAtual);
-                    await b0Img_putBlob(thumbKeyPergunta, thumbBlobPergunta);
-                    
-                    // Criar objeto imagem para salvar no data model
-                    imagemDataPergunta = {
-                        thumbKey: thumbKeyPergunta,
-                        fullKey: fullKeyPergunta,
-                        tipo: diario_imagemMetadataPerguntaAtual.tipo,
-                        tamanho: diario_imagemMetadataPerguntaAtual.tamanho,
-                        largura: diario_imagemMetadataPerguntaAtual.largura,
-                        altura: diario_imagemMetadataPerguntaAtual.altura,
-                        dataAdicao: hoje
-                    };
-                    
-                } catch (error) {
-                    // PATCH: Só mostrar toast se realmente havia tentativa de salvar imagem
-                    if (typeof diario_imagemNovaSelecionadaPergunta !== 'undefined' && diario_imagemNovaSelecionadaPergunta === true &&
-                        typeof diario_imagemBlobPerguntaAtual !== 'undefined' && diario_imagemBlobPerguntaAtual) {
-                        mostrarNotificacaoFeedback(`⚠️ Erro ao salvar imagem da pergunta: ${error.message}`, 'error');
-                    }
-                    // Continuar salvando entrada mesmo se imagem falhar
-                }
-            } else if (typeof diario_imagemRemovidaPergunta !== 'undefined' && diario_imagemRemovidaPergunta && entradaId) {
-                // Se flag de remoção está true e é edição, remover imagem pergunta antiga
-                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-                if (entrada && entrada.imagemPergunta) {
-                    try {
-                        if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
-                        if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
-                    } catch (error) {
-                        console.error('Erro ao remover imagem pergunta:', error);
-                        // Continuar salvando entrada mesmo se remoção falhar
-                    }
-                    imagemDataPergunta = null; // Marcar para remover do data model
-                }
-            }
-            
-            // P3A1: Resetar flag após processar (sucesso ou falha)
-            window.diario_imagemNovaSelecionadaPergunta = false;
-            
             if (entradaId) {
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
@@ -12545,43 +12475,6 @@
                         } else {
                             // S1-FIX: Se não tem imagemData e flag não está true, MANTER imagem existente
                             // Não fazer nada - entrada.imagem já está preservado
-                        }
-                        
-                        // P3A1: Atualizar imagem pergunta usando flag explícita
-                        if (imagemDataPergunta) {
-                            // Nova imagem pergunta: remover antiga APENAS se keys forem diferentes
-                            if (entrada.imagemPergunta) {
-                                const keysDiferentes = entrada.imagemPergunta.fullKey !== imagemDataPergunta.fullKey || 
-                                                       entrada.imagemPergunta.thumbKey !== imagemDataPergunta.thumbKey;
-                                
-                                if (keysDiferentes) {
-                                    // Keys diferentes: deletar antigas antes de salvar novas
-                                    try {
-                                        if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
-                                        if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
-                                    } catch (error) {
-                                        console.error('Erro ao remover imagem pergunta antiga:', error);
-                                    }
-                                }
-                            }
-                            entrada.imagemPergunta = imagemDataPergunta;
-                        } else if (typeof diario_imagemRemovidaPergunta !== 'undefined' && diario_imagemRemovidaPergunta) {
-                            // Flag explícita: remover imagem pergunta
-                            if (entrada.imagemPergunta) {
-                                try {
-                                    if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
-                                    if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
-                                } catch (error) {
-                                    console.error('Erro ao remover imagem pergunta:', error);
-                                }
-                            }
-                            entrada.imagemPergunta = null;
-                        } else {
-                            // Se não tem imagemDataPergunta e flag não está true, MANTER imagem pergunta existente
-                            // Não fazer nada - entrada.imagemPergunta já está preservado
-                            if (!entrada.imagemPergunta) {
-                                entrada.imagemPergunta = null;
-                            }
                         }
                     } else {
                         // Edição normal da Lista: atualizar tudo
@@ -12633,43 +12526,6 @@
                         // Não fazer nada - entrada.imagem já está preservado
                         if (!entrada.imagem) {
                             entrada.imagem = null;
-                        }
-                    }
-                    
-                    // P3A1: Atualizar imagem pergunta usando flag explícita
-                    if (imagemDataPergunta) {
-                        // Nova imagem pergunta: remover antiga APENAS se keys forem diferentes
-                        if (entrada.imagemPergunta) {
-                            const keysDiferentes = entrada.imagemPergunta.fullKey !== imagemDataPergunta.fullKey || 
-                                                   entrada.imagemPergunta.thumbKey !== imagemDataPergunta.thumbKey;
-                            
-                            if (keysDiferentes) {
-                                // Keys diferentes: deletar antigas antes de salvar novas
-                                try {
-                                    if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
-                                    if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
-                                } catch (error) {
-                                    console.error('Erro ao remover imagem pergunta antiga:', error);
-                                }
-                            }
-                        }
-                        entrada.imagemPergunta = imagemDataPergunta;
-                    } else if (typeof diario_imagemRemovidaPergunta !== 'undefined' && diario_imagemRemovidaPergunta) {
-                        // Flag explícita: remover imagem pergunta
-                        if (entrada.imagemPergunta) {
-                            try {
-                                if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
-                                if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
-                            } catch (error) {
-                                console.error('Erro ao remover imagem pergunta:', error);
-                            }
-                        }
-                        entrada.imagemPergunta = null;
-                    } else {
-                        // Se não tem imagemDataPergunta e flag não está true, MANTER imagem pergunta existente
-                        // Não fazer nada - entrada.imagemPergunta já está preservado
-                        if (!entrada.imagemPergunta) {
-                            entrada.imagemPergunta = null;
                         }
                     }
                         
@@ -13335,7 +13191,6 @@
                             </div>
                             ${chipsHTML}
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">❓ ${formatarTextoDiario(entrada.topico)}</div>
-                            ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="diario-img-pergunta-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id}, 'pergunta')"><img id="diario-img-pergunta-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <button onclick="toggleRevisaoDiario(${entrada.id}, this)" class="btn-toggle-revisao" data-entrada-id="${entrada.id}" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
@@ -13402,33 +13257,6 @@
                     console.error('Erro ao carregar thumbnail:', error);
                     imgElement.style.display = 'none';
                     imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
-                }
-                
-                // P3A5: Carregar thumbnail pergunta
-                const imgElementPergunta = document.getElementById(`diario-img-pergunta-${entradaId}`);
-                if (imgElementPergunta && imgElementPergunta.dataset.loaded !== '1') {
-                    if (entrada && entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
-                        try {
-                            const thumbBlobPergunta = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
-                            if (thumbBlobPergunta) {
-                                const thumbURLPergunta = URL.createObjectURL(thumbBlobPergunta);
-                                imgElementPergunta.src = thumbURLPergunta;
-                                imgElementPergunta.dataset.loaded = '1';
-                                imgElementPergunta.style.display = 'block';
-                                imgElementPergunta.onerror = () => {
-                                    URL.revokeObjectURL(thumbURLPergunta);
-                                    imgElementPergunta.style.display = 'none';
-                                    imgElementPergunta.dataset.loaded = '';
-                                };
-                            }
-                        } catch (error) {
-                            console.error('Erro ao carregar thumbnail pergunta:', error);
-                            imgElementPergunta.style.display = 'none';
-                            imgElementPergunta.dataset.loaded = '';
-                        }
-                    } else {
-                        imgElementPergunta.style.display = 'none';
-                    }
                 }
             }
         }
@@ -13632,22 +13460,12 @@
         }
         
         // B3: Viewer de imagem (ampliar ao clicar)
-        async function diario_abrirViewerImagem(entradaId, contexto = 'resposta') {
+        async function diario_abrirViewerImagem(entradaId) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-            if (!entrada) return;
-            
-            // P3A3: Buscar blob baseado no contexto
-            let imagemObj = null;
-            if (contexto === 'pergunta') {
-                if (!entrada.imagemPergunta || !entrada.imagemPergunta.fullKey) return;
-                imagemObj = entrada.imagemPergunta;
-            } else {
-                if (!entrada.imagem || !entrada.imagem.fullKey) return;
-                imagemObj = entrada.imagem;
-            }
+            if (!entrada || !entrada.imagem || !entrada.imagem.fullKey) return;
             
             try {
-                const fullBlob = await b0Img_getBlob(imagemObj.fullKey);
+                const fullBlob = await b0Img_getBlob(entrada.imagem.fullKey);
                 if (!fullBlob) {
                     mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
                     return;
@@ -14027,47 +13845,6 @@
                                 })();
                             }
                         }
-                        
-                        // P3A10: Carregar thumb pergunta também
-                        const imgElementPergunta = document.getElementById(`treino-img-pergunta-${entradaId}`);
-                        if (imgElementPergunta && imgElementPergunta.dataset.loaded !== '1') {
-                            const entrada =
-                                (window.treinoLivreFimDados && Array.isArray(window.treinoLivreFimDados.fila))
-                                    ? window.treinoLivreFimDados.fila.find(e => String(e.id) === String(entradaId))
-                                    : (window.diario && Array.isArray(window.diario.entradas))
-                                        ? window.diario.entradas.find(e => String(e.id) === String(entradaId))
-                                        : null;
-                            
-                            if (entrada && entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
-                                (async () => {
-                                    try {
-                                        const thumbBlobPergunta = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
-                                        if (thumbBlobPergunta) {
-                                            const thumbURLPergunta = URL.createObjectURL(thumbBlobPergunta);
-                                            
-                                            if (!imgElementPergunta.isConnected) {
-                                                URL.revokeObjectURL(thumbURLPergunta);
-                                                return;
-                                            }
-                                            
-                                            imgElementPergunta.src = thumbURLPergunta;
-                                            imgElementPergunta.dataset.loaded = '1';
-                                            imgElementPergunta.style.display = 'block';
-                                            
-                                            imgElementPergunta.onerror = () => {
-                                                URL.revokeObjectURL(thumbURLPergunta);
-                                                imgElementPergunta.style.display = 'none';
-                                                imgElementPergunta.dataset.loaded = '';
-                                            };
-                                        }
-                                    } catch (error) {
-                                        console.error('Erro ao carregar thumbnail pergunta:', error);
-                                        imgElementPergunta.style.display = 'none';
-                                        imgElementPergunta.dataset.loaded = '';
-                                    }
-                                })();
-                            }
-                        }
                     }, 50);
                 }
             }
@@ -14424,72 +14201,6 @@
                 }
             }
             
-            // P3A11: Carregar imagem pergunta se houver
-            if (entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
-                try {
-                    const thumbBlobPergunta = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
-                    if (thumbBlobPergunta) {
-                        const thumbURLPergunta = URL.createObjectURL(thumbBlobPergunta);
-                        const thumbImgPergunta = document.getElementById('novaDiarioImagemThumbPergunta');
-                        const previewPergunta = document.getElementById('novaDiarioImagemPreviewPergunta');
-                        const btnAddPergunta = document.getElementById('novaDiarioImagemBtnPergunta');
-                        if (thumbImgPergunta) {
-                            thumbImgPergunta.src = thumbURLPergunta;
-                            if (thumbImgPergunta.src && thumbImgPergunta.src.startsWith('blob:')) {
-                                thumbImgPergunta.onerror = (ev) => {
-                                    URL.revokeObjectURL(thumbURLPergunta);
-                                    diario_handleImageError(ev);
-                                };
-                            }
-                        }
-                        if (previewPergunta) previewPergunta.style.display = 'block';
-                        if (btnAddPergunta) btnAddPergunta.style.display = 'none';
-                        
-                        if (entrada.imagemPergunta.fullKey) {
-                            try {
-                                const fullBlobPergunta = await b0Img_getBlob(entrada.imagemPergunta.fullKey);
-                                if (fullBlobPergunta) {
-                                    window.diario_imagemBlobPerguntaAtual = fullBlobPergunta;
-                                    window.diario_imagemMetadataPerguntaAtual = entrada.imagemPergunta;
-                                    window.diario_imagemRemovidaPergunta = false;
-                                    window.diario_imagemNovaSelecionadaPergunta = false;
-                                }
-                            } catch (error) {
-                                console.error('Erro ao carregar blob completo pergunta:', error);
-                            }
-                        }
-                        
-                        const statusElPergunta = document.getElementById('novaDiarioImagemStatusPergunta');
-                        if (statusElPergunta) {
-                            const tamanhoKB = entrada.imagemPergunta.tamanho ? Math.round(entrada.imagemPergunta.tamanho / 1024) : '?';
-                            statusElPergunta.textContent = `📷 imagem pergunta: OK (${tamanhoKB}KB)`;
-                            statusElPergunta.style.color = 'rgba(0,206,209,0.8)';
-                        }
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar imagem pergunta:', error);
-                }
-            } else {
-                const thumbImgPergunta = document.getElementById('novaDiarioImagemThumbPergunta');
-                if (thumbImgPergunta) {
-                    thumbImgPergunta.src = '';
-                    thumbImgPergunta.onerror = null;
-                }
-            }
-            
-            if (false) {
-                // Limpar imagem se não houver
-                if (typeof diario_limparImagemModal === 'function') {
-                    diario_limparImagemModal();
-                }
-                // PATCH: Reset defensivo de src para evitar onerror
-                const thumbImg = document.getElementById('novaDiarioImagemThumb');
-                if (thumbImg) {
-                    thumbImg.src = '';
-                    thumbImg.onerror = null; // Remover handler se existir
-                }
-            }
-            
             // PATCH 4: Mostrar/ocultar botão de excluir conforme é edição ou nova entrada
             const btnExcluirWrapper = document.getElementById('btnExcluirEntradaWrapper');
             if (btnExcluirWrapper) {
@@ -14811,7 +14522,6 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entradaAtual.topico)}</div>
-                    ${entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey ? `<div id="sd-thumb-pergunta-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-thumb-pergunta-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entradaAtual.id}, 'pergunta')" /></div>` : ''}
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta" hidden>
                         <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
                             ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
@@ -15353,7 +15063,6 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
-                    ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="tl-thumb-pergunta-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-pergunta-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id}, 'pergunta')" /></div>` : ''}
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
@@ -15752,7 +15461,6 @@
                                         <div class="card-resultado-pergunta">
                                             ${entrada.topico ? escapeHtml(entrada.topico) : '(Sem tópico)'}
                                         </div>
-                                        ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="treino-img-pergunta-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id}, 'pergunta')"><img id="treino-img-pergunta-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                                         <button onclick="toggleRespostaTreinoFim(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
                                             👁️ Ver Resposta
                                         </button>
@@ -16227,15 +15935,6 @@
                             `sd-thumb-img-${entradaAtual.id}`,
                             `sd-thumb-wrap-${entradaAtual.id}`
                         );
-                        // P3A7: Carregar thumb pergunta também
-                        if (entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
-                            diario_carregarThumbnailUnico(
-                                entradaAtual.id,
-                                entradaAtual.imagemPergunta.thumbKey,
-                                `sd-thumb-pergunta-img-${entradaAtual.id}`,
-                                `sd-thumb-pergunta-wrap-${entradaAtual.id}`
-                            );
-                        }
                     }, 50);
                 }
             }
@@ -18554,98 +18253,7 @@
             } finally {
                 // Reabilitar botão
                 btnAdd.disabled = false;
-                btnAdd.textContent = '📷 Adicionar imagem na resposta';
-            }
-        }
-        
-        // P3A2: Processar imagem pergunta
-        async function diario_processarImagemPergunta(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const btnAdd = document.getElementById('novaDiarioImagemBtnPergunta');
-            const preview = document.getElementById('novaDiarioImagemPreviewPergunta');
-            const thumbImg = document.getElementById('novaDiarioImagemThumbPergunta');
-            const inputFile = document.getElementById('novaDiarioImagemPergunta');
-            
-            if (!btnAdd || !preview || !thumbImg || !inputFile) return;
-            
-            btnAdd.disabled = true;
-            btnAdd.textContent = '⏳ Processando...';
-            
-            try {
-                if (!file.type.startsWith('image/')) {
-                    throw new Error('Arquivo deve ser uma imagem');
-                }
-                
-                const MAX_SIZE_BEFORE_COMPRESSION = 10 * 1024 * 1024;
-                if (file.size > MAX_SIZE_BEFORE_COMPRESSION) {
-                    throw new Error('Imagem muito grande (máx. 10MB antes de compressão)');
-                }
-                
-                const img = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = new Image();
-                        img.onload = () => resolve(img);
-                        img.onerror = () => reject(new Error('Erro ao carregar imagem'));
-                        img.src = e.target.result;
-                    };
-                    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-                    reader.readAsDataURL(file);
-                });
-                
-                const processedBlob = await diario_processarImagemAdaptativa(img, file.type);
-                
-                if (!processedBlob) {
-                    throw new Error('Erro ao processar imagem');
-                }
-                
-                const MAX_SIZE_AFTER_COMPRESSION = 2 * 1024 * 1024;
-                if (processedBlob.size > MAX_SIZE_AFTER_COMPRESSION) {
-                    throw new Error('Imagem ainda muito grande após compressão (máx. 2MB)');
-                }
-                
-                const thumbBlob = await diario_gerarThumbnail(processedBlob);
-                const thumbURL = URL.createObjectURL(thumbBlob);
-                
-                thumbImg.src = thumbURL;
-                thumbImg.onerror = (ev) => {
-                    URL.revokeObjectURL(thumbURL);
-                    diario_handleImageError(ev);
-                };
-                thumbImg.onload = () => {};
-                
-                preview.style.display = 'block';
-                btnAdd.style.display = 'none';
-                
-                window.diario_imagemBlobPerguntaAtual = processedBlob;
-                window.diario_imagemMetadataPerguntaAtual = {
-                    tipo: file.type,
-                    tamanho: processedBlob.size,
-                    largura: img.width,
-                    altura: img.height
-                };
-                window.diario_imagemRemovidaPergunta = false;
-                window.diario_imagemNovaSelecionadaPergunta = true;
-                
-                const statusEl = document.getElementById('novaDiarioImagemStatusPergunta');
-                if (statusEl) {
-                    const tamanhoKB = Math.round(processedBlob.size / 1024);
-                    statusEl.textContent = `📷 imagem pergunta: OK (${tamanhoKB}KB)`;
-                    statusEl.style.color = 'rgba(0,206,209,0.8)';
-                }
-                
-                mostrarNotificacaoFeedback('✅ Imagem da pergunta processada com sucesso!', 'success');
-                
-            } catch (error) {
-                mostrarNotificacaoFeedback(`⚠️ Erro ao processar imagem: ${error.message}`, 'error');
-                inputFile.value = '';
-                if (preview) preview.style.display = 'none';
-                if (btnAdd) btnAdd.style.display = 'block';
-            } finally {
-                btnAdd.disabled = false;
-                btnAdd.textContent = '📷 Adicionar imagem na pergunta';
+                btnAdd.textContent = '📷 Adicionar imagem';
             }
         }
         
@@ -18850,40 +18458,7 @@
             // Atualizar indicador visual
             const statusEl = document.getElementById('novaDiarioImagemStatus');
             if (statusEl) {
-                statusEl.textContent = '📷 imagem resposta: —';
-                statusEl.style.color = 'rgba(255,255,255,0.6)';
-            }
-        }
-        
-        // P3A2: Remover imagem pergunta
-        function diario_removerImagemPergunta() {
-            const preview = document.getElementById('novaDiarioImagemPreviewPergunta');
-            const thumbImg = document.getElementById('novaDiarioImagemThumbPergunta');
-            const btnAdd = document.getElementById('novaDiarioImagemBtnPergunta');
-            const inputFile = document.getElementById('novaDiarioImagemPergunta');
-            
-            if (thumbImg) {
-                thumbImg.onerror = null;
-                thumbImg.onload = null;
-            }
-            
-            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
-                URL.revokeObjectURL(thumbImg.src);
-            }
-            
-            if (preview) preview.style.display = 'none';
-            if (btnAdd) btnAdd.style.display = 'block';
-            if (inputFile) inputFile.value = '';
-            if (thumbImg) thumbImg.src = '';
-            
-            window.diario_imagemBlobPerguntaAtual = null;
-            window.diario_imagemMetadataPerguntaAtual = null;
-            window.diario_imagemRemovidaPergunta = true;
-            window.diario_imagemNovaSelecionadaPergunta = false;
-            
-            const statusEl = document.getElementById('novaDiarioImagemStatusPergunta');
-            if (statusEl) {
-                statusEl.textContent = '📷 imagem pergunta: —';
+                statusEl.textContent = '📷 imagem: —';
                 statusEl.style.color = 'rgba(255,255,255,0.6)';
             }
         }
