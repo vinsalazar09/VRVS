@@ -3503,8 +3503,8 @@
                 <h2 class="modal-title" id="tutorialTitulo">🎯 Tour Guiado - VRVS</h2>
                 <button class="modal-close" onclick="fecharTutorial()">×</button>
             </div>
-            <div class="modal-body">
-                <div id="tutorialConteudo" style="min-height: 200px;">
+            <div class="modal-body" style="overflow-y: auto; max-height: calc(95vh - 150px);">
+                <div id="tutorialConteudo" style="min-height: 200px; word-wrap: break-word; overflow-wrap: break-word;">
                     <!-- Conteúdo dinâmico do tutorial -->
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 20px; gap: 10px;">
@@ -13428,6 +13428,22 @@
                 
                 const fullURL = URL.createObjectURL(fullBlob);
                 
+                // Estado do zoom/pan
+                let scale = 1;
+                let tx = 0;
+                let ty = 0;
+                
+                let baseW = 0;
+                let baseH = 0;
+                
+                let isPanning = false;
+                let startX = 0, startY = 0;
+                let startTX = 0, startTY = 0;
+                
+                let lastTapTime = 0;
+                let lastTapX = 0;
+                let lastTapY = 0;
+                
                 // Criar overlay
                 const overlay = document.createElement('div');
                 overlay.id = 'diario-viewer-overlay';
@@ -13443,6 +13459,7 @@
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
+                    overflow: hidden;
                 `;
                 
                 // Imagem ampliada
@@ -13453,7 +13470,113 @@
                     max-height: 95%;
                     object-fit: contain;
                     border-radius: 8px;
+                    user-select: none;
+                    -webkit-user-select: none;
+                    -webkit-touch-callout: none;
+                    transform-origin: center center;
                 `;
+                
+                // Helpers
+                const aplicarTransform = () => {
+                    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+                };
+                
+                const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+                
+                const clampPan = () => {
+                    const o = overlay.getBoundingClientRect();
+                    const maxX = Math.max(0, (baseW * scale - o.width) / 2);
+                    const maxY = Math.max(0, (baseH * scale - o.height) / 2);
+                    tx = clamp(tx, -maxX, maxX);
+                    ty = clamp(ty, -maxY, maxY);
+                };
+                
+                const resetZoom = () => {
+                    scale = 1;
+                    tx = 0;
+                    ty = 0;
+                    aplicarTransform();
+                };
+                
+                const zoomAt = (clientX, clientY, nextScale) => {
+                    const o = overlay.getBoundingClientRect();
+                    const x = clientX - o.left;
+                    const y = clientY - o.top;
+                    
+                    // mover "em direção" ao ponto tocado
+                    scale = nextScale;
+                    tx = (o.width / 2 - x) * (scale - 1);
+                    ty = (o.height / 2 - y) * (scale - 1);
+                    
+                    clampPan();
+                    aplicarTransform();
+                };
+                
+                // Medir tamanho base após carregar
+                img.onload = () => {
+                    requestAnimationFrame(() => {
+                        const r = img.getBoundingClientRect();
+                        baseW = r.width || baseW;
+                        baseH = r.height || baseH;
+                        aplicarTransform();
+                    });
+                };
+                
+                // Touch handlers
+                img.addEventListener('touchstart', (e) => {
+                    if (!e.touches || e.touches.length !== 1) return;
+                    
+                    const t = e.touches[0];
+                    const now = Date.now();
+                    const dt = now - lastTapTime;
+                    const dx = Math.abs(t.clientX - lastTapX);
+                    const dy = Math.abs(t.clientY - lastTapY);
+                    
+                    // double-tap
+                    if (dt < 300 && dx < 40 && dy < 40) {
+                        e.preventDefault();
+                        lastTapTime = 0;
+                        
+                        if (scale === 1) {
+                            zoomAt(t.clientX, t.clientY, 2.5);
+                        } else {
+                            resetZoom();
+                        }
+                        return;
+                    }
+                    
+                    lastTapTime = now;
+                    lastTapX = t.clientX;
+                    lastTapY = t.clientY;
+                    
+                    // pan só se estiver ampliado
+                    if (scale > 1) {
+                        e.preventDefault();
+                        isPanning = true;
+                        startX = t.clientX;
+                        startY = t.clientY;
+                        startTX = tx;
+                        startTY = ty;
+                        img.style.transition = 'none';
+                    }
+                }, { passive: false });
+                
+                img.addEventListener('touchmove', (e) => {
+                    if (!isPanning || scale <= 1 || !e.touches || e.touches.length !== 1) return;
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    tx = startTX + (t.clientX - startX);
+                    ty = startTY + (t.clientY - startY);
+                    clampPan();
+                    aplicarTransform();
+                }, { passive: false });
+                
+                img.addEventListener('touchend', () => {
+                    if (isPanning) {
+                        isPanning = false;
+                        img.style.transition = '';
+                    }
+                });
                 
                 // Botão fechar
                 const btnFechar = document.createElement('button');
@@ -13474,8 +13597,8 @@
                 `;
                 
                 const fechar = () => {
-                    URL.revokeObjectURL(fullURL);
-                    document.body.removeChild(overlay);
+                    try { URL.revokeObjectURL(fullURL); } catch(e) {}
+                    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
                 };
                 
                 btnFechar.onclick = (e) => {
@@ -13483,7 +13606,16 @@
                     fechar();
                 };
                 
-                overlay.onclick = fechar;
+                // Overlay click: fecha se zoom == 1, reseta zoom se zoom > 1
+                overlay.addEventListener('click', (e) => {
+                    if (e.target !== overlay) return;
+                    if (scale > 1) {
+                        resetZoom();
+                    } else {
+                        fechar();
+                    }
+                });
+                
                 img.onclick = (e) => e.stopPropagation();
                 
                 overlay.appendChild(img);
@@ -18646,7 +18778,7 @@
         .footer-text { color: rgba(255, 255, 255, 0.5); font-size: 12px; }
         .footer-logo { color: #00CED1; font-weight: 700; margin-top: 10px; }
         @media print {
-            body { background: white; color: black; }
+            body { background: white; color: #1a1a1a; }
             .tema { border: 1px solid #ccc; break-inside: avoid; }
             .area-title { color: #0d9488; }
             .tema-title { color: #b8701f; }

@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.125-p2d-fix-area-content-scroll-20260123-0200";
+const CACHE_NAME = "vrvs-v5.3.126-zoom-viewer-20260123-0230";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
