@@ -13529,10 +13529,56 @@
         }
         
         function toggleRespostaTreinoFim(entradaId) {
-            const el = document.getElementById(`resposta_treino_${entradaId}`);
-            if (!el) return;
-            const atual = (el.style.display || 'none');
-            el.style.display = (atual === 'none') ? 'block' : 'none';
+            const respostaDiv = document.getElementById(`resposta_treino_${entradaId}`);
+            if (respostaDiv) {
+                const estavaOculta = respostaDiv.style.display === 'none';
+                respostaDiv.style.display = respostaDiv.style.display === 'none' ? 'block' : 'none';
+                
+                // T1b: Carregar thumbnail quando resposta é mostrada pela primeira vez (padrão Diário)
+                if (estavaOculta) {
+                    setTimeout(() => {
+                        const imgElement = document.getElementById(`treino-img-${entradaId}`);
+                        if (imgElement && imgElement.dataset.loaded !== '1') {
+                            const entrada =
+                                (window.treinoLivreFimDados && Array.isArray(window.treinoLivreFimDados.fila))
+                                    ? window.treinoLivreFimDados.fila.find(e => String(e.id) === String(entradaId))
+                                    : (window.diario && Array.isArray(window.diario.entradas))
+                                        ? window.diario.entradas.find(e => String(e.id) === String(entradaId))
+                                        : null;
+                            
+                            if (entrada && entrada.imagem && entrada.imagem.thumbKey) {
+                                (async () => {
+                                    try {
+                                        const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
+                                        if (thumbBlob) {
+                                            const thumbURL = URL.createObjectURL(thumbBlob);
+                                            
+                                            // guard mínimo anti-stale (sem refactor): se saiu do DOM, revoga e aborta
+                                            if (!imgElement.isConnected) {
+                                                URL.revokeObjectURL(thumbURL);
+                                                return;
+                                            }
+                                            
+                                            imgElement.src = thumbURL;
+                                            imgElement.dataset.loaded = '1';
+                                            imgElement.style.display = 'block';
+                                            imgElement.onerror = () => {
+                                                URL.revokeObjectURL(thumbURL);
+                                                imgElement.style.display = 'none';
+                                                imgElement.dataset.loaded = '';
+                                            };
+                                        }
+                                    } catch (error) {
+                                        console.error('Erro ao carregar thumbnail (pós-treino):', error);
+                                        imgElement.style.display = 'none';
+                                        imgElement.dataset.loaded = '';
+                                    }
+                                })();
+                            }
+                        }
+                    }, 50);
+                }
+            }
         }
         
         // PATCH 3: Toggle revisão ON/OFF na lista do Diário
@@ -15086,9 +15132,8 @@
                                         </button>
                                         <div id="resposta_treino_${entrada.id}" style="display: none; background: rgba(0,206,209,0.1); border-left: 3px solid var(--turquesa-main); padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.9);">
                                             <span style="font-size: 13px;">✅</span><br>
-                                            <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
-                                                ${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}
-                                            </span>
+                                            <span style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">${entrada.resposta ? formatarTextoDiario(entrada.resposta) : '(Sem resposta ainda)'}</span>
+                                            ${entrada.imagem && entrada.imagem.thumbKey ? `<div id="treino-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})"><img id="treino-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                                         </div>
                                     </div>
                                 </details>
