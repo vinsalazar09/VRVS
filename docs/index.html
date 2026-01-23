@@ -13624,8 +13624,8 @@
                 entrada.srs = inicializarSrsVRVS3P(hoje);
             }
             
-            // P2C: preservar scroll do container real (não assumir window/documento)
-            const scrollEl = diario_getScrollParent(btnEl);
+            // P2C: preservar scroll (usar padrão que funciona - document.scrollingElement)
+            const scrollEl = document.scrollingElement || document.documentElement;
             const scrollTopAntes = scrollEl ? scrollEl.scrollTop : 0;
             
             // Toggle: inverter estado atual
@@ -13639,18 +13639,15 @@
             
             // P2C: restaurar em 3 fases (iOS aplica ajustes depois do render + thumbs)
             requestAnimationFrame(() => {
-                const se = (scrollEl && scrollEl.isConnected) ? scrollEl : (document.scrollingElement || document.documentElement);
-                if (se) se.scrollTop = scrollTopAntes;
+                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
             });
             
             setTimeout(() => {
-                const se = (scrollEl && scrollEl.isConnected) ? scrollEl : (document.scrollingElement || document.documentElement);
-                if (se) se.scrollTop = scrollTopAntes;
+                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
             }, 140);
             
             setTimeout(() => {
-                const se = (scrollEl && scrollEl.isConnected) ? scrollEl : (document.scrollingElement || document.documentElement);
-                if (se) se.scrollTop = scrollTopAntes;
+                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
             }, 380);
             
             // Feedback visual
