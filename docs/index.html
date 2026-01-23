@@ -14027,6 +14027,47 @@
                                 })();
                             }
                         }
+                        
+                        // P3A10: Carregar thumb pergunta também
+                        const imgElementPergunta = document.getElementById(`treino-img-pergunta-${entradaId}`);
+                        if (imgElementPergunta && imgElementPergunta.dataset.loaded !== '1') {
+                            const entrada =
+                                (window.treinoLivreFimDados && Array.isArray(window.treinoLivreFimDados.fila))
+                                    ? window.treinoLivreFimDados.fila.find(e => String(e.id) === String(entradaId))
+                                    : (window.diario && Array.isArray(window.diario.entradas))
+                                        ? window.diario.entradas.find(e => String(e.id) === String(entradaId))
+                                        : null;
+                            
+                            if (entrada && entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
+                                (async () => {
+                                    try {
+                                        const thumbBlobPergunta = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
+                                        if (thumbBlobPergunta) {
+                                            const thumbURLPergunta = URL.createObjectURL(thumbBlobPergunta);
+                                            
+                                            if (!imgElementPergunta.isConnected) {
+                                                URL.revokeObjectURL(thumbURLPergunta);
+                                                return;
+                                            }
+                                            
+                                            imgElementPergunta.src = thumbURLPergunta;
+                                            imgElementPergunta.dataset.loaded = '1';
+                                            imgElementPergunta.style.display = 'block';
+                                            
+                                            imgElementPergunta.onerror = () => {
+                                                URL.revokeObjectURL(thumbURLPergunta);
+                                                imgElementPergunta.style.display = 'none';
+                                                imgElementPergunta.dataset.loaded = '';
+                                            };
+                                        }
+                                    } catch (error) {
+                                        console.error('Erro ao carregar thumbnail pergunta:', error);
+                                        imgElementPergunta.style.display = 'none';
+                                        imgElementPergunta.dataset.loaded = '';
+                                    }
+                                })();
+                            }
+                        }
                     }, 50);
                 }
             }
