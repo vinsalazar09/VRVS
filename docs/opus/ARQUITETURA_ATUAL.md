@@ -61,10 +61,36 @@ Estrutura do arquivo:
     └── Event handlers
 ```
 
-## Algoritmo de Repetição Espaçada
+## Sistema VRVS 3P (Revisão Espaçada)
+
+O VRVS 3P é o sistema de revisão espaçada da plataforma, baseado em 11 estágios (0-10) com intervalos crescentes.
+
+### Estágios e Intervalos
+
+| Estágio | Intervalo | Retenção | Classificação |
+|---------|-----------|----------|--------------|
+| 0 | 1 dia | 40% | Novo |
+| 1 | 2 dias | 48% | Novo |
+| 2 | 4 dias | 56% | Fixando |
+| 3 | 7 dias | 64% | Fixando |
+| 4 | 12 dias | 72% | Maduro |
+| 5 | 20 dias | 80% | Maduro |
+| 6 | 35 dias | 86% | Maduro |
+| 7 | 60 dias | 90% | Consolidado |
+| 8 | 90 dias | 93% | Consolidado |
+| 9 | 135 dias | 96% | Consolidado |
+| 10 | 200 dias | 98% | Consolidado |
+
+### Regras de Transição
+
+- **ESQUECI:** Se estágio ≤ 1 → volta para 0; Se ≥ 2 → desce 2 estágios
+- **LEMBREI:** Sobe 1 estágio (até máximo 10)
+- **FÁCIL:** Sobe 2 estágios (até máximo 10)
+
+### Algoritmo de Repetição Espaçada (Temas)
 
 ```javascript
-// Cálculo do próximo intervalo
+// Cálculo do próximo intervalo para temas (Feedback)
 if (rendimento < 50) intervalo = 1;
 else if (rendimento < 80) intervalo = 3;
 else {
@@ -77,6 +103,8 @@ else {
 // Limite para prioridade 5
 if (prioridade === 5 && intervalo > 30) intervalo = 30;
 ```
+
+**Nota:** O algoritmo acima é para revisão de **temas** (aba Feedback). O sistema VRVS 3P (cards do Diário) usa os 11 estágios descritos acima.
 
 ## Última Refatoração
 

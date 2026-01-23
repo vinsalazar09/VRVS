@@ -80,3 +80,9 @@ Sistema de gestão de estudos com:
 - **Cursor:** Implementação, debugging, código
 - **Vini:** Validação, testes, direção do projeto
 
+## Metodologia VRVS
+
+Para entender completamente a metodologia por trás do VRVS, consulte o documento **METODOLOGIA_VRVS.md** nesta pasta.
+
+**Resumo:** O VRVS é um sistema de gestão de estudos baseado em revisão espaçada (spaced repetition) e recall ativo. Ele organiza temas, calcula automaticamente quando revisar cada conteúdo, e garante que o conhecimento seja consolidado através de revisões em intervalos crescentes.
+

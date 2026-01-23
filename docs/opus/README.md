@@ -18,6 +18,8 @@ Ao iniciar um novo chat com Opus sobre o projeto VRVS:
 | `BACKLOG_FUNCIONALIDADES.md` | Features pendentes | Após cada sprint |
 | `HISTORICO_SPRINTS.md` | Registro do que foi feito | Após cada sprint |
 | `IDEIAS_FUTURAS.md` | Brainstorms e ideias | Quando surgir ideia nova |
+| `METODOLOGIA_VRVS.md` | Explicação completa da metodologia | Quando metodologia mudar |
+| `HANDOFF_ATUALIZACAO_MANUAL_TUTORIAL_20260123.md` | Handoff para atualização manual/tutorial | Após conclusão da tarefa |
 
 ## 🔄 Última Atualização
 

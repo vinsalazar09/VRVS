@@ -9592,9 +9592,12 @@
                     <p style="margin-bottom: 10px;"><strong>Tarefas de hoje e atrasadas:</strong></p>
                     <ul style="margin-left: 20px; line-height: 1.8;">
                         <li>🎯 Mostra o que você precisa estudar HOJE</li>
+                        <li>🔄 Revisões VRVS 3P do dia (cards para revisar)</li>
                         <li>⏱️ Opção de registrar tempo por atividade</li>
                         <li>💡 Diretrizes personalizadas para cada tema</li>
+                        <li>🔥 Hot Topics aparecem quando expandir um tema</li>
                     </ul>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 Comece sempre pela aba Tarefas para ver o que precisa fazer hoje!</p>
                 `
             },
             {
@@ -9609,16 +9612,43 @@
                 `
             },
             {
+                titulo: "📔 Diário de Aprendizados",
+                conteudo: `
+                    <p style="margin-bottom: 10px;"><strong>Registre o que você aprendeu:</strong></p>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li>📝 Anote aprendizados no formato pergunta/resposta</li>
+                        <li>🔄 Marque "VRVS 3P" para virar card de revisão</li>
+                        <li>📅 Cards aparecem automaticamente para revisar depois</li>
+                        <li>🧠 Sistema de revisão espaçada (quanto mais acerta, mais tempo até próxima revisão)</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 O Diário é onde você transforma estudo em memória de longo prazo!</p>
+                `
+            },
+            {
+                titulo: "🔄 Sistema VRVS 3P (Revisão Espaçada)",
+                conteudo: `
+                    <p style="margin-bottom: 10px;"><strong>Como funciona a revisão espaçada:</strong></p>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li>📝 Você cria uma anotação no Diário e marca "VRVS 3P"</li>
+                        <li>📅 No dia seguinte, o card aparece para revisar</li>
+                        <li>🧠 Você tenta lembrar a resposta (recall ativo)</li>
+                        <li>✅ Responde: <strong style="color: #dc3545;">ESQUECI</strong>, <strong style="color: #f59e0b;">LEMBREI</strong> ou <strong style="color: #22c55e;">FÁCIL</strong></li>
+                        <li>📈 Sistema agenda próxima revisão baseado na sua resposta</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 Quanto mais você acerta, mais tempo até a próxima revisão. É ciência aplicada!</p>
+                `
+            },
+            {
                 titulo: "💬 Feedback de Sessão",
                 conteudo: `
                     <p style="margin-bottom: 10px;"><strong>Registre cada sessão de estudos:</strong></p>
                     <ul style="margin-left: 20px; line-height: 1.8;">
                         <li>⏱️ Use o cronômetro integrado</li>
-                        <li>📊 Avalie seu rendimento</li>
+                        <li>📊 Avalie seu rendimento (0-100%)</li>
                         <li>❓ Registre questões e flashcards</li>
                         <li>📝 Adicione observações</li>
                     </ul>
-                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">Todos os dados são salvos automaticamente!</p>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 O sistema calcula automaticamente quando você deve revisar cada tema!</p>
                 `
             },
             {
@@ -9634,29 +9664,44 @@
                 `
             },
             {
+                titulo: "📝 Caderno e Hot Topics",
+                conteudo: `
+                    <p style="margin-bottom: 10px;"><strong>Anotações detalhadas por tema:</strong></p>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li>🔥 Hot Topics: pontos-chave que sempre caem em prova</li>
+                        <li>📝 Anotações detalhadas por tema</li>
+                        <li>📋 Hot Topics aparecem na aba Tarefas quando expandir um tema</li>
+                        <li>💡 Use para revisar rapidamente antes de estudar</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 Preencha os Hot Topics — eles ajudam muito na hora de estudar!</p>
+                `
+            },
+            {
                 titulo: "📌 Extras e Backup",
                 conteudo: `
                     <p style="margin-bottom: 10px;"><strong>Outras funcionalidades:</strong></p>
                     <ul style="margin-left: 20px; line-height: 1.8;">
-                        <li>📌 Lembretes personalizados</li>
-                        <li>📔 Caderno de anotações</li>
-                        <li>📤 Exportar dados (CSV)</li>
-                        <li>📥 Importar dados</li>
+                        <li>📤 Exportar backup completo (JSON)</li>
+                        <li>📥 Importar backup</li>
+                        <li>📊 Análises e gráficos de progresso</li>
+                        <li>📈 Painel de saúde VRVS 3P</li>
                     </ul>
-                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💾 Tudo é salvo localmente no seu navegador!</p>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💾 Tudo é salvo localmente no seu navegador! Faça backup regularmente.</p>
                 `
             },
             {
                 titulo: "✅ Pronto para começar!",
                 conteudo: `
                     <p style="margin-bottom: 15px;">Agora você conhece todas as funcionalidades!</p>
-                    <p style="margin-bottom: 15px;"><strong>Próximos passos:</strong></p>
+                    <p style="margin-bottom: 15px;"><strong>Fluxo diário recomendado:</strong></p>
                     <ol style="margin-left: 20px; line-height: 1.8;">
-                        <li>Adicione seus primeiros temas na aba "Dados"</li>
-                        <li>Configure a agenda</li>
-                        <li>Comece a estudar e registre suas sessões</li>
+                        <li>📋 Abra a aba <strong>Tarefas</strong> e veja o que precisa fazer hoje</li>
+                        <li>🔄 Revise os cards VRVS 3P (se houver)</li>
+                        <li>📚 Estude um tema e anote aprendizados no <strong>Diário</strong></li>
+                        <li>💬 Registre a sessão no <strong>Feedback</strong></li>
                     </ol>
-                    <p style="margin-top: 15px; color: var(--turquesa-light);">❓ Dúvidas? Use o botão de ajuda no canto da tela!</p>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 O sistema calcula tudo automaticamente. Você só precisa usar consistentemente!</p>
+                    <p style="margin-top: 10px; color: var(--turquesa-light);">❓ Dúvidas? Use o botão de ajuda no canto da tela ou consulte o manual completo!</p>
                 `
             }
         ];
@@ -17647,30 +17692,45 @@
                     <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">🎯 Tour Guiado</h3>
                     <button class="btn" onclick="iniciarTutorial()">🚀 Iniciar Tour da Plataforma</button>
                     <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 10px;">
-                        Um guia passo a passo por todas as funcionalidades
+                        Um guia passo a passo por todas as funcionalidades, incluindo o sistema VRVS 3P
                     </p>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, rgba(0,206,209,0.1), rgba(13,148,136,0.05)); border-radius: 8px; padding: 20px;">
+                <div style="background: linear-gradient(135deg, rgba(0,206,209,0.1), rgba(13,148,136,0.05)); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                     <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">📚 Guia Rápido</h3>
                     <div style="display: flex; flex-direction: column; gap: 15px;">
                         <div>
                             <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📋 Tarefa</div>
-                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Veja o que estudar hoje baseado na revisão espaçada.</div>
-                        </div>
-                        <div>
-                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📝 Feedback</div>
-                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Registre suas sessões de estudo com tempo, performance e questões.</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Veja o que estudar hoje baseado na revisão espaçada. Revise cards VRVS 3P e escolha temas para estudar.</div>
                         </div>
                         <div>
                             <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📔 Diário</div>
-                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Anote aprendizados do dia no formato pergunta/resposta para recall ativo.</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Anote aprendizados no formato pergunta/resposta. Marque "VRVS 3P" para virar card de revisão espaçada.</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">🔄 VRVS 3P</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Sistema de revisão espaçada. Cards aparecem automaticamente para revisar. Quanto mais acerta, mais tempo até próxima revisão.</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📝 Feedback</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Registre suas sessões de estudo com tempo, performance e questões. Sistema calcula quando revisar.</div>
                         </div>
                         <div>
                             <div style="color: var(--cobre-light); font-weight: 600; margin-bottom: 5px;">📓 Caderno</div>
-                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Registre Hot Topics (pontos de prova) e anotações por tema.</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.8);">Registre Hot Topics (pontos de prova) e anotações por tema. Hot Topics aparecem na aba Tarefas.</div>
                         </div>
                     </div>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(255,127,80,0.1), rgba(255,127,80,0.05)); border-radius: 8px; padding: 20px; border-left: 3px solid var(--cobre-main);">
+                    <h3 style="color: var(--cobre-light); font-size: 16px; margin-bottom: 15px;">💡 Fluxo Diário Recomendado</h3>
+                    <ol style="margin-left: 20px; line-height: 1.8; font-size: 13px; color: rgba(255,255,255,0.8);">
+                        <li>Abra a aba <strong>Tarefas</strong> e veja o que precisa fazer hoje</li>
+                        <li>Revise os cards VRVS 3P (se houver)</li>
+                        <li>Estude um tema e anote aprendizados no <strong>Diário</strong></li>
+                        <li>Registre a sessão no <strong>Feedback</strong></li>
+                    </ol>
+                    <p style="margin-top: 15px; font-size: 12px; color: rgba(255,255,255,0.7);">💡 O sistema calcula tudo automaticamente. Você só precisa usar consistentemente!</p>
                 </div>
             `;
         }
