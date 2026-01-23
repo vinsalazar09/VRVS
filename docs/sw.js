@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.127-pinch-zoom-viewer-20260123-0245";
+const CACHE_NAME = "vrvs-v5.3.128-p3a1-schema-imagem-pergunta-20260123-0300";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

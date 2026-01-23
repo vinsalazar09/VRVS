@@ -12429,6 +12429,59 @@
             // B1-FIX: Resetar flag após processar (sucesso ou falha)
             window.diario_imagemNovaSelecionada = false;
             
+            // P3A1: Processar imagem pergunta se houver
+            let imagemDataPergunta = null;
+            if (typeof diario_imagemNovaSelecionadaPergunta !== 'undefined' && diario_imagemNovaSelecionadaPergunta === true &&
+                typeof diario_imagemBlobPerguntaAtual !== 'undefined' && diario_imagemBlobPerguntaAtual && 
+                typeof diario_imagemMetadataPerguntaAtual !== 'undefined' && diario_imagemMetadataPerguntaAtual) {
+                try {
+                    // Gerar thumbnail
+                    const thumbBlobPergunta = await diario_gerarThumbnail(diario_imagemBlobPerguntaAtual);
+                    
+                    // Salvar imagem completa e thumbnail no IndexedDB (usar keys distintas para pergunta)
+                    const fullKeyPergunta = `diario:${id}:pergunta:full`;
+                    const thumbKeyPergunta = `diario:${id}:pergunta:thumb`;
+                    
+                    await b0Img_putBlob(fullKeyPergunta, diario_imagemBlobPerguntaAtual);
+                    await b0Img_putBlob(thumbKeyPergunta, thumbBlobPergunta);
+                    
+                    // Criar objeto imagem para salvar no data model
+                    imagemDataPergunta = {
+                        thumbKey: thumbKeyPergunta,
+                        fullKey: fullKeyPergunta,
+                        tipo: diario_imagemMetadataPerguntaAtual.tipo,
+                        tamanho: diario_imagemMetadataPerguntaAtual.tamanho,
+                        largura: diario_imagemMetadataPerguntaAtual.largura,
+                        altura: diario_imagemMetadataPerguntaAtual.altura,
+                        dataAdicao: hoje
+                    };
+                    
+                } catch (error) {
+                    // PATCH: Só mostrar toast se realmente havia tentativa de salvar imagem
+                    if (typeof diario_imagemNovaSelecionadaPergunta !== 'undefined' && diario_imagemNovaSelecionadaPergunta === true &&
+                        typeof diario_imagemBlobPerguntaAtual !== 'undefined' && diario_imagemBlobPerguntaAtual) {
+                        mostrarNotificacaoFeedback(`⚠️ Erro ao salvar imagem da pergunta: ${error.message}`, 'error');
+                    }
+                    // Continuar salvando entrada mesmo se imagem falhar
+                }
+            } else if (typeof diario_imagemRemovidaPergunta !== 'undefined' && diario_imagemRemovidaPergunta && entradaId) {
+                // Se flag de remoção está true e é edição, remover imagem pergunta antiga
+                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                if (entrada && entrada.imagemPergunta) {
+                    try {
+                        if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                        if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                    } catch (error) {
+                        console.error('Erro ao remover imagem pergunta:', error);
+                        // Continuar salvando entrada mesmo se remoção falhar
+                    }
+                    imagemDataPergunta = null; // Marcar para remover do data model
+                }
+            }
+            
+            // P3A1: Resetar flag após processar (sucesso ou falha)
+            window.diario_imagemNovaSelecionadaPergunta = false;
+            
             if (entradaId) {
                 // Editar entrada existente
                 const entrada = window.diario.entradas.find(e => String(e.id) === entradaId);
@@ -12475,6 +12528,43 @@
                         } else {
                             // S1-FIX: Se não tem imagemData e flag não está true, MANTER imagem existente
                             // Não fazer nada - entrada.imagem já está preservado
+                        }
+                        
+                        // P3A1: Atualizar imagem pergunta usando flag explícita
+                        if (imagemDataPergunta) {
+                            // Nova imagem pergunta: remover antiga APENAS se keys forem diferentes
+                            if (entrada.imagemPergunta) {
+                                const keysDiferentes = entrada.imagemPergunta.fullKey !== imagemDataPergunta.fullKey || 
+                                                       entrada.imagemPergunta.thumbKey !== imagemDataPergunta.thumbKey;
+                                
+                                if (keysDiferentes) {
+                                    // Keys diferentes: deletar antigas antes de salvar novas
+                                    try {
+                                        if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                        if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                                    } catch (error) {
+                                        console.error('Erro ao remover imagem pergunta antiga:', error);
+                                    }
+                                }
+                            }
+                            entrada.imagemPergunta = imagemDataPergunta;
+                        } else if (typeof diario_imagemRemovidaPergunta !== 'undefined' && diario_imagemRemovidaPergunta) {
+                            // Flag explícita: remover imagem pergunta
+                            if (entrada.imagemPergunta) {
+                                try {
+                                    if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                    if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                                } catch (error) {
+                                    console.error('Erro ao remover imagem pergunta:', error);
+                                }
+                            }
+                            entrada.imagemPergunta = null;
+                        } else {
+                            // Se não tem imagemDataPergunta e flag não está true, MANTER imagem pergunta existente
+                            // Não fazer nada - entrada.imagemPergunta já está preservado
+                            if (!entrada.imagemPergunta) {
+                                entrada.imagemPergunta = null;
+                            }
                         }
                     } else {
                         // Edição normal da Lista: atualizar tudo
@@ -12526,6 +12616,43 @@
                         // Não fazer nada - entrada.imagem já está preservado
                         if (!entrada.imagem) {
                             entrada.imagem = null;
+                        }
+                    }
+                    
+                    // P3A1: Atualizar imagem pergunta usando flag explícita
+                    if (imagemDataPergunta) {
+                        // Nova imagem pergunta: remover antiga APENAS se keys forem diferentes
+                        if (entrada.imagemPergunta) {
+                            const keysDiferentes = entrada.imagemPergunta.fullKey !== imagemDataPergunta.fullKey || 
+                                                   entrada.imagemPergunta.thumbKey !== imagemDataPergunta.thumbKey;
+                            
+                            if (keysDiferentes) {
+                                // Keys diferentes: deletar antigas antes de salvar novas
+                                try {
+                                    if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                    if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                                } catch (error) {
+                                    console.error('Erro ao remover imagem pergunta antiga:', error);
+                                }
+                            }
+                        }
+                        entrada.imagemPergunta = imagemDataPergunta;
+                    } else if (typeof diario_imagemRemovidaPergunta !== 'undefined' && diario_imagemRemovidaPergunta) {
+                        // Flag explícita: remover imagem pergunta
+                        if (entrada.imagemPergunta) {
+                            try {
+                                if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                            } catch (error) {
+                                console.error('Erro ao remover imagem pergunta:', error);
+                            }
+                        }
+                        entrada.imagemPergunta = null;
+                    } else {
+                        // Se não tem imagemDataPergunta e flag não está true, MANTER imagem pergunta existente
+                        // Não fazer nada - entrada.imagemPergunta já está preservado
+                        if (!entrada.imagemPergunta) {
+                            entrada.imagemPergunta = null;
                         }
                     }
                         
