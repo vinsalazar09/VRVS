@@ -13148,7 +13148,7 @@
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                         </div>
                         <div style="display: flex; gap: 6px;">
-                            <button onclick="toggleRevisaoDiario(${entrada.id}, this)" class="btn-toggle-revisao" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
+                            <button onclick="toggleRevisaoDiario(${entrada.id}, this)" class="btn-toggle-revisao" data-entrada-id="${entrada.id}" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
                             <button onclick="(async () => { await editarEntradaDiario(${entrada.id}); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
                         </div>
                     </div>
@@ -13595,19 +13595,18 @@
             }
         }
         
-        // P2C: Helper para encontrar container com scroll real
-        function diario_getScrollParent(el) {
-            let cur = el;
-            while (cur && cur !== document.body && cur !== document.documentElement) {
-                try {
-                    const st = window.getComputedStyle(cur);
-                    const oy = st.overflowY;
-                    const isScrollable = (oy === 'auto' || oy === 'scroll') && (cur.scrollHeight > cur.clientHeight + 1);
-                    if (isScrollable) return cur;
-                } catch (e) {}
-                cur = cur.parentElement;
-            }
-            return document.scrollingElement || document.documentElement;
+        // P2D: Helper para escolher quem está rolando (sem adivinhar)
+        function diario_getPrimaryScroller() {
+            const docEl = document.scrollingElement || document.documentElement;
+            const cont = document.getElementById('diarioContainer');
+            
+            const contScrollable = cont && (cont.scrollHeight > cont.clientHeight + 1);
+            const docScrollable = docEl && (docEl.scrollHeight > docEl.clientHeight + 1);
+            
+            // Se o container do Diário realmente rola, ele é o candidato principal
+            if (contScrollable) return cont;
+            if (docScrollable) return docEl;
+            return docEl;
         }
         
         // PATCH 3: Toggle revisão ON/OFF na lista do Diário
@@ -13624,9 +13623,10 @@
                 entrada.srs = inicializarSrsVRVS3P(hoje);
             }
             
-            // P2C: preservar scroll (usar padrão que funciona - document.scrollingElement)
-            const scrollEl = document.scrollingElement || document.documentElement;
-            const scrollTopAntes = scrollEl ? scrollEl.scrollTop : 0;
+            // P2D: âncora visual — manter o item clicado no mesmo lugar da tela
+            const scrollerAntes = diario_getPrimaryScroller();
+            const scrollTopAntes = scrollerAntes ? scrollerAntes.scrollTop : 0;
+            const yAntes = btnEl ? btnEl.getBoundingClientRect().top : null;
             
             // Toggle: inverter estado atual
             entrada.srs.ativo = !entrada.srs.ativo;
@@ -13637,18 +13637,31 @@
             // Re-renderizar lista para atualizar botão
             renderDiario();
             
-            // P2C: restaurar em 3 fases (iOS aplica ajustes depois do render + thumbs)
-            requestAnimationFrame(() => {
-                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
-            });
+            const restoreByAnchor = () => {
+                const scroller = diario_getPrimaryScroller();
+                if (!scroller) return;
+                
+                // Preferência: âncora (mais estável em iOS)
+                if (yAntes != null) {
+                    const btnDepois = document.querySelector(`.btn-toggle-revisao[data-entrada-id="${entradaId}"]`);
+                    if (btnDepois) {
+                        const yDepois = btnDepois.getBoundingClientRect().top;
+                        const delta = yDepois - yAntes;
+                        if (Number.isFinite(delta) && Math.abs(delta) > 0.5) {
+                            scroller.scrollTop = scroller.scrollTop + delta;
+                            return;
+                        }
+                    }
+                }
+                
+                // Fallback: número bruto (se não achar o botão depois do render)
+                scroller.scrollTop = scrollTopAntes;
+            };
             
-            setTimeout(() => {
-                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
-            }, 140);
-            
-            setTimeout(() => {
-                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
-            }, 380);
+            // 3 fases curtas pra vencer reflow tardio / thumbnails no iOS
+            requestAnimationFrame(restoreByAnchor);
+            setTimeout(restoreByAnchor, 140);
+            setTimeout(restoreByAnchor, 380);
             
             // Feedback visual
             const status = entrada.srs.ativo ? 'ativada' : 'desativada';
