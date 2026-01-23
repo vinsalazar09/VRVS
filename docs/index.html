@@ -13596,16 +13596,34 @@
         }
         
         // P2D: Helper para escolher quem está rolando (sem adivinhar)
-        function diario_getPrimaryScroller() {
+        // Agora recebe btnEl para encontrar o container correto (area-content ou diarioContainer)
+        function diario_getPrimaryScroller(btnEl) {
             const docEl = document.scrollingElement || document.documentElement;
+            
+            // P2D-FIX: Se btnEl existe, procurar primeiro no area-content pai (pasta colapsável)
+            if (btnEl) {
+                let cur = btnEl.parentElement;
+                while (cur && cur !== document.body && cur !== document.documentElement) {
+                    try {
+                        const st = window.getComputedStyle(cur);
+                        const oy = st.overflowY;
+                        const isScrollable = (oy === 'auto' || oy === 'scroll') && 
+                                           (cur.scrollHeight > cur.clientHeight + 1);
+                        if (isScrollable && cur.classList.contains('area-content')) {
+                            return cur; // Encontrou o area-content com scroll
+                        }
+                    } catch (e) {}
+                    cur = cur.parentElement;
+                }
+            }
+            
+            // Fallback: verificar diarioContainer
             const cont = document.getElementById('diarioContainer');
-            
             const contScrollable = cont && (cont.scrollHeight > cont.clientHeight + 1);
-            const docScrollable = docEl && (docEl.scrollHeight > docEl.clientHeight + 1);
             
-            // Se o container do Diário realmente rola, ele é o candidato principal
             if (contScrollable) return cont;
-            if (docScrollable) return docEl;
+            
+            // Último fallback: documento inteiro
             return docEl;
         }
         
@@ -13624,7 +13642,7 @@
             }
             
             // P2D: âncora visual — manter o item clicado no mesmo lugar da tela
-            const scrollerAntes = diario_getPrimaryScroller();
+            const scrollerAntes = diario_getPrimaryScroller(btnEl);
             const scrollTopAntes = scrollerAntes ? scrollerAntes.scrollTop : 0;
             const yAntes = btnEl ? btnEl.getBoundingClientRect().top : null;
             
@@ -13638,7 +13656,9 @@
             renderDiario();
             
             const restoreByAnchor = () => {
-                const scroller = diario_getPrimaryScroller();
+                // P2D-FIX: Buscar botão depois do render para encontrar o scroller correto
+                const btnDepois = document.querySelector(`.btn-toggle-revisao[data-entrada-id="${entradaId}"]`);
+                const scroller = diario_getPrimaryScroller(btnDepois);
                 if (!scroller) return;
                 
                 // Preferência: âncora (mais estável em iOS)
