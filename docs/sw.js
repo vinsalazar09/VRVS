@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.124-p2d-diary-toggle-anchor-20260123-0153";
+const CACHE_NAME = "vrvs-v5.3.125-p2d-fix-area-content-scroll-20260123-0200";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
