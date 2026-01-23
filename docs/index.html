@@ -13609,6 +13609,10 @@
                 entrada.srs = inicializarSrsVRVS3P(hoje);
             }
             
+            // PATCH P2: preservar scroll antes do render destrutivo
+            const scrollEl = document.scrollingElement || document.documentElement;
+            const scrollTopAntes = scrollEl ? scrollEl.scrollTop : 0;
+            
             // Toggle: inverter estado atual
             entrada.srs.ativo = !entrada.srs.ativo;
             
@@ -13617,6 +13621,11 @@
             
             // Re-renderizar lista para atualizar botão
             renderDiario();
+            
+            // PATCH P2: restaurar scroll após render (padrão já usado no Diário)
+            setTimeout(() => {
+                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
+            }, 100);
             
             // Feedback visual
             const status = entrada.srs.ativo ? 'ativada' : 'desativada';
