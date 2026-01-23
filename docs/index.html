@@ -13148,7 +13148,7 @@
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">❓ ${formatarTextoDiario(entrada.topico)}</div>
                         </div>
                         <div style="display: flex; gap: 6px;">
-                            <button onclick="toggleRevisaoDiario(${entrada.id})" class="btn-toggle-revisao" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
+                            <button onclick="toggleRevisaoDiario(${entrada.id}, this)" class="btn-toggle-revisao" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
                             <button onclick="(async () => { await editarEntradaDiario(${entrada.id}); })()" style="background: transparent; border: none; color: rgba(0,206,209,0.7); cursor: pointer; font-size: 14px; padding: 4px 8px;">✏️</button>
                         </div>
                     </div>
@@ -13595,8 +13595,23 @@
             }
         }
         
+        // P2C: Helper para encontrar container com scroll real
+        function diario_getScrollParent(el) {
+            let cur = el;
+            while (cur && cur !== document.body && cur !== document.documentElement) {
+                try {
+                    const st = window.getComputedStyle(cur);
+                    const oy = st.overflowY;
+                    const isScrollable = (oy === 'auto' || oy === 'scroll') && (cur.scrollHeight > cur.clientHeight + 1);
+                    if (isScrollable) return cur;
+                } catch (e) {}
+                cur = cur.parentElement;
+            }
+            return document.scrollingElement || document.documentElement;
+        }
+        
         // PATCH 3: Toggle revisão ON/OFF na lista do Diário
-        function toggleRevisaoDiario(entradaId) {
+        function toggleRevisaoDiario(entradaId, btnEl) {
             const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
             if (!entrada) {
                 mostrarNotificacaoFeedback('⚠️ Entrada não encontrada!', 'error');
@@ -13609,8 +13624,8 @@
                 entrada.srs = inicializarSrsVRVS3P(hoje);
             }
             
-            // PATCH P2: preservar scroll antes do render destrutivo
-            const scrollEl = document.scrollingElement || document.documentElement;
+            // P2C: preservar scroll do container real (não assumir window/documento)
+            const scrollEl = diario_getScrollParent(btnEl);
             const scrollTopAntes = scrollEl ? scrollEl.scrollTop : 0;
             
             // Toggle: inverter estado atual
@@ -13622,10 +13637,21 @@
             // Re-renderizar lista para atualizar botão
             renderDiario();
             
-            // PATCH P2: restaurar scroll após render (padrão já usado no Diário)
+            // P2C: restaurar em 3 fases (iOS aplica ajustes depois do render + thumbs)
+            requestAnimationFrame(() => {
+                const se = (scrollEl && scrollEl.isConnected) ? scrollEl : (document.scrollingElement || document.documentElement);
+                if (se) se.scrollTop = scrollTopAntes;
+            });
+            
             setTimeout(() => {
-                if (scrollEl) scrollEl.scrollTop = scrollTopAntes;
-            }, 100);
+                const se = (scrollEl && scrollEl.isConnected) ? scrollEl : (document.scrollingElement || document.documentElement);
+                if (se) se.scrollTop = scrollTopAntes;
+            }, 140);
+            
+            setTimeout(() => {
+                const se = (scrollEl && scrollEl.isConnected) ? scrollEl : (document.scrollingElement || document.documentElement);
+                if (se) se.scrollTop = scrollTopAntes;
+            }, 380);
             
             // Feedback visual
             const status = entrada.srs.ativo ? 'ativada' : 'desativada';
