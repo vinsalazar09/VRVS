@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.148-fix-syntax-sorted-20260124-1337";
+const CACHE_NAME = "vrvs-v5.3.150-s2-cache-scope-20260124-1405";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -14,27 +14,12 @@ const FILES_TO_CACHE = [
 // Instalar Service Worker
 self.addEventListener('install', (event) => {
     console.log('[Service Worker] Instalando versão:', CACHE_NAME);
-    // Forçar ativação imediata ANTES de qualquer coisa
+    // Forçar ativação imediata
     self.skipWaiting();
     event.waitUntil(
-        Promise.all([
-            // Limpar TODOS os caches antigos primeiro
-            caches.keys().then((cacheNames) => {
-                return Promise.all(
-                    cacheNames.map((cacheName) => {
-                        console.log('[Service Worker] Removendo cache antigo na instalação:', cacheName);
-                        return caches.delete(cacheName);
-                    })
-                );
-            }),
-            // Criar novo cache em paralelo
-            caches.open(CACHE_NAME).then((cache) => {
-                console.log('[Service Worker] Fazendo cache dos arquivos');
-                return cache.addAll(FILES_TO_CACHE);
-            })
-        ]).then(() => {
-            // Forçar skip novamente após cache
-            self.skipWaiting();
+        caches.open(CACHE_NAME).then((cache) => {
+            console.log('[Service Worker] Fazendo cache dos arquivos');
+            return cache.addAll(FILES_TO_CACHE);
         })
     );
 });
@@ -43,10 +28,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     console.log('[Service Worker] Ativando versão:', CACHE_NAME);
     event.waitUntil((async () => {
-        // Limpar caches antigos
+        // Limpar apenas caches antigos do VRVS
         const keys = await caches.keys();
-        await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => {
-            console.log('[Service Worker] Removendo cache antigo na ativação:', k);
+        const vrvsOldCaches = keys.filter(k => k.startsWith('vrvs-') && k !== CACHE_NAME);
+        await Promise.all(vrvsOldCaches.map(k => {
+            console.log('[Service Worker] Removendo cache antigo VRVS na ativação:', k);
             return caches.delete(k);
         }));
         // Forçar controle imediato de todas as páginas
@@ -73,54 +59,68 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Detectar HTML: navigate ou accept inclui text/html
+    const accept = event.request.headers.get('accept') || '';
+    const isHTML = event.request.mode === 'navigate' || accept.includes('text/html');
+    
     // ESTRATÉGIA: Network-first para HTML (força atualização sempre)
-    if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
+    if (isHTML) {
         event.respondWith(
-            fetch(event.request, { cache: 'no-store' }).then((response) => {
-                // Se conseguiu buscar da rede, atualizar cache
-                if (response && response.status === 200) {
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
+            (async () => {
+                try {
+                    // Network-first: sempre buscar da rede primeiro
+                    const response = await fetch(event.request, { cache: 'no-store' });
+                    if (response && response.status === 200) {
+                        // Atualizar cache atual com resposta da rede
+                        const cache = await caches.open(CACHE_NAME);
+                        // Cachear tanto event.request quanto './index.html' (clones separados)
+                        await cache.put(event.request, response.clone());
+                        await cache.put('./index.html', response.clone());
+                    }
+                    return response;
+                } catch (error) {
+                    // Se offline, usar SOMENTE cache atual
+                    const cache = await caches.open(CACHE_NAME);
+                    const cachedResponse = await cache.match(event.request, { ignoreSearch: true });
+                    if (cachedResponse) return cachedResponse;
+                    // Fallback: buscar index.html do cache atual
+                    const indexCached = await cache.match('./index.html', { ignoreSearch: true });
+                    if (indexCached) return indexCached;
+                    // Último recurso: erro offline
+                    return new Response('Offline', { status: 503 });
                 }
-                return response;
-            }).catch(() => {
-                // Se offline, usar cache
-                return caches.match(event.request).then((response) => {
-                    return response || caches.match('./index.html');
-                });
-            })
+            })()
         );
         return;
     }
 
-    // Para outros arquivos, usar cache-first mas verificar atualização
+    // Para outros arquivos (assets), usar cache-first SOMENTE no cache atual
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            // Buscar da rede primeiro para verificar atualizações
-            return fetch(event.request).then((networkResponse) => {
-                // Se conseguiu da rede e é sucesso, atualizar cache
+        (async () => {
+            const cache = await caches.open(CACHE_NAME);
+            // Primeiro tentar cache atual
+            const cachedResponse = await cache.match(event.request, { ignoreSearch: true });
+            if (cachedResponse) {
+                // Em background, verificar atualização da rede
+                fetch(event.request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                }).catch(() => {});
+                return cachedResponse;
+            }
+            // Se não tem no cache atual, buscar da rede e gravar no cache atual
+            try {
+                const networkResponse = await fetch(event.request);
                 if (networkResponse && networkResponse.status === 200) {
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                    return networkResponse;
+                    await cache.put(event.request, networkResponse.clone());
                 }
-                // Se não conseguiu da rede, usar cache se disponível
-                return response || networkResponse;
-            }).catch(() => {
-                // Se offline, usar cache se disponível
-                if (response) {
-                    return response;
-                }
-                // Se for HTML e offline, retornar index.html
-                if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
-                    return caches.match('./index.html');
-                }
-            });
-        })
+                return networkResponse;
+            } catch (error) {
+                // Se offline e não tem no cache atual, retornar erro
+                return new Response('Offline', { status: 503 });
+            }
+        })()
     );
 });
 
