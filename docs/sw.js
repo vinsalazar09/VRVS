@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.141-revert-imagem-pergunta-20260123-0630";
+const CACHE_NAME = "vrvs-v5.3.141-stable-rollback-20260124-0800";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
