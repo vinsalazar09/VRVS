@@ -1,0 +1,432 @@
+commit bc39c3b424da521f39ee83ee0d84abdf65b693d2
+Author: vinsalazar09 <vinsalazar09@gmail.com>
+Date:   Fri Jan 16 23:52:37 2026 -0300
+
+    feat: PATCH 2/1/3 - contraste botão + preservar estado render + ver respostas fim treino
+    
+    PATCH 2: Corrigir contraste botão 'Apagar este card' (texto branco sobre fundo vermelho)
+    PATCH 1: Preservar estado (colapsáveis + scroll + âncora) após re-render em todas as funções
+    PATCH 3: Adicionar bloco colapsável 'Ver respostas' no fim do treino (normal + avaliação)
+    
+    - Helpers: vrvsCaptureRenderState() e vrvsRestoreRenderState()
+    - Aplicado em: renderDiario(), renderCadernoV2(), renderTarefas(), renderPendencias()
+    - Sistema de âncora: window.__vrvsRenderAnchorSel + data-diario-id nos cards
+    - Snapshot treino normal: window.treinoLivreFimDados criado também para treino normal
+    - Bloco <details> com respostas completas (sem truncamento)
+    
+    CACHE_NAME: vrvs-v5.3.97-patch3-ver-respostas-fim-treino
+
+diff --git a/docs/index.html b/docs/index.html
+index 933a387..1fd01d1 100644
+--- a/docs/index.html
++++ b/docs/index.html
+@@ -3223,7 +3223,7 @@
+                 </div>
+                 
+                 <div id="btnExcluirEntradaWrapper" style="display: none; margin-top: 16px;">
+-                    <button type="button" class="btn btn-danger" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #EF4444;">
++                    <button type="button" class="btn btn-danger" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; background: #EF4444; border-color: #EF4444; color: #FFFFFF; font-weight: 800;">
+                         🗑️ Apagar este card
+                     </button>
+                 </div>
+@@ -5108,6 +5108,10 @@
+             const limiteStr = limite.toISOString().split('T')[0];
+             
+             const container = document.getElementById('pendenciasContainer');
++            if (!container) return;
++            
++            // PATCH 1: Capturar estado antes do render
++            const renderState = vrvsCaptureRenderState(container);
+             
+             const pendencias = dados.filter(t => {
+                 if (!t.agenda || !t.tema) return false;
+@@ -5197,6 +5201,11 @@
+                 </div>
+                 `;
+             }).join('');
++            
++            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
++            if (renderState) {
++                vrvsRestoreRenderState(container, renderState);
++            }
+         }
+         
+         // REMOVIDO: inicializarEventListenersPendencias()
+@@ -5625,6 +5634,11 @@
+             const hojeStr = hojeStrLocal();
+             
+             const container = document.getElementById('tarefasContainer');
++            if (!container) return;
++            
++            // PATCH 1: Capturar estado antes do render
++            const renderState = vrvsCaptureRenderState(container);
++            
+             let html = '';
+             
+             // ===== CALCULAR CONTAGEM DE DIÁRIO ATIVO POR TEMA (uma vez só) =====
+@@ -5758,6 +5772,11 @@
+             });
+             
+             container.innerHTML = html;
++            
++            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
++            if (renderState) {
++                vrvsRestoreRenderState(container, renderState);
++            }
+         }
+         
+         // ===== PATCH D - FUNÇÃO DE FILTRO DE TAREFAS =====
+@@ -11911,6 +11930,12 @@
+                 // Limpar flag
+                 window.editandoDaSessao = false;
+                 
++                // PATCH 1: Setar âncora antes de renderizar
++                const entradaIdFinal = entradaId || (window.diario.entradas.length > 0 ? window.diario.entradas[window.diario.entradas.length - 1].id : null);
++                if (entradaIdFinal) {
++                    window.__vrvsRenderAnchorSel = `[data-diario-id="${entradaIdFinal}"]`;
++                }
++                
+                 // Fechar modal antes de renderizar (evita conflito visual)
+             fecharModalDiario();
+                 
+@@ -12078,12 +12103,8 @@
+                 return;
+             }
+             
+-            // TOGGLE FIX 01: Capturar estado de expansão antes do render
+-            const estadosExpandidos = new Set();
+-            container.querySelectorAll('.area-content:not(.collapsed)').forEach(el => {
+-                const id = el.id;
+-                if (id) estadosExpandidos.add(id);
+-            });
++            // PATCH 1: Capturar estado completo (colapsáveis + scroll + âncora)
++            const renderState = vrvsCaptureRenderState(container);
+             
+             const filtroVista = document.getElementById('filtroDiarioVista')?.value || 'data';
+             const filtroArea = document.getElementById('filtroDiarioArea')?.value || '';
+@@ -12122,13 +12143,13 @@
+             }
+             
+             if (filtroVista === 'data') {
+-                renderDiarioPorData(entradasFiltradas, container, estadosExpandidos);
++                renderDiarioPorData(entradasFiltradas, container, renderState);
+             } else {
+-                renderDiarioPorTema(entradasFiltradas, container, estadosExpandidos);
++                renderDiarioPorTema(entradasFiltradas, container, renderState);
+             }
+         }
+         
+-        function renderDiarioPorData(entradas, container, estadosExpandidos = new Set()) {
++        function renderDiarioPorData(entradas, container, renderState = null) {
+             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
+             const parseData = (entrada) => {
+                 try {
+@@ -12192,26 +12213,13 @@
+             
+             container.innerHTML = html;
+             
+-            // TOGGLE FIX 01: Restaurar estado de expansão após render
+-            estadosExpandidos.forEach(id => {
+-                const content = document.getElementById(id);
+-                const header = document.querySelector(`[onclick*="${id.replace('area-content-', '')}"]`);
+-                if (content && header) {
+-                    content.classList.remove('collapsed');
+-                    header.classList.remove('collapsed');
+-                    // Aplicar lógica de expansão (max-height, display, etc.)
+-                    const scrollHeight = content.scrollHeight;
+-                    const viewportHeight = window.innerHeight;
+-                    const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7);
+-                    content.style.maxHeight = maxHeightVH + 'px';
+-                    if (content.style.display === 'none') {
+-                        content.style.display = '';
+-                    }
+-                }
+-            });
++            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
++            if (renderState) {
++                vrvsRestoreRenderState(container, renderState);
++            }
+         }
+         
+-        function renderDiarioPorTema(entradas, container, estadosExpandidos = new Set()) {
++        function renderDiarioPorTema(entradas, container, renderState = null) {
+             /* === PATCH 2 - ORDENAÇÃO POR DATA (31/12/2025) === */
+             const parseData = (entrada) => {
+                 try {
+@@ -12351,23 +12359,10 @@
+             
+             container.innerHTML = html;
+             
+-            // TOGGLE FIX 01: Restaurar estado de expansão após render
+-            estadosExpandidos.forEach(id => {
+-                const content = document.getElementById(id);
+-                const header = document.querySelector(`[onclick*="${id.replace('area-content-', '')}"]`);
+-                if (content && header) {
+-                    content.classList.remove('collapsed');
+-                    header.classList.remove('collapsed');
+-                    // Aplicar lógica de expansão (max-height, display, etc.)
+-                    const scrollHeight = content.scrollHeight;
+-                    const viewportHeight = window.innerHeight;
+-                    const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7);
+-                    content.style.maxHeight = maxHeightVH + 'px';
+-                    if (content.style.display === 'none') {
+-                        content.style.display = '';
+-                    }
+-                }
+-            });
++            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
++            if (renderState) {
++                vrvsRestoreRenderState(container, renderState);
++            }
+         }
+         
+         function renderEntradaDiario(entrada) {
+@@ -12386,7 +12381,7 @@
+             const chipsHTML = chips.length > 0 ? `<div style="display: flex; gap: 4px; align-items: center; margin-bottom: 4px;">${chips.join('')}</div>` : '';
+             
+             return `
+-                <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255,127,80,0.2);">
++                <div data-diario-id="${entrada.id}" style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255,127,80,0.2);">
+                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                         <div style="flex: 1;">
+                             <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 4px;">
+@@ -13722,13 +13717,18 @@
+                 resultado = calcularFeedbackTL3();
+             }
+             
+-            // A1: Criar snapshot ANTES de limpar (para detalhes por card)
+-            if (modoAvaliacao && window.treinoLivreAvaliacao && window.treinoLivreFila) {
+-                window.treinoLivreFimDados = {
+-                    fila: [...window.treinoLivreFila], // cópia do array
+-                    notas: { ...window.treinoLivreAvaliacao.notas }, // cópia do objeto
+-                    config: { ...window.treinoLivreAvaliacao.config } // cópia do objeto
+-                };
++            // PATCH 3: Criar snapshot ANTES de limpar (para detalhes por card + ver respostas)
++            // Sempre criar snapshot, tanto para avaliação quanto para treino normal
++            if (window.treinoLivreFila && window.treinoLivreFila.length > 0) {
++                window.treinoLivreFimDados = window.treinoLivreFimDados || {};
++                window.treinoLivreFimDados.fila = [...window.treinoLivreFila]; // cópia do array
++                window.treinoLivreFimDados.modo = modoAvaliacao ? 'avaliacao' : 'normal';
++                
++                // Se Modo Avaliação, incluir notas e config
++                if (modoAvaliacao && window.treinoLivreAvaliacao) {
++                    window.treinoLivreFimDados.notas = { ...window.treinoLivreAvaliacao.notas };
++                    window.treinoLivreFimDados.config = { ...window.treinoLivreAvaliacao.config };
++                }
+             }
+             
+             window.treinoLivreEstado = null;
+@@ -13917,11 +13917,34 @@
+                         </div>
+                         ` : ''}
+                         
++                        ${window.treinoLivreFimDados && window.treinoLivreFimDados.fila ? `
++                        <details style="margin-top: 20px; margin-bottom: 20px;">
++                            <summary style="cursor: pointer; padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--turquesa-light); user-select: none;">
++                                👁️ Ver respostas (revisão rápida)
++                            </summary>
++                            <div style="margin-top: 12px; padding: 16px; background: rgba(20,35,45,0.6); border-radius: 8px; max-height: 60vh; overflow-y: auto;">
++                                ${window.treinoLivreFimDados.fila.map((entrada, idx) => `
++                                    <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
++                                        <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 8px;">
++                                            ${idx + 1}. ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
++                                        </div>
++                                        <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
++                                            ❓ ${escapeHtml(entrada.topico || '(Sem tópico)')}
++                                        </div>
++                                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
++                                            ✅ ${escapeHtml(entrada.resposta || '(Sem resposta)')}
++                                        </div>
++                                    </div>
++                                `).join('')}
++                            </div>
++                        </details>
++                        ` : ''}
++                        
+                         <div style="font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; margin-bottom: 20px; font-style: italic;">
+                             Anote o score e registre manualmente na aba Feedback, se quiser.
+                         </div>
+                         
+-                        ${window.treinoLivreFimDados ? `
++                        ${window.treinoLivreFimDados && window.treinoLivreFimDados.modo === 'avaliacao' ? `
+                         <button id="btnToggleDetalhes" class="btn" onclick="window.toggleDetalhesTreinoFim()" style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px; background: rgba(0, 206, 209, 0.2); border: 1px solid var(--turquesa-main);">
+                             📋 Ver detalhes por card
+                         </button>
+@@ -13965,6 +13988,30 @@
+                     <div class="treino-livre-fim-titulo">✓ Treino concluído</div>
+                     <div class="treino-livre-fim-detalhe">${total} itens revisados</div>
+                     <div class="treino-livre-fim-disclaimer">(nenhuma alteração salva)</div>
++                    
++                    ${window.treinoLivreFimDados && window.treinoLivreFimDados.fila ? `
++                    <details style="margin-top: 20px; margin-bottom: 20px;">
++                        <summary style="cursor: pointer; padding: 12px; background: rgba(0,206,209,0.1); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--turquesa-light); user-select: none;">
++                            👁️ Ver respostas (revisão rápida)
++                        </summary>
++                        <div style="margin-top: 12px; padding: 16px; background: rgba(20,35,45,0.6); border-radius: 8px; max-height: 60vh; overflow-y: auto;">
++                            ${window.treinoLivreFimDados.fila.map((entrada, idx) => `
++                                <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
++                                    <div style="font-size: 12px; color: rgba(0,206,209,0.7); margin-bottom: 8px;">
++                                        ${idx + 1}. ${escapeHtml(entrada.area || '')} • ${escapeHtml(entrada.tema || '')}
++                                    </div>
++                                    <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
++                                        ❓ ${escapeHtml(entrada.topico || '(Sem tópico)')}
++                                    </div>
++                                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">
++                                        ✅ ${escapeHtml(entrada.resposta || '(Sem resposta)')}
++                                    </div>
++                                </div>
++                            `).join('')}
++                        </div>
++                    </details>
++                    ` : ''}
++                    
+                     <button class="btn" onclick="sairTreinoLivre()" style="padding: 12px 24px; font-size: 14px;">
+                         Voltar ao Diário
+                     </button>
+@@ -14929,6 +14976,9 @@
+             const container = document.getElementById('cadernoAreasContainer');
+             if (!container) return;
+             
++            // PATCH 1: Capturar estado antes do render
++            const renderState = vrvsCaptureRenderState(container);
++            
+             // Recarregar anotações
+             try {
+                 const anotacoesSalvas = localStorage.getItem('vrvs_anotacoes');
+@@ -15082,6 +15132,11 @@
+             });
+             
+             container.innerHTML = html;
++            
++            // PATCH 1: Restaurar estado completo (colapsáveis + scroll + âncora)
++            if (renderState) {
++                vrvsRestoreRenderState(container, renderState);
++            }
+         }
+         
+         function toggleTemaCaderno(temaId) {
+@@ -15105,6 +15160,112 @@
+             }
+         }
+         
++        // ==================== PATCH 1: HELPERS PRESERVAÇÃO DE ESTADO ====================
++        
++        // Variável global para âncora de render
++        window.__vrvsRenderAnchorSel = null;
++        
++        // Capturar estado antes do render (colapsáveis + scroll + âncora)
++        function vrvsCaptureRenderState(container) {
++            if (!container) return null;
++            
++            const state = {
++                colapsaveis: new Set(),
++                temasExpandidos: new Set(), // Para Caderno V2
++                scrollY: window.scrollY,
++                anchorTop: null,
++                anchorSel: window.__vrvsRenderAnchorSel || null
++            };
++            
++            // Capturar áreas expandidas (sem .collapsed)
++            container.querySelectorAll('.area-content:not(.collapsed)').forEach(el => {
++                const id = el.id;
++                if (id) state.colapsaveis.add(id);
++            });
++            
++            // Capturar temas expandidos (Caderno V2)
++            container.querySelectorAll('[id^="tema-conteudo-"]:not(.collapsed)').forEach(el => {
++                const id = el.id;
++                if (id) state.temasExpandidos.add(id);
++            });
++            
++            // Capturar posição da âncora se existir
++            if (state.anchorSel) {
++                const anchorEl = document.querySelector(state.anchorSel);
++                if (anchorEl) {
++                    state.anchorTop = anchorEl.getBoundingClientRect().top + window.scrollY;
++                }
++            }
++            
++            return state;
++        }
++        
++        // Restaurar estado após o render
++        function vrvsRestoreRenderState(container, state) {
++            if (!container || !state) return;
++            
++            // Restaurar áreas expandidas
++            state.colapsaveis.forEach(id => {
++                const content = document.getElementById(id);
++                const header = document.querySelector(`[onclick*="${id.replace('area-content-', '')}"]`);
++                if (content && header) {
++                    content.classList.remove('collapsed');
++                    header.classList.remove('collapsed');
++                    // Aplicar max-height se necessário
++                    if (content.scrollHeight > 0) {
++                        const scrollHeight = content.scrollHeight;
++                        const viewportHeight = window.innerHeight;
++                        const maxHeightVH = Math.min(scrollHeight + 100, viewportHeight * 0.7);
++                        content.style.maxHeight = maxHeightVH + 'px';
++                    }
++                    if (content.style.display === 'none') {
++                        content.style.display = '';
++                    }
++                }
++            });
++            
++            // Restaurar temas expandidos (Caderno V2)
++            state.temasExpandidos.forEach(id => {
++                const conteudo = document.getElementById(id);
++                if (conteudo) {
++                    conteudo.classList.remove('collapsed');
++                    conteudo.style.maxHeight = '';
++                    conteudo.style.display = 'block';
++                    conteudo.style.overflow = 'visible';
++                }
++            });
++            
++            // Restaurar scroll/âncora
++            if (state.anchorSel && state.anchorTop !== null) {
++                const anchorEl = document.querySelector(state.anchorSel);
++                if (anchorEl) {
++                    const topAfter = anchorEl.getBoundingClientRect().top + window.scrollY;
++                    const delta = topAfter - state.anchorTop;
++                    window.scrollTo({
++                        top: state.scrollY + delta,
++                        behavior: 'instant'
++                    });
++                } else {
++                    // Fallback: restaurar scroll Y original
++                    window.scrollTo({
++                        top: state.scrollY,
++                        behavior: 'instant'
++                    });
++                }
++            } else {
++                // Sem âncora: restaurar scroll Y original
++                window.scrollTo({
++                    top: state.scrollY,
++                    behavior: 'instant'
++                });
++            }
++            
++            // Limpar âncora após uso
++            window.__vrvsRenderAnchorSel = null;
++        }
++        
++        // ==================== FIM PATCH 1 HELPERS ====================
++        
+         function toggleAreaCaderno(areaId) {
+             const header = document.querySelector(`[onclick="toggleAreaCaderno('${areaId}')"]`);
+             const content = document.getElementById(`area-content-${areaId}`);
+diff --git a/docs/sw.js b/docs/sw.js
+index 0fc6961..8683e91 100644
+--- a/docs/sw.js
++++ b/docs/sw.js
+@@ -1,6 +1,6 @@
+ // Service Worker para VRVS - Funcionamento Offline
+ // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
+-const CACHE_NAME = "vrvs-v5.3.94-backup-raw-export-ui";
++const CACHE_NAME = "vrvs-v5.3.97-patch3-ver-respostas-fim-treino";
+ 
+ // Arquivos essenciais para cache
+ const FILES_TO_CACHE = [
