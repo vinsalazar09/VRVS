@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.154-s3b-quota-parse-doctor-20260124-1627";
+const CACHE_NAME = "vrvs-v5.3.155-s3c-tdz-diarioBuscaRAF-20260124-1700";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
