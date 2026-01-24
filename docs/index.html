@@ -3,6 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <script>
+        // S3A: BOOT TRACE + ERRO VISÍVEL (sempre ativo)
+        (function() {
+            // Helpers para boot trace
+            function setBootStep(n) {
+                try {
+                    localStorage.setItem('vrvs_last_boot_step', String(n));
+                    updateSplashDebugLine();
+                } catch(e) {}
+            }
+            
+            function setBootErr(msg) {
+                try {
+                    const msgShort = String(msg).substring(0, 180);
+                    localStorage.setItem('vrvs_last_boot_err', msgShort);
+                    updateSplashDebugLine();
+                } catch(e) {}
+            }
+            
+            function updateSplashDebugLine() {
+                try {
+                    const el = document.getElementById('splashDebugLine');
+                    if (!el) return;
+                    const step = localStorage.getItem('vrvs_last_boot_step') || '?';
+                    const err = localStorage.getItem('vrvs_last_boot_err') || '—';
+                    el.textContent = 'BOOT: ' + step + ' | ERR: ' + err;
+                } catch(e) {}
+            }
+            
+            // Handlers de erro globais
+            window.addEventListener('error', function(e) {
+                setBootErr('JS: ' + (e.message || String(e)).substring(0, 150));
+            });
+            
+            window.addEventListener('unhandledrejection', function(e) {
+                setBootErr('PROMISE: ' + (e.reason || String(e)).substring(0, 150));
+            });
+            
+            // Updater periódico para #splashDebugLine
+            setInterval(updateSplashDebugLine, 500);
+            
+            // Airbag final (8s)
+            setTimeout(function() {
+                try {
+                    const splash = document.getElementById('splashScreen');
+                    const body = document.body;
+                    if (splash && !splash.classList.contains('hidden')) {
+                        setBootErr('BOOT_TIMEOUT');
+                        splash.classList.add('fade-out');
+                        if (body) body.classList.remove('splash-loading');
+                        setTimeout(function() {
+                            if (splash) splash.classList.add('hidden');
+                        }, 800);
+                    }
+                } catch(e) {}
+            }, 8000);
+            
+            // Marcação inicial
+            setBootStep(1);
+        })();
+        
         // VRVS DEBUG MODE — Desligado por padrão em produção
         const VRVS_DEBUG = false;
         
@@ -3443,6 +3503,7 @@
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
         <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1405 | CACHE: vrvs-v5.3.150-s2-cache-scope-20260124-1405</div>
+        <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div class="splash-loader"></div>
         <div class="splash-progress">
             <div class="splash-progress-bar"></div>
@@ -5030,12 +5091,28 @@
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         
+        // S3A: Safe JSON parse helper (se ainda não foi definido)
+        if (typeof safeJSONFromLS === 'undefined') {
+            function safeJSONFromLS(key, fallback) {
+                try {
+                    const raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : fallback;
+                } catch(e) {
+                    if (typeof setBootErr === 'function') {
+                        setBootErr(key + ': ' + (e.message || String(e)).substring(0, 150));
+                    }
+                    return fallback;
+                }
+            }
+        }
+        
         if (typeof __vrvsMark === 'function') __vrvsMark(2); // Antes do primeiro carregamento do localStorage
-        let dados = JSON.parse(localStorage.getItem('vrvs_dados') || '[]');
-        let historico = JSON.parse(localStorage.getItem('vrvs_historico') || '[]');
+        if (typeof setBootStep === 'function') setBootStep(2);
+        let dados = safeJSONFromLS('vrvs_dados', []);
+        let historico = safeJSONFromLS('vrvs_historico', []);
         
         // P4: Carregar áreas customizadas persistentes
-        let vrvsAreasCustom = JSON.parse(localStorage.getItem('vrvs_areas_custom') || '[]');
+        let vrvsAreasCustom = safeJSONFromLS('vrvs_areas_custom', []);
         // Garantir Array, garantir strings, trim, remover vazios, deduplicar, sort
         if (!Array.isArray(vrvsAreasCustom)) vrvsAreasCustom = [];
         vrvsAreasCustom = vrvsAreasCustom
@@ -5044,14 +5121,15 @@
             .filter((a, i, arr) => arr.indexOf(a) === i) // Deduplicar
             .sort();
         window.vrvsAreasCustom = vrvsAreasCustom;
-        let lembretes = JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]');
-        let anotacoes = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'); // Anotações por tema
+        let lembretes = safeJSONFromLS('vrvs_lembretes', []);
+        let anotacoes = safeJSONFromLS('vrvs_anotacoes', []); // Anotações por tema
         
         // Aplicar correção de inversão área/tema nos dados carregados
         if (Array.isArray(dados)) {
             dados = dados.map(d => fixAreaTemaObjeto(d));
         }
         if (typeof __vrvsMark === 'function') __vrvsMark(3); // Logo após concluir o carregamento dos dados
+        if (typeof setBootStep === 'function') setBootStep(3);
         
         // Limpar dados corrompidos
         function limparDadosCorretos() {
@@ -5139,7 +5217,15 @@
             try {
                 const diarioSalvo = localStorage.getItem('vrvs_diario');
                 if (diarioSalvo) {
-                    const diario = JSON.parse(diarioSalvo);
+                    let diario;
+                    try {
+                        diario = JSON.parse(diarioSalvo);
+                    } catch(e) {
+                        if (typeof setBootErr === 'function') {
+                            setBootErr('vrvs_diario(norm): ' + (e.message || String(e)).substring(0, 150));
+                        }
+                        diario = null;
+                    }
                     if (diario && Array.isArray(diario.entradas)) {
                         diario.entradas.forEach(e => {
                             if (e.area) {
@@ -5178,7 +5264,15 @@
             const diarioSalvo = localStorage.getItem('vrvs_diario');
             const schemaVersion = (typeof DIARIO_SCHEMA_VERSION !== 'undefined' ? DIARIO_SCHEMA_VERSION : '1.0');
             if (diarioSalvo) {
-                const diarioParsed = JSON.parse(diarioSalvo);
+                let diarioParsed;
+                try {
+                    diarioParsed = JSON.parse(diarioSalvo);
+                } catch(e) {
+                    if (typeof setBootErr === 'function') {
+                        setBootErr('vrvs_diario: ' + (e.message || String(e)).substring(0, 150));
+                    }
+                    diarioParsed = null;
+                }
                 // Compatibilidade: aceitar tanto {entradas:[]} quanto [] direto
                 if (Array.isArray(diarioParsed)) {
                     window.diario = { entradas: diarioParsed, schemaVersion: schemaVersion };
@@ -5191,6 +5285,9 @@
                 window.diario = { entradas: [], schemaVersion: schemaVersion };
             }
         } catch (e) {
+            if (typeof setBootErr === 'function') {
+                setBootErr('diario_init: ' + (e.message || String(e)).substring(0, 150));
+            }
             console.error('[INICIALIZAÇÃO] Erro ao carregar diário:', e);
             window.diario = { entradas: [], schemaVersion: '1.0' };
         }
@@ -10647,6 +10744,7 @@
             if (!window.splashScreenRemovido) {
                 window.splashScreenRemovido = true;
                 if (typeof __vrvsMark === 'function') __vrvsMark(5); // No ponto mais próximo de remover/ocultar splash
+                if (typeof setBootStep === 'function') setBootStep(5);
                 setTimeout(() => {
                     try {
                         const splash = document.getElementById('splashScreen');
