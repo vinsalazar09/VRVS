@@ -151,8 +151,45 @@
                 }
             }
             
-            function setBootErr(msg) {
-                const msgShort = String(msg).substring(0, 180);
+            // S3J: Helper para formatar erro com stack trace e localização
+            function fmtErr(e) {
+                try {
+                    const msg = (e && (e.message || e.reason)) ? String(e.message || e.reason) : String(e);
+                    const stack = e && e.stack ? String(e.stack) : '';
+                    
+                    // Extrair primeira ocorrência de ":<linha>:<col>" do stack para index.html ou sw.js
+                    let loc = '';
+                    const m = stack.match(/(index\.html|sw\.js|\/VRVS\/index\.html|\/VRVS\/sw\.js)[^\n]*:(\d+):(\d+)/);
+                    if (m) loc = ` @ ${m[1]}:${m[2]}:${m[3]}`;
+                    
+                    // Se não encontrou no stack, tentar propriedades do evento
+                    if (!loc && e) {
+                        const source = e.filename || e.sourceURL || '';
+                        const line = e.lineno || e.line || '';
+                        const col = e.colno || e.column || '';
+                        if (source && line) loc = ` @ ${source}:${line}:${col}`;
+                    }
+                    
+                    // Retornar mensagem formatada com stack truncado
+                    const stackShort = stack ? stack.substring(0, 300) : '';
+                    return { msg, stack, loc, stackShort };
+                } catch(_) {
+                    return { msg: String(e), stack: '', loc: '', stackShort: '' };
+                }
+            }
+            
+            function setBootErr(msgOrError) {
+                // S3J: Aceitar string ou objeto Error
+                let msgShort, stackInfo = '';
+                if (msgOrError && typeof msgOrError === 'object' && (msgOrError.message || msgOrError.stack)) {
+                    const fmt = fmtErr(msgOrError);
+                    msgShort = fmt.msg + fmt.loc;
+                    if (fmt.stackShort) stackInfo = ' | STK: ' + fmt.stackShort;
+                } else {
+                    msgShort = String(msgOrError);
+                }
+                msgShort = msgShort.substring(0, 180);
+                if (stackInfo) msgShort += stackInfo.substring(0, 200);
                 bootErrMemory = msgShort;
                 if (localStorageQuotaExceeded) {
                     updateSplashDebugLine();
@@ -196,11 +233,15 @@
                     updateSplashDebugLine();
                     return;
                 }
-                const jsErrorMsg = e.message || String(e || 'Unknown error');
-                const source = e.filename || e.sourceURL || '??';
-                const line = e.lineno || e.line || '??';
-                const col = e.colno || e.column || '??';
-                setBootErr('JS: ' + String(jsErrorMsg).substring(0, 100) + ' @ ' + source + ':' + line + ':' + col);
+                // S3J: Passar objeto Error completo com prefixo JS e stack
+                const err = e.error || e;
+                setBootErr({ 
+                    message: 'JS: ' + (err.message || String(err)), 
+                    stack: err.stack || '', 
+                    filename: e.filename, 
+                    lineno: e.lineno, 
+                    colno: e.colno 
+                });
             });
             
             window.addEventListener('unhandledrejection', function(e) {
@@ -209,11 +250,12 @@
                     updateSplashDebugLine();
                     return;
                 }
-                const promiseErrorMsg = e.reason ? (e.reason.message || String(e.reason)) : String(e || 'Unknown promise rejection');
-                const source = e.filename || e.sourceURL || '??';
-                const line = e.lineno || e.line || '??';
-                const col = e.colno || e.column || '??';
-                setBootErr('PROMISE: ' + String(promiseErrorMsg).substring(0, 100) + ' @ ' + source + ':' + line + ':' + col);
+                // S3J: Passar objeto Error completo com prefixo PROMISE e stack
+                const err = e.reason || e;
+                setBootErr({ 
+                    message: 'PROMISE: ' + (err.message || String(err)), 
+                    stack: err.stack || '' 
+                });
             });
             
             // Updater periódico para #splashDebugLine
@@ -3678,7 +3720,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1945 | CACHE: vrvs-v5.3.161-s3i-fix-sw-load-20260124-1945</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2000 | CACHE: vrvs-v5.3.162-s3j-diag-stack-trace-20260124-2000</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -5290,8 +5332,11 @@
                 } catch(e) {
                     // Não tentar setBootErr se for QuotaExceededError (evitar loop)
                     if (typeof setBootErr === 'function' && e.name !== 'QuotaExceededError' && !(e.message && e.message.includes('quota'))) {
-                        const parseErrorMsg = e.message || String(e || 'Parse error');
-                        setBootErr(key + ': ' + String(parseErrorMsg).substring(0, 150));
+                        // S3J: Passar objeto Error completo com stack
+                        setBootErr({ 
+                            message: key + ': ' + (e.message || String(e || 'Parse error')), 
+                            stack: e.stack || '' 
+                        });
                     }
                     return fallback;
                 }
@@ -5440,8 +5485,11 @@
                         diario = JSON.parse(diarioSalvo);
                     } catch(e) {
                         if (typeof setBootErr === 'function') {
-                            const diarioNormErrorMsg = e.message || String(e || 'Diario norm error');
-                            setBootErr('vrvs_diario(norm): ' + String(diarioNormErrorMsg).substring(0, 150));
+                            // S3J: Passar objeto Error completo com stack
+                            setBootErr({ 
+                                message: 'vrvs_diario(norm): ' + (e.message || String(e || 'Diario norm error')), 
+                                stack: e.stack || '' 
+                            });
                         }
                         diario = null;
                     }
@@ -5549,8 +5597,11 @@
                     diarioParsed = JSON.parse(diarioSalvo);
                 } catch(e) {
                     if (typeof setBootErr === 'function') {
-                        const diarioErrorMsg = e.message || String(e || 'Diario error');
-                        setBootErr('vrvs_diario: ' + String(diarioErrorMsg).substring(0, 150));
+                        // S3J: Passar objeto Error completo com stack
+                        setBootErr({ 
+                            message: 'vrvs_diario: ' + (e.message || String(e || 'Diario error')), 
+                            stack: e.stack || '' 
+                        });
                     }
                     diarioParsed = null;
                 }
@@ -5567,8 +5618,11 @@
             }
         } catch (e) {
             if (typeof setBootErr === 'function') {
-                const diarioInitErrorMsg = e.message || String(e || 'Diario init error');
-                setBootErr('diario_init: ' + String(diarioInitErrorMsg).substring(0, 150));
+                // S3J: Passar objeto Error completo com stack
+                setBootErr({ 
+                    message: 'diario_init: ' + (e.message || String(e || 'Diario init error')), 
+                    stack: e.stack || '' 
+                });
             }
             console.error('[INICIALIZAÇÃO] Erro ao carregar diário:', e);
             window.diario = { entradas: [], schemaVersion: '1.0' };
