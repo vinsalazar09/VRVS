@@ -3656,7 +3656,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1730 | CACHE: vrvs-v5.3.156-s3d-window-diarioBuscaRAF-20260124-1730</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1800 | CACHE: vrvs-v5.3.157-s3e-tdz-diario-timers-20260124-1800</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -5248,6 +5248,11 @@
         
         // S3D: Declaração global cedo para evitar TDZ (antes de qualquer uso)
         window.diarioBuscaRAF = window.diarioBuscaRAF ?? null;
+        
+        // S3E: timers globais do Diário (evita TDZ no boot)
+        window.diarioChipVrvs3pTimeout = window.diarioChipVrvs3pTimeout ?? null;
+        window.diarioBuscaTimeout = window.diarioBuscaTimeout ?? null;
+        window.diarioRenderando = window.diarioRenderando ?? false;
         
         // S3A: Safe JSON parse helper (se ainda não foi definido)
         if (typeof safeJSONFromLS === 'undefined') {
@@ -8428,16 +8433,16 @@
             }
             if (sectionId === 'diario') {
                 // S6-NAV-FIX2: Limpar setTimeout pendente antes de criar novo
-                if (diarioChipVrvs3pTimeout !== null) {
-                    clearTimeout(diarioChipVrvs3pTimeout);
-                    diarioChipVrvs3pTimeout = null;
+                if (window.diarioChipVrvs3pTimeout !== null) {
+                    clearTimeout(window.diarioChipVrvs3pTimeout);
+                    window.diarioChipVrvs3pTimeout = null;
                 }
                 
                 renderDiario();
                 // Atualizar chip VRVS 3P quando abrir aba Diário
-                diarioChipVrvs3pTimeout = setTimeout(() => {
+                window.diarioChipVrvs3pTimeout = setTimeout(() => {
                     atualizarChipVrvs3p();
-                    diarioChipVrvs3pTimeout = null; // Limpar após executar
+                    window.diarioChipVrvs3pTimeout = null; // Limpar após executar
                 }, 50);
             }
             if (sectionId === 'analises') {
@@ -13295,16 +13300,16 @@
         
         function renderDiario() {
             // S6-NAV-FIX2: Prevenir múltiplas renderizações simultâneas
-            if (diarioRenderando) {
+            if (window.diarioRenderando) {
                 return; // Já está renderizando, ignorar chamada
             }
             
-            diarioRenderando = true;
+            window.diarioRenderando = true;
             
             try {
                 const container = document.getElementById('diarioContainer');
                 if (!container) {
-                    diarioRenderando = false;
+                    window.diarioRenderando = false;
                     return;
                 }
             
@@ -13318,7 +13323,7 @@
                 const revisarHoje = document.getElementById('diarioRevisarHoje');
                 if (revisarHoje) revisarHoje.style.display = 'none';
                 
-                diarioRenderando = false; // S6-NAV-FIX2: Liberar flag antes de return
+                window.diarioRenderando = false; // S6-NAV-FIX2: Liberar flag antes de return
                 return;
             }
             
@@ -13399,7 +13404,7 @@
             });
             } finally {
                 // S6-NAV-FIX2: Sempre liberar flag, mesmo em caso de erro
-                diarioRenderando = false;
+                window.diarioRenderando = false;
             }
         }
         
@@ -13711,10 +13716,10 @@
         }
         
         // S4: Busca no Diário (tópico + tema + área)
-        let diarioBuscaTimeout = null;
+        // S3E: REMOVIDO: usar window.diarioBuscaTimeout (evita TDZ) - declarado globalmente cedo
         // S3D: REMOVIDO: usar window.diarioBuscaRAF (evita TDZ) - declarado globalmente cedo
-        let diarioChipVrvs3pTimeout = null; // S6-NAV-FIX2: Armazenar ID do setTimeout do chip
-        let diarioRenderando = false; // S6-NAV-FIX2: Flag para prevenir múltiplas renderizações simultâneas
+        // S3E: REMOVIDO: usar window.diarioChipVrvs3pTimeout (evita TDZ) - declarado globalmente cedo
+        // S3E: REMOVIDO: usar window.diarioRenderando (evita TDZ) - declarado globalmente cedo
         
         function filtrarDiarioPorBusca() {
             const buscaInput = document.getElementById('filtroDiarioBusca');
@@ -13732,8 +13737,8 @@
             }
             
             // Debounce 200ms
-            clearTimeout(diarioBuscaTimeout);
-            diarioBuscaTimeout = setTimeout(() => {
+            clearTimeout(window.diarioBuscaTimeout);
+            window.diarioBuscaTimeout = setTimeout(() => {
                 if (!termo) {
                     // S4-MICRO: termo vazio (backspace) deve normalizar 100% sem trocar vista
                     if (resultadosDiv) resultadosDiv.style.display = 'none';
