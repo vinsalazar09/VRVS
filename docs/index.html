@@ -132,6 +132,37 @@
             setTimeout(vrvsShowRescueOverlayIfStuck, 7000);
         }
         
+        // === FALLBACK EMERGÊNCIA SPLASH (remove splash mesmo se window.onload falhar) ===
+        (function() {
+            // Timeout de segurança: remover splash após 5 segundos mesmo se window.onload não executar
+            setTimeout(function() {
+                try {
+                    const splash = document.getElementById('splashScreen');
+                    const body = document.body;
+                    if (splash && !splash.classList.contains('hidden')) {
+                        splash.classList.add('fade-out');
+                        if (body) {
+                            body.classList.remove('splash-loading');
+                        }
+                        setTimeout(function() {
+                            if (splash && !splash.classList.contains('hidden')) {
+                                splash.classList.add('hidden');
+                            }
+                        }, 800);
+                    }
+                } catch(e) {
+                    console.error('[FALLBACK SPLASH] Erro ao remover splash:', e);
+                    // Último recurso: tentar remover diretamente
+                    try {
+                        const splash = document.getElementById('splashScreen');
+                        const body = document.body;
+                        if (splash) splash.classList.add('hidden');
+                        if (body) body.classList.remove('splash-loading');
+                    } catch(e2) {}
+                }
+            }, 5000);
+        })();
+        
         // === VRVS EMERGÊNCIA (PWA preso no splash) - SEMPRE DISPONÍVEL ===
         window.vrvsDownloadRawStoragePWA = function(){
             try {
