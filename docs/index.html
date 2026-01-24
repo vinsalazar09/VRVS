@@ -5,38 +5,83 @@
     <script>
         // S3A: BOOT TRACE + ERRO VISÍVEL (sempre ativo)
         (function() {
-            // Helpers para boot trace
+            // Flag para evitar loop quando localStorage está cheio
+            let localStorageQuotaExceeded = false;
+            let bootStepMemory = '?';
+            let bootErrMemory = '—';
+            
+            // Helpers para boot trace (protegidos contra QuotaExceededError)
             function setBootStep(n) {
+                bootStepMemory = String(n);
+                if (localStorageQuotaExceeded) {
+                    updateSplashDebugLine();
+                    return;
+                }
                 try {
                     localStorage.setItem('vrvs_last_boot_step', String(n));
                     updateSplashDebugLine();
-                } catch(e) {}
+                } catch(e) {
+                    if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
+                        localStorageQuotaExceeded = true;
+                    }
+                    updateSplashDebugLine();
+                }
             }
             
             function setBootErr(msg) {
+                const msgShort = String(msg).substring(0, 180);
+                bootErrMemory = msgShort;
+                if (localStorageQuotaExceeded) {
+                    updateSplashDebugLine();
+                    return;
+                }
                 try {
-                    const msgShort = String(msg).substring(0, 180);
                     localStorage.setItem('vrvs_last_boot_err', msgShort);
                     updateSplashDebugLine();
-                } catch(e) {}
+                } catch(e) {
+                    if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
+                        localStorageQuotaExceeded = true;
+                    }
+                    updateSplashDebugLine();
+                }
             }
             
             function updateSplashDebugLine() {
                 try {
                     const el = document.getElementById('splashDebugLine');
                     if (!el) return;
-                    const step = localStorage.getItem('vrvs_last_boot_step') || '?';
-                    const err = localStorage.getItem('vrvs_last_boot_err') || '—';
+                    let step = bootStepMemory;
+                    let err = bootErrMemory;
+                    if (!localStorageQuotaExceeded) {
+                        try {
+                            step = localStorage.getItem('vrvs_last_boot_step') || bootStepMemory;
+                            err = localStorage.getItem('vrvs_last_boot_err') || bootErrMemory;
+                        } catch(e) {
+                            if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
+                                localStorageQuotaExceeded = true;
+                            }
+                        }
+                    }
                     el.textContent = 'BOOT: ' + step + ' | ERR: ' + err;
                 } catch(e) {}
             }
             
-            // Handlers de erro globais
+            // Handlers de erro globais (protegidos contra QuotaExceededError)
             window.addEventListener('error', function(e) {
+                if (e.error && (e.error.name === 'QuotaExceededError' || (e.error.message && e.error.message.includes('quota')))) {
+                    bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
+                    updateSplashDebugLine();
+                    return;
+                }
                 setBootErr('JS: ' + (e.message || String(e)).substring(0, 150));
             });
             
             window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && (e.reason.name === 'QuotaExceededError' || (e.reason.message && e.reason.message.includes('quota')))) {
+                    bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
+                    updateSplashDebugLine();
+                    return;
+                }
                 setBootErr('PROMISE: ' + (e.reason || String(e)).substring(0, 150));
             });
             
@@ -5098,12 +5143,14 @@
                     const raw = localStorage.getItem(key);
                     return raw ? JSON.parse(raw) : fallback;
                 } catch(e) {
-                    if (typeof setBootErr === 'function') {
+                    // Não tentar setBootErr se for QuotaExceededError (evitar loop)
+                    if (typeof setBootErr === 'function' && e.name !== 'QuotaExceededError' && !(e.message && e.message.includes('quota'))) {
                         setBootErr(key + ': ' + (e.message || String(e)).substring(0, 150));
                     }
                     return fallback;
                 }
             }
+            window.safeJSONFromLS = safeJSONFromLS;
         }
         
         if (typeof __vrvsMark === 'function') __vrvsMark(2); // Antes do primeiro carregamento do localStorage
