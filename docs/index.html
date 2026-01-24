@@ -16,6 +16,14 @@
             } catch(e) {}
         })();
     </script>
+    <!-- S3I: Inicializar variáveis globais ANTES de qualquer código (evita TDZ) -->
+    <script>
+        (function(){
+            window.vistaAnalytics = window.vistaAnalytics ?? 'resumo';
+            window.vistaAgenda = window.vistaAgenda ?? 'timeline';
+            window.vistaAjuda = window.vistaAjuda ?? 'tutorial';
+        })();
+    </script>
     <script>
         // S3B: QUOTA GUARD + PARSE GUARD — Detecção precoce ANTES de qualquer setItem
         (function() {
@@ -5318,10 +5326,7 @@
         window.diarioBuscaTimeout = window.diarioBuscaTimeout ?? null;
         window.diarioRenderando = window.diarioRenderando ?? false;
         
-        // S3G: vistas globais (evita TDZ no boot)
-        window.vistaAgenda = window.vistaAgenda ?? 'timeline';
-        window.vistaAnalytics = window.vistaAnalytics ?? 'resumo';
-        window.vistaAjuda = window.vistaAjuda ?? 'tutorial';
+        // S3G: vistas globais (evita TDZ no boot) - REMOVIDO: já inicializado no topo do HTML
         
         // S3A: Safe JSON parse helper (se ainda não foi definido)
         if (typeof safeJSONFromLS === 'undefined') {
