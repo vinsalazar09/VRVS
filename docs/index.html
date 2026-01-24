@@ -2249,6 +2249,13 @@
             );
         }
         /* ==================== SPLASH SCREEN ==================== */
+        @keyframes splashFailSafeHide {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+        
         #splashScreen {
             position: fixed;
             top: 0;
@@ -2263,6 +2270,8 @@
             z-index: 10000;
             opacity: 1;
             transition: opacity 0.8s ease-out;
+            pointer-events: none; /* FAILSAFE: não bloqueia toques mesmo se JS não executar */
+            animation: splashFailSafeHide .6s ease-out 8s forwards; /* Auto-hide após 8s se JS não executar */
         }
         
         #splashScreen.fade-out {
@@ -2373,7 +2382,9 @@
         }
         
         body.splash-loading {
-            overflow: hidden;
+            /* REMOVIDO overflow: hidden para evitar hard lock se JS não executar */
+            /* Classe ainda é usada pelo JS para controle, mas não bloqueia interação */
+            overflow: auto; /* Permite scroll mesmo se JS não executar */
         }
         
         /* ===== NOVOS ESTILOS - REFATORAÇÃO v2.0 ===== */
@@ -3431,6 +3442,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1400 | CACHE: vrvs-v5.3.147-recovery-failsafe-20260124-1400</div>
         <div class="splash-loader"></div>
         <div class="splash-progress">
             <div class="splash-progress-bar"></div>
@@ -10612,6 +10624,14 @@
                 passoAtual = 0;
                 mostrarPassoTutorial();
                 document.getElementById('tutorialModal').style.display = 'flex';
+            }
+            
+            // Detectar recovery
+            if (window.location.search.includes('recovered=1')) {
+                setTimeout(() => {
+                    alert('✓ Cache limpo com sucesso! O aplicativo foi recarregado.');
+                    window.history.replaceState({}, '', window.location.pathname);
+                }, 3000);
             }
             
             // Splash Screen - Esconder após carregar (executar apenas uma vez)

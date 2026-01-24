@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRVS - Recovery</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a1a1f 0%, #051015 50%, #0a1a1f 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .warning {
+            color: #ff9800;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 VRVS Recovery</h1>
+        <p>Se o aplicativo estiver travado, clique no botão abaixo para limpar o Service Worker e caches.</p>
+        <p class="warning">⚠️ Seus dados (localStorage) NÃO serão apagados.</p>
+        <button onclick="recover()">Limpar Cache e Recarregar</button>
+        <div id="status" style="margin-top: 20px; font-size: 14px;"></div>
+    </div>
+    <script>
+        async function recover() {
+            const status = document.getElementById('status');
+            status.textContent = 'Processando...';
+            try {
+                // 1. Unregister Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let reg of registrations) {
+                        await reg.unregister();
+                        status.textContent += ' ✓ SW removido';
+                    }
+                }
+                // 2. Limpar todos os caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let name of cacheNames) {
+                        await caches.delete(name);
+                        status.textContent += ' ✓ Cache ' + name + ' removido';
+                    }
+                }
+                // 3. Aguardar um pouco
+                await new Promise(resolve => setTimeout(resolve, 500));
+                // 4. Redirect para index.html com flag de recovery
+                status.textContent = '✓ Concluído! Redirecionando...';
+                setTimeout(() => {
+                    window.location.href = './index.html?recovered=1';
+                }, 1000);
+            } catch(e) {
+                status.textContent = '❌ Erro: ' + e.message;
+                console.error('[RECOVERY] Erro:', e);
+            }
+        }
+    </script>
+</body>
+</html>
+
