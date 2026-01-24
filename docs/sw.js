@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.157-s3e-tdz-diario-timers-20260124-1800";
+const CACHE_NAME = "vrvs-v5.3.158-s3f-fix-substring-error-20260124-1855";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

@@ -182,7 +182,8 @@
                     updateSplashDebugLine();
                     return;
                 }
-                setBootErr('JS: ' + (e.message || String(e)).substring(0, 150));
+                const jsErrorMsg = e.message || String(e || 'Unknown error');
+                setBootErr('JS: ' + String(jsErrorMsg).substring(0, 150));
             });
             
             window.addEventListener('unhandledrejection', function(e) {
@@ -191,7 +192,8 @@
                     updateSplashDebugLine();
                     return;
                 }
-                setBootErr('PROMISE: ' + (e.reason || String(e)).substring(0, 150));
+                const promiseErrorMsg = e.reason ? (e.reason.message || String(e.reason)) : String(e || 'Unknown promise rejection');
+                setBootErr('PROMISE: ' + String(promiseErrorMsg).substring(0, 150));
             });
             
             // Updater periódico para #splashDebugLine
@@ -3656,7 +3658,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1800 | CACHE: vrvs-v5.3.157-s3e-tdz-diario-timers-20260124-1800</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1855 | CACHE: vrvs-v5.3.158-s3f-fix-substring-error-20260124-1855</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -5263,7 +5265,8 @@
                 } catch(e) {
                     // Não tentar setBootErr se for QuotaExceededError (evitar loop)
                     if (typeof setBootErr === 'function' && e.name !== 'QuotaExceededError' && !(e.message && e.message.includes('quota'))) {
-                        setBootErr(key + ': ' + (e.message || String(e)).substring(0, 150));
+                        const parseErrorMsg = e.message || String(e || 'Parse error');
+                        setBootErr(key + ': ' + String(parseErrorMsg).substring(0, 150));
                     }
                     return fallback;
                 }
@@ -5412,7 +5415,8 @@
                         diario = JSON.parse(diarioSalvo);
                     } catch(e) {
                         if (typeof setBootErr === 'function') {
-                            setBootErr('vrvs_diario(norm): ' + (e.message || String(e)).substring(0, 150));
+                            const diarioNormErrorMsg = e.message || String(e || 'Diario norm error');
+                            setBootErr('vrvs_diario(norm): ' + String(diarioNormErrorMsg).substring(0, 150));
                         }
                         diario = null;
                     }
@@ -5520,7 +5524,8 @@
                     diarioParsed = JSON.parse(diarioSalvo);
                 } catch(e) {
                     if (typeof setBootErr === 'function') {
-                        setBootErr('vrvs_diario: ' + (e.message || String(e)).substring(0, 150));
+                        const diarioErrorMsg = e.message || String(e || 'Diario error');
+                        setBootErr('vrvs_diario: ' + String(diarioErrorMsg).substring(0, 150));
                     }
                     diarioParsed = null;
                 }
@@ -5537,7 +5542,8 @@
             }
         } catch (e) {
             if (typeof setBootErr === 'function') {
-                setBootErr('diario_init: ' + (e.message || String(e)).substring(0, 150));
+                const diarioInitErrorMsg = e.message || String(e || 'Diario init error');
+                setBootErr('diario_init: ' + String(diarioInitErrorMsg).substring(0, 150));
             }
             console.error('[INICIALIZAÇÃO] Erro ao carregar diário:', e);
             window.diario = { entradas: [], schemaVersion: '1.0' };
