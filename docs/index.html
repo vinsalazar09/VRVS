@@ -197,7 +197,10 @@
                     return;
                 }
                 const jsErrorMsg = e.message || String(e || 'Unknown error');
-                setBootErr('JS: ' + String(jsErrorMsg).substring(0, 150));
+                const source = e.filename || e.sourceURL || '??';
+                const line = e.lineno || e.line || '??';
+                const col = e.colno || e.column || '??';
+                setBootErr('JS: ' + String(jsErrorMsg).substring(0, 100) + ' @ ' + source + ':' + line + ':' + col);
             });
             
             window.addEventListener('unhandledrejection', function(e) {
@@ -207,7 +210,10 @@
                     return;
                 }
                 const promiseErrorMsg = e.reason ? (e.reason.message || String(e.reason)) : String(e || 'Unknown promise rejection');
-                setBootErr('PROMISE: ' + String(promiseErrorMsg).substring(0, 150));
+                const source = e.filename || e.sourceURL || '??';
+                const line = e.lineno || e.line || '??';
+                const col = e.colno || e.column || '??';
+                setBootErr('PROMISE: ' + String(promiseErrorMsg).substring(0, 100) + ' @ ' + source + ':' + line + ':' + col);
             });
             
             // Updater periódico para #splashDebugLine
@@ -3672,7 +3678,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1930 | CACHE: vrvs-v5.3.160-s3h-force-exec-20260124-1930</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1945 | CACHE: vrvs-v5.3.161-s3i-fix-sw-load-20260124-1945</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -10635,6 +10641,9 @@
             
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
+                // S3I: Cache-bust para forçar download do SW (evita "load failed" por cache quebrado)
+                const SW_URL = './sw.js?v=20260124-1945';
+                
                 // Forçar reload quando Service Worker atualizar (ANTES de registrar)
                 let reloading = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -10644,7 +10653,7 @@
                     window.location.reload();
                 });
                 
-                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then((registration) => {
+                navigator.serviceWorker.register(SW_URL, { updateViaCache: 'none' }).then((registration) => {
                     console.log('✅ Service Worker registrado:', registration.scope);
                     
                     // Verificar atualizações imediatamente
