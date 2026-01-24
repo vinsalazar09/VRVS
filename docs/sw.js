@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.158-s3f-fix-substring-error-20260124-1855";
+const CACHE_NAME = "vrvs-v5.3.159-s3g-tdz-vistas-20260124-1900";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

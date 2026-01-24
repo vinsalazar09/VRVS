@@ -3658,7 +3658,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1855 | CACHE: vrvs-v5.3.158-s3f-fix-substring-error-20260124-1855</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1900 | CACHE: vrvs-v5.3.159-s3g-tdz-vistas-20260124-1900</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -5255,6 +5255,11 @@
         window.diarioChipVrvs3pTimeout = window.diarioChipVrvs3pTimeout ?? null;
         window.diarioBuscaTimeout = window.diarioBuscaTimeout ?? null;
         window.diarioRenderando = window.diarioRenderando ?? false;
+        
+        // S3G: vistas globais (evita TDZ no boot)
+        window.vistaAgenda = window.vistaAgenda ?? 'timeline';
+        window.vistaAnalytics = window.vistaAnalytics ?? 'resumo';
+        window.vistaAjuda = window.vistaAjuda ?? 'tutorial';
         
         // S3A: Safe JSON parse helper (se ainda não foi definido)
         if (typeof safeJSONFromLS === 'undefined') {
@@ -8466,7 +8471,7 @@
                     carregarDiario();
                 }
                 // Garantir que a vista inicial seja renderizada
-                if (!vistaAnalytics) vistaAnalytics = 'resumo';
+                if (!window.vistaAnalytics) window.vistaAnalytics = 'resumo';
                 renderAnalytics();
             }
             if (sectionId === 'backup') {
@@ -17362,10 +17367,10 @@
         
         // ==================== AGENDA UNIFICADA ====================
         
-        let vistaAgenda = 'timeline';
+        // S3G: REMOVIDO — usar window.vistaAgenda (evita TDZ no boot) - declarado globalmente cedo
         
         function setVistaAgenda(vista) {
-            vistaAgenda = vista;
+            window.vistaAgenda = vista;
             
             // Atualizar botões
             document.getElementById('btnTimeline').classList.toggle('active', vista === 'timeline');
@@ -17381,7 +17386,7 @@
         }
         
         function renderAgendaUnificada() {
-            if (vistaAgenda === 'atrasados') {
+            if (window.vistaAgenda === 'atrasados') {
                 renderAgendaAtrasados();
             } else {
                 renderAgenda();
@@ -17524,10 +17529,10 @@
         
         // ==================== ANÁLISES ====================
         
-        let vistaAnalytics = 'resumo';
+        // S3G: REMOVIDO — usar window.vistaAnalytics (evita TDZ no boot) - declarado globalmente cedo
         
         function setVistaAnalytics(vista) {
-            vistaAnalytics = vista;
+            window.vistaAnalytics = vista;
             
             // Atualizar botões
             document.querySelectorAll('.sub-nav-btn').forEach(btn => {
@@ -17563,11 +17568,11 @@
             }
             
             // Garantir que vistaAnalytics tenha um valor válido
-            if (!vistaAnalytics) vistaAnalytics = 'resumo';
+            if (!window.vistaAnalytics) window.vistaAnalytics = 'resumo';
             
-            console.log('[ANALYTICS] Renderizando vista:', vistaAnalytics);
+            console.log('[ANALYTICS] Renderizando vista:', window.vistaAnalytics);
             
-            switch(vistaAnalytics) {
+            switch(window.vistaAnalytics) {
                 case 'resumo':
                     renderAnalyticsResumo(container);
                     break;
@@ -17582,8 +17587,8 @@
                     renderAnalyticsHistorico(container);
                     break;
                 default:
-                    console.warn('[ANALYTICS] Vista desconhecida:', vistaAnalytics, '- usando resumo');
-                    vistaAnalytics = 'resumo';
+                    console.warn('[ANALYTICS] Vista desconhecida:', window.vistaAnalytics, '- usando resumo');
+                    window.vistaAnalytics = 'resumo';
                     renderAnalyticsResumo(container);
                     break;
             }
@@ -18111,10 +18116,10 @@
         
         // ==================== AJUDA ====================
         
-        let vistaAjuda = 'tutorial';
+        // S3G: REMOVIDO — usar window.vistaAjuda (evita TDZ no boot) - declarado globalmente cedo
         
         function setVistaAjuda(vista) {
-            vistaAjuda = vista;
+            window.vistaAjuda = vista;
             
             // Atualizar botões
             document.querySelectorAll('.sub-nav-btn').forEach(btn => {
@@ -18133,7 +18138,7 @@
             const container = document.getElementById('ajudaContainer');
             if (!container) return;
             
-            switch(vistaAjuda) {
+            switch(window.vistaAjuda) {
                 case 'tutorial':
                     renderAjudaTutorial(container);
                     break;
