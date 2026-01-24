@@ -3,6 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <script>
+        // S3B: QUOTA GUARD + PARSE GUARD — Detecção precoce ANTES de qualquer setItem
+        (function() {
+            // Helper para detectar QuotaExceededError
+            function isQuotaExceeded(e) {
+                if (!e) return false;
+                return e.name === 'QuotaExceededError' || 
+                       e.code === 22 || 
+                       (e.message && e.message.toLowerCase().includes('quota'));
+            }
+            
+            // Helper para abortar boot e mostrar erro no splash
+            function abortBoot(reason, displayText) {
+                window.__vrvsBootAbort = true;
+                window.__vrvsBootAbortReason = reason;
+                window.__vrvsBootAbortDisplay = displayText || reason;
+                
+                // S3B FIX: Declarar reasonParam antes do setTimeout para escopo correto
+                const reasonParam = reason.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                
+                // Registrar listener DOMContentLoaded ANTES de abortar
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        try {
+                            // Mostrar marcador no splash
+                            const marker = document.getElementById('bootMarkerQuota');
+                            if (marker) {
+                                marker.style.display = 'block';
+                                marker.textContent = 'ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
+                            }
+                            
+                            // Atualizar splashDebugLine
+                            const debugLine = document.getElementById('splashDebugLine');
+                            if (debugLine) {
+                                debugLine.textContent = 'BOOT: ABORT | ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
+                            }
+                        } catch(_) {}
+                    });
+                } else {
+                    // DOM já carregado, atualizar imediatamente
+                    try {
+                        const marker = document.getElementById('bootMarkerQuota');
+                        if (marker) {
+                            marker.style.display = 'block';
+                            marker.textContent = 'ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
+                        }
+                        const debugLine = document.getElementById('splashDebugLine');
+                        if (debugLine) {
+                            debugLine.textContent = 'BOOT: ABORT | ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
+                        }
+                    } catch(_) {}
+                }
+                
+                // Redirecionar após delay
+                setTimeout(function() {
+                    try {
+                        location.replace('./recover.html?mode=storage&reason=' + reasonParam);
+                    } catch(_) {
+                        window.location.href = './recover.html?mode=storage&reason=' + reasonParam;
+                    }
+                }, 200);
+            }
+            
+            // Helper para parse seguro com limite de tamanho
+            function safeParseLS(key, fallback, maxBytes) {
+                maxBytes = maxBytes || (4 * 1024 * 1024); // Default 4MB
+                
+                try {
+                    const raw = localStorage.getItem(key);
+                    if (raw === null) return fallback;
+                    
+                    // Verificar tamanho antes de parsear
+                    const sizeBytes = raw.length * 2; // UTF-16: 2 bytes por char
+                    if (sizeBytes > maxBytes) {
+                        abortBoot('TOO_BIG:' + key, 'STORAGE');
+                        throw new Error('TOO_BIG:' + key);
+                    }
+                    
+                    // Tentar parsear
+                    try {
+                        return JSON.parse(raw);
+                    } catch(parseErr) {
+                        abortBoot('PARSE_FAIL:' + key, 'PARSE');
+                        throw parseErr;
+                    }
+                } catch(e) {
+                    // Se já abortou, re-lançar
+                    if (window.__vrvsBootAbort) throw e;
+                    // Caso contrário, retornar fallback
+                    return fallback;
+                }
+            }
+            
+            // Teste de quota no boot mais precoce possível (ANTES de qualquer setItem)
+            try {
+                localStorage.setItem('__vrvs_quota_test', '1');
+                localStorage.removeItem('__vrvs_quota_test');
+            } catch(e) {
+                if (isQuotaExceeded(e)) {
+                    abortBoot('QUOTA', 'QUOTA');
+                    throw new Error('QUOTA_EXCEEDED: localStorage cheio. Redirecionando para recovery.');
+                }
+            }
+            
+            // S3B FIX: Expor helpers globalmente para uso no código principal
+            window.isQuotaExceeded = isQuotaExceeded;
+            window.safeParseLS = safeParseLS;
+            window.abortBoot = abortBoot;
+        })();
+        
         // S3A: BOOT TRACE + ERRO VISÍVEL (sempre ativo)
         (function() {
             // Flag para evitar loop quando localStorage está cheio
@@ -3547,8 +3656,9 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1405 | CACHE: vrvs-v5.3.150-s2-cache-scope-20260124-1405</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1627 | CACHE: vrvs-v5.3.154-s3b-quota-parse-doctor-20260124-1627</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
+        <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
         <div class="splash-progress">
             <div class="splash-progress-bar"></div>
@@ -5155,11 +5265,12 @@
         
         if (typeof __vrvsMark === 'function') __vrvsMark(2); // Antes do primeiro carregamento do localStorage
         if (typeof setBootStep === 'function') setBootStep(2);
-        let dados = safeJSONFromLS('vrvs_dados', []);
-        let historico = safeJSONFromLS('vrvs_historico', []);
+        // S3B: Usar safeParseLS com limite de tamanho (4MB por chave)
+        let dados = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_dados', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_dados', []);
+        let historico = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_historico', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_historico', []);
         
         // P4: Carregar áreas customizadas persistentes
-        let vrvsAreasCustom = safeJSONFromLS('vrvs_areas_custom', []);
+        let vrvsAreasCustom = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_areas_custom', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_areas_custom', []);
         // Garantir Array, garantir strings, trim, remover vazios, deduplicar, sort
         if (!Array.isArray(vrvsAreasCustom)) vrvsAreasCustom = [];
         vrvsAreasCustom = vrvsAreasCustom
@@ -5168,8 +5279,8 @@
             .filter((a, i, arr) => arr.indexOf(a) === i) // Deduplicar
             .sort();
         window.vrvsAreasCustom = vrvsAreasCustom;
-        let lembretes = safeJSONFromLS('vrvs_lembretes', []);
-        let anotacoes = safeJSONFromLS('vrvs_anotacoes', []); // Anotações por tema
+        let lembretes = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_lembretes', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_lembretes', []);
+        let anotacoes = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_anotacoes', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_anotacoes', []); // Anotações por tema
         
         // Aplicar correção de inversão área/tema nos dados carregados
         if (Array.isArray(dados)) {
@@ -5194,7 +5305,19 @@
             
             if (dados.length < dadosOriginais) {
                 console.log(`🧹 Limpeza: removidos ${dadosOriginais - dados.length} registros corrompidos`);
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                // S3B: Proteger setItem contra quota excedida (com abort se falhar)
+                try {
+                    localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                } catch(e) {
+                    if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                        if (typeof window.abortBoot === 'function') {
+                            window.abortBoot('QUOTA_DADOS_CLEAN', 'QUOTA');
+                        }
+                        throw new Error('QUOTA_EXCEEDED: Falha ao salvar dados limpos');
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
         
@@ -5220,8 +5343,20 @@
             });
             
             if (historico.length < historicoOriginal) {
-                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
-                console.log(`🧹 Limpeza: removidos ${historicoOriginal - historico.length} registros inválidos do histórico`);
+                // S3B: Proteger setItem contra quota excedida (com abort se falhar)
+                try {
+                    localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                    console.log(`🧹 Limpeza: removidos ${historicoOriginal - historico.length} registros inválidos do histórico`);
+                } catch(e) {
+                    if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                        if (typeof window.abortBoot === 'function') {
+                            window.abortBoot('QUOTA_HISTORICO_CLEAN', 'QUOTA');
+                        }
+                        throw new Error('QUOTA_EXCEEDED: Falha ao salvar histórico limpo');
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
         
@@ -5281,18 +5416,79 @@
                                 if (areaAntiga !== e.area) alteracoes++;
                             }
                         });
-                        localStorage.setItem('vrvs_diario', JSON.stringify(diario));
+                        // S3B: Proteger setItem contra quota excedida (com abort se falhar)
+                        try {
+                            localStorage.setItem('vrvs_diario', JSON.stringify(diario));
+                        } catch(e) {
+                            if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                                // Abortar boot e redirecionar
+                                if (typeof window.abortBoot === 'function') {
+                                    window.abortBoot('QUOTA_DIARIO_NORM', 'QUOTA');
+                                }
+                                throw new Error('QUOTA_EXCEEDED: Falha ao salvar diário normalizado');
+                            } else {
+                                throw e; // Re-lançar se não for quota
+                            }
+                        }
                     }
                 }
             } catch (e) {
                 console.warn('[NORMALIZAÇÃO] Erro ao normalizar diário:', e);
             }
             
-            // Salvar dados normalizados
+            // Salvar dados normalizados (S3B: protegido com abort se quota)
             if (alteracoes > 0) {
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
-                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                // Verificar se já abortou antes de tentar salvar
+                if (window.__vrvsBootAbort) {
+                    console.warn('[S3B] Boot abortado, pulando salvamento de dados normalizados');
+                    return;
+                }
+                
+                try {
+                    localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                } catch(e) {
+                    if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                        if (typeof window.abortBoot === 'function') {
+                            window.abortBoot('QUOTA_DADOS_NORM', 'QUOTA');
+                        }
+                        throw new Error('QUOTA_EXCEEDED: Falha ao salvar dados normalizados');
+                    } else {
+                        throw e;
+                    }
+                }
+                
+                // Se abortou após dados, não tentar histórico
+                if (window.__vrvsBootAbort) return;
+                
+                try {
+                    localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                } catch(e) {
+                    if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                        if (typeof window.abortBoot === 'function') {
+                            window.abortBoot('QUOTA_HISTORICO_NORM', 'QUOTA');
+                        }
+                        throw new Error('QUOTA_EXCEEDED: Falha ao salvar histórico normalizado');
+                    } else {
+                        throw e;
+                    }
+                }
+                
+                // Se abortou após histórico, não tentar anotações
+                if (window.__vrvsBootAbort) return;
+                
+                try {
+                    localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                } catch(e) {
+                    if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                        if (typeof window.abortBoot === 'function') {
+                            window.abortBoot('QUOTA_ANOTACOES_NORM', 'QUOTA');
+                        }
+                        throw new Error('QUOTA_EXCEEDED: Falha ao salvar anotações normalizadas');
+                    } else {
+                        throw e;
+                    }
+                }
+                
                 console.log(`✅ Normalização: ${alteracoes} áreas corrigidas`);
             }
         }

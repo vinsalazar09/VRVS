@@ -47,12 +47,336 @@
 <body>
     <div class="container">
         <h1>🔧 VRVS Recovery</h1>
-        <p>Se o aplicativo estiver travado, clique no botão abaixo para limpar o Service Worker e caches.</p>
-        <p class="warning">⚠️ Seus dados (localStorage) NÃO serão apagados.</p>
-        <button onclick="recover()">Limpar Cache e Recarregar</button>
+        
+        <!-- Modo Storage Doctor (quando ?mode=storage) -->
+        <div id="storageDoctor" style="display: none;">
+            <h2 style="color: #ff6b6b; margin-top: 20px;">💾 Storage Doctor</h2>
+            <p style="font-size: 14px; margin-bottom: 20px;">localStorage está cheio ou corrompido. Analise e limpe dados não essenciais.</p>
+            
+            <!-- Mostrar reason se presente -->
+            <div id="reasonDisplay" style="background: rgba(255,152,0,0.2); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; display: none;"></div>
+            
+            <!-- Top chaves por tamanho -->
+            <div style="margin-top: 20px; text-align: left;">
+                <h3 style="font-size: 14px; margin-bottom: 10px;">📊 Top Chaves por Tamanho</h3>
+                <div id="storageKeysList" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; font-size: 12px; font-family: monospace;">
+                    <div style="color: rgba(255,255,255,0.6);">Carregando...</div>
+                </div>
+            </div>
+            
+            <!-- Botão Baixar Backup Essenciais -->
+            <button onclick="downloadEssentialData()" style="background: #2196F3; margin-top: 15px;">
+                📥 Exportar dados essenciais
+            </button>
+            
+            <!-- Preset Seguro Limpeza -->
+            <div style="margin-top: 20px; text-align: left;">
+                <h3 style="font-size: 14px; margin-bottom: 10px;">🧹 Limpeza Segura</h3>
+                <div style="background: rgba(255,152,0,0.1); padding: 15px; border-radius: 8px; font-size: 13px;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="cleanBackups" checked style="margin-right: 8px;">
+                            <span>Limpar BACKUPS (vrvs_backup_*)</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="cleanDebug" checked style="margin-right: 8px;">
+                            <span>Limpar DEBUG/TRACE/TEMP (__vrvs*, vrvs_boot*, vrvs_trace*, vrvs_tmp*)</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="cleanLarge" checked style="margin-right: 8px;">
+                            <span>Limpar chaves grandes não protegidas (>200KB)</span>
+                        </label>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); color: #4CAF50; font-weight: 600;">
+                        ✅ PROTEGIDAS (não serão removidas): vrvs_dados, vrvs_historico, vrvs_diario, vrvs_anotacoes, vrvs_lembretes, vrvs_config, vrvs_areas_custom
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botão Executar Limpeza -->
+            <button onclick="executeStorageCleanup()" style="background: #ff9800; margin-top: 15px;">
+                🧹 Executar limpeza selecionada
+            </button>
+            
+            <!-- Botão Voltar -->
+            <button onclick="goBackToApp()" style="background: rgba(255,255,255,0.2); margin-top: 10px;">
+                ← Voltar para o app
+            </button>
+        </div>
+        
+        <!-- Modo Recovery Normal (quando não é ?mode=storage) -->
+        <div id="normalRecovery">
+            <p>Se o aplicativo estiver travado, clique no botão abaixo para limpar o Service Worker e caches.</p>
+            <p class="warning">⚠️ Seus dados (localStorage) NÃO serão apagados.</p>
+            <button onclick="recover()">Limpar Cache e Recarregar</button>
+        </div>
+        
         <div id="status" style="margin-top: 20px; font-size: 14px;"></div>
     </div>
     <script>
+        // Detectar modo storage doctor
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isStorageMode = urlParams.get('mode') === 'storage';
+            const reason = urlParams.get('reason');
+            
+            if (isStorageMode) {
+                document.getElementById('storageDoctor').style.display = 'block';
+                document.getElementById('normalRecovery').style.display = 'none';
+                
+                // Mostrar reason se presente
+                if (reason) {
+                    const reasonDisplay = document.getElementById('reasonDisplay');
+                    if (reasonDisplay) {
+                        let reasonText = 'Motivo: ';
+                        if (reason === 'quota' || reason.startsWith('quota_')) {
+                            reasonText += 'Quota de armazenamento excedida';
+                        } else if (reason === 'parse_fail' || reason.startsWith('parse_fail')) {
+                            reasonText += 'Dados corrompidos (erro ao parsear JSON)';
+                        } else if (reason === 'too_big' || reason.startsWith('too_big')) {
+                            reasonText += 'Chave muito grande (>4MB)';
+                        } else {
+                            reasonText += reason.replace(/_/g, ' ');
+                        }
+                        reasonDisplay.textContent = reasonText;
+                        reasonDisplay.style.display = 'block';
+                    }
+                }
+                
+                loadStorageKeys();
+            } else {
+                document.getElementById('storageDoctor').style.display = 'none';
+                document.getElementById('normalRecovery').style.display = 'block';
+            }
+        })();
+        
+        // Chaves críticas protegidas (NUNCA deletar)
+        const PROTECTED_KEYS = [
+            'vrvs_dados',
+            'vrvs_historico',
+            'vrvs_diario',
+            'vrvs_anotacoes',
+            'vrvs_lembretes',
+            'vrvs_config',
+            'vrvs_areas_custom'
+        ];
+        
+        // Carregar lista de chaves por tamanho
+        function loadStorageKeys() {
+            const listEl = document.getElementById('storageKeysList');
+            if (!listEl) return;
+            
+            try {
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key) continue;
+                    try {
+                        const value = localStorage.getItem(key);
+                        // Calcular tamanho aproximado (UTF-16: 2 bytes por char)
+                        const sizeBytes = (value ? value.length * 2 : 0);
+                        const isProtected = PROTECTED_KEYS.includes(key);
+                        keys.push({ key: key, size: sizeBytes, protected: isProtected });
+                    } catch(e) {
+                        keys.push({ key: key, size: 0, protected: false });
+                    }
+                }
+                
+                // Ordenar por tamanho (desc)
+                keys.sort((a, b) => b.size - a.size);
+                
+                // Renderizar lista
+                if (keys.length === 0) {
+                    listEl.innerHTML = '<div style="color: rgba(255,255,255,0.6);">Nenhuma chave encontrada</div>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.2);"><th style="text-align: left; padding: 5px;">Chave</th><th style="text-align: right; padding: 5px;">Tamanho</th><th style="text-align: center; padding: 5px;">Status</th></tr>';
+                
+                keys.forEach(function(item) {
+                    const sizeKB = (item.size / 1024).toFixed(2);
+                    const sizeMB = (item.size / (1024 * 1024)).toFixed(2);
+                    const sizeStr = item.size >= 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB';
+                    const statusStr = item.protected ? '<span style="color: #4CAF50;">PROTEGIDA</span>' : (item.size > 200 * 1024 ? '<span style="color: #ff9800;">SUSPEITA</span>' : '');
+                    html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">';
+                    html += '<td style="padding: 5px; word-break: break-all;">' + escapeHtml(item.key) + '</td>';
+                    html += '<td style="padding: 5px; text-align: right;">' + sizeStr + '</td>';
+                    html += '<td style="padding: 5px; text-align: center;">' + statusStr + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</table>';
+                listEl.innerHTML = html;
+            } catch(e) {
+                listEl.innerHTML = '<div style="color: #ff6b6b;">Erro ao carregar chaves: ' + escapeHtml(String(e)) + '</div>';
+            }
+        }
+        
+        // Escapar HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Baixar backup apenas das chaves essenciais protegidas
+        function downloadEssentialData() {
+            try {
+                const backup = {};
+                PROTECTED_KEYS.forEach(function(key) {
+                    try {
+                        const value = localStorage.getItem(key);
+                        if (value !== null) {
+                            backup[key] = value;
+                        }
+                    } catch(e) {
+                        backup[key] = null;
+                    }
+                });
+                
+                const jsonStr = JSON.stringify(backup, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vrvs_essential_data_' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                const status = document.getElementById('status');
+                status.textContent = '✅ Dados essenciais exportados com sucesso!';
+                status.style.color = '#4CAF50';
+            } catch(e) {
+                const status = document.getElementById('status');
+                status.textContent = '❌ Erro ao exportar: ' + e.message;
+                status.style.color = '#ff6b6b';
+            }
+        }
+        
+        // Executar limpeza selecionada
+        function executeStorageCleanup() {
+            const status = document.getElementById('status');
+            const cleanBackups = document.getElementById('cleanBackups').checked;
+            const cleanDebug = document.getElementById('cleanDebug').checked;
+            const cleanLarge = document.getElementById('cleanLarge').checked;
+            
+            if (!cleanBackups && !cleanDebug && !cleanLarge) {
+                status.textContent = '⚠️ Selecione pelo menos uma opção de limpeza.';
+                status.style.color = '#ff9800';
+                return;
+            }
+            
+            // Confirmação explícita
+            const confirmMsg = 'Tem certeza que deseja executar a limpeza selecionada?\n\n' +
+                              'Isso irá remover:\n' +
+                              (cleanBackups ? '- Backups antigos\n' : '') +
+                              (cleanDebug ? '- Chaves de debug/trace/temp\n' : '') +
+                              (cleanLarge ? '- Chaves grandes não protegidas\n' : '') +
+                              '\nChaves protegidas NÃO serão removidas.';
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            // Padrões seguros para limpeza
+            const patterns = [];
+            if (cleanBackups) {
+                patterns.push(/^vrvs_backup_/);
+            }
+            if (cleanDebug) {
+                patterns.push(/^__vrvs/);
+                patterns.push(/^vrvs_boot/);
+                patterns.push(/^vrvs_trace/);
+                patterns.push(/^vrvs_tmp/);
+            }
+            
+            let removedCount = 0;
+            let removedSize = 0;
+            
+            try {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key) continue;
+                    
+                    // Pular chaves protegidas
+                    if (PROTECTED_KEYS.includes(key)) continue;
+                    
+                    let shouldRemove = false;
+                    
+                    // Verificar padrões
+                    if (patterns.some(p => p.test(key))) {
+                        shouldRemove = true;
+                    }
+                    
+                    // Verificar tamanho grande (se opção marcada)
+                    if (cleanLarge && !shouldRemove) {
+                        try {
+                            const value = localStorage.getItem(key);
+                            const size = (value ? value.length * 2 : 0);
+                            if (size > 200 * 1024) {
+                                shouldRemove = true;
+                            }
+                        } catch(e) {
+                            // Ignorar erros ao ler
+                        }
+                    }
+                    
+                    if (shouldRemove) {
+                        try {
+                            const value = localStorage.getItem(key);
+                            const size = (value ? value.length * 2 : 0);
+                            keysToRemove.push({ key: key, size: size });
+                        } catch(e) {
+                            keysToRemove.push({ key: key, size: 0 });
+                        }
+                    }
+                }
+                
+                // Remover chaves
+                keysToRemove.forEach(function(item) {
+                    try {
+                        localStorage.removeItem(item.key);
+                        removedCount++;
+                        removedSize += item.size;
+                    } catch(e) {
+                        // Ignorar erros de remoção
+                    }
+                });
+                
+                const sizeMB = (removedSize / (1024 * 1024)).toFixed(2);
+                const sizeKB = (removedSize / 1024).toFixed(2);
+                const sizeStr = removedSize >= 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB';
+                
+                status.textContent = '✅ Limpeza concluída! ' + removedCount + ' chave(s) removida(s), ' + sizeStr + ' liberados.';
+                status.style.color = '#4CAF50';
+                
+                // Recarregar lista
+                loadStorageKeys();
+                
+                // Redirecionar após 2 segundos
+                setTimeout(function() {
+                    goBackToApp();
+                }, 2000);
+            } catch(e) {
+                status.textContent = '❌ Erro durante limpeza: ' + e.message;
+                status.style.color = '#ff6b6b';
+            }
+        }
+        
+        // Voltar para o app com cache-bust
+        function goBackToApp() {
+            const timestamp = Date.now();
+            window.location.href = './index.html?recovered=1&v=' + timestamp;
+        }
+        
         async function recover() {
             const status = document.getElementById('status');
             status.textContent = 'Processando...';
@@ -88,4 +412,3 @@
     </script>
 </body>
 </html>
-
