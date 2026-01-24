@@ -3656,7 +3656,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1700 | CACHE: vrvs-v5.3.155-s3c-tdz-diarioBuscaRAF-20260124-1700</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-1730 | CACHE: vrvs-v5.3.156-s3d-window-diarioBuscaRAF-20260124-1730</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -5245,6 +5245,9 @@
         ];
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
+        
+        // S3D: Declaração global cedo para evitar TDZ (antes de qualquer uso)
+        window.diarioBuscaRAF = window.diarioBuscaRAF ?? null;
         
         // S3A: Safe JSON parse helper (se ainda não foi definido)
         if (typeof safeJSONFromLS === 'undefined') {
@@ -8380,9 +8383,9 @@
             if (typeof __vrvsMark === 'function') __vrvsMark(4); // Antes de montar/renderizar a UI principal
             
             // S6-NAV-FIX2: Cancelar RAF pendente da busca ao trocar de aba
-            if (diarioBuscaRAF !== null) {
-                cancelAnimationFrame(diarioBuscaRAF);
-                diarioBuscaRAF = null;
+            if (window.diarioBuscaRAF !== null) {
+                cancelAnimationFrame(window.diarioBuscaRAF);
+                window.diarioBuscaRAF = null;
             }
             
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
@@ -13709,7 +13712,7 @@
         
         // S4: Busca no Diário (tópico + tema + área)
         let diarioBuscaTimeout = null;
-        var diarioBuscaRAF = null; // S6-NAV-FIX2: Armazenar ID do RAF para cancelar
+        // S3D: REMOVIDO: usar window.diarioBuscaRAF (evita TDZ) - declarado globalmente cedo
         let diarioChipVrvs3pTimeout = null; // S6-NAV-FIX2: Armazenar ID do setTimeout do chip
         let diarioRenderando = false; // S6-NAV-FIX2: Flag para prevenir múltiplas renderizações simultâneas
         
@@ -13766,7 +13769,7 @@
                 
                 // S4-FIX2: Esconder grupos sem cards visíveis E EXPANDIR (usando toggleAreaCaderno) dos grupos que contêm cards visíveis
                 // S6-NAV-FIX2: Armazenar ID do RAF para permitir cancelamento
-                diarioBuscaRAF = requestAnimationFrame(() => {
+                window.diarioBuscaRAF = requestAnimationFrame(() => {
                     // Helper local para abrir grupo usando mecanismo oficial
                     const ensureGrupoAberto = (id) => {
                         const content = document.getElementById(`area-content-${id}`);
@@ -13825,7 +13828,7 @@
                             }
                         }
                     });
-                    diarioBuscaRAF = null; // S6-NAV-FIX2: Limpar após executar
+                    window.diarioBuscaRAF = null; // S6-NAV-FIX2: Limpar após executar
                 });
                 
                 // Atualizar contador
