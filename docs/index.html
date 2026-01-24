@@ -5124,6 +5124,34 @@
         // Executar normalização na inicialização
         normalizarAreasEmMassa();
         
+        // CRÍTICO: Atribuir dados às variáveis globais para uso em toda a aplicação
+        window.dados = dados;
+        window.historico = historico;
+        window.anotacoes = anotacoes;
+        window.lembretes = lembretes;
+        
+        // Carregar diário e atribuir a window.diario
+        try {
+            const diarioSalvo = localStorage.getItem('vrvs_diario');
+            const schemaVersion = (typeof DIARIO_SCHEMA_VERSION !== 'undefined' ? DIARIO_SCHEMA_VERSION : '1.0');
+            if (diarioSalvo) {
+                const diarioParsed = JSON.parse(diarioSalvo);
+                // Compatibilidade: aceitar tanto {entradas:[]} quanto [] direto
+                if (Array.isArray(diarioParsed)) {
+                    window.diario = { entradas: diarioParsed, schemaVersion: schemaVersion };
+                } else if (diarioParsed && Array.isArray(diarioParsed.entradas)) {
+                    window.diario = diarioParsed;
+                } else {
+                    window.diario = { entradas: [], schemaVersion: schemaVersion };
+                }
+            } else {
+                window.diario = { entradas: [], schemaVersion: schemaVersion };
+            }
+        } catch (e) {
+            console.error('[INICIALIZAÇÃO] Erro ao carregar diário:', e);
+            window.diario = { entradas: [], schemaVersion: '1.0' };
+        }
+        
         // ==================== FUNÇÕES AUXILIARES ====================
         
         function mostrarNotificacaoFeedback(mensagem, tipo = 'success') {
