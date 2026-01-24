@@ -10634,6 +10634,15 @@
                 }, 3000);
             }
             
+            // Forçar atualização do Service Worker se detectar cache desatualizado
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(reg => {
+                        reg.update();
+                    });
+                });
+            }
+            
             // Splash Screen - Esconder após carregar (executar apenas uma vez)
             if (!window.splashScreenRemovido) {
                 window.splashScreenRemovido = true;
