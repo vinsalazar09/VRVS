@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.159-s3g-tdz-vistas-20260124-1900";
+const CACHE_NAME = "vrvs-v5.3.160-s3h-force-exec-20260124-1930";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -69,8 +69,9 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             (async () => {
                 try {
-                    // Network-first: sempre buscar da rede primeiro
-                    const response = await fetch(event.request, { cache: 'no-store' });
+                    // Network-first: sempre buscar da rede primeiro (S3H: garantir no-store)
+                    const req = new Request(event.request.url, { cache: 'no-store' });
+                    const response = await fetch(req);
                     if (response && response.status === 200) {
                         // Atualizar cache atual com resposta da rede
                         const cache = await caches.open(CACHE_NAME);
