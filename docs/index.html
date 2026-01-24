@@ -10619,17 +10619,34 @@
                 window.splashScreenRemovido = true;
                 if (typeof __vrvsMark === 'function') __vrvsMark(5); // No ponto mais próximo de remover/ocultar splash
                 setTimeout(() => {
-                    const splash = document.getElementById('splashScreen');
-                    if (splash && !splash.classList.contains('hidden')) {
-                        splash.classList.add('fade-out');
-                        if (document.body) {
-                            document.body.classList.remove('splash-loading');
-                        }
-                        setTimeout(() => {
-                            if (splash && !splash.classList.contains('hidden')) {
-                                splash.classList.add('hidden');
+                    try {
+                        const splash = document.getElementById('splashScreen');
+                        if (splash && !splash.classList.contains('hidden')) {
+                            splash.classList.add('fade-out');
+                            if (document.body) {
+                                document.body.classList.remove('splash-loading');
                             }
-                        }, 800);
+                            setTimeout(() => {
+                                try {
+                                    if (splash && !splash.classList.contains('hidden')) {
+                                        splash.classList.add('hidden');
+                                    }
+                                } catch(e) {
+                                    console.error('[SPLASH] Erro ao esconder splash:', e);
+                                }
+                            }, 800);
+                        }
+                    } catch(e) {
+                        console.error('[SPLASH] Erro ao remover splash:', e);
+                        // Fallback: tentar remover diretamente
+                        try {
+                            const splash = document.getElementById('splashScreen');
+                            const body = document.body;
+                            if (splash) splash.classList.add('hidden');
+                            if (body) body.classList.remove('splash-loading');
+                        } catch(e2) {
+                            console.error('[SPLASH] Fallback também falhou:', e2);
+                        }
                     }
                 }, 2500); // Mostrar por 2.5 segundos
             }
