@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.164-s3l-fix-booterr-stale-sw-url-20260124-2145";
+const CACHE_NAME = "vrvs-v5.3.165-s3m-tdz-fix-diario-save-20260124-2230";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

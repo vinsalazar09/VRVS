@@ -3741,7 +3741,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2145 | CACHE: vrvs-v5.3.164-s3l-fix-booterr-stale-sw-url-20260124-2145</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2230 | CACHE: vrvs-v5.3.165-s3m-tdz-fix-diario-save-20260124-2230</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -10714,7 +10714,7 @@
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
                 // S3I: Cache-bust para forçar download do SW (evita "load failed" por cache quebrado)
-                const SW_URL = './sw.js?v=20260124-2145';
+                const SW_URL = './sw.js?v=20260124-2230';
                 
                 // Forçar reload quando Service Worker atualizar (ANTES de registrar)
                 let reloading = false;
@@ -11525,7 +11525,7 @@
         // ==================== SRS - SISTEMA DE REVISÃO ESPAÇADA ====================
         
         // Modo da aba do Diário: 'lista' ou 'sessao'
-        let abaDiarioAtiva = 'lista';
+        var abaDiarioAtiva = 'lista';
         
         // Modo da sessão: 'programado' (FSRS) ou 'livre'
         let modoSessaoDiario = 'programado';
@@ -12948,6 +12948,12 @@
         }
         
         async function salvarEntradaDiario() {
+            // S3M: Hardening - garantir que window.diario existe e está válido
+            const _SV = (typeof DIARIO_SCHEMA_VERSION !== 'undefined') ? DIARIO_SCHEMA_VERSION : '1.0';
+            if (!window.diario || typeof window.diario !== 'object') window.diario = { entradas: [], schemaVersion: _SV };
+            if (!Array.isArray(window.diario.entradas)) window.diario.entradas = [];
+            if (!window.diario.schemaVersion) window.diario.schemaVersion = _SV;
+            
             try {
                 const entradaId = document.getElementById('novaDiarioId')?.value;
                 const veioDaSessao = window.editandoDaSessao === true;
