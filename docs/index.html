@@ -281,6 +281,15 @@
                     }
                     return;
                 }
+                // S3O: NÃO abortar boot por erro de SW update (iOS conflito de scriptURL)
+                const errMsg = String(e.reason?.message || e.reason || '');
+                if (errMsg.includes('Cannot update a service worker') || 
+                    errMsg.includes('different SCRIPT URL') ||
+                    errMsg.includes('script URL')) {
+                    // Apenas logar, não abortar boot
+                    console.warn('[SW] Erro de update ignorado (conflito scriptURL):', errMsg);
+                    return; // Não chamar setBootErr para este erro específico
+                }
                 // S3J: Passar objeto Error completo com prefixo PROMISE e stack
                 const err = e.reason || e;
                 setBootErr({ 
@@ -3751,7 +3760,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2355 | CACHE: vrvs-v5.3.168-s3n-fix-remove-backup-manual-20260124-2355</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260125-0000 | CACHE: vrvs-v5.3.169-s3o-fix-sw-scripturl-20260125-0000</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -10723,23 +10732,59 @@
             
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
-                // S3I: Cache-bust para forçar download do SW (evita "load failed" por cache quebrado)
-                const SW_URL = './sw.js?v=20260124-2355';
+                // S3O: Migração - unregister SW antigo com querystring
+                (async function() {
+                    try {
+                        const reg = await navigator.serviceWorker.getRegistration('./');
+                        if (reg && reg.active) {
+                            const scriptURL = reg.active.scriptURL || '';
+                            // Se SW antigo tem querystring ou URL diferente, unregister
+                            if (scriptURL.includes('?v=') || !scriptURL.endsWith('/sw.js')) {
+                                console.log('🔄 Removendo SW antigo com URL variável:', scriptURL);
+                                await reg.unregister();
+                                // Limpar caches antigos relacionados
+                                try {
+                                    const cacheNames = await caches.keys();
+                                    const oldCaches = cacheNames.filter(name => name.startsWith('vrvs-') && name !== 'vrvs-v5.3.169-s3o-fix-sw-scripturl-20260125-0000');
+                                    await Promise.all(oldCaches.map(name => caches.delete(name)));
+                                } catch(e) {}
+                                // Reload apenas uma vez após unregister
+                                if (!window.__vrvsSwMigrated) {
+                                    window.__vrvsSwMigrated = true;
+                                    setTimeout(() => window.location.reload(), 500);
+                                    return; // Não continuar registro neste ciclo
+                                }
+                            }
+                        }
+                        // S3O: Continuar com registro apenas se migração não fez reload
+                        registerServiceWorker();
+                    } catch(e) {
+                        // Ignorar erros de migração, continuar com registro
+                        registerServiceWorker();
+                    }
+                })();
                 
-                // Forçar reload quando Service Worker atualizar (ANTES de registrar)
-                let reloading = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (reloading) return;
-                    reloading = true;
-                    console.log('🔄 Service Worker atualizado, recarregando...');
-                    window.location.reload();
-                });
-                
-                navigator.serviceWorker.register(SW_URL, { updateViaCache: 'none' }).then((registration) => {
+                // S3O: Função de registro separada para evitar duplicação
+                function registerServiceWorker() {
+                    // S3O: URL estável (sem querystring) para evitar conflito iOS
+                    const SW_URL = './sw.js';
+                    
+                    // Forçar reload quando Service Worker atualizar (ANTES de registrar)
+                    let reloading = false;
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        if (reloading) return;
+                        reloading = true;
+                        console.log('🔄 Service Worker atualizado, recarregando...');
+                        window.location.reload();
+                    });
+                    
+                    navigator.serviceWorker.register(SW_URL, { scope: './' }).then((registration) => {
                     console.log('✅ Service Worker registrado:', registration.scope);
                     
-                    // Verificar atualizações imediatamente
-                    registration.update();
+                    // S3O: Forçar update sem mudar URL
+                    try {
+                        registration.update().catch(() => {}); // Ignorar erros de update
+                    } catch(e) {}
                     
                     // Se já há worker esperando, forçar ativação
                     if (registration.waiting) {
@@ -10826,6 +10871,7 @@
                 }).catch((error) => {
                     console.error('⚠️ Erro ao registrar Service Worker:', error);
                 });
+                } // Fim da função registerServiceWorker()
             }
             
             // Função para mostrar notificação de atualização
