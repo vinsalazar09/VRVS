@@ -198,6 +198,22 @@
                 }
                 msgShort = msgShort.substring(0, 180);
                 if (stackInfo) msgShort += stackInfo.substring(0, 200);
+                
+                // S3Q: NUNCA salvar CACHE_NAME como erro (filtro antes de salvar)
+                if (msgShort && typeof msgShort === 'string' && 
+                    (msgShort.includes('vrvs-v5.3') || msgShort.includes('CACHE:') || 
+                     msgShort.includes('vrvs-v') || msgShort.includes('backup-quota-safe') ||
+                     msgShort.includes('s3q-backup-quota-safe'))) {
+                    console.warn('[BOOT ERR] Ignorando erro que contém CACHE_NAME:', msgShort);
+                    bootErrMemory = '—';
+                    // Limpar do localStorage se existir
+                    try {
+                        localStorage.removeItem('vrvs_last_boot_err');
+                    } catch(_) {}
+                    updateSplashDebugLine();
+                    return;
+                }
+                
                 bootErrMemory = msgShort;
                 if (localStorageQuotaExceeded) {
                     updateSplashDebugLine();
@@ -243,8 +259,19 @@
                             // S3L: Só ler de localStorage se app ainda não iniciou
                             if (!appIniciado) {
                                 const errFromLS = localStorage.getItem('vrvs_last_boot_err') || bootErrMemory;
-                                // S3Q: Validar novamente se veio do localStorage
-                                if (errFromLS && !errFromLS.includes('vrvs-v5.3') && !errFromLS.includes('CACHE:') && !errFromLS.includes('vrvs-v')) {
+                                // S3Q: Validar e LIMPAR se contém CACHE_NAME (corrige valores antigos)
+                                if (errFromLS && typeof errFromLS === 'string' && 
+                                    (errFromLS.includes('vrvs-v5.3') || errFromLS.includes('CACHE:') || 
+                                     errFromLS.includes('vrvs-v') || errFromLS.includes('backup-quota-safe') ||
+                                     errFromLS.includes('s3q-backup-quota-safe'))) {
+                                    // Valor inválido no localStorage - limpar
+                                    console.warn('[BOOT ERR] Limpando vrvs_last_boot_err que contém CACHE_NAME');
+                                    try {
+                                        localStorage.removeItem('vrvs_last_boot_err');
+                                    } catch(_) {}
+                                    err = '—';
+                                    bootErrMemory = '—';
+                                } else if (errFromLS && errFromLS !== '—' && errFromLS !== '') {
                                     err = errFromLS;
                                 } else {
                                     err = bootErrMemory;
