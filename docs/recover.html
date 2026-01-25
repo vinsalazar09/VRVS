@@ -119,6 +119,11 @@
                 🧹 Executar limpeza selecionada
             </button>
             
+            <!-- S3N FIX: Botão para remover backup grande manualmente -->
+            <button onclick="removeLargeBackup()" style="background: #f44336; margin-top: 10px;">
+                🔴 Remover Backup Grande (vrvs_backup_*)
+            </button>
+            
             <!-- Botão Voltar -->
             <button onclick="goBackToApp()" style="background: rgba(255,255,255,0.2); margin-top: 10px;">
                 ← Voltar para o app
@@ -511,6 +516,76 @@
                 testQuotaWrite();
             } catch(e) {
                 status.textContent = '❌ Erro ao limpar Cache Storage: ' + e.message;
+                status.style.color = '#ff6b6b';
+            }
+        }
+        
+        // S3N FIX: Remover backup grande manualmente
+        function removeLargeBackup() {
+            if (!confirm('Tem certeza que deseja remover TODOS os backups (vrvs_backup_*)?\n\nIsso irá liberar espaço significativo.')) {
+                return;
+            }
+            
+            const status = document.getElementById('status');
+            status.textContent = 'Processando...';
+            
+            try {
+                const keysToRemove = [];
+                let totalSize = 0;
+                
+                // Encontrar todos os backups
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key) continue;
+                    
+                    if (key.startsWith('vrvs_backup_')) {
+                        try {
+                            const value = localStorage.getItem(key);
+                            const size = (value === null) ? 0 : (value.length * 2);
+                            keysToRemove.push({ key: key, size: size });
+                            totalSize += size;
+                        } catch(e) {
+                            keysToRemove.push({ key: key, size: 0 });
+                        }
+                    }
+                }
+                
+                if (keysToRemove.length === 0) {
+                    status.textContent = '⚠️ Nenhum backup encontrado.';
+                    status.style.color = '#ff9800';
+                    return;
+                }
+                
+                // Remover backups
+                let removedCount = 0;
+                keysToRemove.forEach(function(item) {
+                    try {
+                        localStorage.removeItem(item.key);
+                        removedCount++;
+                    } catch(e) {
+                        // Ignorar erros
+                    }
+                });
+                
+                const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+                const sizeKB = (totalSize / 1024).toFixed(2);
+                const sizeStr = totalSize >= 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB';
+                
+                status.textContent = '✅ ' + removedCount + ' backup(s) removido(s), ' + sizeStr + ' liberados.';
+                status.style.color = '#4CAF50';
+                
+                // Teste de escrita
+                testQuotaWrite();
+                
+                // Recarregar lista
+                loadStorageKeys();
+                
+                // Redirecionar após 2 segundos
+                setTimeout(function() {
+                    goBackToApp();
+                }, 2000);
+            } catch(e) {
+                status.textContent = '❌ Erro ao remover backups: ' + e.message;
                 status.style.color = '#ff6b6b';
             }
         }

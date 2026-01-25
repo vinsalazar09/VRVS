@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.167-s3n-storage-doctor-improved-20260124-2345";
+const CACHE_NAME = "vrvs-v5.3.168-s3n-fix-remove-backup-manual-20260124-2355";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
