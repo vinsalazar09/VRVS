@@ -256,7 +256,9 @@
                             }
                         }
                     }
-                    el.textContent = 'BOOT: ' + step + ' | ERR: ' + err;
+                    // S3Q: Garantir que err nunca seja CACHE_NAME (validação final antes de renderizar)
+                    const finalErr = (err && typeof err === 'string' && (err.includes('vrvs-v5.3') || err.includes('CACHE:') || err.includes('vrvs-v') || err.includes('backup-quota-safe'))) ? '—' : err;
+                    el.textContent = 'BOOT: ' + step + ' | ERR: ' + finalErr;
                 } catch(e) {}
             }
             
