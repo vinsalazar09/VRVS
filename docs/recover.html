@@ -59,10 +59,27 @@
             <!-- Top chaves por tamanho -->
             <div style="margin-top: 20px; text-align: left;">
                 <h3 style="font-size: 14px; margin-bottom: 10px;">📊 Top Chaves por Tamanho</h3>
+                <!-- S3N: Diagnóstico QUOTA no topo -->
+                <div id="quotaDiagnostics" style="background: rgba(255,152,0,0.15); padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 11px; font-family: monospace; color: rgba(255,255,255,0.9);">
+                    <div style="color: rgba(255,255,255,0.6);">Carregando diagnóstico...</div>
+                </div>
                 <div id="storageKeysList" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; font-size: 12px; font-family: monospace;">
                     <div style="color: rgba(255,255,255,0.6);">Carregando...</div>
                 </div>
             </div>
+            
+            <!-- S3N: Botões de limpeza rápida -->
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="clearFlags()" style="background: #9C27B0; flex: 1; margin: 0;">
+                    🏳️ Limpar FLAGS
+                </button>
+                <button onclick="clearCacheStorage()" style="background: #607D8B; flex: 1; margin: 0;">
+                    🗑️ Limpar Cache Storage
+                </button>
+            </div>
+            
+            <!-- S3N: Resultado do teste de escrita -->
+            <div id="writeTestResult" style="margin-top: 10px; padding: 8px; border-radius: 6px; font-size: 12px; display: none;"></div>
             
             <!-- Botão Baixar Backup Essenciais -->
             <button onclick="downloadEssentialData()" style="background: #2196F3; margin-top: 15px;">
@@ -165,25 +182,58 @@
             'vrvs_areas_custom'
         ];
         
-        // Carregar lista de chaves por tamanho
+        // S3N: Carregar lista de chaves por tamanho com diagnóstico completo
         function loadStorageKeys() {
             const listEl = document.getElementById('storageKeysList');
+            const diagEl = document.getElementById('quotaDiagnostics');
             if (!listEl) return;
             
             try {
                 const keys = [];
+                let totalBytes = 0;
+                let nullCount = 0;
+                let emptyCount = 0;
+                let maiorChave = { key: '', size: 0 };
+                
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     if (!key) continue;
                     try {
                         const value = localStorage.getItem(key);
-                        // Calcular tamanho aproximado (UTF-16: 2 bytes por char)
-                        const sizeBytes = (value ? value.length * 2 : 0);
+                        // S3N: Ajustar cálculo - value === null é diferente de value === ''
+                        const sizeBytes = (value === null) ? 0 : (value.length * 2);
+                        
+                        // Contadores
+                        if (value === null) nullCount++;
+                        else if (value === '') emptyCount++;
+                        
+                        totalBytes += sizeBytes;
+                        
+                        // Maior chave
+                        if (sizeBytes > maiorChave.size) {
+                            maiorChave = { key: key, size: sizeBytes };
+                        }
+                        
                         const isProtected = PROTECTED_KEYS.includes(key);
                         keys.push({ key: key, size: sizeBytes, protected: isProtected });
                     } catch(e) {
                         keys.push({ key: key, size: 0, protected: false });
                     }
+                }
+                
+                // S3N: Renderizar diagnóstico no topo
+                if (diagEl) {
+                    const totalKB = (totalBytes / 1024).toFixed(3);
+                    const totalMB = (totalBytes / (1024 * 1024)).toFixed(3);
+                    const totalStr = totalBytes >= 1024 * 1024 ? totalMB + ' MB' : totalKB + ' KB';
+                    const maiorKB = (maiorChave.size / 1024).toFixed(3);
+                    const maiorMB = (maiorChave.size / (1024 * 1024)).toFixed(3);
+                    const maiorStr = maiorChave.size >= 1024 * 1024 ? maiorMB + ' MB' : maiorKB + ' KB';
+                    
+                    diagEl.innerHTML = 
+                        '<div><strong>Total:</strong> ' + keys.length + ' chaves | ' + totalBytes.toLocaleString() + ' bytes (' + totalStr + ')</div>' +
+                        '<div style="margin-top: 4px;"><strong>Null:</strong> ' + nullCount + ' | <strong>Vazias:</strong> ' + emptyCount + '</div>' +
+                        '<div style="margin-top: 4px;"><strong>Maior:</strong> ' + escapeHtml(maiorChave.key) + ' = ' + maiorChave.size.toLocaleString() + ' bytes (' + maiorStr + ')</div>';
                 }
                 
                 // Ordenar por tamanho (desc)
@@ -196,16 +246,18 @@
                 }
                 
                 let html = '<table style="width: 100%; border-collapse: collapse;">';
-                html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.2);"><th style="text-align: left; padding: 5px;">Chave</th><th style="text-align: right; padding: 5px;">Tamanho</th><th style="text-align: center; padding: 5px;">Status</th></tr>';
+                html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.2);"><th style="text-align: left; padding: 5px;">Chave</th><th style="text-align: right; padding: 5px;">Bytes</th><th style="text-align: right; padding: 5px;">KB</th><th style="text-align: center; padding: 5px;">Status</th></tr>';
                 
                 keys.forEach(function(item) {
-                    const sizeKB = (item.size / 1024).toFixed(2);
-                    const sizeMB = (item.size / (1024 * 1024)).toFixed(2);
-                    const sizeStr = item.size >= 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB';
+                    // S3N: Exibir bytes e KB com 3 casas
+                    const sizeKB = (item.size / 1024).toFixed(3);
+                    const sizeMB = (item.size / (1024 * 1024)).toFixed(3);
+                    const sizeKBStr = item.size >= 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB';
                     const statusStr = item.protected ? '<span style="color: #4CAF50;">PROTEGIDA</span>' : (item.size > 200 * 1024 ? '<span style="color: #ff9800;">SUSPEITA</span>' : '');
                     html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">';
                     html += '<td style="padding: 5px; word-break: break-all;">' + escapeHtml(item.key) + '</td>';
-                    html += '<td style="padding: 5px; text-align: right;">' + sizeStr + '</td>';
+                    html += '<td style="padding: 5px; text-align: right; font-family: monospace;">' + item.size.toLocaleString() + '</td>';
+                    html += '<td style="padding: 5px; text-align: right; font-family: monospace;">' + sizeKBStr + '</td>';
                     html += '<td style="padding: 5px; text-align: center;">' + statusStr + '</td>';
                     html += '</tr>';
                 });
@@ -214,6 +266,9 @@
                 listEl.innerHTML = html;
             } catch(e) {
                 listEl.innerHTML = '<div style="color: #ff6b6b;">Erro ao carregar chaves: ' + escapeHtml(String(e)) + '</div>';
+                if (diagEl) {
+                    diagEl.innerHTML = '<div style="color: #ff6b6b;">Erro no diagnóstico: ' + escapeHtml(String(e)) + '</div>';
+                }
             }
         }
         
@@ -320,7 +375,8 @@
                     if (cleanLarge && !shouldRemove) {
                         try {
                             const value = localStorage.getItem(key);
-                            const size = (value ? value.length * 2 : 0);
+                            // S3N: Ajustar cálculo - value === null é diferente de value === ''
+                            const size = (value === null) ? 0 : (value.length * 2);
                             if (size > 200 * 1024) {
                                 shouldRemove = true;
                             }
@@ -332,7 +388,8 @@
                     if (shouldRemove) {
                         try {
                             const value = localStorage.getItem(key);
-                            const size = (value ? value.length * 2 : 0);
+                            // S3N: Ajustar cálculo - value === null é diferente de value === ''
+                            const size = (value === null) ? 0 : (value.length * 2);
                             keysToRemove.push({ key: key, size: size });
                         } catch(e) {
                             keysToRemove.push({ key: key, size: 0 });
@@ -358,6 +415,9 @@
                 status.textContent = '✅ Limpeza concluída! ' + removedCount + ' chave(s) removida(s), ' + sizeStr + ' liberados.';
                 status.style.color = '#4CAF50';
                 
+                // S3N: Teste de escrita após limpeza
+                testQuotaWrite();
+                
                 // Recarregar lista
                 loadStorageKeys();
                 
@@ -368,6 +428,116 @@
             } catch(e) {
                 status.textContent = '❌ Erro durante limpeza: ' + e.message;
                 status.style.color = '#ff6b6b';
+            }
+        }
+        
+        // S3N: Limpar FLAGS (chaves não essenciais)
+        function clearFlags() {
+            const FLAGS_TO_REMOVE = [
+                'vrvs_disable_sw',
+                'vrvs_mostrar_changelog',
+                'vrvs_versao_anterior',
+                'vrvs_tutorial_completo',
+                'vrvs_last_boot_step',
+                'vrvs_last_boot_err'
+            ];
+            
+            if (!confirm('Tem certeza que deseja remover as FLAGS?\n\nIsso irá remover: ' + FLAGS_TO_REMOVE.join(', ') + '\n\nChaves protegidas NÃO serão removidas.')) {
+                return;
+            }
+            
+            const status = document.getElementById('status');
+            let removedCount = 0;
+            
+            try {
+                FLAGS_TO_REMOVE.forEach(function(key) {
+                    try {
+                        if (localStorage.getItem(key) !== null) {
+                            localStorage.removeItem(key);
+                            removedCount++;
+                        }
+                    } catch(e) {
+                        // Ignorar erros
+                    }
+                });
+                
+                status.textContent = '✅ ' + removedCount + ' FLAG(s) removida(s).';
+                status.style.color = '#4CAF50';
+                
+                // S3N: Teste de escrita após limpeza
+                testQuotaWrite();
+                
+                // Recarregar lista
+                loadStorageKeys();
+            } catch(e) {
+                status.textContent = '❌ Erro ao remover FLAGS: ' + e.message;
+                status.style.color = '#ff6b6b';
+            }
+        }
+        
+        // S3N: Limpar Cache Storage (caches.keys() e deletar todos)
+        async function clearCacheStorage() {
+            if (!('caches' in window)) {
+                const status = document.getElementById('status');
+                status.textContent = '⚠️ Cache Storage não disponível neste navegador.';
+                status.style.color = '#ff9800';
+                return;
+            }
+            
+            if (!confirm('Tem certeza que deseja limpar TODOS os caches do Cache Storage?\n\nIsso irá remover todos os caches, mas NÃO afeta localStorage.')) {
+                return;
+            }
+            
+            const status = document.getElementById('status');
+            status.textContent = 'Processando...';
+            
+            try {
+                const cacheNames = await caches.keys();
+                let deletedCount = 0;
+                
+                for (let name of cacheNames) {
+                    try {
+                        await caches.delete(name);
+                        deletedCount++;
+                    } catch(e) {
+                        // Ignorar erros individuais
+                    }
+                }
+                
+                status.textContent = '✅ ' + deletedCount + ' cache(s) removido(s) do Cache Storage.';
+                status.style.color = '#4CAF50';
+                
+                // S3N: Teste de escrita após limpeza
+                testQuotaWrite();
+            } catch(e) {
+                status.textContent = '❌ Erro ao limpar Cache Storage: ' + e.message;
+                status.style.color = '#ff6b6b';
+            }
+        }
+        
+        // S3N: Teste de escrita após qualquer limpeza
+        function testQuotaWrite() {
+            const resultEl = document.getElementById('writeTestResult');
+            if (!resultEl) return;
+            
+            try {
+                localStorage.setItem('vrvs_tmp_quota_test', '1');
+                localStorage.removeItem('vrvs_tmp_quota_test');
+                
+                resultEl.style.display = 'block';
+                resultEl.style.background = 'rgba(76, 175, 80, 0.2)';
+                resultEl.style.color = '#4CAF50';
+                resultEl.textContent = '✅ Teste de escrita: PASS (localStorage tem espaço disponível)';
+            } catch(e) {
+                resultEl.style.display = 'block';
+                resultEl.style.background = 'rgba(244, 67, 54, 0.2)';
+                resultEl.style.color = '#f44336';
+                
+                if (e.name === 'QuotaExceededError' || e.code === 22 || (e.message && e.message.toLowerCase().includes('quota'))) {
+                    resultEl.textContent = '❌ Teste de escrita: FAIL (QuotaExceededError - localStorage ainda está cheio)';
+                } else {
+                    resultEl.textContent = '❌ Teste de escrita: FAIL (' + escapeHtml(String(e)) + ')';
+                }
             }
         }
         
