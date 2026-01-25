@@ -3760,7 +3760,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260125-0000 | CACHE: vrvs-v5.3.169-s3o-fix-sw-scripturl-20260125-0000</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260125-0200 | CACHE: vrvs-v5.3.169-s3p-fix-quota-backup-loop-20260125-0200</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -9764,7 +9764,8 @@
         
         function migrarAnotacoesParaHotTopics() {
             // Migração segura: adicionar campo hotTopics sem perder dados
-            const backupKey = fazerBackupCompleto();
+            // S3P: Removido backup automático do boot (causava QUOTA loop no iPhone PWA)
+            // Backup deve ser manual via aba Backup. Migração é idempotente e segura sem backup.
             const anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
             
             let atualizadas = false;
@@ -9780,7 +9781,7 @@
                 validarAntesDeSalvar('anotacoes', anotacoesMigradas);
                 localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoesMigradas));
                 anotacoes = anotacoesMigradas;
-                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado. Backup: ${backupKey}`);
+                console.log(`[MIGRAÇÃO] Campo hotTopics adicionado.`);
             }
         }
         
@@ -19967,7 +19968,8 @@
     </div>
     
     <!-- Botão Flutuante para Abrir Console -->
-    <button id="vrvsConsoleBtn" onclick="vrvsConsoleToggle()" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: rgba(0,255,0,0.8); color: #000; border: 2px solid #0f0; font-size: 20px; cursor: pointer; z-index: 99998; box-shadow: 0 2px 10px rgba(0,255,0,0.5);">🔍</button>
+    <!-- S3P: Lupa verde oculta por padrão (pode ser reativada via localStorage.setItem('vrvs_debug_enabled', 'true')) -->
+    <button id="vrvsConsoleBtn" onclick="vrvsConsoleToggle()" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: rgba(0,255,0,0.8); color: #000; border: 2px solid #0f0; font-size: 20px; cursor: pointer; z-index: 99998; box-shadow: 0 2px 10px rgba(0,255,0,0.5);">🔍</button>
     
     <script>
         // Console Visual - Interceptar logs e erros
@@ -19978,8 +19980,11 @@
             let logCount = 0;
             const MAX_LOGS = 200;
             
+            // S3P: Verificar se debug está habilitado (via localStorage)
+            const debugEnabled = localStorage.getItem('vrvs_debug_enabled') === 'true';
+            
             function addLog(type, args, color) {
-                if (!consoleContent) return;
+                if (!consoleContent || !debugEnabled) return;
                 
                 logCount++;
                 if (logCount > MAX_LOGS) {
@@ -20008,8 +20013,9 @@
                 consoleContent.appendChild(logEl);
                 consoleContent.scrollTop = consoleContent.scrollHeight;
                 
-                // Mostrar botão se houver erros
-                if (type === 'ERROR' || type === 'WARN') {
+                // S3P: Mostrar botão se houver erros (apenas se debug estiver habilitado)
+                if (consoleBtn && (type === 'ERROR' || type === 'WARN')) {
+                    consoleBtn.style.display = 'block';
                     consoleBtn.style.background = 'rgba(255,0,0,0.8)';
                     consoleBtn.style.borderColor = '#f00';
                 }
@@ -20021,29 +20027,35 @@
                 return div.innerHTML;
             }
             
+            // S3P: Mostrar botão apenas se debug estiver habilitado
+            if (debugEnabled && consoleBtn) {
+                consoleBtn.style.display = 'block';
+            }
+            
             // Interceptar console.log
             const originalLog = console.log;
             console.log = function(...args) {
                 originalLog.apply(console, args);
-                addLog('LOG', args, '#0f0');
+                if (debugEnabled) addLog('LOG', args, '#0f0');
             };
             
             // Interceptar console.error
             const originalError = console.error;
             console.error = function(...args) {
                 originalError.apply(console, args);
-                addLog('ERROR', args, '#f00');
+                if (debugEnabled) addLog('ERROR', args, '#f00');
             };
             
             // Interceptar console.warn
             const originalWarn = console.warn;
             console.warn = function(...args) {
                 originalWarn.apply(console, args);
-                addLog('WARN', args, '#ff0');
+                if (debugEnabled) addLog('WARN', args, '#ff0');
             };
             
             // Interceptar window errors
             window.addEventListener('error', function(e) {
+                if (!debugEnabled) return;
                 const errorMsg = e.message || String(e);
                 const source = e.filename || e.sourceURL || '??';
                 const line = e.lineno || e.line || '??';
@@ -20052,12 +20064,17 @@
             
             // Interceptar promise rejections
             window.addEventListener('unhandledrejection', function(e) {
+                if (!debugEnabled) return;
                 const reason = e.reason ? (e.reason.message || String(e.reason)) : 'Unknown';
                 addLog('ERROR', [`Promise rejection: ${reason}`], '#f00');
             });
             
             // Função para abrir/fechar console
             window.vrvsConsoleToggle = function() {
+                if (!debugEnabled) {
+                    alert('Debug não está habilitado. Para ativar, execute no console:\nlocalStorage.setItem("vrvs_debug_enabled", "true");\nE recarregue a página.');
+                    return;
+                }
                 if (consolePanel.style.display === 'none') {
                     consolePanel.style.display = 'block';
                     consoleBtn.textContent = '✕';
@@ -20072,13 +20089,17 @@
                 if (consoleContent) {
                     consoleContent.innerHTML = '';
                     logCount = 0;
-                    consoleBtn.style.background = 'rgba(0,255,0,0.8)';
-                    consoleBtn.style.borderColor = '#0f0';
+                    if (consoleBtn) {
+                        consoleBtn.style.background = 'rgba(0,255,0,0.8)';
+                        consoleBtn.style.borderColor = '#0f0';
+                    }
                 }
             };
             
-            // Log inicial
-            addLog('LOG', ['Console Debug ativado. Toque no botão 🔍 para abrir/fechar.'], '#0f0');
+            // Log inicial apenas se debug estiver habilitado
+            if (debugEnabled) {
+                addLog('LOG', ['Console Debug ativado. Toque no botão 🔍 para abrir/fechar.'], '#0f0');
+            }
         })();
     </script>
 </body>
