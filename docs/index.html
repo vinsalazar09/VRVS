@@ -3728,7 +3728,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2000 | CACHE: vrvs-v5.3.162-s3j-diag-stack-trace-20260124-2000</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2130 | CACHE: vrvs-v5.3.163-s3k-diario-migrate-booterr-clear-20260124-2130</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -10530,7 +10530,7 @@
             
             const diarioInicial = {
                 schemaVersion: 1,
-                entries: []
+                entradas: []  // S3K: Corrigir para usar "entradas" (schema atual)
             };
             
             localStorage.setItem('vrvs_diario', JSON.stringify(diarioInicial));
@@ -11478,6 +11478,15 @@
             // Inicializar Diário
             carregarDiario();
             renderDiario();
+            
+            // S3K: Limpar bootErr stale quando app inicia com sucesso
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem('vrvs_last_boot_err');
+                }
+            } catch(e) {
+                console.warn('[S3K] Erro ao limpar bootErr:', e);
+            }
             
             // Garantir que botão + Nova tenha texto branco visível (corrige problema de herança do card-title)
             setTimeout(() => {
@@ -12688,14 +12697,64 @@
             try {
                 const diarioSalvo = localStorage.getItem('vrvs_diario');
                 if (diarioSalvo) {
-                    const diario = JSON.parse(diarioSalvo);
-                    if (diario.entradas && Array.isArray(diario.entradas)) {
-                        window.diario = diario;
-                        inicializarSrsEmTodasEntradas(); // Inicializar SRS em entradas existentes
-                        migrarSRSParaVRVS3P(); // Migrar para VRVS 3P se necessário
-                    } else {
-                        window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
-                        inicializarSrsEmTodasEntradas(); // Seguro mesmo vazio
+                    // S3K: Migração de schema (array antigo, entries, entradas)
+                    let diarioParsed;
+                    try {
+                        diarioParsed = JSON.parse(diarioSalvo);
+                    } catch(e) {
+                        console.error('[DIÁRIO] Erro ao parsear:', e);
+                        diarioParsed = null;
+                    }
+                    
+                    let diarioMigrado = null;
+                    
+                    // FORMATO ANTIGO 1: Array direto [...]
+                    if (Array.isArray(diarioParsed)) {
+                        diarioMigrado = { 
+                            entradas: diarioParsed, 
+                            schemaVersion: DIARIO_SCHEMA_VERSION 
+                        };
+                    }
+                    // FORMATO ANTIGO 2: Objeto com entries (sem entradas)
+                    else if (diarioParsed && Array.isArray(diarioParsed.entries) && !Array.isArray(diarioParsed.entradas)) {
+                        diarioMigrado = { 
+                            ...diarioParsed, 
+                            entradas: diarioParsed.entries,
+                            schemaVersion: DIARIO_SCHEMA_VERSION 
+                        };
+                        // Remover entries antigo para evitar confusão
+                        delete diarioMigrado.entries;
+                    }
+                    // FORMATO NOVO OK: Objeto com entradas
+                    else if (diarioParsed && Array.isArray(diarioParsed.entradas)) {
+                        diarioMigrado = diarioParsed;
+                        // Garantir schemaVersion se não existir
+                        if (!diarioMigrado.schemaVersion) {
+                            diarioMigrado.schemaVersion = DIARIO_SCHEMA_VERSION;
+                        }
+                    }
+                    // Fallback: criar estrutura vazia
+                    else {
+                        diarioMigrado = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+                    }
+                    
+                    window.diario = diarioMigrado;
+                    inicializarSrsEmTodasEntradas();
+                    migrarSRSParaVRVS3P();
+                    
+                    // S3K: Salvar migração APENAS se migrou e tem dados
+                    if (diarioMigrado && diarioMigrado.entradas && diarioMigrado.entradas.length > 0) {
+                        // Verificar se realmente migrou (array ou entries -> entradas)
+                        const migrou = Array.isArray(diarioParsed) || 
+                                      (diarioParsed && Array.isArray(diarioParsed.entries) && !Array.isArray(diarioParsed.entradas));
+                        if (migrou) {
+                            try {
+                                localStorage.setItem('vrvs_diario', JSON.stringify(diarioMigrado));
+                                console.log('[DIÁRIO S3K] Migração salva:', diarioMigrado.entradas.length, 'entradas');
+                            } catch(e) {
+                                console.warn('[DIÁRIO S3K] Erro ao salvar migração (quota?):', e);
+                            }
+                        }
                     }
                 } else {
                     window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
