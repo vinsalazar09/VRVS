@@ -250,8 +250,13 @@
             // Handlers de erro globais (protegidos contra QuotaExceededError)
             window.addEventListener('error', function(e) {
                 if (e.error && (e.error.name === 'QuotaExceededError' || (e.error.message && e.error.message.includes('quota')))) {
-                    bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
-                    updateSplashDebugLine();
+                    // S3M FIX: Chamar abortBoot ao invés de apenas mostrar erro
+                    if (typeof window.abortBoot === 'function') {
+                        window.abortBoot('QUOTA', 'QUOTA');
+                    } else {
+                        bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
+                        updateSplashDebugLine();
+                    }
                     return;
                 }
                 // S3J: Passar objeto Error completo com prefixo JS e stack
@@ -267,8 +272,13 @@
             
             window.addEventListener('unhandledrejection', function(e) {
                 if (e.reason && (e.reason.name === 'QuotaExceededError' || (e.reason.message && e.reason.message.includes('quota')))) {
-                    bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
-                    updateSplashDebugLine();
+                    // S3M FIX: Chamar abortBoot ao invés de apenas mostrar erro
+                    if (typeof window.abortBoot === 'function') {
+                        window.abortBoot('QUOTA', 'QUOTA');
+                    } else {
+                        bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
+                        updateSplashDebugLine();
+                    }
                     return;
                 }
                 // S3J: Passar objeto Error completo com prefixo PROMISE e stack
@@ -3741,7 +3751,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2230 | CACHE: vrvs-v5.3.165-s3m-tdz-fix-diario-save-20260124-2230</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260124-2315 | CACHE: vrvs-v5.3.166-s3m-fix-quota-abort-20260124-2315</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -10714,7 +10724,7 @@
             // Registrar Service Worker para funcionamento offline
             if ('serviceWorker' in navigator) {
                 // S3I: Cache-bust para forçar download do SW (evita "load failed" por cache quebrado)
-                const SW_URL = './sw.js?v=20260124-2230';
+                const SW_URL = './sw.js?v=20260124-2315';
                 
                 // Forçar reload quando Service Worker atualizar (ANTES de registrar)
                 let reloading = false;
