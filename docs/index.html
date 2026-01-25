@@ -220,6 +220,13 @@
                     if (!el) return;
                     let step = bootStepMemory;
                     let err = bootErrMemory;
+                    
+                    // S3Q: Validar que err não seja CACHE_NAME (bug cosmético)
+                    if (err && (err.includes('vrvs-v5.3') || err.includes('CACHE:') || err.includes('vrvs-v'))) {
+                        err = '—';
+                        bootErrMemory = '—';
+                    }
+                    
                     // S3L: Se app já iniciou com sucesso, não mostrar erro stale
                     const appIniciado = document.body && !document.body.classList.contains('splash-loading');
                     if (appIniciado && err !== '—' && err !== '') {
@@ -235,7 +242,13 @@
                             step = localStorage.getItem('vrvs_last_boot_step') || bootStepMemory;
                             // S3L: Só ler de localStorage se app ainda não iniciou
                             if (!appIniciado) {
-                                err = localStorage.getItem('vrvs_last_boot_err') || bootErrMemory;
+                                const errFromLS = localStorage.getItem('vrvs_last_boot_err') || bootErrMemory;
+                                // S3Q: Validar novamente se veio do localStorage
+                                if (errFromLS && !errFromLS.includes('vrvs-v5.3') && !errFromLS.includes('CACHE:') && !errFromLS.includes('vrvs-v')) {
+                                    err = errFromLS;
+                                } else {
+                                    err = bootErrMemory;
+                                }
                             }
                         } catch(e) {
                             if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
@@ -3760,7 +3773,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260125-0200 | CACHE: vrvs-v5.3.169-s3p-fix-quota-backup-loop-20260125-0200</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260125-0300 | CACHE: vrvs-v5.3.169-s3q-backup-quota-safe-20260125-0300</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -4940,24 +4953,88 @@
                 config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
             };
             
+            // S3Q: Calcular tamanho estimado do backup
+            const backupStr = JSON.stringify(backup);
+            const estimatedBytes = backupStr.length * 2; // UTF-16
+            const MAX_BACKUP_BYTES_STANDALONE = 1.5 * 1024 * 1024; // 1.5MB conservador
+            
+            // S3Q: Hard stop se backup muito grande (preventivo)
+            if (isStandalone() && estimatedBytes > MAX_BACKUP_BYTES_STANDALONE) {
+                console.warn('[BACKUP] Backup muito grande (' + (estimatedBytes / 1024 / 1024).toFixed(2) + 'MB). Não será criado.');
+                if (typeof mostrarNotificacaoFeedback === 'function') {
+                    mostrarNotificacaoFeedback('⚠️ Backup muito grande (' + (estimatedBytes / 1024 / 1024).toFixed(2) + 'MB). Limpe dados antigos antes de criar backup.', 'warning');
+                }
+                return null;
+            }
+            
+            // S3Q: Verificar quota disponível ANTES de criar backup
+            try {
+                const testKey = '__vrvs_backup_quota_test';
+                // Tentar escrever ~100KB para verificar espaço
+                const testSize = Math.min(100 * 1024, estimatedBytes);
+                localStorage.setItem(testKey, 'x'.repeat(testSize));
+                localStorage.removeItem(testKey);
+            } catch(e) {
+                if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                    console.warn('[BACKUP] Quota insuficiente para criar backup. Pulando criação.');
+                    if (typeof mostrarNotificacaoFeedback === 'function') {
+                        mostrarNotificacaoFeedback('⚠️ Espaço insuficiente para backup. Limpe dados antigos no Storage Doctor.', 'warning');
+                    }
+                    return null;
+                }
+                // Se não for quota, rethrow (erro inesperado)
+                throw e;
+            }
+            
             // Limitar backups no PWA (2) vs desktop (5)
             const MAX_BACKUPS = isStandalone() ? 2 : 5;
             
-            // Limpar backups antigos ANTES de criar novo (para abrir espaço)
+            // S3Q: Limpar backups antigos ANTES de criar novo (mais agressivo)
             const bks = Object.keys(localStorage)
                 .filter(k => k.startsWith('vrvs_backup_'))
                 .sort();
             
-            while (bks.length >= MAX_BACKUPS) {
-                const rm = bks.shift();
-                try { localStorage.removeItem(rm); } catch(_) {}
+            // S3Q: Limpar TODOS os backups se estiver no limite (garantir espaço máximo)
+            if (bks.length >= MAX_BACKUPS) {
+                bks.forEach(rm => {
+                    try { localStorage.removeItem(rm); } catch(_) {}
+                });
             }
             
+            // S3Q: Tentar criar backup com proteção QUOTA
             const backupKey = `vrvs_backup_${Date.now()}`;
-            localStorage.setItem(backupKey, JSON.stringify(backup));
-            
-            console.log(`[BACKUP] Backup criado: ${backupKey} (MAX_BACKUPS: ${MAX_BACKUPS})`);
-            return backupKey;
+            try {
+                localStorage.setItem(backupKey, backupStr);
+                console.log(`[BACKUP] Backup criado: ${backupKey} (${(estimatedBytes / 1024 / 1024).toFixed(2)}MB)`);
+                return backupKey;
+            } catch(e) {
+                // S3Q: Se falhar por quota, limpar TODOS os backups e retry 1x
+                if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                    console.warn('[BACKUP] Quota excedida ao criar backup. Limpando todos os backups e tentando novamente...');
+                    
+                    // Limpar TODOS os backups
+                    const allBackups = Object.keys(localStorage).filter(k => k.startsWith('vrvs_backup_'));
+                    allBackups.forEach(rm => {
+                        try { localStorage.removeItem(rm); } catch(_) {}
+                    });
+                    
+                    // Retry 1x
+                    try {
+                        localStorage.setItem(backupKey, backupStr);
+                        console.log(`[BACKUP] Backup criado após limpeza: ${backupKey}`);
+                        return backupKey;
+                    } catch(e2) {
+                        // Se ainda falhar, desistir
+                        console.error('[BACKUP] Falha ao criar backup mesmo após limpeza:', e2);
+                        if (typeof mostrarNotificacaoFeedback === 'function') {
+                            mostrarNotificacaoFeedback('⚠️ Sem espaço suficiente para backup. Limpe dados no Storage Doctor.', 'warning');
+                        }
+                        return null;
+                    }
+                }
+                // Se não for quota, rethrow (erro inesperado)
+                throw e;
+            }
         }
         
         // Baixar snapshot pré-import (NÃO grava no localStorage)
