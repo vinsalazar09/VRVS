@@ -3802,7 +3802,7 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260126-1900 | CACHE: vrvs-v5.3.170-a1-trauma-coluna-fix-20260126-1900</div>
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260126-2000 | CACHE: vrvs-v5.3.171-protecao-areas-duplicadas-20260126-2000</div>
         <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
@@ -5981,6 +5981,104 @@
         }
 
         // ==================== MODAL DE EDIÇÃO ====================
+        
+        // PROTEÇÃO: Sincronizar área em todos os dados quando área é renomeada
+        function sincronizarAreaEmTodosOsDados(areaAntiga, areaNova) {
+            if (!areaAntiga || !areaNova || areaAntiga === areaNova) {
+                return 0; // Nada a fazer
+            }
+            
+            let alteracoes = 0;
+            
+            try {
+                // 1. Atualizar dados (todos os temas com área antiga)
+                if (Array.isArray(dados)) {
+                    dados.forEach(t => {
+                        if (t.area === areaAntiga) {
+                            t.area = areaNova;
+                            alteracoes++;
+                        }
+                    });
+                }
+                
+                // 2. Atualizar histórico
+                if (Array.isArray(historico)) {
+                    historico.forEach(h => {
+                        if (h.area === areaAntiga) {
+                            h.area = areaNova;
+                            alteracoes++;
+                        }
+                    });
+                }
+                
+                // 3. Atualizar anotações
+                if (typeof anotacoes !== 'undefined' && Array.isArray(anotacoes)) {
+                    anotacoes.forEach(a => {
+                        if (a.area === areaAntiga) {
+                            a.area = areaNova;
+                            alteracoes++;
+                        }
+                    });
+                }
+                
+                // 4. Atualizar diário
+                try {
+                    const diarioSalvo = localStorage.getItem('vrvs_diario');
+                    if (diarioSalvo) {
+                        let diario;
+                        try {
+                            diario = JSON.parse(diarioSalvo);
+                        } catch(e) {
+                            console.warn('[SINCRONIZAÇÃO] Erro ao parsear diário:', e);
+                            diario = null;
+                        }
+                        
+                        if (diario && Array.isArray(diario.entradas)) {
+                            let diarioAlterado = false;
+                            diario.entradas.forEach(e => {
+                                if (e.area === areaAntiga) {
+                                    e.area = areaNova;
+                                    alteracoes++;
+                                    diarioAlterado = true;
+                                }
+                            });
+                            
+                            if (diarioAlterado) {
+                                try {
+                                    localStorage.setItem('vrvs_diario', JSON.stringify(diario));
+                                } catch(e) {
+                                    console.warn('[SINCRONIZAÇÃO] Erro ao salvar diário:', e);
+                                }
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.warn('[SINCRONIZAÇÃO] Erro ao processar diário:', e);
+                }
+                
+                // 5. Salvar dados atualizados (se houver alterações)
+                if (alteracoes > 0) {
+                    try {
+                        localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                        if (Array.isArray(historico) && historico.length > 0) {
+                            localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                        }
+                        if (typeof anotacoes !== 'undefined' && Array.isArray(anotacoes) && anotacoes.length > 0) {
+                            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                        }
+                    } catch(e) {
+                        console.warn('[SINCRONIZAÇÃO] Erro ao salvar dados:', e);
+                        throw e; // Re-lançar para tratamento superior
+                    }
+                }
+                
+            } catch(e) {
+                console.error('[SINCRONIZAÇÃO] Erro crítico ao sincronizar área:', e);
+                // Não bloquear a edição do tema, apenas logar erro
+            }
+            
+            return alteracoes;
+        }
         
         function openEditModal(id) {
             const tema = dados.find(t => t.id == id);
@@ -11561,7 +11659,21 @@
                     return;
                 }
                 
-                tema.area = normalizeArea(areaEdit);
+                // PROTEÇÃO: Capturar área ANTES da edição para sincronização
+                const areaAntiga = tema.area ? String(tema.area).trim() : '';
+                const areaNova = normalizeArea(areaEdit);
+                
+                // Atualizar área do tema editado
+                tema.area = areaNova;
+                
+                // PROTEÇÃO: Se área mudou, sincronizar em TODOS os dados
+                if (areaAntiga && areaAntiga !== areaNova) {
+                    const alteracoes = sincronizarAreaEmTodosOsDados(areaAntiga, areaNova);
+                    if (alteracoes > 1) {
+                        // Mais de 1 porque inclui o próprio tema editado
+                        console.log(`[SINCRONIZAÇÃO] Área "${areaAntiga}" → "${areaNova}": ${alteracoes} registro(s) atualizado(s)`);
+                    }
+                }
                 tema.tema = document.getElementById('editTema').value.trim();
                 tema.prioridade = parseInt(document.getElementById('editPrioridade').value);
                 const novoStatus = document.getElementById('editStatus').value;
