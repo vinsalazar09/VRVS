@@ -44,6 +44,10 @@
                 // S3B FIX: Declarar reasonParam antes do setTimeout para escopo correto
                 const reasonParam = reason.toLowerCase().replace(/[^a-z0-9_]/g, '_');
                 
+                // Centralizar escrita do splash via updateSplashDebugLine (evita vazamento de CACHE_NAME)
+                bootStepMemory = 'ABORT';
+                bootErrMemory = sanitizeBootErr(window.__vrvsBootAbortDisplay || 'ABORT');
+                
                 // Registrar listener DOMContentLoaded ANTES de abortar
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', function() {
@@ -52,14 +56,10 @@
                             const marker = document.getElementById('bootMarkerQuota');
                             if (marker) {
                                 marker.style.display = 'block';
-                                marker.textContent = 'ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
+                                marker.textContent = 'ERR: ' + sanitizeBootErr(window.__vrvsBootAbortDisplay) + ' → Recovery';
                             }
-                            
-                            // Atualizar splashDebugLine
-                            const debugLine = document.getElementById('splashDebugLine');
-                            if (debugLine) {
-                                debugLine.textContent = 'BOOT: ABORT | ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
-                            }
+                            // Atualizar splashDebugLine via função centralizada
+                            updateSplashDebugLine();
                         } catch(_) {}
                     });
                 } else {
@@ -68,12 +68,10 @@
                         const marker = document.getElementById('bootMarkerQuota');
                         if (marker) {
                             marker.style.display = 'block';
-                            marker.textContent = 'ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
+                            marker.textContent = 'ERR: ' + sanitizeBootErr(window.__vrvsBootAbortDisplay) + ' → Recovery';
                         }
-                        const debugLine = document.getElementById('splashDebugLine');
-                        if (debugLine) {
-                            debugLine.textContent = 'BOOT: ABORT | ERR: ' + window.__vrvsBootAbortDisplay + ' → Recovery';
-                        }
+                        // Atualizar splashDebugLine via função centralizada
+                        updateSplashDebugLine();
                     } catch(_) {}
                 }
                 
@@ -186,6 +184,16 @@
                 }
             }
             
+            // Sanitização de erro para evitar vazamento de CACHE_NAME no splash
+            function sanitizeBootErr(v) {
+                const s = String(v || '').trim();
+                if (!s) return '—';
+                // se vazou cache name / marcador de cache, reduzir:
+                if (s.includes('vrvs-v') || s.includes('CACHE:') || s.includes('CACHE_NAME')) return 'CACHE';
+                // também evitar strings muito longas no splash:
+                return s.length > 40 ? s.slice(0, 40) + '…' : s;
+            }
+            
             function setBootErr(msgOrError) {
                 // S3J: Aceitar string ou objeto Error
                 let msgShort, stackInfo = '';
@@ -214,13 +222,14 @@
                     return;
                 }
                 
-                bootErrMemory = msgShort;
+                // Sanitizar antes de salvar (evita vazamento de CACHE_NAME)
+                bootErrMemory = sanitizeBootErr(msgShort);
                 if (localStorageQuotaExceeded) {
                     updateSplashDebugLine();
                     return;
                 }
                 try {
-                    localStorage.setItem('vrvs_last_boot_err', msgShort);
+                    localStorage.setItem('vrvs_last_boot_err', bootErrMemory);
                     updateSplashDebugLine();
                 } catch(e) {
                     if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
@@ -259,20 +268,9 @@
                             // S3L: Só ler de localStorage se app ainda não iniciou
                             if (!appIniciado) {
                                 const errFromLS = localStorage.getItem('vrvs_last_boot_err') || bootErrMemory;
-                                // S3Q: Validar e LIMPAR se contém CACHE_NAME (corrige valores antigos)
-                                if (errFromLS && typeof errFromLS === 'string' && 
-                                    (errFromLS.includes('vrvs-v5.3') || errFromLS.includes('CACHE:') || 
-                                     errFromLS.includes('vrvs-v') || errFromLS.includes('backup-quota-safe') ||
-                                     errFromLS.includes('s3q-backup-quota-safe'))) {
-                                    // Valor inválido no localStorage - limpar
-                                    console.warn('[BOOT ERR] Limpando vrvs_last_boot_err que contém CACHE_NAME');
-                                    try {
-                                        localStorage.removeItem('vrvs_last_boot_err');
-                                    } catch(_) {}
-                                    err = '—';
-                                    bootErrMemory = '—';
-                                } else if (errFromLS && errFromLS !== '—' && errFromLS !== '') {
-                                    err = errFromLS;
+                                // Sanitizar valor do localStorage (corrige valores antigos com CACHE_NAME)
+                                if (errFromLS && typeof errFromLS === 'string' && errFromLS !== '—' && errFromLS !== '') {
+                                    err = sanitizeBootErr(errFromLS);
                                 } else {
                                     err = bootErrMemory;
                                 }
@@ -5982,104 +5980,6 @@
 
         // ==================== MODAL DE EDIÇÃO ====================
         
-        // PROTEÇÃO: Sincronizar área em todos os dados quando área é renomeada
-        function sincronizarAreaEmTodosOsDados(areaAntiga, areaNova) {
-            if (!areaAntiga || !areaNova || areaAntiga === areaNova) {
-                return 0; // Nada a fazer
-            }
-            
-            let alteracoes = 0;
-            
-            try {
-                // 1. Atualizar dados (todos os temas com área antiga)
-                if (Array.isArray(dados)) {
-                    dados.forEach(t => {
-                        if (t.area === areaAntiga) {
-                            t.area = areaNova;
-                            alteracoes++;
-                        }
-                    });
-                }
-                
-                // 2. Atualizar histórico
-                if (Array.isArray(historico)) {
-                    historico.forEach(h => {
-                        if (h.area === areaAntiga) {
-                            h.area = areaNova;
-                            alteracoes++;
-                        }
-                    });
-                }
-                
-                // 3. Atualizar anotações
-                if (typeof anotacoes !== 'undefined' && Array.isArray(anotacoes)) {
-                    anotacoes.forEach(a => {
-                        if (a.area === areaAntiga) {
-                            a.area = areaNova;
-                            alteracoes++;
-                        }
-                    });
-                }
-                
-                // 4. Atualizar diário
-                try {
-                    const diarioSalvo = localStorage.getItem('vrvs_diario');
-                    if (diarioSalvo) {
-                        let diario;
-                        try {
-                            diario = JSON.parse(diarioSalvo);
-                        } catch(e) {
-                            console.warn('[SINCRONIZAÇÃO] Erro ao parsear diário:', e);
-                            diario = null;
-                        }
-                        
-                        if (diario && Array.isArray(diario.entradas)) {
-                            let diarioAlterado = false;
-                            diario.entradas.forEach(e => {
-                                if (e.area === areaAntiga) {
-                                    e.area = areaNova;
-                                    alteracoes++;
-                                    diarioAlterado = true;
-                                }
-                            });
-                            
-                            if (diarioAlterado) {
-                                try {
-                                    localStorage.setItem('vrvs_diario', JSON.stringify(diario));
-                                } catch(e) {
-                                    console.warn('[SINCRONIZAÇÃO] Erro ao salvar diário:', e);
-                                }
-                            }
-                        }
-                    }
-                } catch(e) {
-                    console.warn('[SINCRONIZAÇÃO] Erro ao processar diário:', e);
-                }
-                
-                // 5. Salvar dados atualizados (se houver alterações)
-                if (alteracoes > 0) {
-                    try {
-                        localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-                        if (Array.isArray(historico) && historico.length > 0) {
-                            localStorage.setItem('vrvs_historico', JSON.stringify(historico));
-                        }
-                        if (typeof anotacoes !== 'undefined' && Array.isArray(anotacoes) && anotacoes.length > 0) {
-                            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
-                        }
-                    } catch(e) {
-                        console.warn('[SINCRONIZAÇÃO] Erro ao salvar dados:', e);
-                        throw e; // Re-lançar para tratamento superior
-                    }
-                }
-                
-            } catch(e) {
-                console.error('[SINCRONIZAÇÃO] Erro crítico ao sincronizar área:', e);
-                // Não bloquear a edição do tema, apenas logar erro
-            }
-            
-            return alteracoes;
-        }
-        
         function openEditModal(id) {
             const tema = dados.find(t => t.id == id);
             if (!tema) {
@@ -11659,21 +11559,8 @@
                     return;
                 }
                 
-                // PROTEÇÃO: Capturar área ANTES da edição para sincronização
-                const areaAntiga = tema.area ? String(tema.area).trim() : '';
-                const areaNova = normalizeArea(areaEdit);
-                
-                // Atualizar área do tema editado
-                tema.area = areaNova;
-                
-                // PROTEÇÃO: Se área mudou, sincronizar em TODOS os dados
-                if (areaAntiga && areaAntiga !== areaNova) {
-                    const alteracoes = sincronizarAreaEmTodosOsDados(areaAntiga, areaNova);
-                    if (alteracoes > 1) {
-                        // Mais de 1 porque inclui o próprio tema editado
-                        console.log(`[SINCRONIZAÇÃO] Área "${areaAntiga}" → "${areaNova}": ${alteracoes} registro(s) atualizado(s)`);
-                    }
-                }
+                // Atualizar área do tema editado (normalizada)
+                tema.area = normalizeArea(areaEdit);
                 tema.tema = document.getElementById('editTema').value.trim();
                 tema.prioridade = parseInt(document.getElementById('editPrioridade').value);
                 const novoStatus = document.getElementById('editStatus').value;

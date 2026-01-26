@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.171-protecao-areas-duplicadas-20260126-2000";
+const CACHE_NAME = "vrvs-v5.3.172-splash-err-writer-fix-20260126-2100";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
