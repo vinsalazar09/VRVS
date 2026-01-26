@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.169-s3q-backup-quota-safe-20260125-0300";
+const CACHE_NAME = "vrvs-v5.3.170-a1-trauma-coluna-fix-20260126-1900";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
