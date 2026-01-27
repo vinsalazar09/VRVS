@@ -15825,6 +15825,36 @@
                     </div>
                 </div>
             `;
+            
+            // FIX: Ao navegar (re-render), se a resposta já está mostrada e há imagem, recarregar thumbnail
+            try {
+                if (entradaAtual && entradaAtual.id && entradaAtual.imagem) {
+                    const chave = String(entradaAtual.id);
+
+                    // modo normal (resposta já mostrada)
+                    const respJaMostradaNormal =
+                        window.treinoLivreRespostaMostrada &&
+                        window.treinoLivreRespostaMostrada[chave] === true;
+
+                    // modo avaliação (resposta já mostrada)
+                    const respJaMostradaAvaliacao =
+                        modoAvaliacao &&
+                        window.treinoLivreAvaliacao &&
+                        window.treinoLivreAvaliacao.respostaMostrada &&
+                        window.treinoLivreAvaliacao.respostaMostrada[indice] === true;
+
+                    if (respJaMostradaNormal || respJaMostradaAvaliacao) {
+                        setTimeout(() => {
+                            diario_carregarThumbnailUnico(
+                                entradaAtual.id,
+                                null,
+                                `tl-thumb-img-${entradaAtual.id}`,
+                                `tl-thumb-wrap-${entradaAtual.id}`
+                            );
+                        }, 50);
+                    }
+                }
+            } catch (e) {}
         }
         
         // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
