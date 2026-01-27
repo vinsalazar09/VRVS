@@ -3800,9 +3800,9 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 10001;">BUILD: 20260126-2000 | CACHE: vrvs-v5.3.171-protecao-areas-duplicadas-20260126-2000</div>
-        <div id="splashDebugLine" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; z-index: 10002; text-align: center;">BOOT: ? | ERR: —</div>
-        <div id="bootMarkerQuota" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
+        <div id="splashBuildLine" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); font-size:10px; color:rgba(255,255,255,0.3); font-family:monospace; z-index:10001; text-align:center; max-width:92vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">BUILD: 20260126-2130 | CACHE: vrvs-v5.3.173-splash-layout-buildline-20260126-2130</div>
+        <div id="splashDebugLine" style="position:absolute; bottom:56px; left:50%; transform:translateX(-50%); font-size:11px; color:rgba(255,255,255,0.6); font-family:monospace; z-index:10002; text-align:center; max-width:92vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">BOOT: ? | ERR: —</div>
+        <div id="bootMarkerQuota" style="position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
         <div class="splash-progress">
             <div class="splash-progress-bar"></div>
@@ -19475,8 +19475,8 @@
         }
         
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
-        const APP_BUILD = "vrvs-v5.3.65-resposta-alignfix";
-        const APP_BUILD_CACHE = "vrvs-v5.3.65-resposta-alignfix";
+        const APP_BUILD = "20260126-2130";
+        const APP_BUILD_CACHE = "vrvs-v5.3.173-splash-layout-buildline-20260126-2130";
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
