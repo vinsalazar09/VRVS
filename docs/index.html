@@ -59,7 +59,8 @@
                                 marker.textContent = 'ERR: ' + sanitizeBootErr(window.__vrvsBootAbortDisplay) + ' → Recovery';
                             }
                             // Atualizar splashDebugLine via função centralizada
-                            updateSplashDebugLine();
+                            // REMOVIDO: Linhas de debug removidas do splash
+                            // updateSplashDebugLine();
                         } catch(_) {}
                     });
                 } else {
@@ -71,7 +72,8 @@
                             marker.textContent = 'ERR: ' + sanitizeBootErr(window.__vrvsBootAbortDisplay) + ' → Recovery';
                         }
                         // Atualizar splashDebugLine via função centralizada
-                        updateSplashDebugLine();
+                        // REMOVIDO: Linhas de debug removidas do splash
+                        // updateSplashDebugLine();
                     } catch(_) {}
                 }
                 
@@ -143,17 +145,20 @@
             function setBootStep(n) {
                 bootStepMemory = String(n);
                 if (localStorageQuotaExceeded) {
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                     return;
                 }
                 try {
                     localStorage.setItem('vrvs_last_boot_step', String(n));
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                 } catch(e) {
                     if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
                         localStorageQuotaExceeded = true;
                     }
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                 }
             }
             
@@ -218,24 +223,28 @@
                     try {
                         localStorage.removeItem('vrvs_last_boot_err');
                     } catch(_) {}
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                     return;
                 }
                 
                 // Sanitizar antes de salvar (evita vazamento de CACHE_NAME)
                 bootErrMemory = sanitizeBootErr(msgShort);
                 if (localStorageQuotaExceeded) {
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                     return;
                 }
                 try {
                     localStorage.setItem('vrvs_last_boot_err', bootErrMemory);
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                 } catch(e) {
                     if (e.name === 'QuotaExceededError' || e.message && e.message.includes('quota')) {
                         localStorageQuotaExceeded = true;
                     }
-                    updateSplashDebugLine();
+                    // REMOVIDO: Linhas de debug removidas do splash
+                    // updateSplashDebugLine();
                 }
             }
             
@@ -295,7 +304,8 @@
                         window.abortBoot('QUOTA', 'QUOTA');
                     } else {
                         bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
-                        updateSplashDebugLine();
+                        // REMOVIDO: Linhas de debug removidas do splash
+                        // updateSplashDebugLine();
                     }
                     return;
                 }
@@ -317,7 +327,8 @@
                         window.abortBoot('QUOTA', 'QUOTA');
                     } else {
                         bootErrMemory = 'QUOTA_EXCEEDED: localStorage cheio';
-                        updateSplashDebugLine();
+                        // REMOVIDO: Linhas de debug removidas do splash
+                        // updateSplashDebugLine();
                     }
                     return;
                 }
@@ -339,7 +350,8 @@
             });
             
             // Updater periódico para #splashDebugLine
-            setInterval(updateSplashDebugLine, 500);
+            // REMOVIDO: Linhas de debug removidas do splash
+            // setInterval(updateSplashDebugLine, 500);
             
             // Airbag final (8s)
             setTimeout(function() {
@@ -3800,14 +3812,6 @@
         <img src="./logo.png?v=3" alt="VRVS Logo" class="splash-logo" onerror="this.onerror=null; this.src='./logo.jpeg?v=3';">
         <div class="splash-title">VRVS</div>
         <div class="splash-subtitle">Sistema de Revisão e Performance</div>
-        <div id="splashBottomLines" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:92vw; z-index:10002; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none;">
-          <div id="splashDebugLine" style="font-size:11px; color:rgba(255,255,255,0.6); font-family:monospace; text-align:center; max-width:92vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-            BOOT: ? | ERR: —
-          </div>
-          <div id="splashBuildLine" style="font-size:10px; color:rgba(255,255,255,0.3); font-family:monospace; text-align:center; width:92vw; white-space:normal; overflow-wrap:anywhere; line-height:1.15;">
-            BUILD: 20260126-2140 | CACHE: vrvs-v5.3.174-splash-bottomlines-wrap-20260126-2140
-          </div>
-        </div>
         <div id="bootMarkerQuota" style="position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #ff6b6b; font-family: monospace; z-index: 10003; text-align: center; font-weight: 700; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 6px; display: none;">ERR: QUOTA → Recovery</div>
         <div class="splash-loader"></div>
         <div class="splash-progress">
