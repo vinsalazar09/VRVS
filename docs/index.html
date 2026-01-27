@@ -25,6 +25,15 @@
         })();
     </script>
     <script>
+        // RESCUE: Kill-switch anti-overlay fantasma (executar o mais cedo possível)
+        ;(function vrvs_rescue_killOverlays(){
+            try{
+                const ids = ['diario-viewer-overlay-pergunta','diario-viewer-overlay'];
+                ids.forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+                document.querySelectorAll('[id^="diario-viewer-overlay"]').forEach(el => el.remove());
+            }catch(e){}
+        })();
+        
         // S3B: QUOTA GUARD + PARSE GUARD — Detecção precoce ANTES de qualquer setItem
         (function() {
             // Helper para detectar QuotaExceededError
@@ -14157,7 +14166,6 @@
                             </div>
                             ${chipsHTML}
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">❓ ${formatarTextoDiario(entrada.topico)}</div>
-                            ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="diario-pergunta-img-thumb-${entrada.id}" style="margin-top: 12px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="diario-pergunta-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <button onclick="toggleRevisaoDiario(${entrada.id}, this)" class="btn-toggle-revisao" data-entrada-id="${entrada.id}" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
@@ -14195,73 +14203,35 @@
             const cards = document.querySelectorAll('[data-diario-id]');
             for (const card of cards) {
                 const entradaId = card.getAttribute('data-diario-id');
-                
-                // Carregar thumbnail da RESPOSTA
                 const imgElement = document.getElementById(`diario-img-${entradaId}`);
-                if (imgElement) {
-                    // B2-FIX-2: Usar dataset.loaded para evitar re-carregar
-                    if (imgElement.dataset.loaded !== '1') {
-                        const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-                        if (entrada && entrada.imagem && entrada.imagem.thumbKey) {
-                            try {
-                                const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
-                                if (thumbBlob) {
-                                    const thumbURL = URL.createObjectURL(thumbBlob);
-                                    imgElement.src = thumbURL;
-                                    imgElement.dataset.loaded = '1';
-                                    imgElement.style.display = 'block';
-                                    imgElement.onerror = () => {
-                                        URL.revokeObjectURL(thumbURL);
-                                        imgElement.style.display = 'none';
-                                        imgElement.dataset.loaded = '';
-                                    };
-                                }
-                            } catch (error) {
-                                console.error('Erro ao carregar thumbnail:', error);
-                                imgElement.style.display = 'none';
-                                imgElement.dataset.loaded = '';
-                            }
-                        } else {
-                            imgElement.style.display = 'none';
-                        }
-                    }
+                if (!imgElement) continue;
+                
+                // B2-FIX-2: Usar dataset.loaded para evitar re-carregar
+                if (imgElement.dataset.loaded === '1') continue; // Já carregado
+                
+                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                if (!entrada || !entrada.imagem || !entrada.imagem.thumbKey) {
+                    imgElement.style.display = 'none';
+                    continue;
                 }
                 
-                // MP2: Carregar thumbnail da PERGUNTA
-                const imgPerguntaElement = document.getElementById(`diario-pergunta-img-${entradaId}`);
-                if (imgPerguntaElement) {
-                    if (imgPerguntaElement.dataset.loaded !== '1') {
-                        const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-                        if (entrada && entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
-                            try {
-                                const thumbBlob = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
-                                if (thumbBlob) {
-                                    const thumbURL = URL.createObjectURL(thumbBlob);
-                                    imgPerguntaElement.src = thumbURL;
-                                    imgPerguntaElement.dataset.loaded = '1';
-                                    imgPerguntaElement.style.display = 'block';
-                                    const wrapElement = document.getElementById(`diario-pergunta-img-thumb-${entradaId}`);
-                                    if (wrapElement) wrapElement.hidden = false;
-                                    imgPerguntaElement.onerror = () => {
-                                        URL.revokeObjectURL(thumbURL);
-                                        imgPerguntaElement.style.display = 'none';
-                                        if (wrapElement) wrapElement.hidden = true;
-                                        imgPerguntaElement.dataset.loaded = '';
-                                    };
-                                }
-                            } catch (error) {
-                                console.error('Erro ao carregar thumbnail da pergunta:', error);
-                                imgPerguntaElement.style.display = 'none';
-                                const wrapElement = document.getElementById(`diario-pergunta-img-thumb-${entradaId}`);
-                                if (wrapElement) wrapElement.hidden = true;
-                                imgPerguntaElement.dataset.loaded = '';
-                            }
-                        } else {
-                            imgPerguntaElement.style.display = 'none';
-                            const wrapElement = document.getElementById(`diario-pergunta-img-thumb-${entradaId}`);
-                            if (wrapElement) wrapElement.hidden = true;
-                        }
+                try {
+                    const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
+                    if (thumbBlob) {
+                        const thumbURL = URL.createObjectURL(thumbBlob);
+                        imgElement.src = thumbURL;
+                        imgElement.dataset.loaded = '1'; // Marcar como carregado
+                        imgElement.style.display = 'block'; // B2-FIX-2: Forçar exibição
+                        imgElement.onerror = () => {
+                            URL.revokeObjectURL(thumbURL);
+                            imgElement.style.display = 'none';
+                            imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
+                        };
                     }
+                } catch (error) {
+                    console.error('Erro ao carregar thumbnail:', error);
+                    imgElement.style.display = 'none';
+                    imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                 }
             }
         }
@@ -14459,62 +14429,6 @@
                 };
             } catch (error) {
                 console.error('Erro ao carregar thumbnail:', error);
-                wrapElement.hidden = true;
-                imgElement.dataset.loaded = '';
-            }
-        }
-        
-        // MP2: Helper para carregar thumbnail da PERGUNTA único (sessões)
-        async function diario_carregarThumbnailPerguntaUnico(entradaId, thumbKey, imgElId, wrapElId) {
-            const imgElement = document.getElementById(imgElId);
-            const wrapElement = document.getElementById(wrapElId);
-            
-            if (!imgElement || !wrapElement) return;
-            
-            // Se já carregado, não recarregar
-            if (imgElement.dataset.loaded === '1') return;
-            
-            // Fallback: se thumbKey vazio, tentar buscar da entrada
-            let thumbKeyFinal = thumbKey;
-            if (!thumbKeyFinal && entradaId) {
-                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-                if (entrada && entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
-                    thumbKeyFinal = entrada.imagemPergunta.thumbKey;
-                }
-            }
-            
-            // Se ainda não tem thumbKey, esconder wrapper e retornar
-            if (!thumbKeyFinal) {
-                wrapElement.hidden = true;
-                return;
-            }
-            
-            try {
-                const thumbBlob = await b0Img_getBlob(thumbKeyFinal);
-                if (!thumbBlob) {
-                    wrapElement.hidden = true;
-                    return;
-                }
-                
-                // Revogar URL antiga se existir
-                if (imgElement.src && imgElement.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(imgElement.src);
-                }
-                
-                const thumbURL = URL.createObjectURL(thumbBlob);
-                imgElement.src = thumbURL;
-                imgElement.dataset.loaded = '1';
-                imgElement.style.display = 'block';
-                wrapElement.hidden = false;
-                
-                imgElement.onerror = () => {
-                    URL.revokeObjectURL(thumbURL);
-                    imgElement.style.display = 'none';
-                    wrapElement.hidden = true;
-                    imgElement.dataset.loaded = '';
-                };
-            } catch (error) {
-                console.error('Erro ao carregar thumbnail da pergunta:', error);
                 wrapElement.hidden = true;
                 imgElement.dataset.loaded = '';
             }
@@ -14805,295 +14719,7 @@
                 overlay.appendChild(img);
                 overlay.appendChild(btnFechar);
                 document.body.appendChild(overlay);
-            } catch (error) {
-                console.error('Erro ao abrir viewer de imagem:', error);
-                mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
-            }
-        }
-        
-        // MP2: Viewer de imagem da PERGUNTA (ampliar ao clicar)
-        async function diario_abrirViewerImagemPergunta(entradaId) {
-            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-            if (!entrada || !entrada.imagemPergunta || !entrada.imagemPergunta.fullKey) return;
-            
-            try {
-                const fullBlob = await b0Img_getBlob(entrada.imagemPergunta.fullKey);
-                if (!fullBlob) {
-                    mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
-                    return;
-                }
                 
-                const fullURL = URL.createObjectURL(fullBlob);
-                
-                // Estado do zoom/pan (reutilizar mesma lógica do viewer da resposta)
-                let scale = 1;
-                let tx = 0;
-                let ty = 0;
-                
-                let baseW = 0;
-                let baseH = 0;
-                
-                let isPanning = false;
-                let startX = 0, startY = 0;
-                let startTX = 0, startTY = 0;
-                
-                let isPinching = false;
-                let initialPinchDistance = 0;
-                let initialPinchScale = 1;
-                let initialPinchCenterX = 0;
-                let initialPinchCenterY = 0;
-                let initialPinchTX = 0;
-                let initialPinchTY = 0;
-                
-                let lastTapTime = 0;
-                let lastTapX = 0;
-                let lastTapY = 0;
-                
-                // Criar overlay
-                const overlay = document.createElement('div');
-                overlay.id = 'diario-viewer-overlay-pergunta';
-                overlay.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.95);
-                    z-index: 999999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    overflow: hidden;
-                `;
-                
-                // Imagem ampliada
-                const img = document.createElement('img');
-                img.src = fullURL;
-                img.style.cssText = `
-                    max-width: 95%;
-                    max-height: 95%;
-                    object-fit: contain;
-                    border-radius: 8px;
-                    user-select: none;
-                    -webkit-user-select: none;
-                    -webkit-touch-callout: none;
-                    transform-origin: center center;
-                `;
-                
-                // Helpers (mesma lógica do viewer da resposta)
-                const aplicarTransform = () => {
-                    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-                };
-                
-                const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-                
-                const clampPan = () => {
-                    const o = overlay.getBoundingClientRect();
-                    const maxX = Math.max(0, (baseW * scale - o.width) / 2);
-                    const maxY = Math.max(0, (baseH * scale - o.height) / 2);
-                    tx = clamp(tx, -maxX, maxX);
-                    ty = clamp(ty, -maxY, maxY);
-                };
-                
-                const resetZoom = () => {
-                    scale = 1;
-                    tx = 0;
-                    ty = 0;
-                    aplicarTransform();
-                };
-                
-                const zoomAt = (clientX, clientY, nextScale) => {
-                    const o = overlay.getBoundingClientRect();
-                    const x = clientX - o.left;
-                    const y = clientY - o.top;
-                    
-                    scale = nextScale;
-                    tx = (o.width / 2 - x) * (scale - 1);
-                    ty = (o.height / 2 - y) * (scale - 1);
-                    
-                    clampPan();
-                    aplicarTransform();
-                };
-                
-                const calcularDistancia = (t1, t2) => {
-                    const dx = t1.clientX - t2.clientX;
-                    const dy = t1.clientY - t2.clientY;
-                    return Math.hypot(dx, dy);
-                };
-                
-                const calcularCentro = (t1, t2) => {
-                    return {
-                        x: (t1.clientX + t2.clientX) / 2,
-                        y: (t1.clientY + t2.clientY) / 2
-                    };
-                };
-                
-                // Medir tamanho base após carregar
-                img.onload = () => {
-                    requestAnimationFrame(() => {
-                        const r = img.getBoundingClientRect();
-                        baseW = r.width || baseW;
-                        baseH = r.height || baseH;
-                        aplicarTransform();
-                    });
-                };
-                
-                // Touch handlers (mesma lógica do viewer da resposta)
-                img.addEventListener('touchstart', (e) => {
-                    if (!e.touches) return;
-                    
-                    if (e.touches.length === 2) {
-                        e.preventDefault();
-                        isPanning = false;
-                        isPinching = true;
-                        
-                        const t1 = e.touches[0];
-                        const t2 = e.touches[1];
-                        initialPinchDistance = calcularDistancia(t1, t2);
-                        initialPinchScale = scale;
-                        const centro = calcularCentro(t1, t2);
-                        initialPinchCenterX = centro.x;
-                        initialPinchCenterY = centro.y;
-                        initialPinchTX = tx;
-                        initialPinchTY = ty;
-                        
-                        img.style.transition = 'none';
-                        return;
-                    }
-                    
-                    if (e.touches.length !== 1) return;
-                    
-                    const t = e.touches[0];
-                    const now = Date.now();
-                    const dt = now - lastTapTime;
-                    const dx = Math.abs(t.clientX - lastTapX);
-                    const dy = Math.abs(t.clientY - lastTapY);
-                    
-                    if (dt < 300 && dx < 40 && dy < 40) {
-                        e.preventDefault();
-                        lastTapTime = 0;
-                        
-                        if (scale === 1) {
-                            zoomAt(t.clientX, t.clientY, 2.5);
-                        } else {
-                            resetZoom();
-                        }
-                        return;
-                    }
-                    
-                    lastTapTime = now;
-                    lastTapX = t.clientX;
-                    lastTapY = t.clientY;
-                    
-                    if (scale > 1) {
-                        e.preventDefault();
-                        isPanning = true;
-                        isPinching = false;
-                        startX = t.clientX;
-                        startY = t.clientY;
-                        startTX = tx;
-                        startTY = ty;
-                        img.style.transition = 'none';
-                    }
-                }, { passive: false });
-                
-                img.addEventListener('touchmove', (e) => {
-                    if (!e.touches) return;
-                    
-                    if (e.touches.length === 2 && isPinching) {
-                        e.preventDefault();
-                        const t1 = e.touches[0];
-                        const t2 = e.touches[1];
-                        const currentDistance = calcularDistancia(t1, t2);
-                        const ratio = currentDistance / initialPinchDistance;
-                        const nextScale = initialPinchScale * ratio;
-                        const minScale = 1;
-                        const maxScale = 5;
-                        const clampedScale = clamp(nextScale, minScale, maxScale);
-                        
-                        const centro = calcularCentro(t1, t2);
-                        const o = overlay.getBoundingClientRect();
-                        const centerX = centro.x - o.left;
-                        const centerY = centro.y - o.top;
-                        
-                        scale = clampedScale;
-                        tx = initialPinchTX + (centerX - initialPinchCenterX) * (scale - initialPinchScale);
-                        ty = initialPinchTY + (centerY - initialPinchCenterY) * (scale - initialPinchScale);
-                        
-                        clampPan();
-                        aplicarTransform();
-                        return;
-                    }
-                    
-                    if (!isPanning || scale <= 1 || e.touches.length !== 1) return;
-                    e.preventDefault();
-                    const t = e.touches[0];
-                    tx = startTX + (t.clientX - startX);
-                    ty = startTY + (t.clientY - startY);
-                    clampPan();
-                    aplicarTransform();
-                }, { passive: false });
-                
-                img.addEventListener('touchend', (e) => {
-                    if (isPinching && (!e.touches || e.touches.length < 2)) {
-                        isPinching = false;
-                        img.style.transition = '';
-                    }
-                    if (isPanning && (!e.touches || e.touches.length === 0)) {
-                        isPanning = false;
-                        img.style.transition = '';
-                    }
-                });
-                
-                // Botão fechar
-                const btnFechar = document.createElement('button');
-                btnFechar.textContent = '✕';
-                btnFechar.style.cssText = `
-                    position: absolute;
-                    top: 20px;
-                    right: 20px;
-                    background: rgba(255, 255, 255, 0.2);
-                    border: none;
-                    color: white;
-                    font-size: 24px;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    cursor: pointer;
-                    z-index: 10001;
-                `;
-                
-                const fechar = () => {
-                    try { URL.revokeObjectURL(fullURL); } catch(e) {}
-                    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                };
-                
-                btnFechar.onclick = (e) => {
-                    e.stopPropagation();
-                    fechar();
-                };
-                
-                overlay.addEventListener('click', (e) => {
-                    if (e.target !== overlay) return;
-                    if (scale > 1) {
-                        resetZoom();
-                    } else {
-                        fechar();
-                    }
-                });
-                
-                img.onclick = (e) => e.stopPropagation();
-                
-                overlay.appendChild(img);
-                overlay.appendChild(btnFechar);
-                document.body.appendChild(overlay);
-            } catch (error) {
-                console.error('Erro ao abrir viewer de imagem da pergunta:', error);
-                mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
-            }
-        }
-        
             } catch (error) {
                 console.error('Erro ao abrir viewer:', error);
                 mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
@@ -15951,7 +15577,6 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entradaAtual.topico)}</div>
-                    <div id="sd-pergunta-thumb-wrap-${entradaAtual.id}" style="margin-top: 12px;" hidden><img id="sd-pergunta-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entradaAtual.id})" /></div>
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta" hidden>
                         <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
                             ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
@@ -15983,18 +15608,6 @@
                     </div>
                 </div>
             `;
-            
-            // MP2: Carregar thumbnail da PERGUNTA após renderizar
-            if (entradaAtual && entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
-                setTimeout(() => {
-                    diario_carregarThumbnailPerguntaUnico(
-                        entradaAtual.id,
-                        null,
-                        `sd-pergunta-thumb-img-${entradaAtual.id}`,
-                        `sd-pergunta-thumb-wrap-${entradaAtual.id}`
-                    );
-                }, 50);
-            }
         }
         
         // ==================== TL-1: TREINO LIVRE CUSTOMIZADO ====================
@@ -16477,20 +16090,6 @@
                     }
                 }
             } catch (e) {}
-            
-            // MP2: Carregar thumbnail da PERGUNTA após renderizar (navegação)
-            try {
-                if (entradaAtual && entradaAtual.id && entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
-                    setTimeout(() => {
-                        diario_carregarThumbnailPerguntaUnico(
-                            entradaAtual.id,
-                            null,
-                            `tl-pergunta-thumb-img-${entradaAtual.id}`,
-                            `tl-pergunta-thumb-wrap-${entradaAtual.id}`
-                        );
-                    }, 50);
-                }
-            } catch (e) {}
         }
         
         // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
@@ -16549,7 +16148,6 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
-                    <div id="tl-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})" /></div>
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
@@ -16606,15 +16204,6 @@
                         `tl-thumb-img-${entrada.id}`,
                         `tl-thumb-wrap-${entrada.id}`
                     );
-                    // MP2: Carregar thumbnail da PERGUNTA também
-                    if (entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
-                        diario_carregarThumbnailPerguntaUnico(
-                            entrada.id,
-                            null,
-                            `tl-pergunta-thumb-img-${entrada.id}`,
-                            `tl-pergunta-thumb-wrap-${entrada.id}`
-                        );
-                    }
                 }, 50);
             }
         }
@@ -16659,15 +16248,6 @@
                             `tl-thumb-img-${entradaAtual.id}`,
                             `tl-thumb-wrap-${entradaAtual.id}`
                         );
-                        // MP2: Carregar thumbnail da PERGUNTA também
-                        if (entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
-                            diario_carregarThumbnailPerguntaUnico(
-                                entradaAtual.id,
-                                null,
-                                `tl-pergunta-thumb-img-${entradaAtual.id}`,
-                                `tl-pergunta-thumb-wrap-${entradaAtual.id}`
-                            );
-                        }
                     }, 50);
                 }
                 
@@ -17440,15 +17020,6 @@
                             `sd-thumb-img-${entradaAtual.id}`,
                             `sd-thumb-wrap-${entradaAtual.id}`
                         );
-                        // MP2: Carregar thumbnail da PERGUNTA também
-                        if (entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
-                            diario_carregarThumbnailPerguntaUnico(
-                                entradaAtual.id,
-                                null,
-                                `sd-pergunta-thumb-img-${entradaAtual.id}`,
-                                `sd-pergunta-thumb-wrap-${entradaAtual.id}`
-                            );
-                        }
                     }, 50);
                 }
             }
