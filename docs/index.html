@@ -6735,7 +6735,7 @@
             
             const tarefas = dados.filter(t => {
                 if (!t.agenda || !t.tema) return false;
-                if (t.status !== 'Em estudo' && t.status !== 'Planejado') return false;
+                if (t.status !== 'Em estudo') return false;
                 if (!dataValida(t.agenda)) return false;
                 // Apenas tarefas com até 7 dias de atraso (hoje até 7 dias atrás)
                 const agendaDate = new Date(t.agenda + 'T00:00:00');
