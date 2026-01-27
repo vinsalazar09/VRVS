@@ -13410,10 +13410,32 @@
                 // Pequeno delay para garantir que modal fechou antes de renderizar (especialmente mobile)
                 setTimeout(() => {
                     if (veioDaSessaoFlag) {
-                        // Se veio da sessão, re-renderizar apenas o card atual da sessão
-                        const entradaAtual = getEntradaAtualSessao();
-                        if (entradaAtual) {
-                            renderSessaoDiario(entradaAtual);
+                        // Treino Livre: re-renderizar runner correto e recarregar thumbnail
+                        const tlAtivo = !!(window.treinoLivreEstado?.ativo && window.treinoLivreFila && Number.isInteger(window.treinoLivreEstado?.indiceAtual));
+
+                        if (tlAtivo) {
+                            renderTreinoLivreRunner();
+
+                            const indice = window.treinoLivreEstado.indiceAtual;
+                            const entradaAtual = window.treinoLivreFila && window.treinoLivreFila[indice];
+
+                            if (entradaAtual && entradaAtual.id) {
+                                setTimeout(() => {
+                                    diario_carregarThumbnailUnico(
+                                        entradaAtual.id,
+                                        null,
+                                        `tl-thumb-img-${entradaAtual.id}`,
+                                        `tl-thumb-wrap-${entradaAtual.id}`
+                                    );
+                                }, 50);
+                            }
+
+                        } else {
+                            // Sessão programada (comportamento atual)
+                            const entradaAtual = getEntradaAtualSessao();
+                            if (entradaAtual) {
+                                renderSessaoDiario(entradaAtual);
+                            }
                         }
                     } else {
                         // Edição normal: renderizar lista completa
