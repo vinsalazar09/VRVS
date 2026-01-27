@@ -3975,6 +3975,23 @@
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label">📷 Imagem da Pergunta/Tópico (opcional)</label>
+                    <input type="file" id="novaDiarioImagemPergunta" accept="image/*" style="display: none;" onchange="diario_processarImagemPergunta(event)">
+                    <div id="novaDiarioImagemPerguntaPreview" style="display: none; margin-top: 10px;">
+                        <img id="novaDiarioImagemPerguntaThumb" src="" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);">
+                        <div style="margin-top: 8px;">
+                            <button type="button" class="btn btn-secondary" onclick="diario_removerImagemPergunta()" style="font-size: 12px; padding: 8px 16px;">🗑️ Remover imagem</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('novaDiarioImagemPergunta').click()" id="novaDiarioImagemPerguntaBtn" style="margin-top: 8px;">
+                        📷 Adicionar imagem
+                    </button>
+                    <div id="novaDiarioImagemPerguntaStatus" style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; font-style: italic;">
+                        📷 imagem: —
+                    </div>
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">✅ Resposta</label>
                     <textarea class="form-textarea" id="novaDiarioResposta" rows="8" placeholder="Ex: Gradua em estágios evolutivos a artrose pós meniscectomia..." style="min-height: 250px; overflow-y: auto;"></textarea>
                 </div>
@@ -13099,9 +13116,13 @@
         
         function fecharModalDiario() {
             document.getElementById('modalNovaDiario').classList.remove('active');
-            // B1: Limpar imagem ao fechar modal
+            // B1: Limpar imagem da resposta ao fechar modal
             if (typeof diario_limparImagemModal === 'function') {
                 diario_limparImagemModal();
+            }
+            // MP1: Limpar imagem da pergunta ao fechar modal
+            if (typeof diario_limparImagemPerguntaModal === 'function') {
+                diario_limparImagemPerguntaModal();
             }
             
             // Limpar flag de edição da sessão e reabilitar selects
@@ -13173,8 +13194,10 @@
             // B1: Gerar ID único UMA vez (para entrada e keys)
             const id = entradaId ? Number(entradaId) : Date.now();
             
-            // B1: Processar imagem se houver
+            // B1: Processar imagem da RESPOSTA se houver
             let imagemData = null;
+            // MP1: Processar imagem da PERGUNTA se houver
+            let imagemPerguntaData = null;
             // B1-FIX: Só gerar imagemData se usuário realmente selecionou nova imagem
             if (typeof diario_imagemNovaSelecionada !== 'undefined' && diario_imagemNovaSelecionada === true &&
                 typeof diario_imagemBlobAtual !== 'undefined' && diario_imagemBlobAtual && 
@@ -13224,8 +13247,57 @@
                 }
             }
             
+            // MP1: Processar imagem da PERGUNTA se houver
+            if (typeof diario_imagemPerguntaNovaSelecionada !== 'undefined' && diario_imagemPerguntaNovaSelecionada === true &&
+                typeof diario_imagemPerguntaBlobAtual !== 'undefined' && diario_imagemPerguntaBlobAtual && 
+                typeof diario_imagemPerguntaMetadataAtual !== 'undefined' && diario_imagemPerguntaMetadataAtual) {
+                try {
+                    // Gerar thumbnail
+                    const thumbBlob = await diario_gerarThumbnail(diario_imagemPerguntaBlobAtual);
+                    
+                    // Salvar imagem completa e thumbnail no IndexedDB (usar ID único com sufixo :pergunta)
+                    const fullKey = `diario:${id}:pergunta:full`;
+                    const thumbKey = `diario:${id}:pergunta:thumb`;
+                    
+                    await b0Img_putBlob(fullKey, diario_imagemPerguntaBlobAtual);
+                    await b0Img_putBlob(thumbKey, thumbBlob);
+                    
+                    // Criar objeto imagem para salvar no data model
+                    imagemPerguntaData = {
+                        thumbKey: thumbKey,
+                        fullKey: fullKey,
+                        tipo: diario_imagemPerguntaMetadataAtual.tipo,
+                        tamanho: diario_imagemPerguntaMetadataAtual.tamanho,
+                        largura: diario_imagemPerguntaMetadataAtual.largura,
+                        altura: diario_imagemPerguntaMetadataAtual.altura,
+                        dataAdicao: hoje
+                    };
+                    
+                } catch (error) {
+                    if (typeof diario_imagemPerguntaNovaSelecionada !== 'undefined' && diario_imagemPerguntaNovaSelecionada === true &&
+                        typeof diario_imagemPerguntaBlobAtual !== 'undefined' && diario_imagemPerguntaBlobAtual) {
+                        mostrarNotificacaoFeedback(`⚠️ Erro ao salvar imagem da pergunta: ${error.message}`, 'error');
+                    }
+                    // Continuar salvando entrada mesmo se imagem falhar
+                }
+            } else if (typeof diario_imagemPerguntaRemovida !== 'undefined' && diario_imagemPerguntaRemovida && entradaId) {
+                // Se flag de remoção está true e é edição, remover imagem antiga da pergunta
+                const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+                if (entrada && entrada.imagemPergunta) {
+                    try {
+                        if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                        if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                    } catch (error) {
+                        console.error('Erro ao remover imagem da pergunta:', error);
+                    }
+                    imagemPerguntaData = null; // Marcar para remover do data model
+                }
+            }
+            
             // B1-FIX: Resetar flag após processar (sucesso ou falha)
             window.diario_imagemNovaSelecionada = false;
+            // MP1: Resetar flag da pergunta após processar
+            window.diario_imagemPerguntaNovaSelecionada = false;
             
             if (entradaId) {
                 // Editar entrada existente
@@ -13273,6 +13345,39 @@
                         } else {
                             // S1-FIX: Se não tem imagemData e flag não está true, MANTER imagem existente
                             // Não fazer nada - entrada.imagem já está preservado
+                        }
+                        
+                        // MP1: Atualizar imagem da PERGUNTA se houver nova seleção ou remoção
+                        if (imagemPerguntaData) {
+                            // Nova imagem: remover antiga APENAS se keys forem diferentes
+                            if (entrada.imagemPergunta) {
+                                const keysDiferentes = entrada.imagemPergunta.fullKey !== imagemPerguntaData.fullKey || 
+                                                       entrada.imagemPergunta.thumbKey !== imagemPerguntaData.thumbKey;
+                                
+                                if (keysDiferentes) {
+                                    try {
+                                        if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                        if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                                    } catch (error) {
+                                        console.error('Erro ao remover imagem antiga da pergunta:', error);
+                                    }
+                                }
+                            }
+                            entrada.imagemPergunta = imagemPerguntaData;
+                        } else if (typeof diario_imagemPerguntaRemovida !== 'undefined' && diario_imagemPerguntaRemovida) {
+                            // Flag explícita: remover imagem da pergunta
+                            if (entrada.imagemPergunta) {
+                                try {
+                                    if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                    if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                                } catch (error) {
+                                    console.error('Erro ao remover imagem da pergunta:', error);
+                                }
+                            }
+                            entrada.imagemPergunta = null;
+                        } else {
+                            // Se não tem imagemPerguntaData e flag não está true, MANTER imagem existente
+                            // Não fazer nada - entrada.imagemPergunta já está preservado
                         }
                     } else {
                         // Edição normal da Lista: atualizar tudo
@@ -13326,6 +13431,42 @@
                             entrada.imagem = null;
                         }
                     }
+                    
+                    // MP1: Atualizar imagem da PERGUNTA se houver nova seleção ou remoção
+                    if (imagemPerguntaData) {
+                        // Nova imagem: remover antiga APENAS se keys forem diferentes
+                        if (entrada.imagemPergunta) {
+                            const keysDiferentes = entrada.imagemPergunta.fullKey !== imagemPerguntaData.fullKey || 
+                                                   entrada.imagemPergunta.thumbKey !== imagemPerguntaData.thumbKey;
+                            
+                            if (keysDiferentes) {
+                                try {
+                                    if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                    if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                                } catch (error) {
+                                    console.error('Erro ao remover imagem antiga da pergunta:', error);
+                                }
+                            }
+                        }
+                        entrada.imagemPergunta = imagemPerguntaData;
+                    } else if (typeof diario_imagemPerguntaRemovida !== 'undefined' && diario_imagemPerguntaRemovida) {
+                        // Flag explícita: remover imagem da pergunta
+                        if (entrada.imagemPergunta) {
+                            try {
+                                if (entrada.imagemPergunta.fullKey) await b0Img_deleteKey(entrada.imagemPergunta.fullKey);
+                                if (entrada.imagemPergunta.thumbKey) await b0Img_deleteKey(entrada.imagemPergunta.thumbKey);
+                            } catch (error) {
+                                console.error('Erro ao remover imagem da pergunta:', error);
+                            }
+                        }
+                        entrada.imagemPergunta = null;
+                    } else {
+                        // Se não tem imagemPerguntaData e flag não está true, MANTER imagem existente
+                        // Não fazer nada - entrada.imagemPergunta já está preservado
+                        if (!entrada.imagemPergunta) {
+                            entrada.imagemPergunta = null;
+                        }
+                    }
                         
                         // PATCH 4: Gerenciar SRS conforme checkbox (APENAS VRVS 3P, não atencao)
                         if (incluirVRVS3P) {
@@ -13373,7 +13514,8 @@
                     // PATCH 4: Não setar atencao (legado removido)
                     criadoEm: hoje,
                     ultimaAtualizacao: hoje,
-                    imagem: imagemData || null  // B1: Adicionar campo imagem
+                    imagem: imagemData || null,  // B1: Adicionar campo imagem (RESPOSTA)
+                    imagemPergunta: imagemPerguntaData || null  // MP1: Adicionar campo imagem (PERGUNTA)
                 };
                 
                 // PATCH 4: Se checkbox marcado, inicializar SRS VRVS 3P; senão, não criar SRS
@@ -13392,6 +13534,10 @@
             // B1: Limpar imagem após salvar
             if (typeof diario_limparImagemModal === 'function') {
                 diario_limparImagemModal();
+            }
+            // MP1: Limpar imagem da pergunta após salvar
+            if (typeof diario_limparImagemPerguntaModal === 'function') {
+                diario_limparImagemPerguntaModal();
             }
                 
                 // Verificar se veio da sessão (já declarado acima, apenas usar)
@@ -15018,6 +15164,86 @@
                 if (thumbImg) {
                     thumbImg.src = '';
                     thumbImg.onerror = null; // Remover handler se existir
+                }
+            }
+            
+            // MP1: Carregar imagem da PERGUNTA se houver
+            if (entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
+                try {
+                    // Carregar thumbnail para preview
+                    const thumbBlob = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
+                    if (thumbBlob) {
+                        const thumbURL = URL.createObjectURL(thumbBlob);
+                        const thumbImg = document.getElementById('novaDiarioImagemPerguntaThumb');
+                        const preview = document.getElementById('novaDiarioImagemPerguntaPreview');
+                        const btnAdd = document.getElementById('novaDiarioImagemPerguntaBtn');
+                        if (thumbImg) {
+                            thumbImg.src = thumbURL;
+                            if (thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                                thumbImg.onerror = (ev) => {
+                                    URL.revokeObjectURL(thumbURL);
+                                    diario_handleImageErrorPergunta(ev);
+                                };
+                            }
+                            thumbImg.onload = () => {
+                                // Não revogar aqui
+                            };
+                        }
+                        if (preview) preview.style.display = 'block';
+                        if (btnAdd) btnAdd.style.display = 'none';
+                        
+                        // Carregar blob completo para viewer, mas NÃO marcar como nova seleção
+                        if (entrada.imagemPergunta.fullKey) {
+                            try {
+                                const fullBlob = await b0Img_getBlob(entrada.imagemPergunta.fullKey);
+                                if (fullBlob) {
+                                    window.diario_imagemPerguntaBlobAtual = fullBlob;
+                                    window.diario_imagemPerguntaMetadataAtual = entrada.imagemPergunta;
+                                    window.diario_imagemPerguntaRemovida = false;
+                                    window.diario_imagemPerguntaNovaSelecionada = false;
+                                } else {
+                                    window.diario_imagemPerguntaBlobAtual = null;
+                                    window.diario_imagemPerguntaMetadataAtual = null;
+                                    window.diario_imagemPerguntaRemovida = true;
+                                    window.diario_imagemPerguntaNovaSelecionada = false;
+                                }
+                            } catch (error) {
+                                console.error('Erro ao carregar blob completo da pergunta:', error);
+                                window.diario_imagemPerguntaBlobAtual = null;
+                                window.diario_imagemPerguntaMetadataAtual = entrada.imagemPergunta;
+                                window.diario_imagemPerguntaRemovida = false;
+                                window.diario_imagemPerguntaNovaSelecionada = false;
+                            }
+                        } else {
+                            window.diario_imagemPerguntaBlobAtual = null;
+                            window.diario_imagemPerguntaMetadataAtual = entrada.imagemPergunta;
+                            window.diario_imagemPerguntaRemovida = false;
+                            window.diario_imagemPerguntaNovaSelecionada = false;
+                        }
+                        
+                        // Atualizar indicador visual
+                        const statusEl = document.getElementById('novaDiarioImagemPerguntaStatus');
+                        if (statusEl) {
+                            const tamanhoKB = entrada.imagemPergunta.tamanho ? Math.round(entrada.imagemPergunta.tamanho / 1024) : '?';
+                            statusEl.textContent = `📷 imagem: OK (${tamanhoKB}KB)`;
+                            statusEl.style.color = 'rgba(0,206,209,0.8)';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar imagem da pergunta:', error);
+                    // Continuar sem imagem se falhar
+                    window.diario_imagemPerguntaNovaSelecionada = false;
+                }
+            } else {
+                // Limpar imagem da pergunta se não houver
+                if (typeof diario_limparImagemPerguntaModal === 'function') {
+                    diario_limparImagemPerguntaModal();
+                }
+                // Reset defensivo de src para evitar onerror
+                const thumbImg = document.getElementById('novaDiarioImagemPerguntaThumb');
+                if (thumbImg) {
+                    thumbImg.src = '';
+                    thumbImg.onerror = null;
                 }
             }
             
@@ -18999,6 +19225,12 @@
         window.diario_imagemRemovida = false;
         window.diario_imagemNovaSelecionada = false; // B1-FIX: Flag para distinguir nova seleção vs carregamento
         
+        // MP1: Variáveis globais para imagem da PERGUNTA
+        window.diario_imagemPerguntaNovaSelecionada = false;
+        window.diario_imagemPerguntaBlobAtual = null;
+        window.diario_imagemPerguntaMetadataAtual = null;
+        window.diario_imagemPerguntaRemovida = false;
+        
         // Processar imagem selecionada
         async function diario_processarImagem(event) {
             const file = event.target.files[0];
@@ -19311,6 +19543,205 @@
                 statusEl.textContent = '📷 imagem: —';
                 statusEl.style.color = 'rgba(255,255,255,0.6)';
             }
+        }
+        
+        // MP1: Processar imagem da PERGUNTA selecionada
+        async function diario_processarImagemPergunta(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const btnAdd = document.getElementById('novaDiarioImagemPerguntaBtn');
+            const preview = document.getElementById('novaDiarioImagemPerguntaPreview');
+            const thumbImg = document.getElementById('novaDiarioImagemPerguntaThumb');
+            const inputFile = document.getElementById('novaDiarioImagemPergunta');
+            
+            if (!btnAdd || !preview || !thumbImg || !inputFile) return;
+            
+            // Desabilitar botão durante processamento
+            btnAdd.disabled = true;
+            btnAdd.textContent = '⏳ Processando...';
+            
+            try {
+                // Validar tipo
+                if (!file.type.startsWith('image/')) {
+                    throw new Error('Arquivo deve ser uma imagem');
+                }
+                
+                // Validar tamanho (limite: 10MB antes de compressão)
+                const MAX_SIZE_BEFORE_COMPRESSION = 10 * 1024 * 1024;
+                if (file.size > MAX_SIZE_BEFORE_COMPRESSION) {
+                    throw new Error('Imagem muito grande (máx. 10MB antes de compressão)');
+                }
+                
+                // Carregar imagem
+                const img = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                    reader.readAsDataURL(file);
+                });
+                
+                // Processar imagem (redimensionar e comprimir)
+                const processedBlob = await diario_processarImagemAdaptativa(img, file.type);
+                
+                if (!processedBlob) {
+                    throw new Error('Erro ao processar imagem');
+                }
+                
+                // Validar tamanho final (limite: 2MB após compressão)
+                const MAX_SIZE_AFTER_COMPRESSION = 2 * 1024 * 1024;
+                if (processedBlob.size > MAX_SIZE_AFTER_COMPRESSION) {
+                    throw new Error('Imagem ainda muito grande após compressão (máx. 2MB)');
+                }
+                
+                // Criar preview thumbnail
+                const thumbBlob = await diario_gerarThumbnail(processedBlob);
+                const thumbURL = URL.createObjectURL(thumbBlob);
+                
+                thumbImg.src = thumbURL;
+                thumbImg.onerror = (ev) => {
+                    URL.revokeObjectURL(thumbURL);
+                    diario_handleImageErrorPergunta(ev);
+                };
+                thumbImg.onload = () => {
+                    // Não revogar aqui, apenas quando remover ou erro
+                };
+                
+                preview.style.display = 'block';
+                btnAdd.style.display = 'none';
+                
+                // Armazenar blob e metadata
+                window.diario_imagemPerguntaBlobAtual = processedBlob;
+                window.diario_imagemPerguntaMetadataAtual = {
+                    tipo: file.type,
+                    tamanho: processedBlob.size,
+                    largura: img.width,
+                    altura: img.height
+                };
+                window.diario_imagemPerguntaRemovida = false;
+                window.diario_imagemPerguntaNovaSelecionada = true;
+                
+                // Atualizar indicador visual
+                const statusEl = document.getElementById('novaDiarioImagemPerguntaStatus');
+                if (statusEl) {
+                    const tamanhoKB = Math.round(processedBlob.size / 1024);
+                    statusEl.textContent = `📷 imagem: OK (${tamanhoKB}KB)`;
+                    statusEl.style.color = 'rgba(0,206,209,0.8)';
+                }
+                
+                mostrarNotificacaoFeedback('✅ Imagem processada com sucesso!', 'success');
+                
+            } catch (error) {
+                mostrarNotificacaoFeedback(`⚠️ Erro ao processar imagem: ${error.message}`, 'error');
+                // Limpar input
+                inputFile.value = '';
+                // Limpar preview se houver
+                if (preview) preview.style.display = 'none';
+                if (btnAdd) btnAdd.style.display = 'block';
+            } finally {
+                // Reabilitar botão
+                btnAdd.disabled = false;
+                btnAdd.textContent = '📷 Adicionar imagem';
+            }
+        }
+        
+        // MP1: Remover imagem da PERGUNTA
+        function diario_removerImagemPergunta() {
+            const preview = document.getElementById('novaDiarioImagemPerguntaPreview');
+            const thumbImg = document.getElementById('novaDiarioImagemPerguntaThumb');
+            const btnAdd = document.getElementById('novaDiarioImagemPerguntaBtn');
+            const inputFile = document.getElementById('novaDiarioImagemPergunta');
+            
+            // B1-FIX: desarmar handlers antes de mexer em src/revoke
+            if (thumbImg) {
+                thumbImg.onerror = null;
+                thumbImg.onload = null;
+            }
+            
+            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(thumbImg.src);
+            }
+            
+            if (preview) preview.style.display = 'none';
+            if (btnAdd) btnAdd.style.display = 'block';
+            if (inputFile) inputFile.value = '';
+            if (thumbImg) thumbImg.src = '';
+            
+            // Limpar variáveis globais
+            window.diario_imagemPerguntaBlobAtual = null;
+            window.diario_imagemPerguntaMetadataAtual = null;
+            window.diario_imagemPerguntaRemovida = true;
+            window.diario_imagemPerguntaNovaSelecionada = false;
+            
+            // Atualizar indicador visual
+            const statusEl = document.getElementById('novaDiarioImagemPerguntaStatus');
+            if (statusEl) {
+                statusEl.textContent = '📷 imagem: —';
+                statusEl.style.color = 'rgba(255,255,255,0.6)';
+            }
+        }
+        
+        // MP1: Limpar imagem da PERGUNTA do modal (ao fechar)
+        function diario_limparImagemPerguntaModal() {
+            const preview = document.getElementById('novaDiarioImagemPerguntaPreview');
+            const thumbImg = document.getElementById('novaDiarioImagemPerguntaThumb');
+            const btnAdd = document.getElementById('novaDiarioImagemPerguntaBtn');
+            const inputFile = document.getElementById('novaDiarioImagemPergunta');
+            
+            // B1-FIX: desarmar handlers antes de mexer em src/revoke
+            if (thumbImg) {
+                thumbImg.onerror = null;
+                thumbImg.onload = null;
+            }
+            
+            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(thumbImg.src);
+            }
+            
+            if (preview) preview.style.display = 'none';
+            if (btnAdd) btnAdd.style.display = 'block';
+            if (inputFile) inputFile.value = '';
+            if (thumbImg) thumbImg.src = '';
+            
+            // Limpar variáveis globais
+            window.diario_imagemPerguntaBlobAtual = null;
+            window.diario_imagemPerguntaMetadataAtual = null;
+            window.diario_imagemPerguntaRemovida = false;
+            window.diario_imagemPerguntaNovaSelecionada = false;
+            
+            // Atualizar indicador visual
+            const statusEl = document.getElementById('novaDiarioImagemPerguntaStatus');
+            if (statusEl) {
+                statusEl.textContent = '📷 imagem: —';
+                statusEl.style.color = 'rgba(255,255,255,0.6)';
+            }
+        }
+        
+        // MP1: Handler de erro de imagem da PERGUNTA
+        function diario_handleImageErrorPergunta(event) {
+            const thumbImg = event.target;
+            if (!thumbImg || !thumbImg.src || thumbImg.src === '' || thumbImg.src === 'data:' || 
+                (!thumbImg.src.startsWith('blob:') && !thumbImg.src.startsWith('http') && !thumbImg.src.startsWith('data:'))) {
+                return;
+            }
+            
+            if (thumbImg && thumbImg.id === 'novaDiarioImagemPerguntaThumb') {
+                const modal = document.getElementById('modalNovaDiario');
+                if (!modal || !modal.classList.contains('active')) {
+                    return;
+                }
+            }
+            
+            if (thumbImg && thumbImg.src && thumbImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(thumbImg.src);
+            }
+            mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
+            diario_removerImagemPergunta();
         }
         
         // Limpar imagem do modal (ao fechar)
