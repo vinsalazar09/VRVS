@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.181-config-diario-20260202-1700";
+const CACHE_NAME = "vrvs-v5.3.182-fix-tutorial-text-color-20260202-1745";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

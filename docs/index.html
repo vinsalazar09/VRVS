@@ -2558,6 +2558,20 @@
             max-height: 80vh; /* Desktop: 80vh */
             overflow-y: auto;
             animation: modalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255,255,255,0.9); /* Cor clara para todo texto no modal */
+        }
+        
+        /* Garantir que TODOS os elementos dentro do modal sejam claros */
+        .modal-content p,
+        .modal-content ul,
+        .modal-content li,
+        .modal-content strong,
+        .modal-content span,
+        .modal-content div,
+        .modal-content h1,
+        .modal-content h2,
+        .modal-content h3 {
+            color: rgba(255,255,255,0.9) !important;
         }
         
         @keyframes modalSlide {
