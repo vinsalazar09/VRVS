@@ -2831,6 +2831,44 @@
             color: white;
         }
         
+        /* ===== CONFIGURAÇÕES ===== */
+        
+        .config-toggle {
+            padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .config-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .config-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .config-help {
+            margin-top: 8px;
+            margin-left: 32px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .config-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
         /* ===== CADERNO - ÁREAS COLAPSÁVEIS ===== */
         
         .area-section {
@@ -4276,7 +4314,7 @@
             <!-- ESTUDO (uso diário) -->
             <div class="tab" onclick="showSection('tarefa', event)">📋 Tarefa</div>
             <div class="tab" onclick="showSection('feedback', event)">📝 Feedback</div>
-            <div class="tab" onclick="showSection('diario', event)">📔 Diário</div>
+            <div class="tab" id="tabDiario" onclick="showSection('diario', event)">📔 Diário</div>
             <div class="tab" onclick="showSection('caderno', event)">📓 Caderno</div>
             <!-- PLANEJAMENTO -->
             <div class="tab" onclick="showSection('agenda', event)">📅 Agenda</div>
@@ -4286,6 +4324,7 @@
             <!-- SISTEMA -->
             <div class="tab" onclick="showSection('backup', event)">💾 Backup</div>
             <div class="tab" onclick="showSection('ajuda', event)">❓ Ajuda</div>
+            <div class="tab" onclick="showSection('config', event)">⚙️ Config</div>
         </div>
         
         <div class="content">
@@ -4968,6 +5007,34 @@
                     
                     <!-- Container dinâmico -->
                     <div id="ajudaContainer"></div>
+                </div>
+            </div>
+            
+            <!-- CONFIGURAÇÕES -->
+            <div id="config" class="section">
+                <div class="card">
+                    <div class="card-title">⚙️ CONFIGURAÇÕES</div>
+                    
+                    <h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--turquesa-light);">📔 Diário VRVS</h3>
+                    
+                    <div class="config-toggle">
+                        <label>
+                            <input type="checkbox" id="configDiarioEnabled" onchange="toggleDiario(this.checked)">
+                            <span>Habilitar Diário VRVS</span>
+                        </label>
+                        <p class="config-help">Desmarque para ocultar funcionalidades do Diário sem apagar histórico</p>
+                    </div>
+                    
+                    <div class="config-actions">
+                        <button class="btn btn-primary" onclick="desligarTudoDiario()">🔴 Desligar Tudo do Diário</button>
+                        <button class="btn btn-secondary" onclick="ligarTudoDiario()">🟢 Ligar Tudo do Diário</button>
+                    </div>
+                    
+                    <div style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid var(--turquesa-main);">
+                        <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7);">
+                            ℹ️ <strong>Importante:</strong> Desligar o Diário <strong>não apaga seus dados</strong>. Todas as entradas, imagens e histórico permanecem salvos. Você pode reativar a qualquer momento.
+                        </p>
+                    </div>
                 </div>
             </div>
             
@@ -8596,6 +8663,72 @@
             mostrarNotificacaoFeedback(`✅ ${anotacoesComConteudo.length} anotação(ões) exportadas!`);
         }
         
+        // ==================== CONFIGURAÇÕES ====================
+        
+        function vrvs_getConfig() {
+            if (window.vrvs_config && typeof window.vrvs_config === 'object') return window.vrvs_config;
+            let cfg = {};
+            const raw = localStorage.getItem('vrvs_config');
+            if (raw) {
+                try { cfg = JSON.parse(raw) || {}; } catch(e) { cfg = {}; }
+            }
+            window.vrvs_config = cfg;
+            return cfg;
+        }
+        
+        function vrvs_saveConfig() {
+            try {
+                localStorage.setItem('vrvs_config', JSON.stringify(window.vrvs_config || {}));
+                return true;
+            } catch(e) {
+                alert('Erro ao salvar configuração. Seus dados NÃO foram apagados.\n\nDetalhe: ' + (e && e.message ? e.message : e));
+                return false;
+            }
+        }
+        
+        function vrvs_isDiarioEnabled() {
+            const cfg = vrvs_getConfig();
+            return !(cfg && cfg.diario && cfg.diario.enabled === false);
+        }
+        
+        function vrvs_applyDiarioVisibility() {
+            const enabled = vrvs_isDiarioEnabled();
+            const tab = document.getElementById('tabDiario');
+            if (tab) tab.style.display = enabled ? '' : 'none';
+        }
+        
+        function vrvs_setDiarioEnabled(enabled) {
+            const cfg = vrvs_getConfig();
+            cfg.diario = cfg.diario || {};
+            cfg.diario.enabled = !!enabled;
+            window.vrvs_config = cfg;
+            if (!vrvs_saveConfig()) return;
+            vrvs_applyDiarioVisibility();
+        }
+        
+        function renderConfig() {
+            const enabled = vrvs_isDiarioEnabled();
+            const checkbox = document.getElementById('configDiarioEnabled');
+            if (checkbox) checkbox.checked = enabled;
+        }
+        
+        function toggleDiario(enabled) {
+            vrvs_setDiarioEnabled(enabled);
+            alert(enabled ? '✅ Diário habilitado.' : '✅ Diário desabilitado (dados preservados).');
+        }
+        
+        function desligarTudoDiario() {
+            const ok = confirm('Desligar TUDO do Diário?\n\nSeus dados NÃO serão apagados, apenas ocultos.');
+            if (!ok) return;
+            toggleDiario(false);
+            // Se o usuário estiver no Diário, manda para Config:
+            try { showSection('config'); } catch(e) {}
+        }
+        
+        function ligarTudoDiario() {
+            toggleDiario(true);
+        }
+        
         function salvarDadosManualmente() {
             try {
                 // Salvar todos os dados no localStorage
@@ -8695,6 +8828,13 @@
                 renderCadernoV2();
             }
             if (sectionId === 'diario') {
+                // Verificar se Diário está habilitado
+                if (!vrvs_isDiarioEnabled()) {
+                    alert('Diário está desabilitado. Ative em Configurações para usar.');
+                    showSection('config');
+                    return;
+                }
+                
                 // S6-NAV-FIX2: Limpar setTimeout pendente antes de criar novo
                 if (window.diarioChipVrvs3pTimeout !== null) {
                     clearTimeout(window.diarioChipVrvs3pTimeout);
@@ -8731,6 +8871,9 @@
             }
             if (sectionId === 'ajuda') {
                 renderAjuda();
+            }
+            if (sectionId === 'config') {
+                renderConfig();
             }
         }
         
@@ -10721,6 +10864,10 @@
             
             // Restaurar cronômetro se estava rodando antes
             restaurarCronometro();
+            
+            // Inicializar configurações e aplicar visibilidade do Diário
+            vrvs_getConfig();
+            vrvs_applyDiarioVisibility();
             
             // Verificar se é primeira vez e mostrar tutorial
             const tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');
