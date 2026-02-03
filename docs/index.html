@@ -22,6 +22,10 @@
             window.vistaAnalytics = window.vistaAnalytics ?? 'resumo';
             window.vistaAgenda = window.vistaAgenda ?? 'timeline';
             window.vistaAjuda = window.vistaAjuda ?? 'tutorial';
+            
+            // ETAPA 2.A: Inicializar globals de Perfis/Fichários
+            window.vrvs_activeProfile = window.vrvs_activeProfile ?? null; // Será carregado por getActiveProfile()
+            window.vrvs_profiles = window.vrvs_profiles ?? null; // Será carregado por loadProfilesSafe()
         })();
     </script>
     <script>
@@ -8750,6 +8754,219 @@
         function ligarTudoDiario() {
             toggleDiario(true);
         }
+        
+        // ==================== PERFIS/FICHÁRIOS (ETAPA 2.A - INFRA) ====================
+        // QUADRO PRETO: Wrappers únicos para suportar múltiplos perfis isolados (DEFAULT + até 4 outros)
+        // NAMESPACING: profile:NOME:baseKey (exceto DEFAULT que mantém legado direto)
+        // RECOVERY: Fallback automático para DEFAULT em caso de corrupção
+        // NOTA: Esta etapa NÃO altera subsistemas (Diário/Dados/Histórico/Anotações) ainda
+        //       Migração ocorrerá nas Etapas 2.C.1 a 2.C.4
+        
+        /**
+         * Sanitiza nome de perfil com regras rígidas:
+         * - REJEITA inválidos (não corrige silenciosamente)
+         * - Trim + uppercase
+         * - Permitir só [A-Z0-9_-]
+         * - Proibir ":" e proibir "DEFAULT" (palavra reservada)
+         * - Tamanho: 1 a 20 caracteres
+         * @returns {string|null} Nome sanitizado OU null se inválido
+         */
+        function sanitizeProfileName(raw) {
+            if (typeof raw !== 'string') return null;
+            const clean = raw.trim().toUpperCase();
+            if (clean.length < 1 || clean.length > 20) return null;
+            if (clean === 'DEFAULT') return null; // Palavra reservada
+            if (clean.includes(':')) return null; // Caracter proibido (conflita com namespace)
+            if (!/^[A-Z0-9_-]+$/.test(clean)) return null; // Só A-Z0-9_-
+            return clean;
+        }
+        
+        /**
+         * Carrega lista de perfis do localStorage.
+         * @returns {Array<string>} Lista validada (sempre inclui DEFAULT)
+         */
+        function loadProfilesSafe() {
+            try {
+                const raw = localStorage.getItem('vrvs_profiles');
+                if (!raw) return ['DEFAULT'];
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return ['DEFAULT'];
+                // Validar cada nome
+                const validated = parsed
+                    .map(name => sanitizeProfileName(name))
+                    .filter(name => name !== null);
+                // Garantir DEFAULT sempre presente
+                if (!validated.includes('DEFAULT')) validated.unshift('DEFAULT');
+                return validated;
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro ao carregar vrvs_profiles, usando ["DEFAULT"]:', e);
+                return ['DEFAULT'];
+            }
+        }
+        
+        /**
+         * Salva lista de perfis no localStorage.
+         * @param {Array<string>} list - Lista de nomes de perfis
+         */
+        function saveProfilesSafe(list) {
+            try {
+                if (!Array.isArray(list)) {
+                    console.error('[VRVS Profiles] saveProfilesSafe: list não é array');
+                    return;
+                }
+                // Validar cada nome antes de salvar
+                const validated = list
+                    .map(name => sanitizeProfileName(name))
+                    .filter(name => name !== null);
+                // Garantir DEFAULT sempre presente
+                if (!validated.includes('DEFAULT')) validated.unshift('DEFAULT');
+                localStorage.setItem('vrvs_profiles', JSON.stringify(validated));
+                window.vrvs_profiles = validated;
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro ao salvar vrvs_profiles:', e);
+                alert('Erro ao salvar lista de perfis. Seus dados NÃO foram apagados.\n\nDetalhe: ' + (e && e.message ? e.message : e));
+            }
+        }
+        
+        /**
+         * Obtém o perfil ativo atual.
+         * @returns {string} Nome do perfil ativo (sempre validado, fallback DEFAULT)
+         */
+        function getActiveProfile() {
+            try {
+                // 1) Ler vrvs_activeProfile do localStorage
+                const raw = localStorage.getItem('vrvs_activeProfile');
+                if (!raw || typeof raw !== 'string') {
+                    // Não existe ou inválido → DEFAULT
+                    localStorage.setItem('vrvs_activeProfile', 'DEFAULT');
+                    window.vrvs_activeProfile = 'DEFAULT';
+                    return 'DEFAULT';
+                }
+                // 2) Sanitizar
+                const candidate = sanitizeProfileName(raw);
+                if (!candidate) {
+                    // Nome inválido → DEFAULT
+                    console.warn('[VRVS Profiles] vrvs_activeProfile inválido, resetando para DEFAULT:', raw);
+                    localStorage.setItem('vrvs_activeProfile', 'DEFAULT');
+                    window.vrvs_activeProfile = 'DEFAULT';
+                    return 'DEFAULT';
+                }
+                // 3) Validar contra lista de perfis existentes
+                const profiles = loadProfilesSafe();
+                if (!profiles.includes(candidate)) {
+                    // Perfil não existe na lista → DEFAULT
+                    console.warn('[VRVS Profiles] vrvs_activeProfile não existe na lista, resetando para DEFAULT:', candidate);
+                    localStorage.setItem('vrvs_activeProfile', 'DEFAULT');
+                    window.vrvs_activeProfile = 'DEFAULT';
+                    return 'DEFAULT';
+                }
+                // 4) Tudo OK, atualizar global e retornar
+                window.vrvs_activeProfile = candidate;
+                return candidate;
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro crítico em getActiveProfile, fallback DEFAULT:', e);
+                localStorage.setItem('vrvs_activeProfile', 'DEFAULT');
+                window.vrvs_activeProfile = 'DEFAULT';
+                return 'DEFAULT';
+            }
+        }
+        
+        /**
+         * Define o perfil ativo.
+         * @param {string} name - Nome do perfil
+         * @returns {boolean} Sucesso ou não
+         */
+        function setActiveProfile(name) {
+            try {
+                const clean = sanitizeProfileName(name);
+                if (!clean) {
+                    console.error('[VRVS Profiles] setActiveProfile: nome inválido:', name);
+                    return false;
+                }
+                // Validar contra lista
+                const profiles = loadProfilesSafe();
+                if (!profiles.includes(clean)) {
+                    console.error('[VRVS Profiles] setActiveProfile: perfil não existe na lista:', clean);
+                    return false;
+                }
+                localStorage.setItem('vrvs_activeProfile', clean);
+                window.vrvs_activeProfile = clean;
+                return true;
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro ao definir perfil ativo:', e);
+                return false;
+            }
+        }
+        
+        /**
+         * Resolve a chave real do localStorage considerando o perfil ativo.
+         * DEFAULT → baseKey (legado direto)
+         * OUTROS → profile:NOME:baseKey
+         * @param {string} baseKey - Chave base (ex: "vrvs_diario")
+         * @returns {string} Chave final para usar no localStorage
+         */
+        function getStorageKey(baseKey) {
+            const profile = getActiveProfile();
+            if (profile === 'DEFAULT') {
+                return baseKey; // Legado: acesso direto
+            } else {
+                return `profile:${profile}:${baseKey}`; // Namespaced
+            }
+        }
+        
+        /**
+         * Obtém valor do localStorage considerando o perfil ativo.
+         * @param {string} baseKey - Chave base
+         * @param {*} fallback - Valor fallback se não existir
+         * @returns {*} Valor parseado ou fallback
+         */
+        function getFromStorage(baseKey, fallback) {
+            try {
+                const realKey = getStorageKey(baseKey);
+                const raw = localStorage.getItem(realKey);
+                if (!raw) return fallback;
+                return JSON.parse(raw);
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro ao ler do storage:', baseKey, e);
+                return fallback;
+            }
+        }
+        
+        /**
+         * Define valor no localStorage considerando o perfil ativo.
+         * @param {string} baseKey - Chave base
+         * @param {*} value - Valor a salvar
+         * @returns {boolean} Sucesso ou não
+         */
+        function setToStorage(baseKey, value) {
+            try {
+                const realKey = getStorageKey(baseKey);
+                localStorage.setItem(realKey, JSON.stringify(value));
+                return true;
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro ao salvar no storage:', baseKey, e);
+                alert('Erro ao salvar dados. Verifique se há espaço disponível.\n\nDetalhe: ' + (e && e.message ? e.message : e));
+                return false;
+            }
+        }
+        
+        /**
+         * Remove valor do localStorage considerando o perfil ativo.
+         * @param {string} baseKey - Chave base
+         * @returns {boolean} Sucesso ou não
+         */
+        function removeFromStorage(baseKey) {
+            try {
+                const realKey = getStorageKey(baseKey);
+                localStorage.removeItem(realKey);
+                return true;
+            } catch(e) {
+                console.error('[VRVS Profiles] Erro ao remover do storage:', baseKey, e);
+                return false;
+            }
+        }
+        
+        // ==================== FIM PERFIS/FICHÁRIOS (ETAPA 2.A) ====================
         
         function salvarDadosManualmente() {
             try {
