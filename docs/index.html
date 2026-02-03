@@ -5037,24 +5037,24 @@
                 <div class="card">
                     <div class="card-title">⚙️ CONFIGURAÇÕES</div>
                     
-                    <h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--turquesa-light);">📔 Diário VRVS</h3>
+                    <h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--turquesa-light);">📔 Revisões do Diário (VRVS 3P)</h3>
                     
                     <div class="config-toggle">
                         <label>
                             <input type="checkbox" id="configDiarioEnabled" onchange="toggleDiario(this.checked)">
-                            <span>Habilitar Diário VRVS</span>
+                            <span>Mostrar aba Diário (não mexe nas revisões)</span>
                         </label>
-                        <p class="config-help">Desmarque para ocultar funcionalidades do Diário sem apagar histórico</p>
+                        <p class="config-help">Esse toggle só mostra/oculta o Diário. Para ativar/desativar revisões, use os botões abaixo.</p>
                     </div>
                     
                     <div class="config-actions">
-                        <button class="btn btn-primary" onclick="desligarTudoDiario()">🔴 Desligar Tudo do Diário</button>
-                        <button class="btn btn-secondary" onclick="ligarTudoDiario()">🟢 Ligar Tudo do Diário</button>
+                        <button class="btn btn-primary" onclick="desligarTudoDiario()">🔴 Desativar revisões de TODOS os cards</button>
+                        <button class="btn btn-secondary" onclick="ligarTudoDiario()">🟢 Ativar revisões de TODOS os cards</button>
                     </div>
                     
                     <div style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid var(--turquesa-main);">
                         <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7);">
-                            ℹ️ <strong>Importante:</strong> Desligar o Diário <strong>não apaga seus dados</strong>. Todas as entradas, imagens e histórico permanecem salvos. Você pode reativar a qualquer momento.
+                            ℹ️ <strong>Importante:</strong> Desativar revisões <strong>não apaga seus dados</strong>. Todas as entradas, imagens e histórico permanecem salvos. Apenas remove os cards das revisões programadas (VRVS 3P). Você pode reativar a qualquer momento.
                         </p>
                     </div>
                 </div>
@@ -8748,15 +8748,12 @@
         }
         
         function desligarTudoDiario() {
-            const ok = confirm('Desligar TUDO do Diário?\n\nSeus dados NÃO serão apagados, apenas ocultos.');
-            if (!ok) return;
-            toggleDiario(false);
-            // Se o usuário estiver no Diário, manda para Config:
+            desmarcarTodasRevisoes();
             try { showSection('config'); } catch(e) {}
         }
         
         function ligarTudoDiario() {
-            toggleDiario(true);
+            marcarTodasRevisoes();
         }
         
         function salvarDadosManualmente() {
@@ -17399,6 +17396,7 @@
             // Salvar e renderizar
             salvarDiarioLS();
             renderDiario();
+            renderTarefas();
             
             alert(`✅ ${contador} entrada(s) marcada(s) para revisão!`);
         }
@@ -17425,6 +17423,7 @@
             // Salvar e renderizar
             salvarDiarioLS();
             renderDiario();
+            renderTarefas();
             
             alert(`✅ ${contador} entrada(s) desmarcada(s) para revisão!`);
         }
