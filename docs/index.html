@@ -4844,6 +4844,14 @@
                         <span style="color: rgba(255,255,255,0.7);">🧠 ativos: <span id="diarioCountAtivos" style="color: var(--turquesa-light); font-weight: 600;">0</span></span>
                         <span style="color: rgba(255,255,255,0.7);">⏰ hoje: <span id="diarioCountHoje" style="color: var(--cobre-light); font-weight: 600;">0</span></span>
                         <span style="color: rgba(255,255,255,0.7);">📆 próximas: <span id="diarioCountProximas" style="color: var(--turquesa-main); font-weight: 600;">0</span></span>
+                        <div style="margin-left: auto; display: flex; gap: 8px;">
+                            <button onclick="desmarcarTodasRevisoes()" style="background: rgba(255,69,58,0.2); border: 1px solid rgba(255,69,58,0.4); color: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                🔴 Desmarcar Todos
+                            </button>
+                            <button onclick="marcarTodasRevisoes()" style="background: rgba(52,199,89,0.2); border: 1px solid rgba(52,199,89,0.4); color: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                🟢 Marcar Todos
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Filtros -->
@@ -17365,6 +17373,60 @@
             } else {
                 renderSessaoDiario(getEntradaAtualSessao());
             }
+        }
+        
+        // Marcar todas as entradas do Diário para revisão (ativar SRS)
+        function marcarTodasRevisoes() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                alert('Nenhuma entrada encontrada no Diário.');
+                return;
+            }
+            
+            const hoje = hojeStr();
+            let contador = 0;
+            
+            window.diario.entradas.forEach(entrada => {
+                // Se não tem SRS, criar; se já tem, ativar
+                if (!entrada.srs) {
+                    entrada.srs = inicializarSrsVRVS3P(hoje);
+                    contador++;
+                } else if (!entrada.srs.ativo) {
+                    entrada.srs.ativo = true;
+                    contador++;
+                }
+            });
+            
+            // Salvar e renderizar
+            salvarDiarioLS();
+            renderDiario();
+            
+            alert(`✅ ${contador} entrada(s) marcada(s) para revisão!`);
+        }
+        
+        // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
+        function desmarcarTodasRevisoes() {
+            if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                alert('Nenhuma entrada encontrada no Diário.');
+                return;
+            }
+            
+            const confirmar = confirm('⚠️ Desmarcar TODAS as entradas para revisão?\n\nOs dados NÃO serão apagados, apenas ocultos das revisões programadas.');
+            if (!confirmar) return;
+            
+            let contador = 0;
+            
+            window.diario.entradas.forEach(entrada => {
+                if (entrada.srs && entrada.srs.ativo) {
+                    entrada.srs.ativo = false;
+                    contador++;
+                }
+            });
+            
+            // Salvar e renderizar
+            salvarDiarioLS();
+            renderDiario();
+            
+            alert(`✅ ${contador} entrada(s) desmarcada(s) para revisão!`);
         }
         
         // Excluir entrada atual do Diário permanentemente

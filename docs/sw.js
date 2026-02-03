@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.183-hotfix-diario-off-tarefas-20260203-0400";
+const CACHE_NAME = "vrvs-v5.3.184-feat-toggle-revisoes-massa-20260203-1700";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
