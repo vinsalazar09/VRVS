@@ -6809,10 +6809,11 @@
             
             // ===== BOX "REVISÕES DO DIA" =====
             // Contar tópicos do Diário programados para hoje
+            const diarioHabilitado = vrvs_isDiarioEnabled();
             const entradasHoje = getEntradasParaRevisarHojeDiario({ area: null, tema: null });
             const totalTopicos = entradasHoje.length;
             
-            if (totalTopicos > 0) {
+            if (diarioHabilitado && totalTopicos > 0) {
                 // Contar temas distintos
                 const temasDistintos = new Set(entradasHoje.map(e => `${e.area}|${e.tema}`));
                 const qtdTemas = temasDistintos.size;
@@ -6933,6 +6934,12 @@
         // ===== PATCH D - FUNÇÃO DE FILTRO DE TAREFAS =====
         // Função para abrir sessão de revisões do dia (todos os tópicos)
         function abrirRevisoesDoDia() {
+            if (!vrvs_isDiarioEnabled()) {
+                alert('Diário está desativado (dados preservados). Vá em Config para reativar.');
+                showSection('config');
+                return;
+            }
+            
             // Limpar filtros para pegar todos os tópicos do dia
             window.filtrosSessaoDiario = {
                 origem: 'revisoes-do-dia'
@@ -8709,6 +8716,7 @@
             const enabled = vrvs_isDiarioEnabled();
             const tab = document.getElementById('tabDiario');
             if (tab) tab.style.display = enabled ? '' : 'none';
+            try { renderTarefas(); } catch(e) {}
         }
         
         function vrvs_setDiarioEnabled(enabled) {
@@ -12533,6 +12541,7 @@
         }
         
         function getEntradasParaRevisarHojeDiario(filtros) {
+            if (!vrvs_isDiarioEnabled()) return [];
             if (!window.diario || !Array.isArray(window.diario.entradas)) return [];
             
             // P1 FIX: Usar data local (timezone do dispositivo, não UTC)
