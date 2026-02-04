@@ -4321,7 +4321,7 @@
     <div class="container">
         <div class="header">
             <div class="header-title">🧠 VRVS CIRCUIT TECH</div>
-            <div class="header-subtitle">Sistema de Gestão de Estudos • v5.3 <span id="buildTag" style="display:none;">[build: 5e4b588]</span></div>
+            <div class="header-subtitle">Sistema de Gestão de Estudos • <span id="vrvsBuildDisplay">v5.3.190</span></div>
         </div>
         
         <div class="tabs">
@@ -5037,26 +5037,31 @@
                 <div class="card">
                     <div class="card-title">⚙️ CONFIGURAÇÕES</div>
                     
-                    <!-- VRVS_TEMP: Config será refeita; bloco removido -->
-                    <div style="display:none">
-                        <h3 style="margin-top: 24px; margin-bottom: 16px; color: var(--turquesa-light);">📔 Revisões do Diário (VRVS 3P)</h3>
-                        
-                        <div class="config-toggle">
-                            <label>
-                                <input type="checkbox" id="configDiarioEnabled" onchange="toggleDiario(this.checked)">
-                                <span>Mostrar aba Diário (não mexe nas revisões)</span>
-                            </label>
-                            <p class="config-help">Esse toggle só mostra/oculta o Diário. Para ativar/desativar revisões, use os botões abaixo.</p>
+                    <!-- CONFIG HUB -->
+                    <div style="margin-top: 24px;">
+                        <!-- Bloco 1: Acesso Rápido -->
+                        <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">🚀 Acesso Rápido</h3>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn btn-secondary" onclick="showSection('backup')" style="flex: 1; min-width: 100px;">💾 Backup</button>
+                                <button class="btn btn-secondary" onclick="showSection('dados')" style="flex: 1; min-width: 100px;">📊 Dados</button>
+                                <button class="btn btn-secondary" onclick="showSection('ajuda')" style="flex: 1; min-width: 100px;">❓ Ajuda</button>
+                            </div>
                         </div>
                         
-                        <div class="config-actions">
-                            <button class="btn btn-primary" onclick="desligarTudoDiario()">🔴 Desativar revisões de TODOS os cards</button>
-                            <button class="btn btn-secondary" onclick="ligarTudoDiario()">🟢 Ativar revisões de TODOS os cards</button>
+                        <!-- Bloco 2: Revisões VRVS 3P -->
+                        <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.2); border-radius: 8px;">
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">📔 Revisões VRVS 3P</h3>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">Os controles gerais de revisão ficam no Diário.</p>
+                            <button class="btn btn-primary" onclick="irParaRevisoesDiario()">🔁 Ir para Diário (Revisões)</button>
                         </div>
                         
-                        <div style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid var(--turquesa-main);">
+                        <!-- Bloco 3: Versão / Diagnóstico -->
+                        <div style="padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">ℹ️ Versão / Diagnóstico</h3>
                             <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7);">
-                                ℹ️ <strong>Importante:</strong> Desativar revisões <strong>não apaga seus dados</strong>. Todas as entradas, imagens e histórico permanecem salvos. Apenas remove os cards das revisões programadas (VRVS 3P). Você pode reativar a qualquer momento.
+                                <strong>Build:</strong> <span id="configVrvsBuild" style="color: var(--turquesa-light); font-weight: 600;"></span><br>
+                                <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Build deve bater com CACHE_NAME do Service Worker</span>
                             </p>
                         </div>
                     </div>
@@ -5068,6 +5073,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // ==================== VRVS BUILD ====================
+        const VRVS_BUILD = "v5.3.190";
+        
         // ==================== DADOS E INICIALIZAÇÃO ====================
         // Função para corrigir inversão área↔tema ANTES de carregar dados
         function fixAreaTemaObjeto(obj) {
@@ -8697,6 +8705,32 @@
         
         // ==================== CONFIGURAÇÕES ====================
         
+        function irParaRevisoesDiario() {
+            showSection('diario');
+            setTimeout(() => {
+                const el = document.getElementById('diarioIndicadoresVRVS');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+        }
+        
+        function renderConfig() {
+            const enabled = vrvs_isDiarioEnabled();
+            const checkbox = document.getElementById('configDiarioEnabled');
+            if (checkbox) checkbox.checked = enabled;
+            // Atualizar VRVS_BUILD na UI
+            const buildEl = document.getElementById('configVrvsBuild');
+            if (buildEl && typeof VRVS_BUILD !== 'undefined') {
+                buildEl.textContent = VRVS_BUILD;
+            }
+            // Atualizar header
+            const headerBuild = document.getElementById('vrvsBuildDisplay');
+            if (headerBuild && typeof VRVS_BUILD !== 'undefined') {
+                headerBuild.textContent = VRVS_BUILD;
+            }
+        }
+        
         function vrvs_getConfig() {
             if (window.vrvs_config && typeof window.vrvs_config === 'object') return window.vrvs_config;
             let cfg = {};
@@ -8737,12 +8771,6 @@
             window.vrvs_config = cfg;
             if (!vrvs_saveConfig()) return;
             vrvs_applyDiarioVisibility();
-        }
-        
-        function renderConfig() {
-            const enabled = vrvs_isDiarioEnabled();
-            const checkbox = document.getElementById('configDiarioEnabled');
-            if (checkbox) checkbox.checked = enabled;
         }
         
         function toggleDiario(enabled) {
@@ -10898,6 +10926,10 @@
             // Inicializar configurações e aplicar visibilidade do Diário
             vrvs_getConfig();
             vrvs_applyDiarioVisibility();
+            // Inicializar VRVS_BUILD na UI
+            if (typeof VRVS_BUILD !== 'undefined') {
+                renderConfig();
+            }
             
             // Verificar se é primeira vez e mostrar tutorial
             const tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');

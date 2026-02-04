@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.189-refactor-ajuda-titulo-20260204-0100";
+const CACHE_NAME = "vrvs-v5.3.190-config-hub-vrvs-build-20260204-0200";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
