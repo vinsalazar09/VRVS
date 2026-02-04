@@ -17398,7 +17398,9 @@
             renderDiario();
             renderTarefas();
             
-            mostrarNotificacaoFeedback(`✅ ${contador} entrada(s) marcada(s) para revisão!`, 'success');
+            setTimeout(() => {
+                mostrarNotificacaoFeedback('✅ Revisão ativada', 'success');
+            }, 0);
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
@@ -17407,9 +17409,6 @@
                 mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
-            
-            const confirmar = confirm('⚠️ Desmarcar TODAS as entradas para revisão?\n\nOs dados NÃO serão apagados, apenas ocultos das revisões programadas.');
-            if (!confirmar) return;
             
             let contador = 0;
             
@@ -17425,7 +17424,9 @@
             renderDiario();
             renderTarefas();
             
-            mostrarNotificacaoFeedback(`✅ ${contador} entrada(s) desmarcada(s) para revisão!`, 'success');
+            setTimeout(() => {
+                mostrarNotificacaoFeedback('✅ Revisão desativada', 'success');
+            }, 0);
         }
         
         // Excluir entrada atual do Diário permanentemente
