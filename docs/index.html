@@ -17375,7 +17375,7 @@
         // Marcar todas as entradas do Diário para revisão (ativar SRS)
         function marcarTodasRevisoes() {
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
-                alert('Nenhuma entrada encontrada no Diário.');
+                mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
             
@@ -17398,13 +17398,13 @@
             renderDiario();
             renderTarefas();
             
-            alert(`✅ ${contador} entrada(s) marcada(s) para revisão!`);
+            mostrarNotificacaoFeedback(`✅ ${contador} entrada(s) marcada(s) para revisão!`, 'success');
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
         function desmarcarTodasRevisoes() {
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
-                alert('Nenhuma entrada encontrada no Diário.');
+                mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
             
@@ -17425,7 +17425,7 @@
             renderDiario();
             renderTarefas();
             
-            alert(`✅ ${contador} entrada(s) desmarcada(s) para revisão!`);
+            mostrarNotificacaoFeedback(`✅ ${contador} entrada(s) desmarcada(s) para revisão!`, 'success');
         }
         
         // Excluir entrada atual do Diário permanentemente
