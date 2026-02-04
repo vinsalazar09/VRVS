@@ -4321,7 +4321,7 @@
     <div class="container">
         <div class="header">
             <div class="header-title">🧠 VRVS CIRCUIT TECH</div>
-            <div class="header-subtitle">Sistema de Gestão de Estudos • <span id="vrvsBuildDisplay">v5.3.190</span></div>
+            <div class="header-subtitle">Sistema de Gestão de Estudos • <span id="vrvsBuildDisplay">v5.3.191</span></div>
         </div>
         
         <div class="tabs">
@@ -5023,7 +5023,6 @@
                     <!-- Sub-navegação -->
                     <div class="sub-nav">
                         <button class="sub-nav-btn active" id="btnAjudaTutorial" onclick="setVistaAjuda('tutorial')">📚 Tutorial</button>
-                        <button class="sub-nav-btn" id="btnAjudaLembretes" onclick="setVistaAjuda('lembretes')">📌 Lembretes</button>
                         <button class="sub-nav-btn" id="btnAjudaFaq" onclick="setVistaAjuda('faq')">💬 FAQ</button>
                     </div>
                     
@@ -5037,32 +5036,47 @@
                 <div class="card">
                     <div class="card-title">⚙️ CONFIGURAÇÕES</div>
                     
-                    <!-- CONFIG HUB -->
+                    <!-- CONFIG REFATORADA -->
                     <div style="margin-top: 24px;">
-                        <!-- Bloco 1: Acesso Rápido -->
+                        <!-- Bloco 1: Perfil -->
                         <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">🚀 Acesso Rápido</h3>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <button class="btn btn-secondary" onclick="showSection('backup')" style="flex: 1; min-width: 100px;">💾 Backup</button>
-                                <button class="btn btn-secondary" onclick="showSection('dados')" style="flex: 1; min-width: 100px;">📊 Dados</button>
-                                <button class="btn btn-secondary" onclick="showSection('ajuda')" style="flex: 1; min-width: 100px;">❓ Ajuda</button>
-                            </div>
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">👤 Perfil</h3>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">Perfil ativo: <strong>DEFAULT</strong></p>
+                            <button class="btn btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">⚙️ Gerenciar perfis (em breve)</button>
+                            <p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
                         
-                        <!-- Bloco 2: Revisões VRVS 3P -->
+                        <!-- Bloco 2: Dados -->
                         <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.2); border-radius: 8px;">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">📔 Revisões VRVS 3P</h3>
-                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">Os controles gerais de revisão ficam no Diário.</p>
-                            <button class="btn btn-primary" onclick="irParaRevisoesDiario()">🔁 Ir para Diário (Revisões)</button>
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">💾 Dados</h3>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">
+                                Uso atual: <strong id="configStorageUsage">Calculando...</strong><br>
+                                <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Limite varia por aparelho/navegador</span>
+                            </p>
+                            <button class="btn btn-primary" onclick="showSection('backup')">📥 Exportar / Importar dados →</button>
                         </div>
                         
                         <!-- Bloco 3: Versão / Diagnóstico -->
-                        <div style="padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                        <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
                             <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">ℹ️ Versão / Diagnóstico</h3>
-                            <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7);">
+                            <p style="margin: 0 0 12px 0; font-size: 13px; color: rgba(255,255,255,0.7);">
                                 <strong>Build:</strong> <span id="configVrvsBuild" style="color: var(--turquesa-light); font-weight: 600;"></span><br>
                                 <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Build deve bater com CACHE_NAME do Service Worker</span>
                             </p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
+                                <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
+                                <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Bloco 4: Sobre -->
+                        <div style="padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">ℹ️ Sobre</h3>
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">
+                                VRVS <span id="configSobreBuild"></span>
+                            </p>
+                            <button class="btn btn-secondary" onclick="showSection('ajuda')">📚 Ver Tutorial e FAQ →</button>
                         </div>
                     </div>
                 </div>
@@ -5074,7 +5088,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // ==================== VRVS BUILD ====================
-        const VRVS_BUILD = "v5.3.190";
+        const VRVS_BUILD = "v5.3.191";
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         // Função para corrigir inversão área↔tema ANTES de carregar dados
@@ -8724,10 +8738,30 @@
             if (buildEl && typeof VRVS_BUILD !== 'undefined') {
                 buildEl.textContent = VRVS_BUILD;
             }
+            const sobreBuild = document.getElementById('configSobreBuild');
+            if (sobreBuild && typeof VRVS_BUILD !== 'undefined') {
+                sobreBuild.textContent = VRVS_BUILD;
+            }
             // Atualizar header
             const headerBuild = document.getElementById('vrvsBuildDisplay');
             if (headerBuild && typeof VRVS_BUILD !== 'undefined') {
                 headerBuild.textContent = VRVS_BUILD;
+            }
+            // Calcular uso de armazenamento
+            const storageEl = document.getElementById('configStorageUsage');
+            if (storageEl) {
+                try {
+                    let totalBytes = 0;
+                    const keys = ['vrvs_dados', 'vrvs_historico', 'vrvs_anotacoes', 'vrvs_diario', 'vrvs_config', 'vrvs_lembretes'];
+                    keys.forEach(key => {
+                        const val = localStorage.getItem(key);
+                        if (val) totalBytes += new Blob([val]).size;
+                    });
+                    const mb = (totalBytes / (1024 * 1024)).toFixed(2);
+                    storageEl.textContent = `${mb} MB`;
+                } catch(e) {
+                    storageEl.textContent = 'N/A';
+                }
             }
         }
         
@@ -17434,8 +17468,12 @@
             renderTarefas();
             
             setTimeout(() => {
-                mostrarNotificacaoFeedback('✅ Revisão ativada', 'success');
-            }, 0);
+                if (contador === 0) {
+                    mostrarNotificacaoFeedback('ℹ️ Nada mudou: todas as entradas já estavam com revisão ativa.', 'success');
+                } else {
+                    mostrarNotificacaoFeedback(`✅ Revisões ativadas em ${contador} entrada(s).`, 'success');
+                }
+            }, 50);
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
@@ -17460,8 +17498,12 @@
             renderTarefas();
             
             setTimeout(() => {
-                mostrarNotificacaoFeedback('✅ Revisão desativada', 'success');
-            }, 0);
+                if (contador === 0) {
+                    mostrarNotificacaoFeedback('ℹ️ Nada mudou: não havia entradas com revisão ativa.', 'success');
+                } else {
+                    mostrarNotificacaoFeedback(`✅ Revisões desativadas em ${contador} entrada(s).`, 'success');
+                }
+            }, 50);
         }
         
         // Excluir entrada atual do Diário permanentemente
@@ -18273,11 +18315,153 @@
         }
         
         function renderAgendaUnificada() {
+            const container = document.getElementById('agendaContainer');
+            if (!container) return;
+            
             if (window.vistaAgenda === 'atrasados') {
                 renderAgendaAtrasados();
             } else {
                 renderAgenda();
+                // Adicionar seção de Lembretes após a timeline
+                const lembretesHTML = renderLembretesAgenda();
+                if (lembretesHTML) {
+                    container.innerHTML += lembretesHTML;
+                }
             }
+        }
+        
+        function renderLembretesAgenda() {
+            if (!lembretes || lembretes.length === 0) return '';
+            
+            const hoje = obterYMDLocal();
+            const lembretesAtivos = lembretes.filter(l => !l.concluido && (!l.proximaData || l.proximaData <= hoje));
+            const lembretesFuturos = lembretes.filter(l => !l.concluido && l.proximaData && l.proximaData > hoje);
+            
+            let html = '<div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(0,206,209,0.3);">';
+            html += '<h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 15px;">📌 Lembretes</h3>';
+            
+            // Formulário para adicionar lembrete
+            html += `
+                <div style="margin-bottom: 20px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
+                    <form id="lembreteFormAgenda" onsubmit="adicionarLembreteAgenda(event)">
+                        <div class="form-group">
+                            <label class="form-label">Título do Lembrete</label>
+                            <input type="text" class="form-input" id="lembreteTituloAgenda" placeholder="Ex: Revisar vias de acesso" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Descrição (opcional)</label>
+                            <textarea class="form-input" id="lembreteDescricaoAgenda" rows="2" placeholder="Detalhes..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Periodicidade</label>
+                            <select class="form-select" id="lembretePeriodicidadeAgenda" required>
+                                <option value="pontual">Pontual</option>
+                                <option value="diaria">Diária</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="mensal">Mensal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data Inicial</label>
+                            <input type="date" class="form-input" id="lembreteDataAgenda" required>
+                        </div>
+                        <button type="submit" class="btn">➕ Adicionar Lembrete</button>
+                    </form>
+                </div>
+            `;
+            
+            // Lista de lembretes
+            if (lembretesAtivos.length > 0) {
+                html += '<div style="margin-bottom: 20px;"><h4 style="color: var(--cobre-light); margin-bottom: 10px; font-size: 14px;">📌 Para Hoje</h4>';
+                html += lembretesAtivos.map(l => {
+                    const proximaDataFormatada = l.proximaData ? formatarData(l.proximaData) : 'Pontual';
+                    const tema = l.temaId ? dados.find(t => String(t.id) === String(l.temaId)) : null;
+                    const temaInfo = tema ? ` • 🔗 ${tema.area} - ${tema.tema}` : '';
+                    return `
+                        <div class="task-item" style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">
+                                        ${l.temaId ? `<a href="#" onclick="navegarParaAnotacao(${l.temaId}); return false;" style="color: var(--turquesa-light); text-decoration: none;">📔</a> ` : ''}${l.titulo}
+                                    </div>
+                                    ${l.descricao ? `<div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 5px;">${l.descricao}</div>` : ''}
+                                    <div style="font-size: 11px; color: rgba(0,206,209,0.6);">
+                                        📅 ${proximaDataFormatada} • ${l.periodicidade === 'pontual' ? 'Pontual' : l.periodicidade.charAt(0).toUpperCase() + l.periodicidade.slice(1)}${temaInfo}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    ${l.periodicidade !== 'pontual' ? `<button class="btn-edit" onclick="marcarLembreteConcluido(${l.id})" title="Marcar como concluído">✅</button>` : ''}
+                                    ${l.temaId ? `<button class="btn-edit" onclick="navegarParaAnotacao(${l.temaId})" title="Ver anotações">📔</button>` : ''}
+                                    <button class="btn-edit" onclick="deletarLembrete(${l.id})" title="Deletar">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                html += '</div>';
+            }
+            
+            if (lembretesFuturos.length > 0) {
+                html += '<div style="margin-bottom: 20px;"><h4 style="color: rgba(0,206,209,0.7); margin-bottom: 10px; font-size: 14px;">📅 Próximos</h4>';
+                html += lembretesFuturos.map(l => {
+                    const proximaDataFormatada = formatarData(l.proximaData);
+                    const tema = l.temaId ? dados.find(t => String(t.id) === String(l.temaId)) : null;
+                    const temaInfo = tema ? ` • 🔗 ${tema.area} - ${tema.tema}` : '';
+                    return `
+                        <div class="task-item" style="margin-bottom: 10px; opacity: 0.7;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--cobre-light); margin-bottom: 5px;">
+                                        ${l.temaId ? `<a href="#" onclick="navegarParaAnotacao(${l.temaId}); return false;" style="color: var(--turquesa-light); text-decoration: none;">📔</a> ` : ''}${l.titulo}
+                                    </div>
+                                    ${l.descricao ? `<div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 5px;">${l.descricao}</div>` : ''}
+                                    <div style="font-size: 11px; color: rgba(0,206,209,0.6);">
+                                        📅 ${proximaDataFormatada} • ${l.periodicidade.charAt(0).toUpperCase() + l.periodicidade.slice(1)}${temaInfo}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    ${l.temaId ? `<button class="btn-edit" onclick="navegarParaAnotacao(${l.temaId})" title="Ver anotações">📔</button>` : ''}
+                                    <button class="btn-edit" onclick="deletarLembrete(${l.id})" title="Deletar">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
+        
+        function adicionarLembreteAgenda(event) {
+            event.preventDefault();
+            const titulo = document.getElementById('lembreteTituloAgenda').value.trim();
+            const descricao = document.getElementById('lembreteDescricaoAgenda').value.trim();
+            const periodicidade = document.getElementById('lembretePeriodicidadeAgenda').value;
+            const dataInicial = document.getElementById('lembreteDataAgenda').value;
+            
+            if (!titulo || !dataInicial) {
+                mostrarNotificacaoFeedback('⚠️ Preencha título e data inicial.', 'error');
+                return;
+            }
+            
+            const novoLembrete = {
+                id: Date.now(),
+                titulo,
+                descricao,
+                periodicidade,
+                dataInicial,
+                proximaData: periodicidade === 'pontual' ? null : dataInicial,
+                concluido: false
+            };
+            
+            lembretes.push(novoLembrete);
+            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+            
+            document.getElementById('lembreteFormAgenda').reset();
+            renderAgendaUnificada();
+            mostrarNotificacaoFeedback('✅ Lembrete adicionado!', 'success');
         }
         
         // Helper: Obter número de sessões de um tema
@@ -19028,9 +19212,6 @@
             switch(window.vistaAjuda) {
                 case 'tutorial':
                     renderAjudaTutorial(container);
-                    break;
-                case 'lembretes':
-                    renderAjudaLembretes(container);
                     break;
                 case 'faq':
                     renderAjudaFaq(container);
@@ -20226,9 +20407,6 @@
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('caderno')" style="text-align: left;">❓ Como usar o Caderno V2?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('analytics')" style="text-align: left;">❓ Como usar Análises?</button>
                     <button class="btn btn-small" onclick="mostrarRespostaAjuda('exportar')" style="text-align: left;">❓ Como exportar Hot Topics em HTML?</button>
-                    <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
-                    <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
-                    <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
                 </div>
                 <div id="respostaFaqAjuda" style="margin-top: 20px;"></div>
             `;
