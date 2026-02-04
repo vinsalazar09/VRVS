@@ -5923,8 +5923,33 @@
         // ==================== FUNÇÕES AUXILIARES ====================
         
         function mostrarNotificacaoFeedback(mensagem, tipo = 'success') {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:ENTRY',message:'Toast chamado',data:{mensagem,tipo},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
             const container = document.getElementById('feedbackMessage');
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:BEFORE_SET',message:'Antes de setar innerHTML',data:{containerExists:!!container,containerParent:container?.parentElement?.tagName||'none',containerDisplay:container?.style.display||'none'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+            
+            if (!container) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:NO_CONTAINER',message:'Container não existe',data:{},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+                console.error('[TOAST] #feedbackMessage não encontrado!');
+                return;
+            }
+            
             container.innerHTML = `<div class="message ${tipo}">${mensagem}</div>`;
+            
+            // #region agent log
+            setTimeout(() => {
+                const afterEl = document.getElementById('feedbackMessage');
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:AFTER_SET',message:'Após setar innerHTML',data:{innerHTML:afterEl?.innerHTML?.substring(0,150)||'empty',hasMessage:afterEl?.innerHTML?.includes('message')||false,offsetParent:afterEl?.offsetParent!==null},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            }, 10);
+            // #endregion
+            
             setTimeout(() => container.innerHTML = '', 5000);
         }
         
@@ -14064,8 +14089,15 @@
         }
         
         function renderDiario() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderDiario:ENTRY',message:'renderDiario chamado',data:{feedbackElBefore:document.getElementById('feedbackMessage')?.innerHTML?.substring(0,50)||'empty'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            
             // S6-NAV-FIX2: Prevenir múltiplas renderizações simultâneas
             if (window.diarioRenderando) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderDiario:SKIP',message:'Já renderizando, skip',data:{},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+                // #endregion
                 return; // Já está renderizando, ignorar chamada
             }
             
@@ -14089,6 +14121,9 @@
                 if (revisarHoje) revisarHoje.style.display = 'none';
                 
                 window.diarioRenderando = false; // S6-NAV-FIX2: Liberar flag antes de return
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderDiario:EMPTY_RETURN',message:'Diário vazio, retornando',data:{feedbackElAfter:document.getElementById('feedbackMessage')?.innerHTML?.substring(0,50)||'empty'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 return;
             }
             
@@ -14168,6 +14203,9 @@
                 });
             });
             } finally {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderDiario:FINALLY',message:'renderDiario finalizado',data:{feedbackElExists:!!document.getElementById('feedbackMessage'),feedbackInnerHTML:document.getElementById('feedbackMessage')?.innerHTML?.substring(0,100)||'empty'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 // S6-NAV-FIX2: Sempre liberar flag, mesmo em caso de erro
                 window.diarioRenderando = false;
             }
@@ -17443,7 +17481,14 @@
         
         // Marcar todas as entradas do Diário para revisão (ativar SRS)
         function marcarTodasRevisoes() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:ENTRY',message:'Função chamada',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+            // #endregion
+            
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:ERROR',message:'Sem entradas',data:{diarioExists:!!window.diario},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
@@ -17462,23 +17507,50 @@
                 }
             });
             
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:BEFORE_RENDER',message:'Antes de renderizar',data:{contador,entradasTotal:window.diario.entradas.length},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
             // Salvar e renderizar
             salvarDiarioLS();
+            const renderStart = Date.now();
             renderDiario();
+            const renderDiarioTime = Date.now() - renderStart;
             renderTarefas();
+            const renderTarefasTime = Date.now() - renderStart - renderDiarioTime;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:AFTER_RENDER',message:'Após renderizar',data:{renderDiarioTime,renderTarefasTime,feedbackElExists:!!document.getElementById('feedbackMessage')},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
             
             setTimeout(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:SETTIMEOUT_CALLBACK',message:'Timeout callback executado',data:{contador,feedbackElExists:!!document.getElementById('feedbackMessage'),feedbackElVisible:document.getElementById('feedbackMessage')?.offsetParent!==null},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
                 if (contador === 0) {
                     mostrarNotificacaoFeedback('ℹ️ Nada mudou: todas as entradas já estavam com revisão ativa.', 'success');
                 } else {
                     mostrarNotificacaoFeedback(`✅ Revisões ativadas em ${contador} entrada(s).`, 'success');
                 }
+                // #region agent log
+                setTimeout(() => {
+                    const el = document.getElementById('feedbackMessage');
+                    fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:AFTER_TOAST',message:'Após chamar toast',data:{feedbackElExists:!!el,feedbackInnerHTML:el?.innerHTML?.substring(0,100)||'empty',feedbackDisplay:el?.style.display||'none',feedbackVisibility:el?.style.visibility||'visible'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                }, 50);
+                // #endregion
             }, 200);
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
         function desmarcarTodasRevisoes() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:ENTRY',message:'Função chamada',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+            // #endregion
+            
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:ERROR',message:'Sem entradas',data:{diarioExists:!!window.diario},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
@@ -17492,17 +17564,37 @@
                 }
             });
             
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:BEFORE_RENDER',message:'Antes de renderizar',data:{contador,entradasTotal:window.diario.entradas.length},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
             // Salvar e renderizar
             salvarDiarioLS();
+            const renderStart = Date.now();
             renderDiario();
+            const renderDiarioTime = Date.now() - renderStart;
             renderTarefas();
+            const renderTarefasTime = Date.now() - renderStart - renderDiarioTime;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:AFTER_RENDER',message:'Após renderizar',data:{renderDiarioTime,renderTarefasTime,feedbackElExists:!!document.getElementById('feedbackMessage')},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
             
             setTimeout(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:SETTIMEOUT_CALLBACK',message:'Timeout callback executado',data:{contador,feedbackElExists:!!document.getElementById('feedbackMessage'),feedbackElVisible:document.getElementById('feedbackMessage')?.offsetParent!==null},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
                 if (contador === 0) {
                     mostrarNotificacaoFeedback('ℹ️ Nada mudou: não havia entradas com revisão ativa.', 'success');
                 } else {
                     mostrarNotificacaoFeedback(`✅ Revisões desativadas em ${contador} entrada(s).`, 'success');
                 }
+                // #region agent log
+                setTimeout(() => {
+                    const el = document.getElementById('feedbackMessage');
+                    fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:AFTER_TOAST',message:'Após chamar toast',data:{feedbackElExists:!!el,feedbackInnerHTML:el?.innerHTML?.substring(0,100)||'empty',feedbackDisplay:el?.style.display||'none',feedbackVisibility:el?.style.visibility||'visible'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                }, 50);
+                // #endregion
             }, 200);
         }
         
