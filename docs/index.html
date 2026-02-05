@@ -9241,6 +9241,8 @@
                 perfis.forEach(perfil => {
                     const isAtivo = perfil === perfilAtivo;
                     const isDefault = perfil === 'DEFAULT';
+                    // Escape robusto para onclick (backslash primeiro, depois aspas simples)
+                    const perfilEsc = String(perfil).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     
                     html += `
                         <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid ${isAtivo ? 'rgba(0,206,209,0.4)' : 'rgba(255,255,255,0.1)'};">
@@ -9250,7 +9252,7 @@
                                     ${isAtivo ? '<span style="margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>' : ''}
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    ${!isDefault && !isAtivo ? `<button onclick="vrvs_confirmarApagarPerfil('${perfil.replace(/'/g, "\\'")}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Apagar</button>` : ''}
+                                    ${!isDefault && !isAtivo ? `<button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Apagar</button>` : ''}
                                 </div>
                             </div>
                         </div>
