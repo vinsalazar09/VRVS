@@ -5015,6 +5015,9 @@
                     <!-- Exportar -->
                     <div style="margin-bottom: 30px;">
                         <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📤 EXPORTAR DADOS</h3>
+                        <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
+                            Perfil ativo: <strong id="backupPerfilAtivo">DEFAULT</strong>
+                        </p>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                             <button class="btn btn-secondary" onclick="exportarDados()">📊 DADOS.csv</button>
                             <button class="btn btn-secondary" onclick="exportarHistorico()">📜 HISTORICO.csv</button>
@@ -5062,13 +5065,16 @@
                         
                         <div style="border-top: 1px solid rgba(0,206,209,0.3); margin-top: 20px; padding-top: 20px;">
                             <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR BACKUP COMPLETO (JSON)</h3>
+                            <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
+                                Perfil ativo: <strong id="backupPerfilAtivoImport">DEFAULT</strong>
+                            </p>
                             <div class="form-group">
                                 <label class="form-label">Arquivo Backup Completo VRVS (.json)</label>
                                 <input type="file" class="form-input" id="importBackupJSON" accept=".json">
                             </div>
                             <button class="btn" onclick="importarBackupJSON()" style="background: var(--turquesa-main);">📥 RESTAURAR BACKUP COMPLETO</button>
                             <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
-                                ⚠️ Esta operação substitui TODOS os dados atuais pelos do backup. Faça backup antes de restaurar!
+                                ⚠️ Esta operação substitui TODOS os dados do perfil ativo pelos do backup. Faça backup antes de restaurar!
                             </div>
                         </div>
                     </div>
@@ -5113,8 +5119,7 @@
                             <div style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px;">
                                 <span>Perfil ativo:</span>
                                 <select id="perfilAtivoSelect" onchange="trocarPerfil(this.value)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 8px; color: var(--turquesa-light); font-weight: 600; cursor: pointer;">
-                                    <option value="DEFAULT">DEFAULT</option>
-                                    <option value="VIDA">VIDA</option>
+                                    <!-- PATCH D1: Renderizado dinamicamente via renderConfig() -->
                                 </select>
                             </div>
                             <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 8px 16px;">⚙️ Gerenciar perfis</button>
@@ -5129,7 +5134,12 @@
                                 <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Limite varia por aparelho/navegador</span>
                             </p>
                             <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-top: 12px;" onclick="toggleBackupConfig()">
-                                <span style="font-size: 13px; color: rgba(255,255,255,0.7);">📥 Exportar / Importar dados</span>
+                                <div>
+                                    <span style="font-size: 13px; color: rgba(255,255,255,0.7);">📥 Exportar / Importar dados</span>
+                                    <span style="font-size: 10px; color: rgba(255,255,255,0.5); display: block; margin-top: 4px;">
+                                        (Perfil: <strong id="configPerfilAtivo">DEFAULT</strong>)
+                                    </span>
+                                </div>
                                 <span id="backupConfigToggle" style="font-size: 12px; color: rgba(255,255,255,0.5);">▼ Expandir</span>
                             </div>
                             <div id="backupConfigContent" style="display: none; margin-top: 12px;">
@@ -5200,14 +5210,10 @@
                 <div class="vrvsModal-section" style="margin-bottom: 24px;">
                     <h3 style="margin-top: 0; margin-bottom: 12px; color: rgba(255,255,255,0.9); font-size: 16px;">📋 Perfis Existentes</h3>
                     <div id="vrvsModalPerfisLista" style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        <div style="margin-bottom: 8px; font-size: 14px; color: rgba(255,255,255,0.9);">
-                            <span style="color: var(--turquesa-light); font-weight: 600;">DEFAULT</span>
-                            <span id="vrvsModalBadgeDEFAULT" class="vrvsModal-badge" style="display: none; margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>
-                        </div>
-                        <div style="font-size: 14px; color: rgba(255,255,255,0.9);">
-                            <span style="color: var(--turquesa-light); font-weight: 600;">VIDA</span>
-                            <span id="vrvsModalBadgeVIDA" class="vrvsModal-badge" style="display: none; margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>
-                        </div>
+                        <!-- PATCH D1: Renderizado dinamicamente via abrirModalGerenciarPerfis() -->
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-secondary" onclick="vrvs_abrirModalCriarPerfil()" style="width: 100%;">➕ Criar novo perfil</button>
                     </div>
                 </div>
                 
@@ -5252,14 +5258,17 @@
         }
         
         function fazerBackupCompleto() {
+            // PACOTE A: Ler dados SEMPRE do perfil ativo usando window.vrvs_key()
+            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
             const backup = {
                 schemaVersion: 'VRVS_BACKUP_v1',
                 timestamp: new Date().toISOString(),
-                dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
-                historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
-                anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
-                lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
-                diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
+                perfilAtivo: perfilAtivo,
+                dados: JSON.parse(localStorage.getItem(window.vrvs_key('dados')) || '[]'),
+                historico: JSON.parse(localStorage.getItem(window.vrvs_key('historico')) || '[]'),
+                anotacoes: JSON.parse(localStorage.getItem(window.vrvs_key('anotacoes')) || '[]'),
+                lembretes: JSON.parse(localStorage.getItem(window.vrvs_key('lembretes')) || '[]'),
+                diario: JSON.parse(localStorage.getItem(window.vrvs_diarioKey()) || '{"entradas":[],"schemaVersion":"1.0"}'),
                 config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
             };
             
@@ -5296,23 +5305,26 @@
                 throw e;
             }
             
-            // Limitar backups no PWA (2) vs desktop (5)
-            const MAX_BACKUPS = isStandalone() ? 2 : 5;
+            // PACOTE A: Retenção por perfil (5 backups POR PERFIL)
+            const MAX_BACKUPS_PER_PERFIL = 5;
             
-            // S3Q: Limpar backups antigos ANTES de criar novo (mais agressivo)
-            const bks = Object.keys(localStorage)
-                .filter(k => k.startsWith('vrvs_backup_'))
+            // S3Q: Limpar backups antigos do PERFIL ATIVO ANTES de criar novo
+            const prefixoPerfil = `vrvs_backup_${perfilAtivo}_`;
+            const bksDoPerfil = Object.keys(localStorage)
+                .filter(k => k.startsWith(prefixoPerfil))
                 .sort();
             
-            // S3Q: Limpar TODOS os backups se estiver no limite (garantir espaço máximo)
-            if (bks.length >= MAX_BACKUPS) {
-                bks.forEach(rm => {
+            // S3Q: Limpar backups antigos do perfil se estiver no limite
+            if (bksDoPerfil.length >= MAX_BACKUPS_PER_PERFIL) {
+                // Manter apenas os últimos MAX_BACKUPS_PER_PERFIL
+                const backupsParaRemover = bksDoPerfil.slice(0, bksDoPerfil.length - MAX_BACKUPS_PER_PERFIL + 1);
+                backupsParaRemover.forEach(rm => {
                     try { localStorage.removeItem(rm); } catch(_) {}
                 });
             }
             
-            // S3Q: Tentar criar backup com proteção QUOTA
-            const backupKey = `vrvs_backup_${Date.now()}`;
+            // S3Q: Tentar criar backup com proteção QUOTA (com prefixo de perfil)
+            const backupKey = `vrvs_backup_${perfilAtivo}_${Date.now()}`;
             try {
                 localStorage.setItem(backupKey, backupStr);
                 console.log(`[BACKUP] Backup criado: ${backupKey} (${(estimatedBytes / 1024 / 1024).toFixed(2)}MB)`);
@@ -5322,9 +5334,9 @@
                 if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
                     console.warn('[BACKUP] Quota excedida ao criar backup. Limpando todos os backups e tentando novamente...');
                     
-                    // Limpar TODOS os backups
-                    const allBackups = Object.keys(localStorage).filter(k => k.startsWith('vrvs_backup_'));
-                    allBackups.forEach(rm => {
+                    // Limpar TODOS os backups do PERFIL ATIVO
+                    const allBackupsDoPerfil = Object.keys(localStorage).filter(k => k.startsWith(prefixoPerfil));
+                    allBackupsDoPerfil.forEach(rm => {
                         try { localStorage.removeItem(rm); } catch(_) {}
                     });
                     
@@ -5371,14 +5383,17 @@
         // Exportar backup completo em JSON (download)
         function exportarBackupJSON() {
             try {
+                // PACOTE A: Exportar SEMPRE do perfil ativo usando window.vrvs_key()
+                const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
                 const backup = {
                     schemaVersion: 'VRVS_BACKUP_v1',
                     createdAt: new Date().toISOString(),
-                    vrvs_dados: JSON.parse(localStorage.getItem('vrvs_dados') || '[]'),
-                    vrvs_historico: JSON.parse(localStorage.getItem('vrvs_historico') || '[]'),
-                    vrvs_anotacoes: JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]'),
-                    vrvs_lembretes: JSON.parse(localStorage.getItem('vrvs_lembretes') || '[]'),
-                    vrvs_diario: JSON.parse(localStorage.getItem('vrvs_diario') || '{"entradas":[],"schemaVersion":"1.0"}'),
+                    perfilAtivo: perfilAtivo,
+                    vrvs_dados: JSON.parse(localStorage.getItem(window.vrvs_key('dados')) || '[]'),
+                    vrvs_historico: JSON.parse(localStorage.getItem(window.vrvs_key('historico')) || '[]'),
+                    vrvs_anotacoes: JSON.parse(localStorage.getItem(window.vrvs_key('anotacoes')) || '[]'),
+                    vrvs_lembretes: JSON.parse(localStorage.getItem(window.vrvs_key('lembretes')) || '[]'),
+                    vrvs_diario: JSON.parse(localStorage.getItem(window.vrvs_diarioKey()) || '{"entradas":[],"schemaVersion":"1.0"}'),
                     vrvs_config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
                 };
                 
@@ -5396,13 +5411,13 @@
                 a.href = url;
                 const hoje = obterYMDLocal();
                 const hora = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-                a.download = `vrvs_backup_${hoje}_${hora}.json`;
+                a.download = `vrvs_backup_${perfilAtivo}_${hoje}_${hora}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
-                mostrarNotificacaoFeedback(`✅ Backup completo exportado! (${totalDados} temas, ${totalHistorico} sessões, ${totalAnotacoes} anotações, ${totalLembretes} lembretes, ${totalDiario} entradas do Diário)`);
+                mostrarNotificacaoFeedback(`✅ Backup completo exportado do perfil "${perfilAtivo}"! (${totalDados} temas, ${totalHistorico} sessões, ${totalAnotacoes} anotações, ${totalLembretes} lembretes, ${totalDiario} entradas do Diário)`);
             } catch (error) {
                 console.error('[BACKUP] Erro ao exportar JSON:', error);
                 mostrarNotificacaoFeedback('⚠️ Erro ao exportar backup. Verifique o console.', 'error');
@@ -5517,6 +5532,11 @@
                     
                     console.log('[IMPORT RAW] Validação OK, mostrando preview...');
                     
+                    // PACOTE A: Verificar se perfil do backup é diferente do perfil ativo
+                    const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+                    const perfilBackup = backup.perfilAtivo || 'DEFAULT';
+                    const perfilDiferente = perfilBackup !== perfilAtivo;
+                    
                     // Mostrar preview antes de restaurar
                     const totalDados = backup.vrvs_dados?.length || 0;
                     const totalHistorico = backup.vrvs_historico?.length || 0;
@@ -5524,16 +5544,26 @@
                     const totalLembretes = backup.vrvs_lembretes?.length || 0;
                     const totalDiario = backup.vrvs_diario?.entradas?.length || 0;
                     
-                    const confirmacao = confirm(
-                        `Este backup contém:\n` +
+                    let mensagemConfirmacao = `Este backup contém:\n` +
                         `• ${totalDados} temas\n` +
                         `• ${totalHistorico} sessões\n` +
                         `• ${totalAnotacoes} anotações\n` +
                         `• ${totalLembretes} lembretes\n` +
-                        `• ${totalDiario} entradas do Diário\n\n` +
-                        `⚠️ ATENÇÃO: Esta operação substituirá TODOS os dados atuais!\n\n` +
-                        `Deseja continuar?`
-                    );
+                        `• ${totalDiario} entradas do Diário\n\n`;
+                    
+                    // PACOTE A: Avisar se perfil diferente
+                    if (perfilDiferente) {
+                        mensagemConfirmacao += `⚠️ ATENÇÃO CRÍTICA:\n` +
+                            `• Backup foi criado no perfil "${perfilBackup}"\n` +
+                            `• Você está importando no perfil "${perfilAtivo}"\n` +
+                            `• Os dados serão importados APENAS no perfil "${perfilAtivo}"\n` +
+                            `• O perfil "${perfilBackup}" NÃO será afetado\n\n`;
+                    }
+                    
+                    mensagemConfirmacao += `⚠️ Esta operação substituirá TODOS os dados do perfil "${perfilAtivo}"!\n\n` +
+                        `Deseja continuar?`;
+                    
+                    const confirmacao = confirm(mensagemConfirmacao);
                     
                     if (!confirmacao) return;
                     
@@ -5551,14 +5581,15 @@
                         console.log('[IMPORT RAW] Backups antigos limpos, mantido 1 mais recente');
                     } catch(_) {}
                     
-                    // Restaurar dados (removeItem + setItem para reduzir pico de alocação)
-                    console.log('[IMPORT RAW] Restaurando dados...');
+                    // PACOTE A: Restaurar dados SEMPRE no perfil ativo usando window.vrvs_key()
+                    console.log('[IMPORT RAW] Restaurando dados no perfil ativo:', perfilAtivo);
                     if (backup.vrvs_dados) {
-                        try { localStorage.removeItem('vrvs_dados'); } catch(_) {}
+                        const dadosKey = window.vrvs_key('dados');
+                        try { localStorage.removeItem(dadosKey); } catch(_) {}
                         try {
-                            localStorage.setItem('vrvs_dados', JSON.stringify(backup.vrvs_dados));
+                            localStorage.setItem(dadosKey, JSON.stringify(backup.vrvs_dados));
                             dados = backup.vrvs_dados;
-                            console.log('[IMPORT RAW] ✅ vrvs_dados restaurado:', backup.vrvs_dados.length, 'itens');
+                            console.log('[IMPORT RAW] ✅ vrvs_dados restaurado no perfil', perfilAtivo, ':', backup.vrvs_dados.length, 'itens');
                         } catch(e) {
                             alert('Falha ao restaurar vrvs_dados (quota). Snapshot pré-import foi baixado.');
                             throw e;
@@ -5566,11 +5597,12 @@
                     }
                     
                     if (backup.vrvs_historico) {
-                        try { localStorage.removeItem('vrvs_historico'); } catch(_) {}
+                        const historicoKey = window.vrvs_key('historico');
+                        try { localStorage.removeItem(historicoKey); } catch(_) {}
                         try {
-                            localStorage.setItem('vrvs_historico', JSON.stringify(backup.vrvs_historico));
+                            localStorage.setItem(historicoKey, JSON.stringify(backup.vrvs_historico));
                             historico = backup.vrvs_historico;
-                            console.log('[IMPORT RAW] ✅ vrvs_historico restaurado:', backup.vrvs_historico.length, 'itens');
+                            console.log('[IMPORT RAW] ✅ vrvs_historico restaurado no perfil', perfilAtivo, ':', backup.vrvs_historico.length, 'itens');
                         } catch(e) {
                             alert('Falha ao restaurar vrvs_historico (quota). Snapshot pré-import foi baixado.');
                             throw e;
@@ -5578,11 +5610,12 @@
                     }
                     
                     if (backup.vrvs_anotacoes) {
-                        try { localStorage.removeItem('vrvs_anotacoes'); } catch(_) {}
+                        const anotacoesKey = window.vrvs_key('anotacoes');
+                        try { localStorage.removeItem(anotacoesKey); } catch(_) {}
                         try {
-                            localStorage.setItem('vrvs_anotacoes', JSON.stringify(backup.vrvs_anotacoes));
+                            localStorage.setItem(anotacoesKey, JSON.stringify(backup.vrvs_anotacoes));
                             anotacoes = backup.vrvs_anotacoes;
-                            console.log('[IMPORT RAW] ✅ vrvs_anotacoes restaurado:', backup.vrvs_anotacoes.length, 'itens');
+                            console.log('[IMPORT RAW] ✅ vrvs_anotacoes restaurado no perfil', perfilAtivo, ':', backup.vrvs_anotacoes.length, 'itens');
                         } catch(e) {
                             alert('Falha ao restaurar vrvs_anotacoes (quota). Snapshot pré-import foi baixado.');
                             throw e;
@@ -5590,10 +5623,11 @@
                     }
                     
                     if (backup.vrvs_lembretes) {
-                        try { localStorage.removeItem('vrvs_lembretes'); } catch(_) {}
+                        const lembretesKey = window.vrvs_key('lembretes');
+                        try { localStorage.removeItem(lembretesKey); } catch(_) {}
                         try {
-                            localStorage.setItem('vrvs_lembretes', JSON.stringify(backup.vrvs_lembretes));
-                            console.log('[IMPORT RAW] ✅ vrvs_lembretes restaurado:', backup.vrvs_lembretes.length, 'itens');
+                            localStorage.setItem(lembretesKey, JSON.stringify(backup.vrvs_lembretes));
+                            console.log('[IMPORT RAW] ✅ vrvs_lembretes restaurado no perfil', perfilAtivo, ':', backup.vrvs_lembretes.length, 'itens');
                         } catch(e) {
                             alert('Falha ao restaurar vrvs_lembretes (quota). Snapshot pré-import foi baixado.');
                             throw e;
@@ -5602,11 +5636,12 @@
                     
                     // CRÍTICO: Restaurar Diário com SRS completo
                     if (backup.vrvs_diario) {
-                        try { localStorage.removeItem('vrvs_diario'); } catch(_) {}
+                        const diarioKey = window.vrvs_diarioKey();
+                        try { localStorage.removeItem(diarioKey); } catch(_) {}
                         try {
-                            localStorage.setItem('vrvs_diario', JSON.stringify(backup.vrvs_diario));
+                            localStorage.setItem(diarioKey, JSON.stringify(backup.vrvs_diario));
                             window.diario = backup.vrvs_diario;
-                            console.log('[IMPORT RAW] ✅ vrvs_diario restaurado:', backup.vrvs_diario.entradas?.length || 0, 'entradas');
+                            console.log('[IMPORT RAW] ✅ vrvs_diario restaurado no perfil', perfilAtivo, ':', backup.vrvs_diario.entradas?.length || 0, 'entradas');
                             
                             // Migrar SRS se necessário (mas não resetar se já está completo)
                             migrarSRSParaVRVS3P();
@@ -8943,6 +8978,17 @@
             }, 100);
         }
         
+        // PACOTE A: Função helper para atualizar labels de perfil ativo
+        function atualizarLabelsPerfilAtivo() {
+            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+            const elBackup = document.getElementById('backupPerfilAtivo');
+            const elBackupImport = document.getElementById('backupPerfilAtivoImport');
+            const elConfig = document.getElementById('configPerfilAtivo');
+            if (elBackup) elBackup.textContent = perfilAtivo;
+            if (elBackupImport) elBackupImport.textContent = perfilAtivo;
+            if (elConfig) elConfig.textContent = perfilAtivo;
+        }
+        
         function renderConfig() {
             const enabled = vrvs_isDiarioEnabled();
             const checkbox = document.getElementById('configDiarioEnabled');
@@ -8952,6 +8998,8 @@
             if (buildEl && typeof VRVS_BUILD !== 'undefined') {
                 buildEl.textContent = VRVS_BUILD;
             }
+            // PACOTE A: Atualizar label de perfil ativo
+            atualizarLabelsPerfilAtivo();
             const sobreBuild = document.getElementById('configSobreBuild');
             if (sobreBuild && typeof VRVS_BUILD !== 'undefined') {
                 sobreBuild.textContent = VRVS_BUILD;
@@ -8977,11 +9025,202 @@
                     storageEl.textContent = 'N/A';
                 }
             }
-            // Sincronizar select de perfil
+            // PATCH D1: Sincronizar select de perfil (renderizar dinamicamente)
             const selectPerfil = document.getElementById('perfilAtivoSelect');
             if (selectPerfil) {
+                // Renderizar options dinamicamente
+                const perfis = window.vrvs_listarPerfis();
+                selectPerfil.innerHTML = perfis.map(p => 
+                    `<option value="${p}">${p}</option>`
+                ).join('');
                 selectPerfil.value = window.vrvs_perfilAtivo || 'DEFAULT';
             }
+        }
+        
+        // ==================== GERENCIAR PERFIS V1 - PATCH D1 ====================
+        
+        // Helper para construir chave de um perfil específico (sem trocar contexto global)
+        window.vrvs_keyOf = function(perfil, baseKey) {
+            if (perfil === 'DEFAULT') {
+                return `vrvs_${baseKey}`;
+            }
+            return `vrvs_${perfil}_${baseKey}`;
+        };
+        
+        window.vrvs_diarioKeyOf = function(perfil) {
+            return window.vrvs_keyOf(perfil, 'diario');
+        };
+        
+        // Listar perfis existentes (descobrir via localStorage + lista explícita)
+        window.vrvs_listarPerfis = function() {
+            // Tentar lista explícita primeiro
+            const listaRaw = localStorage.getItem('vrvs_perfis_lista');
+            if (listaRaw) {
+                try {
+                    const lista = JSON.parse(listaRaw);
+                    if (Array.isArray(lista) && lista.length > 0) {
+                        // Garantir que DEFAULT está na lista
+                        if (!lista.includes('DEFAULT')) {
+                            lista.unshift('DEFAULT');
+                        }
+                        return lista.filter((p, i, arr) => arr.indexOf(p) === i); // Deduplicar
+                    }
+                } catch(e) {
+                    console.warn('[PERFIS D1] Erro ao parsear lista:', e);
+                }
+            }
+            
+            // Fallback: descobrir perfis via chaves localStorage
+            const perfisEncontrados = new Set(['DEFAULT']); // DEFAULT sempre existe
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                // Padrão: vrvs_PERFIL_dados, vrvs_PERFIL_historico, etc. (PERFIL em MAIÚSCULO)
+                const match = key.match(/^vrvs_([A-Z0-9_]+)_(dados|historico|anotacoes|lembretes|diario|areas_custom)$/);
+                if (match && match[1] !== 'DEFAULT') {
+                    perfisEncontrados.add(match[1]);
+                }
+            });
+            
+            return Array.from(perfisEncontrados).sort();
+        };
+        
+        // Salvar lista de perfis
+        window.vrvs_salvarListaPerfis = function(perfis) {
+            if (!Array.isArray(perfis) || perfis.length === 0) {
+                console.warn('[PERFIS D1] Lista inválida, não salvando');
+                return;
+            }
+            // Garantir DEFAULT sempre presente
+            if (!perfis.includes('DEFAULT')) {
+                perfis.unshift('DEFAULT');
+            }
+            // Deduplicar e ordenar
+            const perfisUnicos = perfis.filter((p, i, arr) => arr.indexOf(p) === i);
+            localStorage.setItem('vrvs_perfis_lista', JSON.stringify(perfisUnicos));
+        };
+        
+        // Normalizar nome do perfil (A-Z0-9_, MAIÚSCULO)
+        window.vrvs_normalizarNomePerfil = function(nome) {
+            if (!nome || typeof nome !== 'string') return null;
+            // Trim e converter para MAIÚSCULO
+            let normalizado = nome.trim().toUpperCase();
+            // Trocar espaços por underscore
+            normalizado = normalizado.replace(/\s+/g, '_');
+            // Remover caracteres inválidos (manter apenas A-Z0-9_)
+            normalizado = normalizado.replace(/[^A-Z0-9_]/g, '');
+            // Não pode começar com número
+            if (/^[0-9]/.test(normalizado)) {
+                return null;
+            }
+            return normalizado.length > 0 ? normalizado : null;
+        };
+        
+        // Criar novo perfil
+        window.vrvs_criarPerfil = function(nomeInput) {
+            if (!nomeInput || typeof nomeInput !== 'string') {
+                mostrarNotificacaoFeedback('⚠️ Nome do perfil é obrigatório', 'error');
+                return false;
+            }
+            
+            // Normalizar nome (A-Z0-9_, MAIÚSCULO)
+            const nome = window.vrvs_normalizarNomePerfil(nomeInput);
+            if (!nome) {
+                mostrarNotificacaoFeedback('⚠️ Nome inválido. Use apenas letras, números e underscore. Não pode começar com número.', 'error');
+                return false;
+            }
+            
+            // Validar tamanho
+            if (nome.length > 30) {
+                mostrarNotificacaoFeedback('⚠️ Nome muito longo (máximo 30 caracteres)', 'error');
+                return false;
+            }
+            
+            // Validar único (case-insensitive já não precisa, pois normalizamos para MAIÚSCULO)
+            const perfisExistentes = window.vrvs_listarPerfis();
+            if (perfisExistentes.includes(nome)) {
+                mostrarNotificacaoFeedback(`⚠️ Perfil "${nome}" já existe`, 'error');
+                return false;
+            }
+            
+            // Adicionar à lista
+            perfisExistentes.push(nome);
+            window.vrvs_salvarListaPerfis(perfisExistentes);
+            
+            // Criar datasets zerados (não herdar nada)
+            const datasets = ['dados', 'historico', 'anotacoes', 'lembretes', 'areas_custom'];
+            datasets.forEach(baseKey => {
+                const key = window.vrvs_keyOf(nome, baseKey);
+                if (!localStorage.getItem(key)) {
+                    localStorage.setItem(key, JSON.stringify([]));
+                }
+            });
+            
+            // Diário zerado
+            const diarioKey = window.vrvs_diarioKeyOf(nome);
+            if (!localStorage.getItem(diarioKey)) {
+                localStorage.setItem(diarioKey, JSON.stringify({entradas: [], schemaVersion: '1.0'}));
+            }
+            
+            mostrarNotificacaoFeedback(`✅ Perfil "${nome}" criado com sucesso!`);
+            return true;
+        };
+        
+        // Apagar perfil
+        window.vrvs_apagarPerfil = function(perfil) {
+            if (!perfil || typeof perfil !== 'string') {
+                mostrarNotificacaoFeedback('⚠️ Perfil inválido', 'error');
+                return false;
+            }
+            
+            // Travas
+            if (perfil === 'DEFAULT') {
+                mostrarNotificacaoFeedback('⚠️ Não é possível apagar o perfil DEFAULT', 'error');
+                return false;
+            }
+            
+            const perfisExistentes = window.vrvs_listarPerfis();
+            if (perfisExistentes.length <= 1) {
+                mostrarNotificacaoFeedback('⚠️ Não é possível apagar o último perfil', 'error');
+                return false;
+            }
+            
+            if (window.vrvs_perfilAtivo === perfil) {
+                mostrarNotificacaoFeedback('⚠️ Não é possível apagar o perfil ativo. Troque de perfil primeiro.', 'error');
+                return false;
+            }
+            
+            // Confirmação forte
+            const confirmacao = prompt(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nPara confirmar, digite exatamente: APAGAR\n\nPerfil a ser apagado: "${perfil}"`);
+            if (confirmacao !== 'APAGAR') {
+                if (confirmacao !== null) { // null = cancelou prompt
+                    mostrarNotificacaoFeedback('❌ Confirmação cancelada', 'error');
+                }
+                return false;
+            }
+            
+            // Apagar todas as chaves do perfil
+            const datasets = ['dados', 'historico', 'anotacoes', 'lembretes', 'areas_custom', 'diario'];
+            datasets.forEach(baseKey => {
+                const key = window.vrvs_keyOf(perfil, baseKey);
+                try {
+                    localStorage.removeItem(key);
+                } catch(e) {
+                    console.warn(`[PERFIS D1] Erro ao apagar ${key}:`, e);
+                }
+            });
+            
+            // Remover da lista
+            const novaLista = perfisExistentes.filter(p => p !== perfil);
+            window.vrvs_salvarListaPerfis(novaLista);
+            
+            mostrarNotificacaoFeedback(`✅ Perfil "${perfil}" apagado com sucesso`);
+            return true;
+        };
+        
+        // PATCH D1: Inicializar lista de perfis se não existir (migração) - DEPOIS de definir funções helper
+        if (!localStorage.getItem('vrvs_perfis_lista')) {
+            const perfisDescobertos = window.vrvs_listarPerfis();
+            window.vrvs_salvarListaPerfis(perfisDescobertos);
         }
         
         // ==================== MODAL GERENCIAR PERFIS (P1.3) ====================
@@ -8990,24 +9229,56 @@
             const modal = document.getElementById('vrvsModalPerfis');
             if (!modal) return;
             
-            // Atualizar badge "ATIVO" baseado no perfil atual
-            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
-            const badgeDEFAULT = document.getElementById('vrvsModalBadgeDEFAULT');
-            const badgeVIDA = document.getElementById('vrvsModalBadgeVIDA');
-            
-            // Esconder todos os badges primeiro
-            if (badgeDEFAULT) badgeDEFAULT.style.display = 'none';
-            if (badgeVIDA) badgeVIDA.style.display = 'none';
-            
-            // Mostrar badge do perfil ativo
-            if (perfilAtivo === 'DEFAULT' && badgeDEFAULT) {
-                badgeDEFAULT.style.display = 'inline-block';
-            } else if (perfilAtivo === 'VIDA' && badgeVIDA) {
-                badgeVIDA.style.display = 'inline-block';
+            // PATCH D1: Renderizar lista dinamicamente
+            const listaContainer = document.getElementById('vrvsModalPerfisLista');
+            if (listaContainer) {
+                const perfis = window.vrvs_listarPerfis();
+                const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+                let html = '';
+                
+                perfis.forEach(perfil => {
+                    const isAtivo = perfil === perfilAtivo;
+                    const isDefault = perfil === 'DEFAULT';
+                    
+                    html += `
+                        <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid ${isAtivo ? 'rgba(0,206,209,0.4)' : 'rgba(255,255,255,0.1)'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="color: var(--turquesa-light); font-weight: 600; font-size: 15px;">${perfil}</span>
+                                    ${isAtivo ? '<span style="margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>' : ''}
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    ${!isDefault && !isAtivo ? `<button onclick="vrvs_confirmarApagarPerfil(${JSON.stringify(perfil)})" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Apagar</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                listaContainer.innerHTML = html;
             }
             
             // Abrir modal
             modal.classList.add('active');
+        };
+        
+        // PATCH D1: Modal auxiliar para criar perfil
+        window.vrvs_abrirModalCriarPerfil = function() {
+            const nomeInput = prompt('Digite o nome do novo perfil:\n\n(Será convertido para MAIÚSCULO e espaços serão trocados por _)');
+            if (nomeInput && nomeInput.trim()) {
+                if (window.vrvs_criarPerfil(nomeInput.trim())) {
+                    abrirModalGerenciarPerfis(); // Recarregar lista
+                    renderConfig(); // Atualizar select também
+                }
+            }
+        };
+        
+        // PATCH D1: Confirmar apagar perfil
+        window.vrvs_confirmarApagarPerfil = function(perfil) {
+            if (window.vrvs_apagarPerfil(perfil)) {
+                abrirModalGerenciarPerfis(); // Recarregar lista
+                renderConfig(); // Atualizar select
+            }
         };
         
         window.fecharModalGerenciarPerfis = function() {
@@ -9154,6 +9425,11 @@
                 const fallback = document.querySelector(`.tab[onclick*="showSection('${sectionId}')"]`) ||
                                  document.querySelector(`.tab[onclick*="showSection(\\"${sectionId}\\")"]`);
                 if (fallback) fallback.classList.add('active');
+            }
+            
+            // PACOTE A: Atualizar labels de perfil ativo quando abrir aba Backup
+            if (sectionId === 'backup') {
+                atualizarLabelsPerfilAtivo();
             }
             
             if (sectionId === 'dados') renderDados();
@@ -11268,6 +11544,9 @@
             
             // Recarregar diário
             carregarDiario();
+            
+            // PACOTE A: Atualizar labels de perfil ativo após trocar perfil (após recarregar tudo)
+            atualizarLabelsPerfilAtivo();
             
             // Re-renderizar seções visíveis
             const diarioSection = document.getElementById('diario');
@@ -16788,6 +17067,26 @@
             } catch (e) {}
         }
         
+        // PATCH C: Helpers únicos para renderizar imagem da pergunta (evita duplicação e esquecimentos)
+        function renderImagemPerguntaThumbnail(entrada, contextoPrefix) {
+            if (!entrada || !entrada.imagemPergunta || !entrada.imagemPergunta.thumbKey) {
+                return '';
+            }
+            return `<div id="${contextoPrefix}-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="${contextoPrefix}-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>`;
+        }
+        
+        function posRenderImagemPergunta(entradaId, thumbKey, contextoPrefix) {
+            if (!entradaId || !thumbKey) return;
+            setTimeout(() => {
+                diario_carregarThumbnailUnico(
+                    entradaId,
+                    thumbKey,
+                    `${contextoPrefix}-pergunta-thumb-img-${entradaId}`,
+                    `${contextoPrefix}-pergunta-thumb-wrap-${entradaId}`
+                );
+            }, 50);
+        }
+        
         // Renderizar card do Treino Livre (reutiliza CSS da Sessão Programada)
         function renderTreinoLivreCard(entrada) {
             // P2 v2: Verificar se resposta já foi mostrada neste card (usar entrada.id)
@@ -16804,7 +17103,7 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
-                    ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="tl-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="tl-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
+                    ${renderImagemPerguntaThumbnail(entrada, 'tl')}
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
@@ -16845,7 +17144,7 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
-                    ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="tl-avaliacao-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="tl-avaliacao-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
+                    ${renderImagemPerguntaThumbnail(entrada, 'tl-avaliacao')}
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
