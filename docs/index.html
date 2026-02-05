@@ -8887,6 +8887,11 @@
                     return;
                 }
                 
+                // Lazy-load: garantir que diário está carregado antes de renderizar
+                if (!window.diario) {
+                    carregarDiario();
+                }
+                
                 // S6-NAV-FIX2: Limpar setTimeout pendente antes de criar novo
                 if (window.diarioChipVrvs3pTimeout !== null) {
                     clearTimeout(window.diarioChipVrvs3pTimeout);
@@ -11827,42 +11832,45 @@
                 updateFeedbackSelect();
             };
             
-            // LEMBRETE FORM
-            document.getElementById('lembreteForm').onsubmit = function(e) {
-                e.preventDefault();
-                const titulo = document.getElementById('lembreteTitulo').value.trim();
-                const descricao = document.getElementById('lembreteDescricao').value.trim();
-                const periodicidade = document.getElementById('lembretePeriodicidade').value;
-                const temaId = document.getElementById('lembreteTemaId').value;
-                const dataInicial = document.getElementById('lembreteDataInicial').value;
-                
-                const novoLembrete = {
-                    id: Date.now(),
-                    titulo: titulo,
-                    descricao: descricao || '',
-                    periodicidade: periodicidade,
-                    temaId: temaId || null,
-                    dataInicial: dataInicial,
-                    proximaData: periodicidade === 'pontual' ? dataInicial : calcularProximaDataLembrete({
+            // LEMBRETE FORM (null-check para evitar erro se elemento foi removido)
+            const lembreteForm = document.getElementById('lembreteForm');
+            if (lembreteForm) {
+                lembreteForm.onsubmit = function(e) {
+                    e.preventDefault();
+                    const titulo = document.getElementById('lembreteTitulo').value.trim();
+                    const descricao = document.getElementById('lembreteDescricao').value.trim();
+                    const periodicidade = document.getElementById('lembretePeriodicidade').value;
+                    const temaId = document.getElementById('lembreteTemaId').value;
+                    const dataInicial = document.getElementById('lembreteDataInicial').value;
+                    
+                    const novoLembrete = {
+                        id: Date.now(),
+                        titulo: titulo,
+                        descricao: descricao || '',
                         periodicidade: periodicidade,
+                        temaId: temaId || null,
                         dataInicial: dataInicial,
-                        ultimaData: null
-                    }),
-                    ultimaData: null,
-                    concluido: false
+                        proximaData: periodicidade === 'pontual' ? dataInicial : calcularProximaDataLembrete({
+                            periodicidade: periodicidade,
+                            dataInicial: dataInicial,
+                            ultimaData: null
+                        }),
+                        ultimaData: null,
+                        concluido: false
+                    };
+                    
+                    lembretes.push(novoLembrete);
+                    localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+                    
+                    mostrarNotificacaoFeedback('✅ Lembrete adicionado com sucesso!');
+                    
+                    // Limpar formulário
+                    this.reset();
+                    document.getElementById('lembreteDataInicial').value = new Date().toISOString().split('T')[0];
+                    
+                    renderLembretes();
                 };
-                
-                lembretes.push(novoLembrete);
-                localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
-                
-                mostrarNotificacaoFeedback('✅ Lembrete adicionado com sucesso!');
-                
-                // Limpar formulário
-                this.reset();
-                document.getElementById('lembreteDataInicial').value = new Date().toISOString().split('T')[0];
-                
-                renderLembretes();
-            };
+            }
             
             // Inicializações
             renderTarefas();
