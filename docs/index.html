@@ -6355,7 +6355,7 @@
             const editAreaSelect = document.getElementById('editArea');
             if (editAreaSelect) {
                 // Usar helper centralizado para obter todas as áreas disponíveis
-                const areasCompletas = obterListaAreasDisponiveis();
+                const areasCompletas = getAreasDisponiveisDoPerfilAtivo();
                 
                 editAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
                     areasCompletas.map(area => `<option value="${area}">${area}</option>`).join('') +
@@ -7344,7 +7344,7 @@
             const temaSelect = document.getElementById('feedbackTema');
             
             // Usar helper centralizado para obter todas as áreas disponíveis
-            const areasCompletas = obterListaAreasDisponiveis();
+            const areasCompletas = getAreasDisponiveisDoPerfilAtivo();
             
             areaSelect.innerHTML = '<option value="">Selecione a área...</option>' +
                 areasCompletas.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -7361,7 +7361,7 @@
             if (element.tagName === 'INPUT' && element.list) {
                 const datalist = document.getElementById(element.list.id || 'listAreasFixas');
                 if (datalist) {
-                    datalist.innerHTML = AREAS_FIXAS.map(area => `<option value="${area}">`).join('');
+                    datalist.innerHTML = getAreasBaseDoPerfil().map(area => `<option value="${area}">`).join('');
                 }
             }
         }
@@ -9227,7 +9227,7 @@
         function atualizarSelectsAnalise() {
             // Atualizar select de áreas usando helper centralizado
             const areaSelect = document.getElementById('analiseFiltroArea');
-            const areas = obterListaAreasDisponiveis();
+            const areas = getAreasDisponiveisDoPerfilAtivo();
             areaSelect.innerHTML = '<option value="">Todas as áreas</option>';
             areas.forEach(area => {
                 areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
@@ -10490,7 +10490,7 @@
             
             if (selectArea) {
                 // Usar helper centralizado para obter todas as áreas disponíveis
-                const areas = obterListaAreasDisponiveis();
+                const areas = getAreasDisponiveisDoPerfilAtivo();
                 selectArea.innerHTML = '<option value="">Todas as áreas</option>';
                 areas.forEach(area => {
                     const option = document.createElement('option');
@@ -12315,9 +12315,9 @@
             // Popular select de áreas fixas no cadastro (incluir áreas existentes para consistência)
             const novaAreaSelect = document.getElementById('novaArea');
             if (novaAreaSelect) {
-                // Unir AREAS_FIXAS + áreas existentes nos dados (mesmo padrão do modal de edição)
+                // Unir áreas base do perfil + áreas existentes nos dados (mesmo padrão do modal de edição)
                 const areasExistentes = [...new Set(dados.map(t => t.area).filter(Boolean))];
-                const areasCompletas = [...new Set([...AREAS_FIXAS, ...areasExistentes])].sort();
+                const areasCompletas = getAreasDisponiveisDoPerfilAtivo();
                 
                 novaAreaSelect.innerHTML = '<option value="">Selecione...</option>' + 
                     areasCompletas.map(area => `<option value="${area}">${area}</option>`).join('') +
@@ -13720,7 +13720,7 @@
             
             // Popular select de áreas usando helper centralizado
             if (areaSelect) {
-                const areasExistentes = obterListaAreasDisponiveis();
+                const areasExistentes = getAreasDisponiveisDoPerfilAtivo();
                 areaSelect.innerHTML = '<option value="">Selecione...</option>';
                 areasExistentes.forEach(area => {
                     const option = document.createElement('option');
@@ -15697,12 +15697,12 @@
                 dataInput.value = entrada.data || obterYMDLocal();
             }
             
-            // Popular select de áreas com TODAS as áreas existentes (AREAS_FIXAS + áreas dos dados + área da entrada)
+            // Popular select de áreas com TODAS as áreas existentes (áreas base do perfil + áreas dos dados + área da entrada)
             const areaSelect = document.getElementById('novaDiarioArea');
             if (areaSelect) {
-                // Coletar todas as áreas: AREAS_FIXAS + áreas dos dados + área da entrada atual
+                // Coletar todas as áreas: áreas base do perfil + áreas dos dados + área da entrada atual
                 const areasDosDados = [...new Set(dados.map(t => t.area).filter(a => a))];
-                const areasExistentes = [...new Set([...AREAS_FIXAS, ...areasDosDados, entrada.area].filter(a => a))].sort();
+                const areasExistentes = [...new Set([...getAreasDisponiveisDoPerfilAtivo(), entrada.area].filter(a => a))].sort();
                 
                 areaSelect.innerHTML = '<option value="">Selecione...</option>';
                 areasExistentes.forEach(area => {
@@ -18120,7 +18120,7 @@
             const areaNormalizada = normalizarArea(nomeArea);
             
             // Verificar se já existe usando helper centralizado
-            const areasExistentes = obterListaAreasDisponiveis();
+            const areasExistentes = getAreasDisponiveisDoPerfilAtivo();
             if (areasExistentes.includes(areaNormalizada)) {
                 mostrarNotificacaoFeedback(`⚠️ A área "${areaNormalizada}" já existe!`, 'error');
                 return;
@@ -18142,7 +18142,24 @@
             mostrarNotificacaoFeedback(`✅ Área "${areaNormalizada}" adicionada com sucesso! Agora está disponível em todas as abas.`);
         }
         
+        // PATCH A: Helper para obter áreas base (fixas) do perfil ativo
+        function getAreasBaseDoPerfil() {
+            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+            // DEFAULT: retorna AREAS_FIXAS (compatibilidade)
+            // Perfis não-DEFAULT: retorna [] (nascem zerados)
+            return perfilAtivo === 'DEFAULT' ? AREAS_FIXAS : [];
+        }
+        
+        // PATCH A: Helper único para obter todas as áreas disponíveis do perfil ativo
+        function getAreasDisponiveisDoPerfilAtivo() {
+            const areasBase = getAreasBaseDoPerfil();
+            const areasDados = dados.map(t => t.area).filter(a => a && a.trim());
+            const areasCustom = window.vrvsAreasCustom || [];
+            return [...new Set([...areasBase, ...areasCustom, ...areasDados])].sort();
+        }
+        
         // P4: Helper centralizado para obter lista completa de áreas disponíveis
+        // DEPRECATED: Usar getAreasDisponiveisDoPerfilAtivo() em vez desta função
         function obterListaAreasDisponiveis() {
             const areasDados = dados.map(t => t.area).filter(a => a && a.trim());
             const areasCustom = window.vrvsAreasCustom || [];
@@ -18164,7 +18181,7 @@
             ];
             
             // Obter todas as áreas existentes usando helper centralizado
-            const areasCompletas = obterListaAreasDisponiveis();
+            const areasCompletas = getAreasDisponiveisDoPerfilAtivo();
             // Se novaArea não estiver na lista, adicionar temporariamente para atualização
             if (novaArea && !areasCompletas.includes(novaArea)) {
                 areasCompletas.push(novaArea);
@@ -18294,38 +18311,34 @@
                 return;
             }
             
-            // P4.2: Separar áreas por origem com optgroup
-            // P4.3 Android: Prefixar texto das options para funcionar mesmo sem optgroup
-            const { padrao, custom } = obterAreasPorOrigem();
+            // P0: Perfis não-DEFAULT não devem mostrar áreas padrão
+            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+            const areasBase = getAreasBaseDoPerfil();
+            const areasCustom = (window.vrvsAreasCustom || []).map(a => String(a).trim()).filter(Boolean).sort();
             
             let html = '<option value="">Selecione...</option>';
             
-            // Grupo 1: Áreas padrão (VRVS — iguais para todos) - só mostrar se não for zerado
-            if (padrao.length > 0) {
+            // Grupo 1: Áreas padrão (só DEFAULT tem)
+            if (areasBase.length > 0) {
                 html += '<optgroup label="Áreas padrão">';
-                padrao.forEach(a => {
-                    // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
-                    const areaDisplay = String(a).trim(); // Exatamente como está em AREAS_FIXAS
+                areasBase.forEach(a => {
+                    const areaDisplay = String(a).trim();
                     const textoExibido = escapeHtml(areaDisplay);
                     html += `<option value="${escapeHtml(areaDisplay)}">${textoExibido}</option>`;
                 });
                 html += '</optgroup>';
             }
             
-            // Grupo 2: Áreas criadas neste aparelho
-            if (custom.length > 0) {
+            // Grupo 2: Áreas criadas neste perfil
+            if (areasCustom.length > 0) {
                 html += '<optgroup label="Minhas áreas">';
-                custom.forEach(a => {
-                    // Android Acentos: Display exatamente como salvo (sem normalização/title-case)
-                    const areaDisplay = String(a).trim(); // Exatamente como está salvo
+                areasCustom.forEach(a => {
+                    const areaDisplay = String(a).trim();
                     const textoExibido = escapeHtml(areaDisplay);
                     html += `<option value="${escapeHtml(areaDisplay)}">${textoExibido}</option>`;
                 });
                 html += '</optgroup>';
             }
-            
-            // P4.2b: Remover grupo "detectadas" do modal de cadastro (reduz ruído e confusão)
-            // obterAreasPorOrigem() mantém detectadas para uso futuro em outros lugares
             
             selectArea.innerHTML = html;
             
