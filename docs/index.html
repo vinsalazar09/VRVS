@@ -17256,6 +17256,7 @@
                                         <div class="card-resultado-pergunta">
                                             ${entrada.topico ? escapeHtml(entrada.topico) : '(Sem tópico)'}
                                         </div>
+                                        ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="resultado-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="resultado-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                                         <button onclick="toggleRespostaTreinoFim(${entrada.id})" style="background: rgba(0,206,209,0.15); border: 1px solid rgba(0,206,209,0.3); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 8px;">
                                             👁️ Ver Resposta
                                         </button>
@@ -17270,6 +17271,21 @@
                         });
                         html += '</div>';
                         container.innerHTML = html;
+                        
+                        // ALVO A: Carregar thumbnails das imagens da pergunta
+                        cards.forEach((item) => {
+                            const { entrada } = item;
+                            if (entrada && entrada.id && entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
+                                setTimeout(() => {
+                                    diario_carregarThumbnailUnico(
+                                        entrada.id,
+                                        entrada.imagemPergunta.thumbKey,
+                                        `resultado-pergunta-thumb-img-${entrada.id}`,
+                                        `resultado-pergunta-thumb-wrap-${entrada.id}`
+                                    );
+                                }, 50);
+                            }
+                        });
                     }
                     container.setAttribute('data-renderizado', 'true');
                 }
