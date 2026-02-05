@@ -5078,15 +5078,6 @@
                             </p>
                             <button class="btn btn-secondary" onclick="showSection('ajuda')">📚 Ver Tutorial e FAQ →</button>
                         </div>
-                        
-                        <!-- Bloco 5: Revisões VRVS 3P -->
-                        <div style="margin-top: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">🔄 Revisões VRVS 3P</h3>
-                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">
-                                Gerencie quais cards do Diário estão incluídos na revisão espaçada.
-                            </p>
-                            <button class="btn btn-primary" onclick="showSection('diario')">📔 Ir para Diário (Revisões) →</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -5097,7 +5088,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // ==================== VRVS BUILD ====================
-        const VRVS_BUILD = "v5.3.194";
+        const VRVS_BUILD = "v5.3.191";
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
         // Função para corrigir inversão área↔tema ANTES de carregar dados
@@ -5932,14 +5923,33 @@
         // ==================== FUNÇÕES AUXILIARES ====================
         
         function mostrarNotificacaoFeedback(mensagem, tipo = 'success') {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:ENTRY',message:'Toast chamado',data:{mensagem,tipo},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
             const container = document.getElementById('feedbackMessage');
             
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:BEFORE_SET',message:'Antes de setar innerHTML',data:{containerExists:!!container,containerParent:container?.parentElement?.tagName||'none',containerDisplay:container?.style.display||'none'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+            
             if (!container) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:NO_CONTAINER',message:'Container não existe',data:{},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
                 console.error('[TOAST] #feedbackMessage não encontrado!');
                 return;
             }
             
             container.innerHTML = `<div class="message ${tipo}">${mensagem}</div>`;
+            
+            // #region agent log
+            setTimeout(() => {
+                const afterEl = document.getElementById('feedbackMessage');
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mostrarNotificacaoFeedback:AFTER_SET',message:'Após setar innerHTML',data:{innerHTML:afterEl?.innerHTML?.substring(0,150)||'empty',hasMessage:afterEl?.innerHTML?.includes('message')||false,offsetParent:afterEl?.offsetParent!==null},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            }, 10);
+            // #endregion
+            
             setTimeout(() => container.innerHTML = '', 5000);
         }
         
@@ -17477,13 +17487,16 @@
             }
             
             const hoje = hojeStr();
+            let contadorMudou = 0;
             
             window.diario.entradas.forEach(entrada => {
                 // Se não tem SRS, criar; se já tem, ativar
                 if (!entrada.srs) {
                     entrada.srs = inicializarSrsVRVS3P(hoje);
+                    contadorMudou++;
                 } else if (!entrada.srs.ativo) {
                     entrada.srs.ativo = true;
+                    contadorMudou++;
                 }
             });
             
@@ -17492,8 +17505,16 @@
             renderDiario();
             renderTarefas();
             
-            // Toast idêntico ao toggle individual
-            mostrarNotificacaoFeedback('✅ Revisão ativada', 'success');
+            // Toast com double-RAF para garantir DOM estável
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (contadorMudou > 0) {
+                        mostrarNotificacaoFeedback(`✅ Revisões ativadas em ${contadorMudou} entrada(s).`, 'success');
+                    } else {
+                        mostrarNotificacaoFeedback('ℹ️ Nada mudou: todas já estavam ativas.', 'success');
+                    }
+                });
+            });
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
@@ -17503,9 +17524,35 @@
                 return;
             }
             
+            // Calcular quantas entradas estão ativas (sem modificar ainda)
+            let ativas = 0;
+            window.diario.entradas.forEach(entrada => {
+                if (entrada.srs && entrada.srs.ativo) {
+                    ativas++;
+                }
+            });
+            
+            // Se não há nenhuma ativa, apenas mostrar toast e retornar
+            if (ativas === 0) {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        mostrarNotificacaoFeedback('ℹ️ Nada mudou: nenhuma estava ativa.', 'success');
+                    });
+                });
+                return;
+            }
+            
+            // Só pedir confirm se realmente houver algo para desmarcar
+            if (!confirm('⚠️ Desmarcar todas as revisões?\n\nIsso vai desativar a revisão em todos os cards do Diário.')) {
+                return;
+            }
+            
+            let contadorMudou = 0;
+            
             window.diario.entradas.forEach(entrada => {
                 if (entrada.srs && entrada.srs.ativo) {
                     entrada.srs.ativo = false;
+                    contadorMudou++;
                 }
             });
             
@@ -17514,8 +17561,12 @@
             renderDiario();
             renderTarefas();
             
-            // Toast idêntico ao toggle individual
-            mostrarNotificacaoFeedback('✅ Revisão desativada', 'success');
+            // Toast com double-RAF para garantir DOM estável
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    mostrarNotificacaoFeedback(`✅ Revisões desativadas em ${contadorMudou} entrada(s).`, 'success');
+                });
+            });
         }
         
         // Excluir entrada atual do Diário permanentemente
