@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.198-revert-hotfixs-toast-bulk-diario-20260204-1100";
+const CACHE_NAME = "vrvs-v5.3.199-remove-lembretes-ui-reorg-config-ajuda-20260204-1200";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

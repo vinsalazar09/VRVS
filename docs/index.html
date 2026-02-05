@@ -4762,47 +4762,6 @@
                 </div>
             </div>
             
-            <!-- LEMBRETES -->
-            <div id="lembretes" class="section" style="display: none;">
-                <div class="card">
-                    <div class="card-title">📌 LEMBRETES E ANOTAÇÕES</div>
-                    <div style="margin-bottom: 20px;">
-                        <form id="lembreteForm">
-                            <div class="form-group">
-                                <label class="form-label">Título do Lembrete</label>
-                                <input type="text" class="form-input" id="lembreteTitulo" placeholder="Ex: Revisar vias de acesso do cotovelo" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Descrição (opcional)</label>
-                                <textarea class="form-input" id="lembreteDescricao" rows="3" placeholder="Detalhes adicionais..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Periodicidade</label>
-                                <select class="form-select" id="lembretePeriodicidade" required>
-                                    <option value="pontual">Pontual (apenas uma vez)</option>
-                                    <option value="diaria">Diária</option>
-                                    <option value="semanal">Semanal</option>
-                                    <option value="quinzenal">Quinzenal (15 dias)</option>
-                                    <option value="mensal">Mensal</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Vincular ao Tema (opcional)</label>
-                                <select class="form-select" id="lembreteTemaId">
-                                    <option value="">Nenhum (lembrete geral)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Data Inicial</label>
-                                <input type="date" class="form-input" id="lembreteDataInicial" required>
-                            </div>
-                            <button type="submit" class="btn">➕ Adicionar Lembrete</button>
-                        </form>
-                    </div>
-                    <div id="lembretesContainer"></div>
-                </div>
-            </div>
-            
             <!-- DIÁRIO -->
             <div id="diario" class="section">
                 <div class="card">
@@ -5015,7 +4974,7 @@
                 </div>
             </div>
             
-            <!-- AJUDA (Tutorial + Lembretes) -->
+            <!-- AJUDA (Tutorial + FAQ) -->
             <div id="ajuda" class="section">
                 <div class="card">
                     <div class="card-title">❓ AJUDA</div>
@@ -5046,9 +5005,9 @@
                             <p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
                         
-                        <!-- Bloco 2: Dados -->
+                        <!-- Bloco 2: Armazenamento -->
                         <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.2); border-radius: 8px;">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">💾 Dados</h3>
+                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">💾 Armazenamento</h3>
                             <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">
                                 Uso atual: <strong id="configStorageUsage">Calculando...</strong><br>
                                 <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Limite varia por aparelho/navegador</span>
@@ -5056,17 +5015,22 @@
                             <button class="btn btn-primary" onclick="showSection('backup')">📥 Exportar / Importar dados →</button>
                         </div>
                         
-                        <!-- Bloco 3: Versão / Diagnóstico -->
+                        <!-- Bloco 3: Ferramentas (colapsável) -->
                         <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">ℹ️ Versão / Diagnóstico</h3>
-                            <p style="margin: 0 0 12px 0; font-size: 13px; color: rgba(255,255,255,0.7);">
-                                <strong>Build:</strong> <span id="configVrvsBuild" style="color: var(--turquesa-light); font-weight: 600;"></span><br>
-                                <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Build deve bater com CACHE_NAME do Service Worker</span>
-                            </p>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
-                                <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
-                                <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
+                            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleFerramentasConfig()">
+                                <h3 style="margin: 0; color: var(--turquesa-light); font-size: 16px;">🔧 Ferramentas</h3>
+                                <span id="ferramentasConfigToggle" style="font-size: 14px; color: rgba(255,255,255,0.6);">▼ Expandir</span>
+                            </div>
+                            <div id="ferramentasConfigContent" style="display: none; margin-top: 12px;">
+                                <p style="margin: 0 0 12px 0; font-size: 13px; color: rgba(255,255,255,0.7);">
+                                    <strong>Build:</strong> <span id="configVrvsBuild" style="color: var(--turquesa-light); font-weight: 600;"></span><br>
+                                    <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Build deve bater com CACHE_NAME do Service Worker</span>
+                                </p>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
+                                    <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
+                                    <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
+                                </div>
                             </div>
                         </div>
                         
@@ -8912,10 +8876,6 @@
             if (sectionId === 'stats') updateStats();
             if (sectionId === 'historico') renderHistorico();
             if (sectionId === 'pendencias') renderPendencias();
-            if (sectionId === 'lembretes') {
-                atualizarSelectsLembrete();
-                renderLembretes();
-            }
             if (sectionId === 'caderno') {
                 renderCadernoV2();
             }
@@ -20293,102 +20253,6 @@
         
         // ==================== FIM B1 — FUNÇÕES DE IMAGEM DO DIÁRIO ====================
         
-        function renderAjudaLembretes(container) {
-            container.innerHTML = `
-                <div style="margin-bottom: 20px;">
-                    <form id="lembreteFormAjuda" onsubmit="adicionarLembreteAjuda(event)">
-                        <div class="form-group">
-                            <label class="form-label">Título do Lembrete</label>
-                            <input type="text" class="form-input" id="lembreteTituloAjuda" placeholder="Ex: Revisar vias de acesso" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Descrição (opcional)</label>
-                            <textarea class="form-input" id="lembreteDescricaoAjuda" rows="2" placeholder="Detalhes..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Periodicidade</label>
-                            <select class="form-select" id="lembretePeriodicidadeAjuda" required>
-                                <option value="pontual">Pontual</option>
-                                <option value="diaria">Diária</option>
-                                <option value="semanal">Semanal</option>
-                                <option value="mensal">Mensal</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Data Inicial</label>
-                            <input type="date" class="form-input" id="lembreteDataAjuda" required>
-                        </div>
-                        <button type="submit" class="btn">➕ Adicionar Lembrete</button>
-                    </form>
-                </div>
-                <div id="lembretesListaAjuda"></div>
-            `;
-            
-            // Renderizar lembretes existentes
-            setTimeout(() => {
-                renderLembretesLista();
-            }, 100);
-        }
-        
-        function renderLembretesLista() {
-            const container = document.getElementById('lembretesListaAjuda');
-            if (!container) return;
-            
-            if (lembretes.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📌</div><div>Nenhum lembrete</div></div>';
-                return;
-            }
-            
-            let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
-            lembretes.forEach(l => {
-                html += `
-                    <div class="task-item" style="padding: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div>
-                                <div style="font-weight: 600; color: var(--cobre-light);">${l.titulo}</div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.6);">${l.periodicidade} • ${formatarData(l.dataInicial)}</div>
-                            </div>
-                            <button class="btn-edit" onclick="removerLembrete(${l.id})" title="Remover">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        }
-        
-        function adicionarLembreteAjuda(event) {
-            event.preventDefault();
-            
-            const titulo = document.getElementById('lembreteTituloAjuda').value.trim();
-            const descricao = document.getElementById('lembreteDescricaoAjuda').value.trim();
-            const periodicidade = document.getElementById('lembretePeriodicidadeAjuda').value;
-            const dataInicial = document.getElementById('lembreteDataAjuda').value;
-            
-            if (!titulo || !dataInicial) return;
-            
-            const novoLembrete = {
-                id: Date.now(),
-                titulo: titulo,
-                descricao: descricao,
-                periodicidade: periodicidade,
-                dataInicial: dataInicial,
-                temaId: null,
-                ativo: true
-            };
-            
-            lembretes.push(novoLembrete);
-            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
-            
-            // Limpar form
-            document.getElementById('lembreteTituloAjuda').value = '';
-            document.getElementById('lembreteDescricaoAjuda').value = '';
-            document.getElementById('lembreteDataAjuda').value = '';
-            
-            renderLembretesLista();
-            mostrarNotificacaoFeedback('✅ Lembrete adicionado!');
-        }
-        
         function renderAjudaFaq(container) {
             container.innerHTML = `
                 <div style="margin-bottom: 20px;">
@@ -20486,6 +20350,16 @@
             } catch (e) {
                 alert('❌ Erro ao resetar: ' + e.message);
             }
+        }
+        
+        function toggleFerramentasConfig() {
+            const content = document.getElementById('ferramentasConfigContent');
+            const toggle = document.getElementById('ferramentasConfigToggle');
+            if (!content || !toggle) return;
+            
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+            toggle.textContent = isVisible ? '▼ Expandir' : '▲ Recolher';
         }
         // === FIM FUNÇÕES DIAGNÓSTICO/RESET ===
         
