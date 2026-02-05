@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.196-hotfix-toast-blindagem-completa-20260204-0900";
+const CACHE_NAME = "vrvs-v5.3.197-hotfix-toast-forcar-estado-final-ios-20260204-1000";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
