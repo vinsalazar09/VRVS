@@ -1172,6 +1172,116 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
+        /* ==================== MODAL GERENCIAR PERFIS (P1.3) ==================== */
+        
+        .vrvsModal {
+            display: none;
+            position: fixed;
+            z-index: 1001; /* Acima do .modal padrão (z-index: 1000) */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .vrvsModal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .vrvsModal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .vrvsModal-content {
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(135deg,
+                rgba(20, 35, 45, 0.95),
+                rgba(30, 50, 60, 0.95)
+            );
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--turquesa-light);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: vrvsModalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255,255,255,0.9);
+        }
+        
+        @keyframes vrvsModalSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .vrvsModal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0,206,209,0.2);
+        }
+        
+        .vrvsModal-title {
+            margin: 0;
+            color: var(--turquesa-light);
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .vrvsModal-close {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            font-size: 32px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .vrvsModal-close:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .vrvsModal-body {
+            color: rgba(255,255,255,0.9);
+            line-height: 1.6;
+        }
+        
+        .vrvsModal-badge {
+            display: inline-block;
+        }
+        
+        /* Mobile: modal mais próximo do topo */
+        @media (max-width: 768px) {
+            .vrvsModal-content {
+                max-height: 90vh;
+                margin-top: 5vh;
+            }
+        }
+        
         /* ==================== SRS - ESTILOS DIÁRIO ==================== */
         
         /* ===== CHIP VRVS 3P – Diário ===== */
@@ -5007,7 +5117,7 @@
                                     <option value="VIDA">VIDA</option>
                                 </select>
                             </div>
-                            <button class="btn btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">⚙️ Gerenciar perfis (em breve)</button>
+                            <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 8px 16px;">⚙️ Gerenciar perfis</button>
                             <p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
                         
@@ -5058,6 +5168,54 @@
                 </div>
             </div>
             
+        </div>
+    </div>
+
+    <!-- Modal Gerenciar Perfis (P1.3) -->
+    <div id="vrvsModalPerfis" class="vrvsModal">
+        <div class="vrvsModal-overlay" onclick="fecharModalGerenciarPerfis()"></div>
+        <div class="vrvsModal-content">
+            <div class="vrvsModal-header">
+                <h2 class="vrvsModal-title">⚙️ Perfis</h2>
+                <button class="vrvsModal-close" onclick="fecharModalGerenciarPerfis()">×</button>
+            </div>
+            <div class="vrvsModal-body">
+                
+                <div class="vrvsModal-section" style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">📊 Status Atual</h3>
+                    <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                        Cada perfil isola apenas o <strong>Diário</strong> (entradas e revisões SRS). 
+                        Temas, Tarefas, Caderno e Histórico ainda são compartilhados entre perfis.
+                    </p>
+                </div>
+                
+                <div class="vrvsModal-section" style="margin-bottom: 24px; padding: 16px; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.2); border-radius: 8px;">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">🎯 Destino</h3>
+                    <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                        Em breve, cada perfil terá um <strong>dataset completo zerado</strong>: 
+                        Temas, Tarefas, Diário, Caderno e Histórico isolados por perfil. 
+                        Criar um novo perfil será como iniciar uma plataforma totalmente nova.
+                    </p>
+                </div>
+                
+                <div class="vrvsModal-section" style="margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; color: rgba(255,255,255,0.9); font-size: 16px;">📋 Perfis Existentes</h3>
+                    <div id="vrvsModalPerfisLista" style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="margin-bottom: 8px; font-size: 14px; color: rgba(255,255,255,0.9);">
+                            <span style="color: var(--turquesa-light); font-weight: 600;">DEFAULT</span>
+                            <span id="vrvsModalBadgeDEFAULT" class="vrvsModal-badge" style="display: none; margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>
+                        </div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.9);">
+                            <span style="color: var(--turquesa-light); font-weight: 600;">VIDA</span>
+                            <span id="vrvsModalBadgeVIDA" class="vrvsModal-badge" style="display: none; margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="vrvsModal-footer" style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="fecharModalGerenciarPerfis()">Fechar</button>
+            </div>
         </div>
     </div>
 
@@ -8745,6 +8903,39 @@
                 selectPerfil.value = window.vrvs_perfilAtivo || 'DEFAULT';
             }
         }
+        
+        // ==================== MODAL GERENCIAR PERFIS (P1.3) ====================
+        
+        window.abrirModalGerenciarPerfis = function() {
+            const modal = document.getElementById('vrvsModalPerfis');
+            if (!modal) return;
+            
+            // Atualizar badge "ATIVO" baseado no perfil atual
+            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+            const badgeDEFAULT = document.getElementById('vrvsModalBadgeDEFAULT');
+            const badgeVIDA = document.getElementById('vrvsModalBadgeVIDA');
+            
+            // Esconder todos os badges primeiro
+            if (badgeDEFAULT) badgeDEFAULT.style.display = 'none';
+            if (badgeVIDA) badgeVIDA.style.display = 'none';
+            
+            // Mostrar badge do perfil ativo
+            if (perfilAtivo === 'DEFAULT' && badgeDEFAULT) {
+                badgeDEFAULT.style.display = 'inline-block';
+            } else if (perfilAtivo === 'VIDA' && badgeVIDA) {
+                badgeVIDA.style.display = 'inline-block';
+            }
+            
+            // Abrir modal
+            modal.classList.add('active');
+        };
+        
+        window.fecharModalGerenciarPerfis = function() {
+            const modal = document.getElementById('vrvsModalPerfis');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        };
         
         function vrvs_getConfig() {
             if (window.vrvs_config && typeof window.vrvs_config === 'object') return window.vrvs_config;
