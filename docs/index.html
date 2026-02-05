@@ -5000,7 +5000,13 @@
                         <!-- Bloco 1: Perfil -->
                         <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
                             <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">👤 Perfil</h3>
-                            <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8);">Perfil ativo: <strong>DEFAULT</strong></p>
+                            <div style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px;">
+                                <span>Perfil ativo:</span>
+                                <select id="perfilAtivoSelect" onchange="trocarPerfil(this.value)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 8px; color: var(--turquesa-light); font-weight: 600; cursor: pointer;">
+                                    <option value="DEFAULT">DEFAULT</option>
+                                    <option value="VIDA">VIDA</option>
+                                </select>
+                            </div>
                             <button class="btn btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">⚙️ Gerenciar perfis (em breve)</button>
                             <p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
@@ -8727,6 +8733,11 @@
                     storageEl.textContent = 'N/A';
                 }
             }
+            // Sincronizar select de perfil
+            const selectPerfil = document.getElementById('perfilAtivoSelect');
+            if (selectPerfil) {
+                selectPerfil.value = window.vrvs_perfilAtivo || 'DEFAULT';
+            }
         }
         
         function vrvs_getConfig() {
@@ -10896,6 +10907,48 @@
         
         // Executar migrações na inicialização
         migrarAnotacoesParaHotTopics();
+        
+        // ==================== PERFIS MVP (P1.1 REV2) ====================
+        // Inicializar perfil ativo antes de qualquer uso do Diário
+        window.vrvs_perfilAtivo = localStorage.getItem('vrvs_perfil_ativo') || 'DEFAULT';
+        
+        // Helper para key do Diário (DEFAULT usa legacy, outros perfis usam namespaced)
+        window.vrvs_diarioKey = function() {
+            return (window.vrvs_perfilAtivo === 'DEFAULT') ? 'vrvs_diario' : 'vrvs_' + window.vrvs_perfilAtivo + '_diario';
+        };
+        
+        // Trocar perfil ativo e recarregar Diário
+        window.trocarPerfil = function(novoPerfil) {
+            if (!novoPerfil || novoPerfil === window.vrvs_perfilAtivo) {
+                return;
+            }
+            
+            // Salvar diário do perfil atual
+            try {
+                salvarDiario();
+            } catch(e) {
+                console.warn('[PERFIL] Erro ao salvar antes de trocar:', e);
+            }
+            
+            // Trocar perfil
+            window.vrvs_perfilAtivo = novoPerfil;
+            localStorage.setItem('vrvs_perfil_ativo', novoPerfil);
+            
+            // Recarregar diário do novo perfil
+            carregarDiario();
+            
+            // Se estiver na seção Diário, re-renderizar
+            const diarioSection = document.getElementById('diario');
+            if (diarioSection && diarioSection.style.display !== 'none') {
+                renderDiario();
+            }
+            
+            // Atualizar select na Config
+            const selectPerfil = document.getElementById('perfilAtivoSelect');
+            if (selectPerfil) {
+                selectPerfil.value = novoPerfil;
+            }
+        };
         
         // Inicializar estrutura do Diário se não existir
         function inicializarDiario() {
@@ -13119,7 +13172,7 @@
         
         function carregarDiario() {
             try {
-                const diarioSalvo = localStorage.getItem('vrvs_diario');
+                const diarioSalvo = localStorage.getItem(window.vrvs_diarioKey());
                 if (diarioSalvo) {
                     // S3K: Migração de schema (array antigo, entries, entradas)
                     let diarioParsed;
@@ -13197,11 +13250,16 @@
         function salvarDiario() {
             try {
                 window.diario.schemaVersion = DIARIO_SCHEMA_VERSION;
-                localStorage.setItem('vrvs_diario', JSON.stringify(window.diario));
+                localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(window.diario));
             } catch (e) {
                 console.error('[DIÁRIO] Erro ao salvar:', e);
                 mostrarNotificacaoFeedback('⚠️ Erro ao salvar diário!', 'error');
             }
+        }
+        
+        // Alias para compatibilidade (usado em marcarTodasRevisoes/desmarcarTodasRevisoes)
+        if (typeof window.salvarDiarioLS !== 'function') {
+            window.salvarDiarioLS = function() { salvarDiario(); };
         }
         
         function setModoDiario(modo) {
