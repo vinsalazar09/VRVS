@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.211-perfis-d1-20260205-1915";
+const CACHE_NAME = "vrvs-v5.3.212-backup-json-visivel-20260205-1939";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
