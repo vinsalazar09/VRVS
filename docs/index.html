@@ -9250,7 +9250,7 @@
                                     ${isAtivo ? '<span style="margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>' : ''}
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    ${!isDefault && !isAtivo ? `<button onclick="vrvs_confirmarApagarPerfil(${JSON.stringify(perfil)})" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Apagar</button>` : ''}
+                                    ${!isDefault && !isAtivo ? `<button onclick="vrvs_confirmarApagarPerfil('${perfil.replace(/'/g, "\\'")}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Apagar</button>` : ''}
                                 </div>
                             </div>
                         </div>
