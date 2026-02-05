@@ -5961,16 +5961,6 @@
             container.style.pointerEvents = 'none';
             
             container.innerHTML = `<div class="message ${tipo}">${mensagem}</div>`;
-            
-            // Forçar estado final do .message (evitar travamento da animação no iOS)
-            const msgEl = container.querySelector('.message');
-            if (msgEl) {
-                msgEl.style.opacity = '1';
-                msgEl.style.transform = 'translateX(0)';
-                msgEl.style.webkitTransform = 'translateX(0)';
-                msgEl.style.animation = 'none'; // Desativa animação que pode travar no iOS
-            }
-            
             container._toastTimer = setTimeout(() => {
                 container.innerHTML = '';
                 container._toastTimer = null;
