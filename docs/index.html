@@ -5043,9 +5043,25 @@
                         </div>
                     </details>
                     
-                    <!-- Importar -->
+                    <!-- Importar Backup JSON (Box Principal) -->
                     <div style="margin-bottom: 30px;">
-                        <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR DADOS</h3>
+                        <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR BACKUP COMPLETO (JSON)</h3>
+                        <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
+                            Perfil ativo: <strong id="backupPerfilAtivoImport">DEFAULT</strong>
+                        </p>
+                        <div class="form-group">
+                            <label class="form-label">Arquivo Backup Completo VRVS (.json)</label>
+                            <input type="file" class="form-input" id="importBackupJSON" accept=".json">
+                        </div>
+                        <button class="btn" onclick="importarBackupJSON()" style="background: var(--turquesa-main);">📥 RESTAURAR BACKUP COMPLETO</button>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                            ⚠️ Esta operação substitui TODOS os dados do perfil ativo pelos do backup. Faça backup antes de restaurar!
+                        </div>
+                    </div>
+                    
+                    <!-- Importar Dados CSV -->
+                    <div style="margin-bottom: 30px; border-top: 1px solid rgba(0,206,209,0.3); padding-top: 20px;">
+                        <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR DADOS (CSV)</h3>
                         <div class="form-group">
                             <label class="form-label">Arquivo DADOS.csv</label>
                             <input type="file" class="form-input" id="importDados" accept=".csv">
@@ -5063,21 +5079,6 @@
                             <input type="file" class="form-input" id="importDiario" accept=".csv">
                         </div>
                         <button class="btn" onclick="importarArquivos()">📥 PROCESSAR IMPORTAÇÃO</button>
-                        
-                        <div style="border-top: 1px solid rgba(0,206,209,0.3); margin-top: 20px; padding-top: 20px;">
-                            <h3 style="color: var(--turquesa-light); font-size: 14px; margin-bottom: 15px;">📥 IMPORTAR BACKUP COMPLETO (JSON)</h3>
-                            <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
-                                Perfil ativo: <strong id="backupPerfilAtivoImport">DEFAULT</strong>
-                            </p>
-                            <div class="form-group">
-                                <label class="form-label">Arquivo Backup Completo VRVS (.json)</label>
-                                <input type="file" class="form-input" id="importBackupJSON" accept=".json">
-                            </div>
-                            <button class="btn" onclick="importarBackupJSON()" style="background: var(--turquesa-main);">📥 RESTAURAR BACKUP COMPLETO</button>
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
-                                ⚠️ Esta operação substitui TODOS os dados do perfil ativo pelos do backup. Faça backup antes de restaurar!
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- Reset -->
