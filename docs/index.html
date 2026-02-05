@@ -17492,21 +17492,8 @@
             renderDiario();
             renderTarefas();
             
-            // Toast idêntico ao toggle individual (com double-RAF + setTimeout fallback para garantir DOM estável)
-            let toastShown = false;
-            const showToast = () => {
-                if (toastShown) return;
-                toastShown = true;
-                mostrarNotificacaoFeedback('✅ Revisão ativada', 'success');
-            };
-            
-            // Double-RAF para garantir paint completo no iOS
-            requestAnimationFrame(() => {
-                requestAnimationFrame(showToast);
-            });
-            
-            // Fallback setTimeout caso RAF não dispare (dispositivos lentos/extremos)
-            setTimeout(showToast, 250);
+            // Toast idêntico ao toggle individual
+            mostrarNotificacaoFeedback('✅ Revisão ativada', 'success');
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
@@ -17527,21 +17514,8 @@
             renderDiario();
             renderTarefas();
             
-            // Toast idêntico ao toggle individual (com double-RAF + setTimeout fallback para garantir DOM estável)
-            let toastShown = false;
-            const showToast = () => {
-                if (toastShown) return;
-                toastShown = true;
-                mostrarNotificacaoFeedback('✅ Revisão desativada', 'success');
-            };
-            
-            // Double-RAF para garantir paint completo no iOS
-            requestAnimationFrame(() => {
-                requestAnimationFrame(showToast);
-            });
-            
-            // Fallback setTimeout caso RAF não dispare (dispositivos lentos/extremos)
-            setTimeout(showToast, 250);
+            // Toast idêntico ao toggle individual
+            mostrarNotificacaoFeedback('✅ Revisão desativada', 'success');
         }
         
         // Excluir entrada atual do Diário permanentemente
