@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.192-hotfix-toast-timing-20260204-0400";
+const CACHE_NAME = "vrvs-v5.3.191-ux-config-ajuda-toast-20260204-0300";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
