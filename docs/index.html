@@ -16247,6 +16247,7 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entradaAtual.topico)}</div>
+                    ${entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey ? `<div id="sessao-pergunta-thumb-wrap-${entradaAtual.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entradaAtual.id})"><img id="sessao-pergunta-thumb-img-${entradaAtual.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                     <div id="diarioSessaoRespostaWrapper" class="diario-sessao-resposta" hidden>
                         <div class="diario-sessao-resposta-inner" data-resposta="${entradaAtual.resposta ? 'true' : 'false'}">
                             ${entradaAtual.resposta ? '' : '<em>(Sem resposta cadastrada)</em>'}
@@ -16278,6 +16279,18 @@
                     </div>
                 </div>
             `;
+            
+            // PATCH B: Carregar thumbnail da PERGUNTA na sessão programada
+            if (entradaAtual && entradaAtual.id && entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
+                setTimeout(() => {
+                    diario_carregarThumbnailUnico(
+                        entradaAtual.id,
+                        entradaAtual.imagemPergunta.thumbKey,
+                        `sessao-pergunta-thumb-img-${entradaAtual.id}`,
+                        `sessao-pergunta-thumb-wrap-${entradaAtual.id}`
+                    );
+                }, 50);
+            }
         }
         
         // ==================== TL-1: TREINO LIVRE CUSTOMIZADO ====================
@@ -16759,6 +16772,18 @@
                         }, 50);
                     }
                 }
+                
+                // PATCH B: Carregar thumbnail da PERGUNTA também
+                if (entradaAtual && entradaAtual.id && entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
+                    setTimeout(() => {
+                        diario_carregarThumbnailUnico(
+                            entradaAtual.id,
+                            entradaAtual.imagemPergunta.thumbKey,
+                            `tl-pergunta-thumb-img-${entradaAtual.id}`,
+                            `tl-pergunta-thumb-wrap-${entradaAtual.id}`
+                        );
+                    }, 50);
+                }
             } catch (e) {}
         }
         
@@ -16778,6 +16803,7 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
+                    ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="tl-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="tl-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
@@ -16818,6 +16844,7 @@
                         </div>
                     </div>
                     <div class="diario-sessao-topico" style="width:100% !important; display:block !important; text-align:left !important; align-self:stretch !important; white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-wrap:break-word !important; justify-content:flex-start !important; align-items:flex-start !important;">❓ ${formatarTextoDiario(entrada.topico)}</div>
+                    ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="tl-avaliacao-pergunta-thumb-wrap-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="tl-avaliacao-pergunta-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                     <div id="treinoLivreRespostaWrapper" class="diario-sessao-resposta" ${respostaJaMostrada ? '' : 'hidden'}>
                         <div class="diario-sessao-resposta-inner" data-resposta-texto="${entrada.resposta ? 'true' : 'false'}">${respostaJaMostrada && entrada.resposta ? formatarTextoDiario(entrada.resposta) : (entrada.resposta ? '' : '<em>(Sem resposta cadastrada)</em>')}</div>
                         <div id="tl-thumb-wrap-${entrada.id}" style="margin-top: 12px;" hidden><img id="tl-thumb-img-${entrada.id}" style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3); cursor: pointer;" onclick="diario_abrirViewerImagem(${entrada.id})" /></div>
@@ -16875,6 +16902,18 @@
                         `tl-thumb-wrap-${entrada.id}`
                     );
                 }, 50);
+                
+                // PATCH B: Carregar thumbnail da PERGUNTA também na avaliação
+                if (entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
+                    setTimeout(() => {
+                        diario_carregarThumbnailUnico(
+                            entrada.id,
+                            entrada.imagemPergunta.thumbKey,
+                            `tl-avaliacao-pergunta-thumb-img-${entrada.id}`,
+                            `tl-avaliacao-pergunta-thumb-wrap-${entrada.id}`
+                        );
+                    }, 50);
+                }
             }
         }
         
@@ -17683,6 +17722,18 @@
                 // B2S-FIX: Carregar thumbnail quando resposta é mostrada (com setTimeout)
                 const entradaAtual = getEntradaAtualSessao();
                 if (entradaAtual && entradaAtual.id) {
+                    // PATCH B: Carregar thumbnail da PERGUNTA também na sessão programada
+                    if (entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
+                        setTimeout(() => {
+                            diario_carregarThumbnailUnico(
+                                entradaAtual.id,
+                                entradaAtual.imagemPergunta.thumbKey,
+                                `sessao-pergunta-thumb-img-${entradaAtual.id}`,
+                                `sessao-pergunta-thumb-wrap-${entradaAtual.id}`
+                            );
+                        }, 50);
+                    }
+                    
                     setTimeout(() => {
                         diario_carregarThumbnailUnico(
                             entradaAtual.id,

@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.206-perfis-zerados-areas-base-somente-default-20260205-0800";
+const CACHE_NAME = "vrvs-v5.3.207-diario-img-pergunta-sessoes-20260205-1500";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
