@@ -5932,15 +5932,39 @@
         // ==================== FUNÇÕES AUXILIARES ====================
         
         function mostrarNotificacaoFeedback(mensagem, tipo = 'success') {
-            const container = document.getElementById('feedbackMessage');
+            let container = document.getElementById('feedbackMessage');
             
+            // Criar elemento se não existir
             if (!container) {
-                console.error('[TOAST] #feedbackMessage não encontrado!');
-                return;
+                container = document.createElement('div');
+                container.id = 'feedbackMessage';
+                document.body.appendChild(container);
             }
             
+            // Garantir que está no body (mover se necessário)
+            if (container.parentElement !== document.body) {
+                document.body.appendChild(container);
+            }
+            
+            // Limpar timeout anterior (evitar limpar toast novo)
+            if (container._toastTimer) {
+                clearTimeout(container._toastTimer);
+            }
+            
+            // Forçar propriedades inline (blindagem completa contra CSS/pai escondendo)
+            container.style.position = 'fixed';
+            container.style.top = '100px';
+            container.style.right = '20px';
+            container.style.display = 'block';
+            container.style.visibility = 'visible';
+            container.style.zIndex = '2147483647';
+            container.style.pointerEvents = 'none';
+            
             container.innerHTML = `<div class="message ${tipo}">${mensagem}</div>`;
-            setTimeout(() => container.innerHTML = '', 5000);
+            container._toastTimer = setTimeout(() => {
+                container.innerHTML = '';
+                container._toastTimer = null;
+            }, 5000);
         }
         
         function extrairUltimaSugestao(observacoes) {
