@@ -16773,14 +16773,15 @@
                     }
                 }
                 
-                // PATCH B: Carregar thumbnail da PERGUNTA também
+                // PATCH C: Carregar thumbnail da PERGUNTA (modo normal OU avaliação)
                 if (entradaAtual && entradaAtual.id && entradaAtual.imagemPergunta && entradaAtual.imagemPergunta.thumbKey) {
+                    const prefix = modoAvaliacao ? 'tl-avaliacao' : 'tl';
                     setTimeout(() => {
                         diario_carregarThumbnailUnico(
                             entradaAtual.id,
                             entradaAtual.imagemPergunta.thumbKey,
-                            `tl-pergunta-thumb-img-${entradaAtual.id}`,
-                            `tl-pergunta-thumb-wrap-${entradaAtual.id}`
+                            `${prefix}-pergunta-thumb-img-${entradaAtual.id}`,
+                            `${prefix}-pergunta-thumb-wrap-${entradaAtual.id}`
                         );
                     }, 50);
                 }
@@ -17409,7 +17410,8 @@
             const modoEsquecidos = !!config.esquecidos || config.tipoTreino === 'esquecidos' || config.apenasEsquecidos === true;
             
             // Validação: Modo Avaliação requer tema específico OU filtro por período (exceto modo Esquecidos)
-            if (config.modoAvaliacao && !modoEsquecidos && !config.tema && (!config.periodo || config.periodo === 'todos')) {
+            // PATCH C: "Todo o período" (todos) é filtro válido, não deve bloquear
+            if (config.modoAvaliacao && !modoEsquecidos && !config.tema && !config.periodo) {
                 mostrarNotificacaoFeedback('⚠️ Para usar Modo Avaliação, selecione um tema específico ou filtre por período.', 'error');
                 return;
             }
@@ -20752,8 +20754,14 @@
             const viewerModal = document.getElementById('diario-viewer-imagem-pergunta');
             if (viewerModal) {
                 const imgElement = document.getElementById('diario-viewer-imagem-pergunta-img');
-                if (imgElement && imgElement.src && imgElement.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(imgElement.src);
+                if (imgElement) {
+                    // PATCH C: Desarmar onerror antes de limpar src (evita toast incorreto)
+                    imgElement.onerror = null;
+                    imgElement.onload = null;
+                    
+                    if (imgElement.src && imgElement.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(imgElement.src);
+                    }
                     imgElement.src = '';
                 }
                 viewerModal.classList.remove('active');
