@@ -5770,14 +5770,69 @@
             window.safeJSONFromLS = safeJSONFromLS;
         }
         
+        // ==================== PERFIS MVP (P1.4-A1) ====================
+        // Inicializar perfil ativo ANTES de qualquer carregamento de dados
+        window.vrvs_perfilAtivo = localStorage.getItem('vrvs_perfil_ativo') || 'DEFAULT';
+        
+        // Helper único para todas as chaves (DEFAULT usa legacy, outros perfis usam namespaced)
+        window.vrvs_key = function(baseKey) {
+            const p = window.vrvs_perfilAtivo || 'DEFAULT';
+            if (p === 'DEFAULT') {
+                return `vrvs_${baseKey}`;  // Legacy compat (sem prefixo)
+            }
+            return `vrvs_${p}_${baseKey}`; // Namespaced (ex: vrvs_VIDA_dados)
+        };
+        
+        // Alias para compatibilidade com código existente
+        window.vrvs_diarioKey = function() {
+            return window.vrvs_key('diario');
+        };
+        
         if (typeof __vrvsMark === 'function') __vrvsMark(2); // Antes do primeiro carregamento do localStorage
         if (typeof setBootStep === 'function') setBootStep(2);
-        // S3B: Usar safeParseLS com limite de tamanho (4MB por chave)
-        let dados = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_dados', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_dados', []);
-        let historico = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_historico', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_historico', []);
+        // S3B: Carregar dados com fallback para legacy (compatibilidade)
+        let dadosKey = window.vrvs_key('dados');
+        let dadosRaw = localStorage.getItem(dadosKey);
+        let dados = null;
+        if (dadosRaw !== null) {
+            dados = (typeof window.safeParseLS === 'function') ? window.safeParseLS(dadosKey, [], 4 * 1024 * 1024) : safeJSONFromLS(dadosKey, []);
+        }
+        // Fallback: se perfil DEFAULT e namespaced não existe, tentar legacy
+        if ((dados === null || !Array.isArray(dados)) && window.vrvs_perfilAtivo === 'DEFAULT') {
+            const legacyRaw = localStorage.getItem('vrvs_dados');
+            if (legacyRaw !== null) {
+                dados = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_dados', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_dados', []);
+            }
+        }
+        if (!dados || !Array.isArray(dados)) dados = [];
         
-        // P4: Carregar áreas customizadas persistentes
-        let vrvsAreasCustom = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_areas_custom', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_areas_custom', []);
+        let historicoKey = window.vrvs_key('historico');
+        let historicoRaw = localStorage.getItem(historicoKey);
+        let historico = null;
+        if (historicoRaw !== null) {
+            historico = (typeof window.safeParseLS === 'function') ? window.safeParseLS(historicoKey, [], 4 * 1024 * 1024) : safeJSONFromLS(historicoKey, []);
+        }
+        if ((historico === null || !Array.isArray(historico)) && window.vrvs_perfilAtivo === 'DEFAULT') {
+            const legacyRaw = localStorage.getItem('vrvs_historico');
+            if (legacyRaw !== null) {
+                historico = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_historico', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_historico', []);
+            }
+        }
+        if (!historico || !Array.isArray(historico)) historico = [];
+        
+        // P4: Carregar áreas customizadas persistentes (por perfil)
+        let areasCustomKey = window.vrvs_key('areas_custom');
+        let areasCustomRaw = localStorage.getItem(areasCustomKey);
+        let vrvsAreasCustom = null;
+        if (areasCustomRaw !== null) {
+            vrvsAreasCustom = (typeof window.safeParseLS === 'function') ? window.safeParseLS(areasCustomKey, [], 4 * 1024 * 1024) : safeJSONFromLS(areasCustomKey, []);
+        }
+        if ((vrvsAreasCustom === null || !Array.isArray(vrvsAreasCustom)) && window.vrvs_perfilAtivo === 'DEFAULT') {
+            const legacyRaw = localStorage.getItem('vrvs_areas_custom');
+            if (legacyRaw !== null) {
+                vrvsAreasCustom = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_areas_custom', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_areas_custom', []);
+            }
+        }
         // Garantir Array, garantir strings, trim, remover vazios, deduplicar, sort
         if (!Array.isArray(vrvsAreasCustom)) vrvsAreasCustom = [];
         vrvsAreasCustom = vrvsAreasCustom
@@ -5786,8 +5841,34 @@
             .filter((a, i, arr) => arr.indexOf(a) === i) // Deduplicar
             .sort();
         window.vrvsAreasCustom = vrvsAreasCustom;
-        let lembretes = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_lembretes', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_lembretes', []);
-        let anotacoes = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_anotacoes', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_anotacoes', []); // Anotações por tema
+        
+        let lembretesKey = window.vrvs_key('lembretes');
+        let lembretesRaw = localStorage.getItem(lembretesKey);
+        let lembretes = null;
+        if (lembretesRaw !== null) {
+            lembretes = (typeof window.safeParseLS === 'function') ? window.safeParseLS(lembretesKey, [], 4 * 1024 * 1024) : safeJSONFromLS(lembretesKey, []);
+        }
+        if ((lembretes === null || !Array.isArray(lembretes)) && window.vrvs_perfilAtivo === 'DEFAULT') {
+            const legacyRaw = localStorage.getItem('vrvs_lembretes');
+            if (legacyRaw !== null) {
+                lembretes = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_lembretes', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_lembretes', []);
+            }
+        }
+        if (!lembretes || !Array.isArray(lembretes)) lembretes = [];
+        
+        let anotacoesKey = window.vrvs_key('anotacoes');
+        let anotacoesRaw = localStorage.getItem(anotacoesKey);
+        let anotacoes = null;
+        if (anotacoesRaw !== null) {
+            anotacoes = (typeof window.safeParseLS === 'function') ? window.safeParseLS(anotacoesKey, [], 4 * 1024 * 1024) : safeJSONFromLS(anotacoesKey, []);
+        }
+        if ((anotacoes === null || !Array.isArray(anotacoes)) && window.vrvs_perfilAtivo === 'DEFAULT') {
+            const legacyRaw = localStorage.getItem('vrvs_anotacoes');
+            if (legacyRaw !== null) {
+                anotacoes = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_anotacoes', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_anotacoes', []);
+            }
+        }
+        if (!anotacoes || !Array.isArray(anotacoes)) anotacoes = [];
         
         // Aplicar correção de inversão área/tema nos dados carregados
         if (Array.isArray(dados)) {
@@ -5814,7 +5895,7 @@
                 console.log(`🧹 Limpeza: removidos ${dadosOriginais - dados.length} registros corrompidos`);
                 // S3B: Proteger setItem contra quota excedida (com abort se falhar)
                 try {
-                    localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                    localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
                 } catch(e) {
                     if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
                         if (typeof window.abortBoot === 'function') {
@@ -5852,7 +5933,7 @@
             if (historico.length < historicoOriginal) {
                 // S3B: Proteger setItem contra quota excedida (com abort se falhar)
                 try {
-                    localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                    localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
                     console.log(`🧹 Limpeza: removidos ${historicoOriginal - historico.length} registros inválidos do histórico`);
                 } catch(e) {
                     if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
@@ -5904,7 +5985,7 @@
             
             // Normalizar diário
             try {
-                const diarioSalvo = localStorage.getItem('vrvs_diario');
+                const diarioSalvo = localStorage.getItem(window.vrvs_diarioKey());
                 if (diarioSalvo) {
                     let diario;
                     try {
@@ -5929,7 +6010,7 @@
                         });
                         // S3B: Proteger setItem contra quota excedida (com abort se falhar)
                         try {
-                            localStorage.setItem('vrvs_diario', JSON.stringify(diario));
+                            localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(diario));
                         } catch(e) {
                             if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
                                 // Abortar boot e redirecionar
@@ -5956,7 +6037,7 @@
                 }
                 
                 try {
-                    localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                    localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
                 } catch(e) {
                     if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
                         if (typeof window.abortBoot === 'function') {
@@ -5972,7 +6053,7 @@
                 if (window.__vrvsBootAbort) return;
                 
                 try {
-                    localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                    localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
                 } catch(e) {
                     if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
                         if (typeof window.abortBoot === 'function') {
@@ -5988,7 +6069,7 @@
                 if (window.__vrvsBootAbort) return;
                 
                 try {
-                    localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                    localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
                 } catch(e) {
                     if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
                         if (typeof window.abortBoot === 'function') {
@@ -7342,10 +7423,10 @@
             anotacoes = anotacoes.filter(a => String(a.temaId) !== String(temaId));
             
             // Salvar tudo no localStorage
-            localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-            localStorage.setItem('vrvs_historico', JSON.stringify(historico));
-            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
-            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+            localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+            localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
+            localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
             
             // Mostrar resumo do que foi removido
             const resumo = [
@@ -7422,8 +7503,8 @@
                 tema.contador80 = 0;
             }
             
-            localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-            localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+            localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+            localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
             
             mostrarNotificacaoFeedback('✅ Reversão executada com sucesso!');
             
@@ -8270,7 +8351,7 @@
                         delete t.tipoRevisao;
                         return t;
                     });
-                    localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                    localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
                     console.log('[IMPORT DADOS]', dados.length, 'dados salvos');
                     return 'dados';
                 }).catch(err => {
@@ -8299,7 +8380,7 @@
                         }
                         return h;
                     });
-                    localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                    localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
                     console.log('[IMPORT HISTORICO]', historico.length, 'registros salvos');
                     return 'historico';
                 }).catch(err => {
@@ -8331,7 +8412,7 @@
                     
                     // CRÍTICO: Mesclar com anotações existentes (preservar dados existentes)
                     anotacoes = mesclarAnotacoes(anotacoesImportadas, anotacoes);
-                    localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                    localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
                     console.log(`[IMPORT ANOTACOES] ${anotacoes.length} anotações após mesclagem (${anotacoesImportadas.length} novas)`);
                     return 'anotacoes';
                 }).catch(err => {
@@ -8996,10 +9077,10 @@
         function salvarDadosManualmente() {
             try {
                 // Salvar todos os dados no localStorage
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
-                localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
-                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
                 
                 mostrarNotificacaoFeedback('✅ Todos os dados salvos com sucesso!');
             } catch (e) {
@@ -10295,7 +10376,7 @@
                 lembrete.proximaData = calcularProximaDataLembrete(lembrete);
             }
             
-            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+            localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
             renderLembretes();
             mostrarNotificacaoFeedback('✅ Lembrete atualizado!');
         }
@@ -10304,7 +10385,7 @@
             if (!confirm('Tem certeza que deseja deletar este lembrete?')) return;
             
             lembretes = lembretes.filter(l => l.id !== id);
-            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+            localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
             renderLembretes();
             mostrarNotificacaoFeedback('🗑️ Lembrete deletado!');
         }
@@ -10315,7 +10396,7 @@
             // Migração segura: adicionar campo hotTopics sem perder dados
             // S3P: Removido backup automático do boot (causava QUOTA loop no iPhone PWA)
             // Backup deve ser manual via aba Backup. Migração é idempotente e segura sem backup.
-            const anotacoesAtuais = JSON.parse(localStorage.getItem('vrvs_anotacoes') || '[]');
+            const anotacoesAtuais = JSON.parse(localStorage.getItem(window.vrvs_key('anotacoes')) || '[]');
             
             let atualizadas = false;
             const anotacoesMigradas = anotacoesAtuais.map(a => {
@@ -10328,7 +10409,7 @@
             
             if (atualizadas) {
                 validarAntesDeSalvar('anotacoes', anotacoesMigradas);
-                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoesMigradas));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoesMigradas));
                 anotacoes = anotacoesMigradas;
                 console.log(`[MIGRAÇÃO] Campo hotTopics adicionado.`);
             }
@@ -10350,7 +10431,7 @@
                     ultimaAtualizacao: new Date().toISOString().split('T')[0]
                 };
                 anotacoes.push(anotacao);
-                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
             }
             return anotacao;
         }
@@ -10467,7 +10548,7 @@
             
             // CRÍTICO: Recarregar anotações do localStorage antes de renderizar
             try {
-                const anotacoesSalvas = localStorage.getItem('vrvs_anotacoes');
+                const anotacoesSalvas = localStorage.getItem(window.vrvs_key('anotacoes'));
                 if (anotacoesSalvas) {
                     anotacoes = JSON.parse(anotacoesSalvas);
                 }
@@ -10583,7 +10664,7 @@
             anotacao.hotTopics = hotTopicsTextarea ? hotTopicsTextarea.value.trim() : '';
             anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
             
-            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
             mostrarNotificacaoFeedback('✅ Anotação salva!');
             
             // Atualizar renderização
@@ -10600,7 +10681,7 @@
                 anotacao.conteudo = '';
                 anotacao.hotTopics = '';
                 anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
-                localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
                 
                 const textarea = document.getElementById(`anotacao_${temaId}`);
                 const hotTopicsTextarea = document.getElementById(`hotTopics_${temaId}`);
@@ -11105,23 +11186,28 @@
         // Executar migrações na inicialização
         migrarAnotacoesParaHotTopics();
         
-        // ==================== PERFIS MVP (P1.1 REV2) ====================
-        // Inicializar perfil ativo antes de qualquer uso do Diário
-        window.vrvs_perfilAtivo = localStorage.getItem('vrvs_perfil_ativo') || 'DEFAULT';
-        
-        // Helper para key do Diário (DEFAULT usa legacy, outros perfis usam namespaced)
-        window.vrvs_diarioKey = function() {
-            return (window.vrvs_perfilAtivo === 'DEFAULT') ? 'vrvs_diario' : 'vrvs_' + window.vrvs_perfilAtivo + '_diario';
-        };
-        
-        // Trocar perfil ativo e recarregar Diário
+        // ==================== PERFIS MVP (P1.4-A1) ====================
+        // trocarPerfil agora recarrega todos os datasets (não só diário)
         window.trocarPerfil = function(novoPerfil) {
             if (!novoPerfil || novoPerfil === window.vrvs_perfilAtivo) {
                 return;
             }
             
-            // Salvar diário do perfil atual
+            // Salvar todos os dados do perfil atual
             try {
+                // Salvar dados (via função existente se houver, senão direto)
+                if (typeof salvarDadosManualmente === 'function') {
+                    salvarDadosManualmente();
+                } else {
+                    // Fallback: salvar diretamente
+                    localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                    localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                    localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                    localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
+                }
+                // Salvar áreas customizadas
+                localStorage.setItem(window.vrvs_key('areas_custom'), JSON.stringify(window.vrvsAreasCustom || []));
+                // Salvar diário
                 salvarDiario();
             } catch(e) {
                 console.warn('[PERFIL] Erro ao salvar antes de trocar:', e);
@@ -11131,13 +11217,99 @@
             window.vrvs_perfilAtivo = novoPerfil;
             localStorage.setItem('vrvs_perfil_ativo', novoPerfil);
             
-            // Recarregar diário do novo perfil
+            // Recarregar todos os dados do novo perfil (com fallback legacy se DEFAULT)
+            // Helper para recarregar um dataset
+            function recarregarDataset(baseKey, defaultValue = []) {
+                const key = window.vrvs_key(baseKey);
+                let raw = localStorage.getItem(key);
+                let result = null;
+                if (raw !== null) {
+                    result = (typeof window.safeParseLS === 'function') ? window.safeParseLS(key, defaultValue, 4 * 1024 * 1024) : safeJSONFromLS(key, defaultValue);
+                }
+                if ((result === null || !Array.isArray(result)) && novoPerfil === 'DEFAULT') {
+                    const legacyRaw = localStorage.getItem(`vrvs_${baseKey}`);
+                    if (legacyRaw !== null) {
+                        result = (typeof window.safeParseLS === 'function') ? window.safeParseLS(`vrvs_${baseKey}`, defaultValue, 4 * 1024 * 1024) : safeJSONFromLS(`vrvs_${baseKey}`, defaultValue);
+                    }
+                }
+                return (result && Array.isArray(result)) ? result : defaultValue;
+            }
+            
+            // Recarregar datasets
+            dados = recarregarDataset('dados', []);
+            historico = recarregarDataset('historico', []);
+            anotacoes = recarregarDataset('anotacoes', []);
+            lembretes = recarregarDataset('lembretes', []);
+            
+            // Recarregar áreas customizadas
+            let areasCustomRaw = localStorage.getItem(window.vrvs_key('areas_custom'));
+            let novasAreasCustom = null;
+            if (areasCustomRaw !== null) {
+                novasAreasCustom = (typeof window.safeParseLS === 'function') ? window.safeParseLS(window.vrvs_key('areas_custom'), [], 4 * 1024 * 1024) : safeJSONFromLS(window.vrvs_key('areas_custom'), []);
+            }
+            if ((novasAreasCustom === null || !Array.isArray(novasAreasCustom)) && novoPerfil === 'DEFAULT') {
+                const legacyRaw = localStorage.getItem('vrvs_areas_custom');
+                if (legacyRaw !== null) {
+                    novasAreasCustom = (typeof window.safeParseLS === 'function') ? window.safeParseLS('vrvs_areas_custom', [], 4 * 1024 * 1024) : safeJSONFromLS('vrvs_areas_custom', []);
+                }
+            }
+            if (!novasAreasCustom || !Array.isArray(novasAreasCustom)) novasAreasCustom = [];
+            novasAreasCustom = novasAreasCustom
+                .map(a => String(a).trim())
+                .filter(a => a.length > 0)
+                .filter((a, i, arr) => arr.indexOf(a) === i)
+                .sort();
+            window.vrvsAreasCustom = novasAreasCustom;
+            
+            // Espelhar em window.*
+            window.dados = dados;
+            window.historico = historico;
+            window.anotacoes = anotacoes;
+            window.lembretes = lembretes;
+            
+            // Recarregar diário
             carregarDiario();
             
-            // Se estiver na seção Diário, re-renderizar
+            // Re-renderizar seções visíveis
             const diarioSection = document.getElementById('diario');
             if (diarioSection && diarioSection.style.display !== 'none') {
                 renderDiario();
+            }
+            
+            const tarefaSection = document.getElementById('tarefa');
+            if (tarefaSection && tarefaSection.style.display !== 'none') {
+                if (typeof renderTarefas === 'function') {
+                    renderTarefas();
+                }
+            }
+            
+            const cadernoSection = document.getElementById('caderno');
+            if (cadernoSection && cadernoSection.style.display !== 'none') {
+                if (typeof renderCadernoV2 === 'function') {
+                    renderCadernoV2();
+                } else if (typeof renderCaderno === 'function') {
+                    renderCaderno();
+                }
+            }
+            
+            const dadosSection = document.getElementById('dados');
+            if (dadosSection && dadosSection.style.display !== 'none') {
+                if (typeof renderDados === 'function') {
+                    renderDados();
+                }
+            }
+            
+            // Atualizar chip VRVS 3P e indicadores
+            if (typeof atualizarChipVrvs3p === 'function') {
+                atualizarChipVrvs3p();
+            }
+            
+            // Atualizar selects de área
+            if (typeof atualizarTodosSelectsArea === 'function') {
+                // Recarregar selects com novas áreas customizadas
+                window.vrvsAreasCustom.forEach(area => {
+                    atualizarTodosSelectsArea(area);
+                });
             }
             
             // Atualizar select na Config
@@ -11145,11 +11317,16 @@
             if (selectPerfil) {
                 selectPerfil.value = novoPerfil;
             }
+            
+            // Feedback ao usuário
+            if (typeof mostrarNotificacaoFeedback === 'function') {
+                mostrarNotificacaoFeedback(`✅ Perfil alterado para: ${novoPerfil}`, 'success');
+            }
         };
         
         // Inicializar estrutura do Diário se não existir
         function inicializarDiario() {
-            const diarioExistente = localStorage.getItem('vrvs_diario');
+            const diarioExistente = localStorage.getItem(window.vrvs_diarioKey());
             if (diarioExistente) return;
             
             const diarioInicial = {
@@ -11157,7 +11334,7 @@
                 entradas: []  // S3K: Corrigir para usar "entradas" (schema atual)
             };
             
-            localStorage.setItem('vrvs_diario', JSON.stringify(diarioInicial));
+            localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(diarioInicial));
             console.log('[DIÁRIO] Estrutura inicializada');
         }
         
@@ -11856,7 +12033,7 @@
                 };
                 
                 dados.push(novoTema);
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
                 this.reset();
                 mostrarNotificacaoFeedback('✅ Tema adicionado com sucesso!');
                 renderDados();
@@ -12001,8 +12178,8 @@
                     sugestao: sugestao || '-'
                 });
                 
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
-                localStorage.setItem('vrvs_historico', JSON.stringify(historico));
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
                 
                 this.reset();
                 document.getElementById('feedbackData').value = new Date().toISOString().split('T')[0];
@@ -12070,7 +12247,7 @@
                     }
                 }
                 
-                localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
                 
                 closeEditModal();
                 mostrarNotificacaoFeedback('✅ Tema atualizado com sucesso!');
@@ -12110,7 +12287,7 @@
                     };
                     
                     lembretes.push(novoLembrete);
-                    localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+                    localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
                     
                     mostrarNotificacaoFeedback('✅ Lembrete adicionado com sucesso!');
                     
@@ -13423,7 +13600,7 @@
                                       (diarioParsed && Array.isArray(diarioParsed.entries) && !Array.isArray(diarioParsed.entradas));
                         if (migrou) {
                             try {
-                                localStorage.setItem('vrvs_diario', JSON.stringify(diarioMigrado));
+                                localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(diarioMigrado));
                                 console.log('[DIÁRIO S3K] Migração salva:', diarioMigrado.entradas.length, 'entradas');
                             } catch(e) {
                                 console.warn('[DIÁRIO S3K] Erro ao salvar migração (quota?):', e);
@@ -17929,7 +18106,7 @@
             window.vrvsAreasCustom = window.vrvsAreasCustom
                 .filter((a, i, arr) => arr.indexOf(a) === i) // Deduplicar
                 .sort();
-            localStorage.setItem('vrvs_areas_custom', JSON.stringify(window.vrvsAreasCustom));
+            localStorage.setItem(window.vrvs_key('areas_custom'), JSON.stringify(window.vrvsAreasCustom));
             
             // Atualizar TODOS os selects de área na plataforma
             atualizarTodosSelectsArea(areaNormalizada);
@@ -18202,7 +18379,7 @@
             };
             
             dados.push(novoTema);
-            localStorage.setItem('vrvs_dados', JSON.stringify(dados));
+            localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
             
             // Criar anotação vazia para o tema
             const novaAnotacao = {
@@ -18215,7 +18392,7 @@
                 ultimaAtualizacao: ''
             };
             anotacoes.push(novaAnotacao);
-            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
             
             fecharModalCadastro();
             renderDadosTable();
@@ -18271,7 +18448,7 @@
             anotacao.conteudo = conteudo;
             anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
             
-            localStorage.setItem('vrvs_anotacoes', JSON.stringify(anotacoes));
+            localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
             
             document.getElementById('modalEditarAnotacao').classList.remove('active');
             renderCadernoV2();
@@ -18286,7 +18463,7 @@
             
             // Recarregar anotações
             try {
-                const anotacoesSalvas = localStorage.getItem('vrvs_anotacoes');
+                const anotacoesSalvas = localStorage.getItem(window.vrvs_key('anotacoes'));
                 if (anotacoesSalvas) {
                     anotacoes = JSON.parse(anotacoesSalvas);
                 }
@@ -18680,7 +18857,7 @@
             };
             
             lembretes.push(novoLembrete);
-            localStorage.setItem('vrvs_lembretes', JSON.stringify(lembretes));
+            localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
             
             document.getElementById('lembreteFormAgenda').reset();
             renderAgendaUnificada();
@@ -21018,7 +21195,7 @@
         function abrirModalSRS(entradaId) {
             try {
                 // Buscar entrada no diário (tolerar {entradas:[]} OU [] direto)
-                const raw = localStorage.getItem('vrvs_diario') || '{"entradas":[]}';
+                const raw = localStorage.getItem(window.vrvs_diarioKey()) || '{"entradas":[]}';
                 const parsed = JSON.parse(raw);
                 const entradas = Array.isArray(parsed) ? parsed : (parsed.entradas || []);
                 

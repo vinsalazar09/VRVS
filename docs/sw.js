@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.203-perfis-modal-gerenciar-ux-20260205-0500";
+const CACHE_NAME = "vrvs-v5.3.204-perfis-dataset-completo-a1-a2-20260205-0600";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
