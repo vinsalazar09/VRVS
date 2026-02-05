@@ -17481,92 +17481,121 @@
         
         // Marcar todas as entradas do Diário para revisão (ativar SRS)
         function marcarTodasRevisoes() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:ENTRY',message:'Função chamada',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+            // #endregion
+            
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:ERROR',message:'Sem entradas',data:{diarioExists:!!window.diario},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
             
             const hoje = hojeStr();
-            let contadorMudou = 0;
+            let contador = 0;
             
             window.diario.entradas.forEach(entrada => {
                 // Se não tem SRS, criar; se já tem, ativar
                 if (!entrada.srs) {
                     entrada.srs = inicializarSrsVRVS3P(hoje);
-                    contadorMudou++;
+                    contador++;
                 } else if (!entrada.srs.ativo) {
                     entrada.srs.ativo = true;
-                    contadorMudou++;
+                    contador++;
                 }
             });
             
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:BEFORE_RENDER',message:'Antes de renderizar',data:{contador,entradasTotal:window.diario.entradas.length},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
             // Salvar e renderizar
             salvarDiarioLS();
+            const renderStart = Date.now();
             renderDiario();
+            const renderDiarioTime = Date.now() - renderStart;
             renderTarefas();
+            const renderTarefasTime = Date.now() - renderStart - renderDiarioTime;
             
-            // Toast com double-RAF para garantir DOM estável
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    if (contadorMudou > 0) {
-                        mostrarNotificacaoFeedback(`✅ Revisões ativadas em ${contadorMudou} entrada(s).`, 'success');
-                    } else {
-                        mostrarNotificacaoFeedback('ℹ️ Nada mudou: todas já estavam ativas.', 'success');
-                    }
-                });
-            });
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:AFTER_RENDER',message:'Após renderizar',data:{renderDiarioTime,renderTarefasTime,feedbackElExists:!!document.getElementById('feedbackMessage')},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
+            setTimeout(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:SETTIMEOUT_CALLBACK',message:'Timeout callback executado',data:{contador,feedbackElExists:!!document.getElementById('feedbackMessage'),feedbackElVisible:document.getElementById('feedbackMessage')?.offsetParent!==null},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+                if (contador === 0) {
+                    mostrarNotificacaoFeedback('ℹ️ Nada mudou: todas as entradas já estavam com revisão ativa.', 'success');
+                } else {
+                    mostrarNotificacaoFeedback(`✅ Revisões ativadas em ${contador} entrada(s).`, 'success');
+                }
+                // #region agent log
+                setTimeout(() => {
+                    const el = document.getElementById('feedbackMessage');
+                    fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'marcarTodasRevisoes:AFTER_TOAST',message:'Após chamar toast',data:{feedbackElExists:!!el,feedbackInnerHTML:el?.innerHTML?.substring(0,100)||'empty',feedbackDisplay:el?.style.display||'none',feedbackVisibility:el?.style.visibility||'visible'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                }, 50);
+                // #endregion
+            }, 200);
         }
         
         // Desmarcar todas as entradas do Diário para revisão (desativar SRS, mas manter histórico)
         function desmarcarTodasRevisoes() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:ENTRY',message:'Função chamada',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+            // #endregion
+            
             if (!window.diario || !Array.isArray(window.diario.entradas)) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:ERROR',message:'Sem entradas',data:{diarioExists:!!window.diario},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 mostrarNotificacaoFeedback('⚠️ Nenhuma entrada encontrada no Diário.', 'error');
                 return;
             }
             
-            // Calcular quantas entradas estão ativas (sem modificar ainda)
-            let ativas = 0;
-            window.diario.entradas.forEach(entrada => {
-                if (entrada.srs && entrada.srs.ativo) {
-                    ativas++;
-                }
-            });
-            
-            // Se não há nenhuma ativa, apenas mostrar toast e retornar
-            if (ativas === 0) {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        mostrarNotificacaoFeedback('ℹ️ Nada mudou: nenhuma estava ativa.', 'success');
-                    });
-                });
-                return;
-            }
-            
-            // Só pedir confirm se realmente houver algo para desmarcar
-            if (!confirm('⚠️ Desmarcar todas as revisões?\n\nIsso vai desativar a revisão em todos os cards do Diário.')) {
-                return;
-            }
-            
-            let contadorMudou = 0;
+            let contador = 0;
             
             window.diario.entradas.forEach(entrada => {
                 if (entrada.srs && entrada.srs.ativo) {
                     entrada.srs.ativo = false;
-                    contadorMudou++;
+                    contador++;
                 }
             });
             
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:BEFORE_RENDER',message:'Antes de renderizar',data:{contador,entradasTotal:window.diario.entradas.length},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
             // Salvar e renderizar
             salvarDiarioLS();
+            const renderStart = Date.now();
             renderDiario();
+            const renderDiarioTime = Date.now() - renderStart;
             renderTarefas();
+            const renderTarefasTime = Date.now() - renderStart - renderDiarioTime;
             
-            // Toast com double-RAF para garantir DOM estável
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    mostrarNotificacaoFeedback(`✅ Revisões desativadas em ${contadorMudou} entrada(s).`, 'success');
-                });
-            });
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:AFTER_RENDER',message:'Após renderizar',data:{renderDiarioTime,renderTarefasTime,feedbackElExists:!!document.getElementById('feedbackMessage')},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            
+            setTimeout(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:SETTIMEOUT_CALLBACK',message:'Timeout callback executado',data:{contador,feedbackElExists:!!document.getElementById('feedbackMessage'),feedbackElVisible:document.getElementById('feedbackMessage')?.offsetParent!==null},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+                if (contador === 0) {
+                    mostrarNotificacaoFeedback('ℹ️ Nada mudou: não havia entradas com revisão ativa.', 'success');
+                } else {
+                    mostrarNotificacaoFeedback(`✅ Revisões desativadas em ${contador} entrada(s).`, 'success');
+                }
+                // #region agent log
+                setTimeout(() => {
+                    const el = document.getElementById('feedbackMessage');
+                    fetch('http://127.0.0.1:7242/ingest/53c6086f-5843-45d6-a222-566915d7bbd9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'desmarcarTodasRevisoes:AFTER_TOAST',message:'Após chamar toast',data:{feedbackElExists:!!el,feedbackInnerHTML:el?.innerHTML?.substring(0,100)||'empty',feedbackDisplay:el?.style.display||'none',feedbackVisibility:el?.style.visibility||'visible'},timestamp:Date.now(),sessionId:'debug-toast',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                }, 50);
+                // #endregion
+            }, 200);
         }
         
         // Excluir entrada atual do Diário permanentemente
