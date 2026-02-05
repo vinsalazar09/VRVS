@@ -721,4 +721,52 @@
 
 ═══════════════════════════════════════════════════════════════
 
+**2026-02-05 (16:50):**
+- ✅ **PATCH C EXECUTADO E VALIDADO:** Correções essenciais funcionando perfeitamente
+  - **Toast de erro ao fechar viewer:** ✅ RESOLVIDO - Desarmar `onerror` antes de limpar `src` evita toast incorreto
+  - **Validação Modo Avaliação:** ✅ RESOLVIDO - "Todo o período" (`periodo === 'todos'`) agora é reconhecido como filtro válido
+  - **Imagem da pergunta no Modo Avaliação:** ✅ RESOLVIDO - Thumbnail aparece corretamente durante sessão de treino
+  - **Problema conhecido (não crítico):** ⚠️ Imagem da pergunta não aparece na tela "RESULTADO DA AVALIAÇÃO" (apenas visual, não afeta funcionalidade principal)
+  - **Commits:** `0d92efb` - PATCH C: corrigir toast ao fechar viewer + validação Modo Avaliação + imagem pergunta no Modo Avaliação
+  - **CACHE_NAME:** `vrvs-v5.3.208-patch-c-imagem-pergunta-avaliacao-20260205-1600`
+  - **Status:** ✅ Validação concluída (3/4 itens OK, 1 problema conhecido documentado para correção futura)
+
+**2026-02-05 (14:30):**
+- ❌ **BUG ESTRUTURAL CRÍTICO:** Áreas do perfil DEFAULT aparecendo no perfil VIDAS
+  - **Sintoma:** Ao criar nova entrada no Diário ou adicionar novo tema, áreas do perfil DEFAULT aparecem no dropdown, mesmo em perfil novo que deveria estar "zerado em tudo"
+  - **Causa Raiz:** Função `obterListaAreasDisponiveis()` (linha 18146) sempre inclui `AREAS_FIXAS` sem considerar se o perfil é novo/zerado. Não usa a heurística de `obterAreasPorOrigem()` que detecta aparelho zerado.
+  - **Evidência:** 
+    - `obterListaAreasDisponiveis()` retorna `[...AREAS_FIXAS, ...areasCustom, ...areasDados]` sempre
+    - `AREAS_FIXAS` contém áreas fixas do sistema (Ciências Básicas, Coluna, Joelho, etc.)
+    - Perfil novo deveria mostrar apenas áreas custom criadas pelo usuário, não áreas fixas
+  - **Impacto:** Perfil novo não está verdadeiramente "zerado" - áreas fixas aparecem mesmo sem dados
+  - **Solução Necessária:** 
+    1. Modificar `obterListaAreasDisponiveis()` para usar heurística de `obterAreasPorOrigem()` ou criar lógica similar
+    2. Se perfil não tem dados com áreas fixas, não incluir `AREAS_FIXAS` na lista
+    3. Garantir que apenas áreas custom do perfil atual apareçam em perfil zerado
+  - **Arquivos:** `docs/index.html` linha 18146 (`obterListaAreasDisponiveis`), linha 18234 (`obterAreasPorOrigem`)
+  - **Status:** ⚠️ PENDENTE - Correção estrutural necessária
+
+- ❌ **BUG ESTRUTURAL CRÍTICO:** Imagem da pergunta (`imagemPergunta`) não aparece na sessão de Treino Livre e Revisão VRVS 3P
+  - **Sintoma:** Imagem da pergunta aparece corretamente na lista de tópicos do Diário (PRINT 5), mas NÃO aparece durante Treino Livre (PRINT 4) nem na Revisão Programada (VRVS 3P)
+  - **Causa Raiz:** Funções de renderização das sessões não incluem código para renderizar `entrada.imagemPergunta`:
+    - `renderTreinoLivreCard()` (linha 16780): Renderiza pergunta mas não imagem da pergunta
+    - `renderSessaoDiario()` (linha 16249): Renderiza pergunta mas não imagem da pergunta
+    - `renderTreinoLivreAvaliacao()` (linha 16820): Renderiza pergunta mas não imagem da pergunta
+  - **Evidência:**
+    - `renderEntradaDiario()` (linha 14812) já renderiza `imagemPergunta` corretamente na lista
+    - `diario_carregarThumbnails()` (linha 14846) já carrega thumbnails de `imagemPergunta` corretamente
+    - Funções de sessão não têm código equivalente para renderizar/carregar imagem da pergunta
+  - **Impacto:** Funcionalidade incompleta - imagem da pergunta só funciona na lista, não nas sessões de estudo
+  - **Solução Necessária:**
+    1. Adicionar renderização de `imagemPergunta` em `renderTreinoLivreCard()` logo após o tópico
+    2. Adicionar renderização de `imagemPergunta` em `renderSessaoDiario()` logo após o tópico
+    3. Adicionar renderização de `imagemPergunta` em `renderTreinoLivreAvaliacao()` logo após o tópico
+    4. Adicionar carregamento de thumbnail da pergunta nas funções de carregamento de thumbnails das sessões
+    5. Usar mesmo padrão já implementado para imagem da resposta (`entrada.imagem`)
+  - **Arquivos:** `docs/index.html` linha 16780 (`renderTreinoLivreCard`), linha 16249 (`renderSessaoDiario`), linha 16820 (`renderTreinoLivreAvaliacao`)
+  - **Status:** ⚠️ PENDENTE - Correção estrutural necessária
+
+═══════════════════════════════════════════════════════════════
+
 
