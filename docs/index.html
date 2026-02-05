@@ -5184,17 +5184,16 @@
                 <div class="vrvsModal-section" style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
                     <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">📊 Status Atual</h3>
                     <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                        Cada perfil isola apenas o <strong>Diário</strong> (entradas e revisões SRS). 
-                        Temas, Tarefas, Caderno e Histórico ainda são compartilhados entre perfis.
+                        Cada perfil já isola um <strong>dataset completo</strong>: Temas, Tarefas, Diário, Caderno e Histórico. 
+                        O perfil ativo muda a plataforma inteira para um ambiente separado.
                     </p>
                 </div>
                 
                 <div class="vrvsModal-section" style="margin-bottom: 24px; padding: 16px; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.2); border-radius: 8px;">
                     <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">🎯 Destino</h3>
                     <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                        Em breve, cada perfil terá um <strong>dataset completo zerado</strong>: 
-                        Temas, Tarefas, Diário, Caderno e Histórico isolados por perfil. 
-                        Criar um novo perfil será como iniciar uma plataforma totalmente nova.
+                        <strong>Próximas melhorias:</strong> (1) Backup/Exportar/Importar por perfil (perfil atual), 
+                        (2) Criar/Renomear/Apagar perfis com segurança.
                     </p>
                 </div>
                 
@@ -14810,6 +14809,7 @@
                             </div>
                             ${chipsHTML}
                             <div style="font-size: 14px; font-weight: 600; color: var(--cobre-light); margin-bottom: 8px; display: block; border-bottom: 1px solid rgba(0, 206, 209, 0.2); padding-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">❓ ${formatarTextoDiario(entrada.topico)}</div>
+                            ${entrada.imagemPergunta && entrada.imagemPergunta.thumbKey ? `<div id="diario-img-pergunta-thumb-${entrada.id}" style="margin-top: 8px; margin-bottom: 8px; cursor: pointer;" onclick="diario_abrirViewerImagemPergunta(${entrada.id})"><img id="diario-img-pergunta-${entrada.id}" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" /></div>` : ''}
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <button onclick="toggleRevisaoDiario(${entrada.id}, this)" class="btn-toggle-revisao" data-entrada-id="${entrada.id}" title="${entrada.srs && entrada.srs.ativo ? 'Desativar revisão' : 'Ativar revisão'}" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: rgba(255, 255, 255, 0.9); cursor: pointer; font-size: 12px; padding: 4px 8px; transition: all 0.2s;">${entrada.srs && entrada.srs.ativo ? '✅ ON' : '⚪ OFF'}</button>
@@ -14847,35 +14847,61 @@
             const cards = document.querySelectorAll('[data-diario-id]');
             for (const card of cards) {
                 const entradaId = card.getAttribute('data-diario-id');
-                const imgElement = document.getElementById(`diario-img-${entradaId}`);
-                if (!imgElement) continue;
-                
-                // B2-FIX-2: Usar dataset.loaded para evitar re-carregar
-                if (imgElement.dataset.loaded === '1') continue; // Já carregado
-                
                 const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
-                if (!entrada || !entrada.imagem || !entrada.imagem.thumbKey) {
-                    imgElement.style.display = 'none';
-                    continue;
+                if (!entrada) continue;
+                
+                // Carregar imagem da RESPOSTA (existente)
+                const imgElement = document.getElementById(`diario-img-${entradaId}`);
+                if (imgElement && imgElement.dataset.loaded !== '1') {
+                    if (entrada.imagem && entrada.imagem.thumbKey) {
+                        try {
+                            const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
+                            if (thumbBlob) {
+                                const thumbURL = URL.createObjectURL(thumbBlob);
+                                imgElement.src = thumbURL;
+                                imgElement.dataset.loaded = '1';
+                                imgElement.style.display = 'block';
+                                imgElement.onerror = () => {
+                                    URL.revokeObjectURL(thumbURL);
+                                    imgElement.style.display = 'none';
+                                    imgElement.dataset.loaded = '';
+                                };
+                            }
+                        } catch (error) {
+                            console.error('Erro ao carregar thumbnail resposta:', error);
+                            imgElement.style.display = 'none';
+                            imgElement.dataset.loaded = '';
+                        }
+                    } else {
+                        imgElement.style.display = 'none';
+                    }
                 }
                 
-                try {
-                    const thumbBlob = await b0Img_getBlob(entrada.imagem.thumbKey);
-                    if (thumbBlob) {
-                        const thumbURL = URL.createObjectURL(thumbBlob);
-                        imgElement.src = thumbURL;
-                        imgElement.dataset.loaded = '1'; // Marcar como carregado
-                        imgElement.style.display = 'block'; // B2-FIX-2: Forçar exibição
-                        imgElement.onerror = () => {
-                            URL.revokeObjectURL(thumbURL);
-                            imgElement.style.display = 'none';
-                            imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
-                        };
+                // Carregar imagem da PERGUNTA (novo)
+                const imgPerguntaElement = document.getElementById(`diario-img-pergunta-${entradaId}`);
+                if (imgPerguntaElement && imgPerguntaElement.dataset.loaded !== '1') {
+                    if (entrada.imagemPergunta && entrada.imagemPergunta.thumbKey) {
+                        try {
+                            const thumbBlob = await b0Img_getBlob(entrada.imagemPergunta.thumbKey);
+                            if (thumbBlob) {
+                                const thumbURL = URL.createObjectURL(thumbBlob);
+                                imgPerguntaElement.src = thumbURL;
+                                imgPerguntaElement.dataset.loaded = '1';
+                                imgPerguntaElement.style.display = 'block';
+                                imgPerguntaElement.onerror = () => {
+                                    URL.revokeObjectURL(thumbURL);
+                                    imgPerguntaElement.style.display = 'none';
+                                    imgPerguntaElement.dataset.loaded = '';
+                                };
+                            }
+                        } catch (error) {
+                            console.error('Erro ao carregar thumbnail pergunta:', error);
+                            imgPerguntaElement.style.display = 'none';
+                            imgPerguntaElement.dataset.loaded = '';
+                        }
+                    } else {
+                        imgPerguntaElement.style.display = 'none';
                     }
-                } catch (error) {
-                    console.error('Erro ao carregar thumbnail:', error);
-                    imgElement.style.display = 'none';
-                    imgElement.dataset.loaded = ''; // Limpar flag em caso de erro
                 }
             }
         }
@@ -20599,6 +20625,75 @@
             }
             mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
             diario_removerImagemPergunta();
+        }
+        
+        // MP1: Abrir viewer de imagem da PERGUNTA
+        async function diario_abrirViewerImagemPergunta(entradaId) {
+            const entrada = window.diario.entradas.find(e => String(e.id) === String(entradaId));
+            if (!entrada || !entrada.imagemPergunta || !entrada.imagemPergunta.fullKey) {
+                mostrarNotificacaoFeedback('⚠️ Imagem não encontrada', 'error');
+                return;
+            }
+            
+            try {
+                const fullBlob = await b0Img_getBlob(entrada.imagemPergunta.fullKey);
+                if (!fullBlob) {
+                    mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
+                    return;
+                }
+                
+                const imgURL = URL.createObjectURL(fullBlob);
+                
+                // Criar modal/viewer simples para imagem
+                let viewerModal = document.getElementById('diario-viewer-imagem-pergunta');
+                if (!viewerModal) {
+                    viewerModal = document.createElement('div');
+                    viewerModal.id = 'diario-viewer-imagem-pergunta';
+                    viewerModal.className = 'modal';
+                    viewerModal.style.cssText = 'z-index: 2000;';
+                    viewerModal.innerHTML = `
+                        <div class="modal-overlay" onclick="diario_fecharViewerImagemPergunta()" style="position: absolute; inset: 0; background: rgba(0,0,0,0.95);"></div>
+                        <div class="modal-content" style="position: relative; z-index: 1; max-width: 90vw; max-height: 90vh; padding: 20px; background: rgba(0,0,0,0.95);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                <h3 style="margin: 0; color: var(--turquesa-light);">📷 Imagem da Pergunta</h3>
+                                <button onclick="diario_fecharViewerImagemPergunta()" style="background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 32px; line-height: 1; cursor: pointer; padding: 0; width: 32px; height: 32px;">×</button>
+                            </div>
+                            <div style="display: flex; justify-content: center; align-items: center; max-height: calc(90vh - 100px); overflow: auto;">
+                                <img id="diario-viewer-imagem-pergunta-img" src="" style="max-width: 100%; max-height: calc(90vh - 100px); border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" />
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(viewerModal);
+                }
+                
+                const imgElement = document.getElementById('diario-viewer-imagem-pergunta-img');
+                if (imgElement) {
+                    imgElement.src = imgURL;
+                    imgElement.onload = () => {
+                        viewerModal.classList.add('active');
+                    };
+                    imgElement.onerror = () => {
+                        URL.revokeObjectURL(imgURL);
+                        mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
+                    };
+                }
+            } catch (error) {
+                console.error('Erro ao abrir imagem da pergunta:', error);
+                mostrarNotificacaoFeedback('⚠️ Erro ao abrir imagem', 'error');
+            }
+        }
+        
+        // MP1: Fechar viewer de imagem da PERGUNTA
+        function diario_fecharViewerImagemPergunta() {
+            const viewerModal = document.getElementById('diario-viewer-imagem-pergunta');
+            if (viewerModal) {
+                const imgElement = document.getElementById('diario-viewer-imagem-pergunta-img');
+                if (imgElement && imgElement.src && imgElement.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(imgElement.src);
+                    imgElement.src = '';
+                }
+                viewerModal.classList.remove('active');
+            }
         }
         
         // Limpar imagem do modal (ao fechar)
