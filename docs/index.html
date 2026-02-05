@@ -5018,7 +5018,13 @@
                                 Uso atual: <strong id="configStorageUsage">Calculando...</strong><br>
                                 <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Limite varia por aparelho/navegador</span>
                             </p>
-                            <button class="btn btn-primary" onclick="showSection('backup')">📥 Exportar / Importar dados →</button>
+                            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-top: 12px;" onclick="toggleBackupConfig()">
+                                <span style="font-size: 13px; color: rgba(255,255,255,0.7);">📥 Exportar / Importar dados</span>
+                                <span id="backupConfigToggle" style="font-size: 12px; color: rgba(255,255,255,0.5);">▼ Expandir</span>
+                            </div>
+                            <div id="backupConfigContent" style="display: none; margin-top: 12px;">
+                                <button class="btn btn-small btn-secondary" onclick="showSection('backup')" style="width: 100%; text-align: left;">Abrir Backup →</button>
+                            </div>
                         </div>
                         
                         <!-- Bloco 3: Ferramentas (colapsável) -->
@@ -20421,6 +20427,16 @@
         function toggleFerramentasConfig() {
             const content = document.getElementById('ferramentasConfigContent');
             const toggle = document.getElementById('ferramentasConfigToggle');
+            if (!content || !toggle) return;
+            
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+            toggle.textContent = isVisible ? '▼ Expandir' : '▲ Recolher';
+        }
+        
+        function toggleBackupConfig() {
+            const content = document.getElementById('backupConfigContent');
+            const toggle = document.getElementById('backupConfigToggle');
             if (!content || !toggle) return;
             
             const isVisible = content.style.display !== 'none';
