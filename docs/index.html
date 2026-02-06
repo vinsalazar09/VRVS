@@ -1270,6 +1270,14 @@
             line-height: 1.6;
         }
         
+        /* P4: Variáveis CSS âmbar scoped ao modal Perfis */
+        #vrvsModalPerfis {
+            --vrvs-ambar: #FFB84D;
+            --vrvs-ambar-neon: #FFAA00;
+            --vrvs-ambar-soft: rgba(255,184,77,0.18);
+            --vrvs-ambar-border: rgba(255,184,77,0.3);
+        }
+        
         .vrvsModal-badge {
             display: inline-block;
         }
@@ -5116,16 +5124,16 @@
                     <!-- CONFIG REFATORADA -->
                     <div style="margin-top: 24px;">
                         <!-- Bloco 1: Perfil -->
-                        <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
-                            <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">👤 Perfil</h3>
-                            <div style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px;">
-                                <span>Perfil ativo:</span>
-                                <select id="perfilAtivoSelect" onchange="trocarPerfil(this.value)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 8px; color: var(--turquesa-light); font-weight: 600; cursor: pointer;">
+                        <div style="margin-bottom: 24px; padding: 18px; background: linear-gradient(135deg, rgba(0,206,209,0.08), rgba(0,255,224,0.04)); border: 1px solid rgba(0,206,209,0.25); border-radius: 10px; box-shadow: 0 2px 8px rgba(0,206,209,0.1);">
+                            <h3 style="margin-top: 0; margin-bottom: 14px; color: var(--turquesa-light); font-size: 17px; font-weight: 600;">👤 Perfil</h3>
+                            <div style="margin: 0 0 14px 0; font-size: 14px; color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span style="font-weight: 500;">Perfil ativo:</span>
+                                <select id="perfilAtivoSelect" onchange="trocarPerfil(this.value)" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(0,206,209,0.3); border-radius: 6px; padding: 6px 10px; color: var(--turquesa-light); font-weight: 600; cursor: pointer; min-height: 36px; transition: all 0.2s;">
                                     <!-- PATCH D1: Renderizado dinamicamente via renderConfig() -->
                                 </select>
                             </div>
-                            <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 8px 16px;">⚙️ Gerenciar perfis</button>
-                            <p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Crie datasets separados para diferentes projetos de estudo.</p>
+                            <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 10px 18px; min-height: 40px; border-radius: 6px; transition: all 0.2s;">⚙️ Gerenciar perfis</button>
+                            <p style="margin: 10px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
                         
                         <!-- Bloco 2: Armazenamento -->
@@ -5192,25 +5200,7 @@
                 <button class="vrvsModal-close" onclick="fecharModalGerenciarPerfis()">×</button>
             </div>
             <div class="vrvsModal-body">
-                
-                <div class="vrvsModal-section" style="margin-bottom: 24px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 8px;">
-                    <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--turquesa-light); font-size: 16px;">📊 Status Atual</h3>
-                    <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                        Cada perfil já isola um <strong>dataset completo</strong>: Temas, Tarefas, Diário, Caderno e Histórico. 
-                        O perfil ativo muda a plataforma inteira para um ambiente separado.
-                    </p>
-                </div>
-                
-                <div class="vrvsModal-section" style="margin-bottom: 24px; padding: 16px; background: rgba(255,127,80,0.05); border: 1px solid rgba(255,127,80,0.2); border-radius: 8px;">
-                    <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--cobre-light); font-size: 16px;">🎯 Destino</h3>
-                    <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                        <strong>Próximas melhorias:</strong> (1) Backup/Exportar/Importar por perfil (perfil atual), 
-                        (2) Criar/Renomear/Apagar perfis com segurança.
-                    </p>
-                </div>
-                
                 <div class="vrvsModal-section" style="margin-bottom: 24px;">
-                    <h3 style="margin-top: 0; margin-bottom: 12px; color: rgba(255,255,255,0.9); font-size: 16px;">📋 Perfis Existentes</h3>
                     <div id="vrvsModalPerfisLista" style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
                         <!-- PATCH D1: Renderizado dinamicamente via abrirModalGerenciarPerfis() -->
                     </div>
@@ -9315,18 +9305,47 @@
                     // Escape robusto para onclick (backslash primeiro, depois aspas simples)
                     const perfilEsc = String(perfil).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     
+                    // P4: Estilos diferenciados para perfil ativo (neon/glow)
+                    const estiloAtivo = isAtivo ? `
+                        background: linear-gradient(135deg, rgba(0,206,209,0.12), rgba(0,255,224,0.08));
+                        border: 2px solid rgba(0,206,209,0.6);
+                        box-shadow: 
+                            0 0 20px rgba(0,206,209,0.4),
+                            0 0 40px rgba(0,206,209,0.2),
+                            inset 0 0 20px rgba(0,206,209,0.1);
+                    ` : `
+                        background: rgba(255,255,255,0.03);
+                        border: 1px solid rgba(255,255,255,0.1);
+                    `;
+                    
+                    const badgeAtivo = isAtivo ? `
+                        <span style="
+                            margin-left: 8px; 
+                            padding: 4px 10px; 
+                            background: linear-gradient(135deg, rgba(0,206,209,0.3), rgba(0,255,224,0.2));
+                            border: 1px solid rgba(0,206,209,0.5);
+                            border-radius: 12px; 
+                            font-size: 11px; 
+                            font-weight: 700;
+                            color: var(--turquesa-light);
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            box-shadow: 0 0 10px rgba(0,206,209,0.3);
+                        ">● ATIVO</span>
+                    ` : '';
+                    
                     html += `
-                        <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid ${isAtivo ? 'rgba(0,206,209,0.4)' : 'rgba(255,255,255,0.1)'};">
+                        <div style="margin-bottom: 12px; padding: 14px; border-radius: 10px; ${estiloAtivo}">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <span style="color: var(--turquesa-light); font-weight: 600; font-size: 15px;">${displayNameSafe}</span>
-                                    ${isAtivo ? '<span style="margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>' : ''}
+                                    <span style="color: ${isAtivo ? 'var(--turquesa-light)' : 'rgba(255,255,255,0.9)'}; font-weight: ${isAtivo ? '700' : '600'}; font-size: 15px;">${displayNameSafe}</span>
+                                    ${badgeAtivo}
                                 </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button onclick="vrvs_abrirEditarDisplayName('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">✏️ Editar nome</button>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button onclick="vrvs_abrirEditarDisplayName('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; touch-action: manipulation; min-height: 32px; transition: all 0.2s;">✏️ Editar nome</button>
                                     ${!isDefault && !isAtivo ? `
-                                        <button onclick="vrvs_abrirRenomearPerfil('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">✏️ Renomear</button>
-                                        <button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">🗑️ Apagar</button>
+                                        <button onclick="vrvs_abrirRenomearPerfil('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; touch-action: manipulation; min-height: 32px; transition: all 0.2s;">✏️ Renomear</button>
+                                        <button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; touch-action: manipulation; min-height: 32px; transition: all 0.2s;">🗑️ Apagar</button>
                                     ` : ''}
                                 </div>
                             </div>
