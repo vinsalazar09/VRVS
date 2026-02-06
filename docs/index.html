@@ -5419,7 +5419,9 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
-                mostrarNotificacaoFeedback(`✅ Backup completo exportado do perfil "${perfilAtivo}"! (${totalDados} temas, ${totalHistorico} sessões, ${totalAnotacoes} anotações, ${totalLembretes} lembretes, ${totalDiario} entradas do Diário)`);
+                // PATCH P3: Usar displayName sanitizado em mensagens
+                const displayNameAtivo = window.vrvs_sanitizeDisplayName(window.vrvs_getDisplayName(perfilAtivo));
+                mostrarNotificacaoFeedback(`✅ Backup completo exportado do perfil "${displayNameAtivo}"! (${totalDados} temas, ${totalHistorico} sessões, ${totalAnotacoes} anotações, ${totalLembretes} lembretes, ${totalDiario} entradas do Diário)`);
             } catch (error) {
                 console.error('[BACKUP] Erro ao exportar JSON:', error);
                 mostrarNotificacaoFeedback('⚠️ Erro ao exportar backup. Verifique o console.', 'error');
@@ -5555,14 +5557,19 @@
                     
                     // PACOTE A: Avisar se perfil diferente
                     if (perfilDiferente) {
+                        // PATCH P3: Usar displayNames sanitizados em mensagens
+                        const displayNameBackup = window.vrvs_sanitizeDisplayName(window.vrvs_getDisplayName(perfilBackup));
+                        const displayNameAtivo = window.vrvs_sanitizeDisplayName(window.vrvs_getDisplayName(perfilAtivo));
                         mensagemConfirmacao += `⚠️ ATENÇÃO CRÍTICA:\n` +
-                            `• Backup foi criado no perfil "${perfilBackup}"\n` +
-                            `• Você está importando no perfil "${perfilAtivo}"\n` +
-                            `• Os dados serão importados APENAS no perfil "${perfilAtivo}"\n` +
-                            `• O perfil "${perfilBackup}" NÃO será afetado\n\n`;
+                            `• Backup foi criado no perfil "${displayNameBackup}"\n` +
+                            `• Você está importando no perfil "${displayNameAtivo}"\n` +
+                            `• Os dados serão importados APENAS no perfil "${displayNameAtivo}"\n` +
+                            `• O perfil "${displayNameBackup}" NÃO será afetado\n\n`;
                     }
                     
-                    mensagemConfirmacao += `⚠️ Esta operação substituirá TODOS os dados do perfil "${perfilAtivo}"!\n\n` +
+                    // PATCH P3: Usar displayName sanitizado
+                    const displayNameAtivo = window.vrvs_sanitizeDisplayName(window.vrvs_getDisplayName(perfilAtivo));
+                    mensagemConfirmacao += `⚠️ Esta operação substituirá TODOS os dados do perfil "${displayNameAtivo}"!\n\n` +
                         `Deseja continuar?`;
                     
                     const confirmacao = confirm(mensagemConfirmacao);
@@ -8983,12 +8990,14 @@
         // PACOTE A: Função helper para atualizar labels de perfil ativo
         function atualizarLabelsPerfilAtivo() {
             const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+            // PATCH P3: Usar displayName em vez de perfilId (textContent já escapa automaticamente)
+            const displayName = window.vrvs_getDisplayName(perfilAtivo);
             const elBackup = document.getElementById('backupPerfilAtivo');
             const elBackupImport = document.getElementById('backupPerfilAtivoImport');
             const elConfig = document.getElementById('configPerfilAtivo');
-            if (elBackup) elBackup.textContent = perfilAtivo;
-            if (elBackupImport) elBackupImport.textContent = perfilAtivo;
-            if (elConfig) elConfig.textContent = perfilAtivo;
+            if (elBackup) elBackup.textContent = displayName;
+            if (elBackupImport) elBackupImport.textContent = displayName;
+            if (elConfig) elConfig.textContent = displayName;
         }
         
         function renderConfig() {
@@ -9030,11 +9039,15 @@
             // PATCH D1: Sincronizar select de perfil (renderizar dinamicamente)
             const selectPerfil = document.getElementById('perfilAtivoSelect');
             if (selectPerfil) {
-                // Renderizar options dinamicamente
+                // PATCH P3: Usar displayName no texto do option via DOM (mais seguro que innerHTML)
                 const perfis = window.vrvs_listarPerfis();
-                selectPerfil.innerHTML = perfis.map(p => 
-                    `<option value="${p}">${p}</option>`
-                ).join('');
+                selectPerfil.innerHTML = ''; // Limpar primeiro
+                perfis.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p; // value sempre é perfilId (não displayName)
+                    option.textContent = window.vrvs_getDisplayName(p); // textContent escapa automaticamente
+                    selectPerfil.appendChild(option);
+                });
                 selectPerfil.value = window.vrvs_perfilAtivo || 'DEFAULT';
             }
         }
@@ -9052,6 +9065,63 @@
         window.vrvs_diarioKeyOf = function(perfil) {
             return window.vrvs_keyOf(perfil, 'diario');
         };
+        
+        // ==================== P3: DISPLAY NAMES DE PERFIS ====================
+        
+        // Helper: Escapar HTML para prevenir XSS
+        window.vrvs_escapeHTML = function(str) {
+            if (typeof str !== 'string') return String(str || '');
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+        
+        // Helper: Obter objeto completo de displayNames
+        window.vrvs_getDisplayNames = function() {
+            try {
+                const raw = localStorage.getItem('vrvs_perfis_displayNames');
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return (typeof parsed === 'object' && parsed !== null) ? parsed : {};
+            } catch(e) {
+                console.warn('[PERFIS P3] Erro ao ler displayNames:', e);
+                return {};
+            }
+        };
+        
+        // Helper: Salvar objeto completo de displayNames
+        window.vrvs_setDisplayNames = function(obj) {
+            try {
+                if (!obj || typeof obj !== 'object') {
+                    mostrarNotificacaoFeedback('⚠️ Erro ao salvar nomes de exibição', 'error');
+                    return false;
+                }
+                localStorage.setItem('vrvs_perfis_displayNames', JSON.stringify(obj));
+                return true;
+            } catch(e) {
+                console.error('[PERFIS P3] Erro ao salvar displayNames:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao salvar nomes de exibição (armazenamento cheio?)', 'error');
+                return false;
+            }
+        };
+        
+        // Helper: Obter displayName de um perfil (ou retornar perfilId se não houver)
+        window.vrvs_getDisplayName = function(perfilId) {
+            if (!perfilId || typeof perfilId !== 'string') return perfilId || 'DEFAULT';
+            const displayNames = window.vrvs_getDisplayNames();
+            return displayNames[perfilId] || perfilId;
+        };
+        
+        // Helper: Sanitizar displayName para uso seguro em strings (trim + limit)
+        window.vrvs_sanitizeDisplayName = function(displayName) {
+            if (typeof displayName !== 'string') return String(displayName || '').trim();
+            return displayName.trim().substring(0, 40);
+        };
+        
+        // ==================== FIM P3: DISPLAY NAMES ====================
         
         // Listar perfis existentes (descobrir via localStorage + lista explícita)
         window.vrvs_listarPerfis = function() {
@@ -9238,6 +9308,10 @@
                 perfis.forEach(perfil => {
                     const isAtivo = perfil === perfilAtivo;
                     const isDefault = perfil === 'DEFAULT';
+                    // PATCH P3: Usar displayName em vez de perfilId para exibição
+                    const displayName = window.vrvs_getDisplayName(perfil);
+                    // PATCH P3: Escapar HTML para segurança
+                    const displayNameSafe = window.vrvs_escapeHTML(displayName);
                     // Escape robusto para onclick (backslash primeiro, depois aspas simples)
                     const perfilEsc = String(perfil).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     
@@ -9245,10 +9319,11 @@
                         <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid ${isAtivo ? 'rgba(0,206,209,0.4)' : 'rgba(255,255,255,0.1)'};">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <span style="color: var(--turquesa-light); font-weight: 600; font-size: 15px;">${perfil}</span>
+                                    <span style="color: var(--turquesa-light); font-weight: 600; font-size: 15px;">${displayNameSafe}</span>
                                     ${isAtivo ? '<span style="margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>' : ''}
                                 </div>
                                 <div style="display: flex; gap: 8px;">
+                                    <button onclick="vrvs_abrirEditarDisplayName('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">✏️ Editar nome</button>
                                     ${!isDefault && !isAtivo ? `
                                         <button onclick="vrvs_abrirRenomearPerfil('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">✏️ Renomear</button>
                                         <button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">🗑️ Apagar</button>
@@ -9372,6 +9447,58 @@
                     // Cancelou: nada
                 }
             );
+        };
+        
+        // PATCH P3: Abrir modal para editar displayName de um perfil
+        window.vrvs_abrirEditarDisplayName = function(perfilId) {
+            if (!perfilId || typeof perfilId !== 'string') {
+                mostrarNotificacaoFeedback('⚠️ Perfil inválido', 'error');
+                return;
+            }
+            
+            const displayNames = window.vrvs_getDisplayNames();
+            const displayNameAtual = displayNames[perfilId] || '';
+            
+            // PATCH P3: Prompt funciona mesmo se iPhone ignorar valor default
+            const promptMsg = `Digite o nome de exibição para o perfil "${perfilId}":\n\n(Deixe vazio para remover o nome de exibição)\n(Máximo: 40 caracteres)`;
+            
+            // Tentar passar valor atual, mas não depender dele
+            const novoDisplayNameInput = prompt(promptMsg, displayNameAtual);
+            
+            if (novoDisplayNameInput === null) {
+                // Usuário cancelou prompt - sair silencioso
+                return;
+            }
+            
+            // Sanitização leve (garantir string)
+            let novoDisplayName = String(novoDisplayNameInput || '').trim();
+            
+            // Limite de caracteres
+            if (novoDisplayName.length > 40) {
+                novoDisplayName = novoDisplayName.substring(0, 40).trim();
+                mostrarNotificacaoFeedback('⚠️ Nome truncado para 40 caracteres', 'warning');
+            }
+            
+            // Atualizar displayNames
+            const displayNamesAtualizado = { ...displayNames };
+            
+            if (!novoDisplayName || novoDisplayName.length === 0) {
+                // Remover displayName (volta a exibir perfilId)
+                delete displayNamesAtualizado[perfilId];
+            } else {
+                // Salvar novo displayName
+                displayNamesAtualizado[perfilId] = novoDisplayName;
+            }
+            
+            if (window.vrvs_setDisplayNames(displayNamesAtualizado)) {
+                abrirModalGerenciarPerfis(); // Recarregar lista
+                renderConfig(); // Atualizar select também
+                if (novoDisplayName && novoDisplayName.length > 0) {
+                    mostrarNotificacaoFeedback(`✅ Nome de exibição atualizado para "${novoDisplayName}"`);
+                } else {
+                    mostrarNotificacaoFeedback(`✅ Nome de exibição removido`);
+                }
+            }
         };
         
         // PATCH D2: Modal auxiliar para renomear perfil
