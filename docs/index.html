@@ -9197,23 +9197,6 @@
                 return false;
             }
             
-            // Confirmação forte (normalizada para iPhone)
-            const confirmacao = prompt(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nPara confirmar, digite exatamente: APAGAR\n\nPerfil a ser apagado: "${perfil}"`);
-
-            if (confirmacao === null) {
-                // Usuário cancelou prompt
-                mostrarNotificacaoFeedback('❌ Confirmação cancelada', 'error');
-                return false;
-            }
-
-            // Normalizar entrada (trim + uppercase) para aceitar "apagar", " APAGAR ", etc.
-            const confirmacaoNormalizada = String(confirmacao).trim().toUpperCase();
-
-            if (confirmacaoNormalizada !== 'APAGAR') {
-                mostrarNotificacaoFeedback('❌ Confirmação inválida. Digite exatamente: APAGAR', 'error');
-                return false;
-            }
-            
             // Apagar todas as chaves do perfil
             const datasets = ['dados', 'historico', 'anotacoes', 'lembretes', 'areas_custom', 'diario'];
             datasets.forEach(baseKey => {
@@ -9294,12 +9277,101 @@
             }
         };
         
-        // PATCH D1: Confirmar apagar perfil
+        // PATCH D3: Helper de confirmação simples (toast/overlay)
+        window.vrvs_confirmToast = function(mensagem, onConfirm, onCancel) {
+            // Remover toast/overlay anteriores se existirem
+            const toastAnterior = document.getElementById('vrvs-confirm-toast');
+            const overlayAnterior = document.getElementById('vrvs-confirm-overlay');
+            if (toastAnterior) toastAnterior.remove();
+            if (overlayAnterior) overlayAnterior.remove();
+            
+            // Criar overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'vrvs-confirm-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.6);
+                z-index: 999997;
+            `;
+            
+            // Criar toast
+            const toast = document.createElement('div');
+            toast.id = 'vrvs-confirm-toast';
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.95);
+                border: 2px solid rgba(0,206,209,0.5);
+                border-radius: 12px;
+                padding: 24px;
+                z-index: 999998;
+                min-width: 280px;
+                max-width: 90vw;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            `;
+            
+            toast.innerHTML = `
+                <div style="color: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 20px; text-align: center; line-height: 1.4;">
+                    ${mensagem}
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button id="vrvs-confirm-cancel" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.9); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; touch-action: manipulation;">Cancelar</button>
+                    <button id="vrvs-confirm-ok" style="flex: 1; background: rgba(239,68,68,0.3); border: 1px solid rgba(239,68,68,0.6); color: #EF4444; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; touch-action: manipulation;">Apagar</button>
+                </div>
+            `;
+            
+            // Função fechar (remove toast E overlay)
+            const fechar = () => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            };
+            
+            // Append no DOM ANTES de bindar handlers
+            document.body.appendChild(overlay);
+            document.body.appendChild(toast);
+            
+            // Bindar handlers usando referências locais (querySelector no toast já appendado)
+            const btnCancel = toast.querySelector('#vrvs-confirm-cancel');
+            const btnOk = toast.querySelector('#vrvs-confirm-ok');
+            
+            btnCancel.onclick = () => {
+                fechar();
+                if (onCancel) onCancel();
+            };
+            
+            btnOk.onclick = () => {
+                fechar();
+                if (onConfirm) onConfirm();
+            };
+            
+            // Clique no overlay cancela
+            overlay.onclick = () => {
+                fechar();
+                if (onCancel) onCancel();
+            };
+        };
+        
+        // PATCH D3: Confirmar apagar perfil (com toast de confirmação)
         window.vrvs_confirmarApagarPerfil = function(perfil) {
-            if (window.vrvs_apagarPerfil(perfil)) {
-                abrirModalGerenciarPerfis(); // Recarregar lista
-                renderConfig(); // Atualizar select
-            }
+            window.vrvs_confirmToast(
+                `Apagar o perfil "${perfil}"?<br><small style="color: rgba(255,255,255,0.6); display: block; margin-top: 8px;">Esta ação é irreversível.</small>`,
+                () => {
+                    // Confirmou: apagar
+                    if (window.vrvs_apagarPerfil(perfil)) {
+                        abrirModalGerenciarPerfis(); // Recarregar lista
+                        renderConfig(); // Atualizar select
+                    }
+                },
+                () => {
+                    // Cancelou: nada
+                }
+            );
         };
         
         // PATCH D2: Modal auxiliar para renomear perfil
