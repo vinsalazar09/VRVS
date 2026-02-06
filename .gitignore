@@ -41,6 +41,8 @@ DIARIO/CURSOR/*.txt
 !DIARIO/CURSOR/BASE_CONHECIMENTO_PLATAFORMA.md
 !DIARIO/CURSOR/CADERNO_ERROS_ACERTOS.txt
 DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.md
+DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.sh
+DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.txt
 
 # Scripts temporários
 *.py
@@ -51,6 +53,11 @@ DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.md
 !docs/manifest.json
 !docs/logo.*
 !docs/favicon.ico
+
+# Arquivos scratch/PoC na raiz
+mapeamento_completo.txt
+poc_*.txt
+teot_data.json
 
 # Arquivos específicos que devem ser ignorados
 docs/COMO_ABRIR_CONSOLE_IPHONE.md
