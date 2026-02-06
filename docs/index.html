@@ -616,6 +616,7 @@
             --cobre-main: #FF9F40;
             --cobre-dark: #E5892E;
             --cobre-darker: #B8701F;
+            --ambar-claro: #FFA366; /* P4: Âmbar claro para UI Perfis */
             
             /* GLASSMORPHISM */
             --glass-bg: rgba(20, 35, 45, 0.4);
@@ -1172,12 +1173,12 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
-        /* ==================== MODAL GERENCIAR PERFIS (P1.3) ==================== */
+        /* ==================== MODAL GERENCIAR PERFIS (P4 - REFATORADO) ==================== */
         
         .vrvsModal {
             display: none;
             position: fixed;
-            z-index: 1001; /* Acima do .modal padrão (z-index: 1000) */
+            z-index: 1001;
             left: 0;
             top: 0;
             width: 100%;
@@ -1200,18 +1201,15 @@
         .vrvsModal-content {
             position: relative;
             z-index: 1;
-            background: linear-gradient(135deg,
-                rgba(20, 35, 45, 0.95),
-                rgba(30, 50, 60, 0.95)
-            );
+            background: rgba(10, 26, 31, 0.98);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--turquesa-light);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 24px;
+            padding: 0;
+            max-width: 340px;
             width: 90%;
             max-height: 85vh;
-            overflow-y: auto;
+            overflow: hidden;
             animation: vrvsModalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             color: rgba(255,255,255,0.9);
         }
@@ -1231,55 +1229,288 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(0,206,209,0.2);
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .vrvsModal-title {
             margin: 0;
-            color: var(--turquesa-light);
+            color: #FFFFFF;
             font-size: 20px;
-            font-weight: 600;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .vrvsModal-close {
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.7);
-            font-size: 32px;
-            line-height: 1;
-            cursor: pointer;
-            padding: 0;
             width: 32px;
             height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
         
         .vrvsModal-close:hover {
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.15);
         }
         
         .vrvsModal-body {
+            padding: 20px;
             color: rgba(255,255,255,0.9);
             line-height: 1.6;
         }
         
-        /* P4: Variáveis CSS âmbar scoped ao modal Perfis */
-        #vrvsModalPerfis {
-            --vrvs-ambar: #FFB84D;
-            --vrvs-ambar-neon: #FFAA00;
-            --vrvs-ambar-soft: rgba(255,184,77,0.18);
-            --vrvs-ambar-border: rgba(255,184,77,0.3);
+        .vrvsModal-footer {
+            padding: 0 20px 20px 20px;
         }
         
-        .vrvsModal-badge {
-            display: inline-block;
+        /* ============================================ */
+        /* ITEM DE PERFIL - BASE                       */
+        /* ============================================ */
+        
+        .perfil-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            background: rgba(15, 40, 50, 0.9);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+        
+        .perfil-item:hover {
+            background: rgba(20, 50, 60, 0.95);
+        }
+        
+        .perfil-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .perfil-item-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .perfil-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        
+        /* ============================================ */
+        /* BOTÕES DE AÇÃO                              */
+        /* ============================================ */
+        
+        .btn-perfil-action {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        
+        .btn-perfil-ativar {
+            background: rgba(0, 206, 209, 0.15);
+            color: #00CED1;
+        }
+        
+        .btn-perfil-ativar:hover {
+            background: rgba(0, 206, 209, 0.25);
+        }
+        
+        .btn-perfil-editar {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .btn-perfil-editar:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .btn-perfil-apagar {
+            background: rgba(255, 69, 58, 0.15);
+            color: #ff453a;
+        }
+        
+        .btn-perfil-apagar:hover {
+            background: rgba(255, 69, 58, 0.25);
+        }
+        
+        /* ============================================ */
+        /* PERFIL ATIVO - GRADIENTE TURQUESA + ÂMBAR   */
+        /* ============================================ */
+        
+        .perfil-item.ativo {
+            background: linear-gradient(135deg, rgba(0, 206, 209, 0.12) 0%, rgba(255, 163, 102, 0.08) 100%);
+            border: 2px solid transparent;
+            position: relative;
+            isolation: isolate;
+        }
+        
+        /* BORDA GRADIENTE */
+        .perfil-item.ativo::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 16px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--turquesa-neon) 0%, var(--ambar-claro) 100%);
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        /* GLOW EXTERNO */
+        .perfil-item.ativo::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--turquesa-neon) 0%, var(--ambar-claro) 100%);
+            opacity: 0.25;
+            filter: blur(15px);
+            z-index: -1;
+            animation: glowPulse 2.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.35; }
+        }
+        
+        .perfil-item.ativo .perfil-item-name {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        
+        /* ============================================ */
+        /* BADGE "ATIVO"                               */
+        /* ============================================ */
+        
+        .badge-ativo {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: linear-gradient(135deg, var(--turquesa-neon) 0%, var(--ambar-claro) 100%);
+            color: #000000;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        
+        .badge-ativo-dot {
+            width: 6px;
+            height: 6px;
+            background: #000000;
+            border-radius: 50%;
+            animation: dotPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes dotPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* ============================================ */
+        /* BOTÃO CRIAR NOVO PERFIL                     */
+        /* ============================================ */
+        
+        .btn-criar-perfil {
+            width: 100%;
+            padding: 16px;
+            margin-top: 8px;
+            background: transparent;
+            border: 2px dashed rgba(0, 206, 209, 0.4);
+            border-radius: 14px;
+            color: #00CED1;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+        
+        .btn-criar-perfil:hover {
+            background: rgba(0, 206, 209, 0.08);
+            border-color: var(--turquesa-neon);
+        }
+        
+        .btn-criar-perfil-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--turquesa-neon) 0%, var(--ambar-claro) 100%);
+            color: #000000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        /* ============================================ */
+        /* BOTÃO FECHAR                                */
+        /* ============================================ */
+        
+        .btn-fechar-modal {
+            width: 100%;
+            padding: 16px;
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+        
+        .btn-fechar-modal:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
         
         /* Mobile: modal mais próximo do topo */
@@ -5128,11 +5359,11 @@
                             <h3 style="margin-top: 0; margin-bottom: 14px; color: var(--turquesa-light); font-size: 17px; font-weight: 600;">👤 Perfil</h3>
                             <div style="margin: 0 0 14px 0; font-size: 14px; color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <span style="font-weight: 500;">Perfil ativo:</span>
-                                <select id="perfilAtivoSelect" onchange="trocarPerfil(this.value)" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(0,206,209,0.3); border-radius: 6px; padding: 6px 10px; color: var(--turquesa-light); font-weight: 600; cursor: pointer; min-height: 36px; transition: all 0.2s;">
+                                <select id="perfilAtivoSelect" onchange="trocarPerfil(this.value)" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(0,206,209,0.3); border-radius: 6px; padding: 6px 10px; color: var(--turquesa-light); font-weight: 600; cursor: pointer; min-height: 36px; transition: all 0.2s; box-shadow: 0 0 0 1px rgba(255,163,102,0.1);">
                                     <!-- PATCH D1: Renderizado dinamicamente via renderConfig() -->
                                 </select>
                             </div>
-                            <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 10px 18px; min-height: 40px; border-radius: 6px; transition: all 0.2s;">⚙️ Gerenciar perfis</button>
+                            <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 10px 18px; min-height: 40px; border-radius: 6px; transition: all 0.2s; box-shadow: 0 0 0 1px rgba(255,163,102,0.15), 0 2px 4px rgba(0,206,209,0.1);">⚙️ Gerenciar perfis</button>
                             <p style="margin: 10px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
                         
@@ -5200,18 +5431,16 @@
                 <button class="vrvsModal-close" onclick="fecharModalGerenciarPerfis()">×</button>
             </div>
             <div class="vrvsModal-body">
-                <div class="vrvsModal-section" style="margin-bottom: 24px;">
-                    <div id="vrvsModalPerfisLista" style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        <!-- PATCH D1: Renderizado dinamicamente via abrirModalGerenciarPerfis() -->
-                    </div>
-                    <div style="margin-top: 16px;">
-                        <button class="btn btn-secondary" onclick="vrvs_abrirModalCriarPerfil()" style="width: 100%;">➕ Criar novo perfil</button>
-                    </div>
+                <div id="vrvsModalPerfisLista">
+                    <!-- PATCH D1: Renderizado dinamicamente via abrirModalGerenciarPerfis() -->
                 </div>
-                
+                <button class="btn-criar-perfil" onclick="vrvs_abrirModalCriarPerfil()">
+                    <span class="btn-criar-perfil-icon">+</span>
+                    Criar novo perfil
+                </button>
             </div>
-            <div class="vrvsModal-footer" style="margin-top: 24px; display: flex; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="fecharModalGerenciarPerfis()">Fechar</button>
+            <div class="vrvsModal-footer">
+                <button class="btn-fechar-modal" onclick="fecharModalGerenciarPerfis()">FECHAR</button>
             </div>
         </div>
     </div>
@@ -9299,55 +9528,34 @@
                     const isAtivo = perfil === perfilAtivo;
                     const isDefault = perfil === 'DEFAULT';
                     // PATCH P3: Usar displayName em vez de perfilId para exibição
-                    const displayName = window.vrvs_getDisplayName(perfil);
+                    const displayName = window.vrvs_getDisplayName ? window.vrvs_getDisplayName(perfil) : perfil;
                     // PATCH P3: Escapar HTML para segurança
-                    const displayNameSafe = window.vrvs_escapeHTML(displayName);
+                    const displayNameSafe = window.vrvs_escapeHTML ? window.vrvs_escapeHTML(displayName) : displayName;
                     // Escape robusto para onclick (backslash primeiro, depois aspas simples)
                     const perfilEsc = String(perfil).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     
-                    // P4: Estilos diferenciados para perfil ativo (neon/glow)
-                    const estiloAtivo = isAtivo ? `
-                        background: linear-gradient(135deg, rgba(0,206,209,0.12), rgba(0,255,224,0.08));
-                        border: 2px solid rgba(0,206,209,0.6);
-                        box-shadow: 
-                            0 0 20px rgba(0,206,209,0.4),
-                            0 0 40px rgba(0,206,209,0.2),
-                            inset 0 0 20px rgba(0,206,209,0.1);
-                    ` : `
-                        background: rgba(255,255,255,0.03);
-                        border: 1px solid rgba(255,255,255,0.1);
-                    `;
-                    
-                    const badgeAtivo = isAtivo ? `
-                        <span style="
-                            margin-left: 8px; 
-                            padding: 4px 10px; 
-                            background: linear-gradient(135deg, rgba(0,206,209,0.3), rgba(0,255,224,0.2));
-                            border: 1px solid rgba(0,206,209,0.5);
-                            border-radius: 12px; 
-                            font-size: 11px; 
-                            font-weight: 700;
-                            color: var(--turquesa-light);
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                            box-shadow: 0 0 10px rgba(0,206,209,0.3);
-                        ">● ATIVO</span>
-                    ` : '';
+                    // P4: Usar classes CSS ao invés de inline styles
+                    const classeAtivo = isAtivo ? 'ativo' : '';
                     
                     html += `
-                        <div style="margin-bottom: 12px; padding: 14px; border-radius: 10px; ${estiloAtivo}">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <span style="color: ${isAtivo ? 'var(--turquesa-light)' : 'rgba(255,255,255,0.9)'}; font-weight: ${isAtivo ? '700' : '600'}; font-size: 15px;">${displayNameSafe}</span>
-                                    ${badgeAtivo}
-                                </div>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <button onclick="vrvs_abrirEditarDisplayName('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; touch-action: manipulation; min-height: 32px; transition: all 0.2s;">✏️ Editar nome</button>
-                                    ${!isDefault && !isAtivo ? `
-                                        <button onclick="vrvs_abrirRenomearPerfil('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; touch-action: manipulation; min-height: 32px; transition: all 0.2s;">✏️ Renomear</button>
-                                        <button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; touch-action: manipulation; min-height: 32px; transition: all 0.2s;">🗑️ Apagar</button>
-                                    ` : ''}
-                                </div>
+                        <div class="perfil-item ${classeAtivo}">
+                            <div class="perfil-item-info">
+                                <span class="perfil-item-name">${displayNameSafe}</span>
+                                ${isAtivo ? `
+                                    <span class="badge-ativo">
+                                        <span class="badge-ativo-dot"></span>
+                                        ATIVO
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <div class="perfil-item-actions">
+                                ${!isAtivo ? `
+                                    <button class="btn-perfil-action btn-perfil-ativar" onclick="trocarPerfil('${perfilEsc}')" title="Ativar perfil">▶</button>
+                                ` : ''}
+                                <button class="btn-perfil-action btn-perfil-editar" onclick="vrvs_abrirEditarDisplayName('${perfilEsc}')" title="Editar nome">✏️</button>
+                                ${!isDefault && !isAtivo ? `
+                                    <button class="btn-perfil-action btn-perfil-apagar" onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" title="Apagar perfil">🗑️</button>
+                                ` : ''}
                             </div>
                         </div>
                     `;

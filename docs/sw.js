@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.219-p4-ui-perfis-polish-20260206-0400";
+const CACHE_NAME = "vrvs-v5.3.220-perfis-ui-ambar-20260206-0500";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
