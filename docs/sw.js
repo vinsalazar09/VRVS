@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.216-confirm-toast-apagar-perfil-20260206-0100";
+const CACHE_NAME = "vrvs-v5.3.217-zoom-imagem-pergunta-safe-20260206-0200";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

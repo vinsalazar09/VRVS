@@ -21217,50 +21217,290 @@
             }
             
             try {
+                // PATCH P2: Usar imagemPergunta.fullKey (igual resposta usa imagem.fullKey)
                 const fullBlob = await b0Img_getBlob(entrada.imagemPergunta.fullKey);
                 if (!fullBlob) {
                     mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
                     return;
                 }
                 
-                const imgURL = URL.createObjectURL(fullBlob);
+                const fullURL = URL.createObjectURL(fullBlob);
                 
-                // Criar modal/viewer simples para imagem
-                let viewerModal = document.getElementById('diario-viewer-imagem-pergunta');
-                if (!viewerModal) {
-                    viewerModal = document.createElement('div');
-                    viewerModal.id = 'diario-viewer-imagem-pergunta';
-                    viewerModal.className = 'modal';
-                    viewerModal.style.cssText = 'z-index: 2000;';
-                    viewerModal.innerHTML = `
-                        <div class="modal-overlay" onclick="diario_fecharViewerImagemPergunta()" style="position: absolute; inset: 0; background: rgba(0,0,0,0.95);"></div>
-                        <div class="modal-content" style="position: relative; z-index: 1; max-width: 90vw; max-height: 90vh; padding: 20px; background: rgba(0,0,0,0.95);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                <h3 style="margin: 0; color: var(--turquesa-light);">📷 Imagem da Pergunta</h3>
-                                <button onclick="diario_fecharViewerImagemPergunta()" style="background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 32px; line-height: 1; cursor: pointer; padding: 0; width: 32px; height: 32px;">×</button>
-                            </div>
-                            <div style="display: flex; justify-content: center; align-items: center; max-height: calc(90vh - 100px); overflow: auto;">
-                                <img id="diario-viewer-imagem-pergunta-img" src="" style="max-width: 100%; max-height: calc(90vh - 100px); border-radius: 8px; border: 1px solid rgba(0,206,209,0.3);" />
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(viewerModal);
-                }
+                // Estado do zoom/pan
+                let scale = 1;
+                let tx = 0;
+                let ty = 0;
                 
-                const imgElement = document.getElementById('diario-viewer-imagem-pergunta-img');
-                if (imgElement) {
-                    imgElement.src = imgURL;
-                    imgElement.onload = () => {
-                        viewerModal.classList.add('active');
+                let baseW = 0;
+                let baseH = 0;
+                
+                let isPanning = false;
+                let startX = 0, startY = 0;
+                let startTX = 0, startTY = 0;
+                
+                let isPinching = false;
+                let initialPinchDistance = 0;
+                let initialPinchScale = 1;
+                let initialPinchCenterX = 0;
+                let initialPinchCenterY = 0;
+                let initialPinchTX = 0;
+                let initialPinchTY = 0;
+                
+                let lastTapTime = 0;
+                let lastTapX = 0;
+                let lastTapY = 0;
+                
+                // Criar overlay (ID único para não conflitar com viewer da resposta)
+                const overlay = document.createElement('div');
+                overlay.id = 'diario-viewer-overlay-pergunta';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.95);
+                    z-index: 999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    overflow: hidden;
+                `;
+                
+                // Imagem ampliada
+                const img = document.createElement('img');
+                img.src = fullURL;
+                img.style.cssText = `
+                    max-width: 95%;
+                    max-height: 95%;
+                    object-fit: contain;
+                    border-radius: 8px;
+                    user-select: none;
+                    -webkit-user-select: none;
+                    -webkit-touch-callout: none;
+                    transform-origin: center center;
+                `;
+                
+                // Helpers
+                const aplicarTransform = () => {
+                    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+                };
+                
+                const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+                
+                const clampPan = () => {
+                    const o = overlay.getBoundingClientRect();
+                    const maxX = Math.max(0, (baseW * scale - o.width) / 2);
+                    const maxY = Math.max(0, (baseH * scale - o.height) / 2);
+                    tx = clamp(tx, -maxX, maxX);
+                    ty = clamp(ty, -maxY, maxY);
+                };
+                
+                const resetZoom = () => {
+                    scale = 1;
+                    tx = 0;
+                    ty = 0;
+                    aplicarTransform();
+                };
+                
+                const zoomAt = (clientX, clientY, nextScale) => {
+                    const o = overlay.getBoundingClientRect();
+                    const x = clientX - o.left;
+                    const y = clientY - o.top;
+                    
+                    // mover "em direção" ao ponto tocado
+                    scale = nextScale;
+                    tx = (o.width / 2 - x) * (scale - 1);
+                    ty = (o.height / 2 - y) * (scale - 1);
+                    
+                    clampPan();
+                    aplicarTransform();
+                };
+                
+                const calcularDistancia = (t1, t2) => {
+                    const dx = t1.clientX - t2.clientX;
+                    const dy = t1.clientY - t2.clientY;
+                    return Math.hypot(dx, dy);
+                };
+                
+                const calcularCentro = (t1, t2) => {
+                    return {
+                        x: (t1.clientX + t2.clientX) / 2,
+                        y: (t1.clientY + t2.clientY) / 2
                     };
-                    imgElement.onerror = () => {
-                        URL.revokeObjectURL(imgURL);
-                        mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
-                    };
-                }
+                };
+                
+                // Medir tamanho base após carregar
+                img.onload = () => {
+                    requestAnimationFrame(() => {
+                        const r = img.getBoundingClientRect();
+                        baseW = r.width || baseW;
+                        baseH = r.height || baseH;
+                        aplicarTransform();
+                    });
+                };
+                
+                // Touch handlers
+                img.addEventListener('touchstart', (e) => {
+                    if (!e.touches) return;
+                    
+                    // Pinch gesture (2 toques)
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        isPanning = false;
+                        isPinching = true;
+                        
+                        const t1 = e.touches[0];
+                        const t2 = e.touches[1];
+                        initialPinchDistance = calcularDistancia(t1, t2);
+                        initialPinchScale = scale;
+                        const centro = calcularCentro(t1, t2);
+                        initialPinchCenterX = centro.x;
+                        initialPinchCenterY = centro.y;
+                        initialPinchTX = tx;
+                        initialPinchTY = ty;
+                        
+                        img.style.transition = 'none';
+                        return;
+                    }
+                    
+                    // Single touch (double-tap ou pan)
+                    if (e.touches.length !== 1) return;
+                    
+                    const t = e.touches[0];
+                    const now = Date.now();
+                    const dt = now - lastTapTime;
+                    const dx = Math.abs(t.clientX - lastTapX);
+                    const dy = Math.abs(t.clientY - lastTapY);
+                    
+                    // double-tap
+                    if (dt < 300 && dx < 40 && dy < 40) {
+                        e.preventDefault();
+                        lastTapTime = 0;
+                        
+                        if (scale === 1) {
+                            zoomAt(t.clientX, t.clientY, 2.5);
+                        } else {
+                            resetZoom();
+                        }
+                        return;
+                    }
+                    
+                    lastTapTime = now;
+                    lastTapX = t.clientX;
+                    lastTapY = t.clientY;
+                    
+                    // pan só se estiver ampliado
+                    if (scale > 1) {
+                        e.preventDefault();
+                        isPanning = true;
+                        isPinching = false;
+                        startX = t.clientX;
+                        startY = t.clientY;
+                        startTX = tx;
+                        startTY = ty;
+                        img.style.transition = 'none';
+                    }
+                }, { passive: false });
+                
+                img.addEventListener('touchmove', (e) => {
+                    if (!e.touches) return;
+                    
+                    // Pinch gesture (2 toques)
+                    if (e.touches.length === 2 && isPinching) {
+                        e.preventDefault();
+                        const t1 = e.touches[0];
+                        const t2 = e.touches[1];
+                        const currentDistance = calcularDistancia(t1, t2);
+                        
+                        if (initialPinchDistance > 0) {
+                            const scaleFactor = currentDistance / initialPinchDistance;
+                            scale = Math.max(1, Math.min(5, initialPinchScale * scaleFactor));
+                            
+                            // Ajustar translate para manter o ponto de zoom fixo
+                            const o = overlay.getBoundingClientRect();
+                            const centro = calcularCentro(t1, t2);
+                            const deltaX = centro.x - initialPinchCenterX;
+                            const deltaY = centro.y - initialPinchCenterY;
+                            
+                            tx = initialPinchTX + deltaX;
+                            ty = initialPinchTY + deltaY;
+                            
+                            clampPan();
+                            aplicarTransform();
+                        }
+                        return;
+                    }
+                    
+                    // Pan gesture (1 toque)
+                    if (!isPanning || scale <= 1 || e.touches.length !== 1) return;
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    tx = startTX + (t.clientX - startX);
+                    ty = startTY + (t.clientY - startY);
+                    clampPan();
+                    aplicarTransform();
+                }, { passive: false });
+                
+                img.addEventListener('touchend', (e) => {
+                    if (isPinching && (!e.touches || e.touches.length < 2)) {
+                        isPinching = false;
+                        img.style.transition = '';
+                    }
+                    if (isPanning && (!e.touches || e.touches.length === 0)) {
+                        isPanning = false;
+                        img.style.transition = '';
+                    }
+                });
+                
+                // Botão fechar
+                const btnFechar = document.createElement('button');
+                btnFechar.textContent = '✕';
+                btnFechar.style.cssText = `
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    color: white;
+                    font-size: 24px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    z-index: 10001;
+                `;
+                
+                const fechar = () => {
+                    try { URL.revokeObjectURL(fullURL); } catch(e) {}
+                    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                };
+                
+                btnFechar.onclick = (e) => {
+                    e.stopPropagation();
+                    fechar();
+                };
+                
+                // Overlay click: fecha se zoom == 1, reseta zoom se zoom > 1
+                overlay.addEventListener('click', (e) => {
+                    if (e.target !== overlay) return;
+                    if (scale > 1) {
+                        resetZoom();
+                    } else {
+                        fechar();
+                    }
+                });
+                
+                img.onclick = (e) => e.stopPropagation();
+                
+                overlay.appendChild(img);
+                overlay.appendChild(btnFechar);
+                document.body.appendChild(overlay);
+                
             } catch (error) {
-                console.error('Erro ao abrir imagem da pergunta:', error);
-                mostrarNotificacaoFeedback('⚠️ Erro ao abrir imagem', 'error');
+                console.error('Erro ao abrir viewer da pergunta:', error);
+                mostrarNotificacaoFeedback('⚠️ Erro ao carregar imagem', 'error');
             }
         }
         
