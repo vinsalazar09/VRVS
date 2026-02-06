@@ -9098,7 +9098,13 @@
             }
             // Deduplicar e ordenar
             const perfisUnicos = perfis.filter((p, i, arr) => arr.indexOf(p) === i);
-            localStorage.setItem('vrvs_perfis_lista', JSON.stringify(perfisUnicos));
+            
+            try {
+                localStorage.setItem('vrvs_perfis_lista', JSON.stringify(perfisUnicos));
+            } catch(e) {
+                console.error('[PERFIS D1] Erro ao salvar lista de perfis:', e);
+                mostrarNotificacaoFeedback('⚠️ Falha ao salvar lista de perfis', 'error');
+            }
         };
         
         // Normalizar nome do perfil (A-Z0-9_, MAIÚSCULO)
@@ -9191,12 +9197,20 @@
                 return false;
             }
             
-            // Confirmação forte
+            // Confirmação forte (normalizada para iPhone)
             const confirmacao = prompt(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nPara confirmar, digite exatamente: APAGAR\n\nPerfil a ser apagado: "${perfil}"`);
-            if (confirmacao !== 'APAGAR') {
-                if (confirmacao !== null) { // null = cancelou prompt
-                    mostrarNotificacaoFeedback('❌ Confirmação cancelada', 'error');
-                }
+
+            if (confirmacao === null) {
+                // Usuário cancelou prompt
+                mostrarNotificacaoFeedback('❌ Confirmação cancelada', 'error');
+                return false;
+            }
+
+            // Normalizar entrada (trim + uppercase) para aceitar "apagar", " APAGAR ", etc.
+            const confirmacaoNormalizada = String(confirmacao).trim().toUpperCase();
+
+            if (confirmacaoNormalizada !== 'APAGAR') {
+                mostrarNotificacaoFeedback('❌ Confirmação inválida. Digite exatamente: APAGAR', 'error');
                 return false;
             }
             
@@ -9252,7 +9266,10 @@
                                     ${isAtivo ? '<span style="margin-left: 8px; padding: 2px 8px; background: rgba(0,206,209,0.2); border-radius: 4px; font-size: 11px; color: var(--turquesa-light);">ATIVO</span>' : ''}
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    ${!isDefault && !isAtivo ? `<button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Apagar</button>` : ''}
+                                    ${!isDefault && !isAtivo ? `
+                                        <button onclick="vrvs_abrirRenomearPerfil('${perfilEsc}')" style="background: rgba(0,206,209,0.2); border: 1px solid rgba(0,206,209,0.4); color: var(--turquesa-light); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">✏️ Renomear</button>
+                                        <button onclick="vrvs_confirmarApagarPerfil('${perfilEsc}')" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; touch-action: manipulation;">🗑️ Apagar</button>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>
@@ -9283,6 +9300,113 @@
                 abrirModalGerenciarPerfis(); // Recarregar lista
                 renderConfig(); // Atualizar select
             }
+        };
+        
+        // PATCH D2: Modal auxiliar para renomear perfil
+        window.vrvs_abrirRenomearPerfil = function(perfil) {
+            const novoNomeInput = prompt(`Digite o novo nome para o perfil "${perfil}":\n\n(Será convertido para MAIÚSCULO e espaços serão trocados por _)`);
+            
+            if (novoNomeInput === null) {
+                // Usuário cancelou prompt - sair silencioso
+                return;
+            }
+            
+            if (!novoNomeInput || !novoNomeInput.trim()) {
+                mostrarNotificacaoFeedback('⚠️ Nome do perfil é obrigatório', 'error');
+                return;
+            }
+            
+            if (window.vrvs_renomearPerfil(perfil, novoNomeInput.trim())) {
+                abrirModalGerenciarPerfis(); // Recarregar lista
+                renderConfig(); // Atualizar select também
+            }
+        };
+        
+        // PATCH D2: Renomear perfil (copiar dados para novo nome)
+        window.vrvs_renomearPerfil = function(perfilAntigo, novoNomeInput) {
+            if (!perfilAntigo || typeof perfilAntigo !== 'string') {
+                mostrarNotificacaoFeedback('⚠️ Perfil inválido', 'error');
+                return false;
+            }
+            
+            // Travas
+            if (perfilAntigo === 'DEFAULT') {
+                mostrarNotificacaoFeedback('⚠️ Não é possível renomear o perfil DEFAULT', 'error');
+                return false;
+            }
+            
+            if (window.vrvs_perfilAtivo === perfilAntigo) {
+                mostrarNotificacaoFeedback('⚠️ Não é possível renomear o perfil ativo. Troque de perfil primeiro.', 'error');
+                return false;
+            }
+            
+            // Normalizar novo nome
+            const novoNome = window.vrvs_normalizarNomePerfil(novoNomeInput);
+            if (!novoNome) {
+                mostrarNotificacaoFeedback('⚠️ Nome inválido. Use apenas letras, números e underscore.', 'error');
+                return false;
+            }
+            
+            // Verificar se novo nome já existe
+            const perfisExistentes = window.vrvs_listarPerfis();
+            if (perfisExistentes.includes(novoNome)) {
+                mostrarNotificacaoFeedback(`⚠️ Já existe um perfil chamado "${novoNome}"`, 'error');
+                return false;
+            }
+            
+            // Copiar dados dos datasets para o novo nome (com rollback seguro)
+            const datasets = ['dados', 'historico', 'anotacoes', 'lembretes', 'areas_custom', 'diario'];
+            const newKeysCriadas = []; // Rastrear chaves criadas para rollback
+            
+            for (const baseKey of datasets) {
+                const oldKey = window.vrvs_keyOf(perfilAntigo, baseKey);
+                const newKey = window.vrvs_keyOf(novoNome, baseKey);
+                
+                try {
+                    const raw = localStorage.getItem(oldKey);
+                    if (raw !== null) {
+                        // Tentar copiar para novo nome
+                        localStorage.setItem(newKey, raw);
+                        newKeysCriadas.push(newKey); // Registrar para possível rollback
+                    }
+                } catch(e) {
+                    // Se falhar ao copiar qualquer dataset, fazer rollback completo
+                    console.error(`[PERFIS D2] Erro ao copiar ${baseKey}:`, e);
+                    
+                    // Remover TODAS as chaves já criadas nesta função
+                    newKeysCriadas.forEach(key => {
+                        try {
+                            localStorage.removeItem(key);
+                        } catch(rollbackErr) {
+                            console.warn(`[PERFIS D2] Erro no rollback de ${key}:`, rollbackErr);
+                        }
+                    });
+                    
+                    // NÃO remover nenhum oldKey (dados originais permanecem intactos)
+                    // NÃO atualizar lista de perfis
+                    mostrarNotificacaoFeedback('⚠️ Falha ao renomear (armazenamento cheio?)', 'error');
+                    return false;
+                }
+            }
+            
+            // Só chega aqui se TODOS os datasets foram copiados com sucesso
+            // Agora remover chaves antigas (best-effort)
+            datasets.forEach(baseKey => {
+                const oldKey = window.vrvs_keyOf(perfilAntigo, baseKey);
+                try {
+                    localStorage.removeItem(oldKey);
+                } catch(e) {
+                    console.warn(`[PERFIS D2] Erro ao remover ${oldKey}:`, e);
+                    // Não abortar se falhar remover (dados já estão copiados)
+                }
+            });
+            
+            // Atualizar lista de perfis (preservar ordem, substituir antigo por novo)
+            const novaLista = perfisExistentes.map(p => p === perfilAntigo ? novoNome : p);
+            window.vrvs_salvarListaPerfis(novaLista);
+            
+            mostrarNotificacaoFeedback(`✅ Perfil "${perfilAntigo}" renomeado para "${novoNome}"`);
+            return true;
         };
         
         window.fecharModalGerenciarPerfis = function() {

@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.214-fix-apagar-perfil-20260205-2054";
+const CACHE_NAME = "vrvs-v5.3.215-renomear-perfil-fix-apagar-20260206-0000";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
