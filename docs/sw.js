@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.226-mindmaps-aba-fallback-20260210-0500";
+const CACHE_NAME = "vrvs-v5.3.227-mindmap-safearea-prompt-20260210-0600";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

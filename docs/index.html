@@ -10288,12 +10288,15 @@
         }
         
         function mindmaps_copiarPrompt() {
-            const prompt = `Gere um resumo no formato VRVS Outline v1 para virar mapa mental.
+            const prompt = `MODO GABARITO — OUTLINE VRVS v1
 
-REGRAS:
-- Apenas linhas começando com "- " (nós) e "* " (detalhes).
-- Indentação: 2 espaços por nível.
-- Sem parágrafos soltos, sem numeração.
+Gere um resumo no formato VRVS Outline v1 para virar mapa mental.
+
+REGRAS OBRIGATÓRIAS:
+- Resposta APENAS em bloco de código (sem texto explicativo antes/depois).
+- Cada linha começa com "- " (nós) ou "* " (detalhes).
+- Indentação: exatamente 2 espaços por nível (sem TAB).
+- PROIBIDO: bullets "•/●", numeração, parágrafos soltos, texto fora do bloco de código.
 - Seja hierárquico e objetivo.
 
 TEMA: [COLE O TEMA AQUI]`;

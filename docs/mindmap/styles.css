@@ -8,22 +8,32 @@
   --shadow:0 10px 30px rgba(0,0,0,.55);
   --radius:12px;
   --tap:44px;
+  /* iPhone safe-area */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --topbar-base: 56px;
+  --topbar-h: calc(var(--topbar-base) + var(--safe-top));
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%; background:var(--bg); color:var(--fg); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,sans-serif;}
 body{overflow:hidden; overscroll-behavior:none;}
 #app{position:fixed; inset:0; display:flex; flex-direction:column;}
 #topbar{
-  position:fixed; top:0; left:0; right:0; height:56px;
+  position:fixed; top:0; left:0; right:0;
+  height: var(--topbar-h);
+  padding-top: var(--safe-top);
+  box-sizing: border-box;
   display:flex; align-items:center; justify-content:space-between;
-  padding:0 12px;
+  padding-left: 12px; padding-right: 12px;
   background:linear-gradient(to bottom, rgba(0,0,0,.85), rgba(0,0,0,.15));
   z-index:1000; pointer-events:none;
 }
 #topbar .left,#topbar .right{display:flex; gap:10px; align-items:center; pointer-events:auto;}
 #title{font-size:14px; font-weight:600; opacity:.92; max-width:60vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .btn{
-  height:36px; min-width:36px; padding:0 10px; border-radius:10px;
+  height: var(--tap);
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding:0 10px; border-radius:12px;
   border:1px solid var(--panelBorder);
   background:rgba(25,25,25,.75); color:var(--fg);
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
@@ -31,6 +41,7 @@ body{overflow:hidden; overscroll-behavior:none;}
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   user-select:none; -webkit-user-select:none;
   cursor:pointer;
+  touch-action: manipulation;
 }
 .btn:active{transform:translateY(1px);}
 .btn span{font-size:12px; color:var(--muted);}
