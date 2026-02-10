@@ -4617,39 +4617,7 @@
                     </div>
                 </div>
                 
-                ${modoAvancado_getAtivo() ? `
-                <div class="desempenho-box" style="background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.05)); border: 1px solid rgba(255,184,77,0.2); border-radius: 18px; padding: 20px; margin-top: 24px; margin-bottom: 16px;">
-                    <div style="font-size: 13px; color: rgba(255,184,77,0.9); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                        🏆 Desempenho (Modo Avançado)
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Nota do último treino</label>
-                        <div style="display: flex; gap: 16px; align-items: center;">
-                            <div style="flex: 1;">
-                                <input type="range" id="novaDiarioNotaDesempenho" min="0" max="10" step="0.5" value="0" data-touched="0" style="width: 100%;">
-                            </div>
-                            <div id="novaDiarioNotaDesempenhoValue" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: rgba(255,184,77,0.9); background: rgba(0,0,0,0.3); border: 1px solid rgba(255,184,77,0.2); border-radius: 16px;">—</div>
-                        </div>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Observação (opcional)</label>
-                        <input type="text" id="novaDiarioObsDesempenho" placeholder="Ex: confundi classificação..." style="width: 100%; padding: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: rgba(255,255,255,0.9); font-size: 15px;">
-                    </div>
-                </div>
-                <script>
-                    (function() {
-                        const slider = document.getElementById('novaDiarioNotaDesempenho');
-                        const valueDisplay = document.getElementById('novaDiarioNotaDesempenhoValue');
-                        if (slider && valueDisplay) {
-                            slider.addEventListener('input', function() {
-                                this.dataset.touched = '1';
-                                const val = parseFloat(this.value) || 0;
-                                valueDisplay.textContent = val.toFixed(1);
-                            });
-                        }
-                    })();
-                </script>
-                ` : ''}
+                <div id="diarioDesempenhoMount"></div>
                 
                 <div class="diario-atencao-container">
                     <input
@@ -5346,7 +5314,7 @@
                 <div class="card">
                     <div class="card-title diario-header-row">
                         <div class="diario-header-left">
-                        <span>📔 DIÁRIO DE APRENDIZADOS</span>${modoAvancado_getAtivo() ? '<span class="badge-avancado" style="background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.2)); border: 1px solid rgba(255,184,77,0.3); color: rgba(255,184,77,0.9); padding: 6px 14px; border-radius: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-left: 10px;">AVANÇADO</span>' : ''}
+                        <span>📔 DIÁRIO DE APRENDIZADOS</span><span id="diarioBadgeAvancadoMount"></span>
                             <div id="vrvs3p-chip-diario" onclick="irParaPainelVrvs3p(); event.stopPropagation();">
                                 🧠 <span id="vrvs3p-chip-text">Carregando...</span>
                             </div>
@@ -5374,9 +5342,7 @@
                         <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                             📖 Respostas
                         </button>
-                        ${modoAvancado_getAtivo() ? `<button class="modo-btn" id="modoRanking" onclick="setModoDiario('ranking')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
-                            🏆 Ranking
-                        </button>` : ''}
+                        <span id="diarioRankingBtnMount"></span>
                     </div>
                     
                     <!-- PATCH 2: Indicadores VRVS 3P (complementa chip) -->
@@ -10421,29 +10387,129 @@ TEMA: [COLE O TEMA AQUI]`;
             return Math.floor(diffTime / (1000 * 60 * 60 * 24));
         }
         
-        function modoAvancado_toggle() {
-            const checkbox = document.getElementById('toggleModoAvancado');
-            const ativo = checkbox.checked;
-            modoAvancado_setAtivo(ativo);
-            
-            if (ativo) {
-                mostrarNotificacaoFeedback('✨ Modo Avançado ativado<br>Agora você pode acompanhar seu desempenho nos casos clínicos.', 'success', 3000);
-            }
-            
-            if (typeof renderDiario === 'function') {
-                renderDiario();
-            }
-            
-            if (typeof renderAjuda === 'function') {
-                renderAjuda();
-            }
+function modoAvancado_toggle() {
+    const checkbox = document.getElementById('toggleModoAvancado');
+    const ativo = checkbox.checked;
+    modoAvancado_setAtivo(ativo);
+    
+    if (ativo) {
+        mostrarNotificacaoFeedback('✨ Modo Avançado ativado<br>Agora você pode acompanhar seu desempenho nos casos clínicos.', 'success', 3000);
+    }
+    
+    // Renderizar UI do Modo Avançado (badge + botão ranking)
+    diarioModoAvancado_renderUI();
+    
+    // Se modal estiver aberto, atualizar box desempenho
+    const modal = document.getElementById('modalNovaDiario');
+    if (modal && modal.style.display !== 'none' && modal.style.display !== '') {
+        const entradaId = document.getElementById('novaDiarioId')?.value;
+        if (entradaId) {
+            // Edição: buscar entrada e renderizar com dados
+            const entrada = window.diario?.entradas?.find(e => String(e.id) === entradaId);
+            diarioModoAvancado_renderBoxDesempenho(entrada || null);
+        } else {
+            // Nova entrada: renderizar vazio
+            diarioModoAvancado_renderBoxDesempenho(null);
         }
+    }
+    
+    if (typeof renderDiario === 'function') {
+        renderDiario();
+    }
+    
+    if (typeof renderAjuda === 'function') {
+        renderAjuda();
+    }
+}
         
         function modoAvancado_toggleRankingOrdem() {
             const atual = modoAvancado_getRankingOrdem();
             const nova = atual === 'asc' ? 'desc' : 'asc';
             modoAvancado_setRankingOrdem(nova);
             renderRanking();
+        }
+        
+        function diarioModoAvancado_renderUI() {
+            // A) Badge "AVANÇADO" no header
+            const badgeMount = document.getElementById('diarioBadgeAvancadoMount');
+            if (badgeMount) {
+                if (modoAvancado_getAtivo()) {
+                    badgeMount.innerHTML = '<span class="badge-avancado" style="background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.2)); border: 1px solid rgba(255,184,77,0.3); color: rgba(255,184,77,0.9); padding: 6px 14px; border-radius: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-left: 10px;">AVANÇADO</span>';
+                } else {
+                    badgeMount.innerHTML = '';
+                }
+            }
+            
+            // B) Botão "🏆 Ranking" nos modos
+            const rankingBtnMount = document.getElementById('diarioRankingBtnMount');
+            if (rankingBtnMount) {
+                if (modoAvancado_getAtivo()) {
+                    rankingBtnMount.innerHTML = `<button class="modo-btn" id="modoRanking" onclick="setModoDiario('ranking')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            🏆 Ranking
+                        </button>`;
+                } else {
+                    rankingBtnMount.innerHTML = '';
+                    // Se estava em ranking e modo foi desativado, voltar para recall
+                    if (typeof modoDiario !== 'undefined' && modoDiario === 'ranking') {
+                        modoDiario = 'recall';
+                        if (typeof renderDiario === 'function') {
+                            renderDiario();
+                        }
+                    }
+                }
+            }
+        }
+        
+        function diarioModoAvancado_renderBoxDesempenho(entradaOpt) {
+            const mount = document.getElementById('diarioDesempenhoMount');
+            if (!mount) return;
+            
+            // Se modo não está ativo, limpar mount
+            if (!modoAvancado_getAtivo()) {
+                mount.innerHTML = '';
+                return;
+            }
+            
+            // Renderizar box completo
+            const nota = entradaOpt && typeof entradaOpt.notaDesempenho === 'number' && !isNaN(entradaOpt.notaDesempenho) ? entradaOpt.notaDesempenho : null;
+            const obs = entradaOpt && entradaOpt.obsDesempenho ? entradaOpt.obsDesempenho : '';
+            
+            mount.innerHTML = `
+                <div class="desempenho-box" style="background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.05)); border: 1px solid rgba(255,184,77,0.2); border-radius: 18px; padding: 20px; margin-top: 24px; margin-bottom: 16px;">
+                    <div style="font-size: 13px; color: rgba(255,184,77,0.9); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        🏆 Desempenho (Modo Avançado)
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Nota do último treino</label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div style="flex: 1;">
+                                <input type="range" id="novaDiarioNotaDesempenho" min="0" max="10" step="0.5" value="${nota !== null ? nota : '0'}" data-touched="${nota !== null ? '1' : '0'}" style="width: 100%;">
+                            </div>
+                            <div id="novaDiarioNotaDesempenhoValue" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: rgba(255,184,77,0.9); background: rgba(0,0,0,0.3); border: 1px solid rgba(255,184,77,0.2); border-radius: 16px;">${nota !== null ? nota.toFixed(1) : '—'}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Observação (opcional)</label>
+                        <input type="text" id="novaDiarioObsDesempenho" placeholder="Ex: confundi classificação..." value="${vrvs_escapeHTML(obs)}" style="width: 100%; padding: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: rgba(255,255,255,0.9); font-size: 15px;">
+                    </div>
+                </div>
+            `;
+            
+            // Configurar listener do slider após inserir HTML
+            const slider = document.getElementById('novaDiarioNotaDesempenho');
+            const valueDisplay = document.getElementById('novaDiarioNotaDesempenhoValue');
+            if (slider && valueDisplay) {
+                // Remover listener anterior se existir (evitar duplicação)
+                const newSlider = slider.cloneNode(true);
+                slider.parentNode.replaceChild(newSlider, slider);
+                
+                newSlider.addEventListener('input', function() {
+                    this.dataset.touched = '1';
+                    const val = parseFloat(this.value) || 0;
+                    const display = document.getElementById('novaDiarioNotaDesempenhoValue');
+                    if (display) display.textContent = val.toFixed(1);
+                });
+            }
         }
         
         // ==================== FIM MODO AVANÇADO ====================
@@ -13323,6 +13389,11 @@ TEMA: [COLE O TEMA AQUI]`;
                 }, 100);
             }
             
+            // Renderizar UI do Modo Avançado ao carregar
+            if (typeof diarioModoAvancado_renderUI === 'function') {
+                diarioModoAvancado_renderUI();
+            }
+            
             // Verificar se é primeira vez e mostrar tutorial
             const tutorialCompleto = localStorage.getItem('vrvs_tutorial_completo');
             if (!tutorialCompleto) {
@@ -15664,18 +15735,8 @@ TEMA: [COLE O TEMA AQUI]`;
                 btnExcluirWrapper.style.display = 'none';
             }
             
-            // Limpar campos do Modo Avançado
-            if (modoAvancado_getAtivo()) {
-                const slider = document.getElementById('novaDiarioNotaDesempenho');
-                const obs = document.getElementById('novaDiarioObsDesempenho');
-                const valueDisplay = document.getElementById('novaDiarioNotaDesempenhoValue');
-                if (slider) {
-                    slider.value = '0';
-                    slider.dataset.touched = '0';
-                }
-                if (obs) obs.value = '';
-                if (valueDisplay) valueDisplay.textContent = '—';
-            }
+            // Renderizar box do Modo Avançado (null = nova entrada, limpa campos)
+            diarioModoAvancado_renderBoxDesempenho(null);
             
             // Reabilitar selects (caso tenham sido desabilitados)
             const areaSelect = document.getElementById('novaDiarioArea');
@@ -16483,6 +16544,9 @@ TEMA: [COLE O TEMA AQUI]`;
         }
         
         function renderDiario() {
+            // Renderizar UI do Modo Avançado (badge + botão ranking)
+            diarioModoAvancado_renderUI();
+            
             // Se modo é ranking e modo avançado está ativo, renderizar ranking
             if (modoDiario === 'ranking' && modoAvancado_getAtivo()) {
                 renderRanking();
@@ -17893,28 +17957,8 @@ TEMA: [COLE O TEMA AQUI]`;
             const temSrsAtivo = entrada.srs && entrada.srs.ativo;
             document.getElementById('novaDiarioAtencao').checked = temSrsAtivo || false;
             
-            // Preencher campos do Modo Avançado se ativo
-            if (modoAvancado_getAtivo()) {
-                const slider = document.getElementById('novaDiarioNotaDesempenho');
-                const obs = document.getElementById('novaDiarioObsDesempenho');
-                const valueDisplay = document.getElementById('novaDiarioNotaDesempenhoValue');
-                
-                if (slider && valueDisplay) {
-                    if (typeof entrada.notaDesempenho === 'number' && !isNaN(entrada.notaDesempenho)) {
-                        slider.value = String(entrada.notaDesempenho);
-                        slider.dataset.touched = '1';
-                        valueDisplay.textContent = entrada.notaDesempenho.toFixed(1);
-                    } else {
-                        slider.value = '0';
-                        slider.dataset.touched = '0';
-                        valueDisplay.textContent = '—';
-                    }
-                }
-                
-                if (obs) {
-                    obs.value = entrada.obsDesempenho || '';
-                }
-            }
+            // Renderizar box do Modo Avançado com dados da entrada
+            diarioModoAvancado_renderBoxDesempenho(entrada);
             
             // B1: Carregar imagem se houver
             if (entrada.imagem && entrada.imagem.thumbKey) {
