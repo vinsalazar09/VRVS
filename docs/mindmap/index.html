@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#000000" />
+  <title>Mapas Mentais - VRVS</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app">
+    <div id="topbar">
+      <div class="left">
+        <button id="btnBack" class="btn" type="button" aria-label="Voltar"><span class="ico">←</span><span>Voltar</span></button>
+        <div id="title">Mapa Mental</div>
+      </div>
+      <div class="right">
+        <button id="btnSearch" class="btn" type="button" aria-label="Buscar"><span class="ico">⌕</span><span>Buscar</span></button>
+        <button id="btnFit" class="btn" type="button" aria-label="Ajustar à tela"><span class="ico">⤢</span><span>Fit</span></button>
+        <button id="btn1x" class="btn" type="button" aria-label="Zoom 1x"><span class="ico">1</span><span>1x</span></button>
+      </div>
+    </div>
+
+    <div id="viewport">
+      <div id="world">
+        <svg id="connections"></svg>
+      </div>
+    </div>
+
+    <div id="scrim"></div>
+
+    <div id="sheet" role="dialog" aria-modal="true">
+      <div id="sheetHeader">
+        <div id="sheetTitle">—</div>
+        <button id="btnCloseSheet" class="btn" type="button" aria-label="Fechar"><span class="ico">✕</span></button>
+      </div>
+      <div id="sheetBody"></div>
+    </div>
+
+    <div id="search">
+      <div id="searchPanel">
+        <header>
+          <input id="searchInput" type="search" placeholder="Buscar..." autocomplete="off" />
+          <button id="btnCloseSearch" class="btn" type="button" aria-label="Fechar busca"><span class="ico">✕</span></button>
+        </header>
+        <div id="searchList"></div>
+      </div>
+    </div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

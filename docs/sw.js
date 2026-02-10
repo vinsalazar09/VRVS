@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.224-remove-areas-fixas-20260210-0210";
+const CACHE_NAME = "vrvs-v5.3.225-mindmaps-module-20260210-0400";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
@@ -9,7 +9,11 @@ const FILES_TO_CACHE = [
     './recover.html',
     './manifest.json',
     './logo.png',
-    './favicon.ico'
+    './favicon.ico',
+    './mindmap/',
+    './mindmap/index.html',
+    './mindmap/app.js',
+    './mindmap/styles.css'
 ];
 
 // Instalar Service Worker
