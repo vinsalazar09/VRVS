@@ -6661,13 +6661,7 @@
                 return mapaNormalizacao[areaNormalizada];
             }
             
-            // Se não está no mapa, verificar se já é uma área fixa (case-insensitive)
-            const areaFixasLower = AREAS_FIXAS.map(a => a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-            const index = areaFixasLower.indexOf(areaNormalizada);
-            if (index !== -1) {
-                return AREAS_FIXAS[index]; // Retornar versão correta com acentos
-            }
-            
+            // Plataforma livre - retornar área normalizada como está
             // Android Acentos: NÃO usar title-case ASCII (quebra Unicode/acentos)
             // Retornar exatamente como está salvo (trim apenas)
             return area.trim();
@@ -7813,9 +7807,8 @@
             areasOrdenadas.forEach(area => {
                 const temas = porArea[area];
                 const areaId = `area-gerenciar-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                // Área só é fixa se estiver em AREAS_FIXAS E NÃO estiver em areas_custom do perfil ativo
-                const areasCustomDoPerfil = window.vrvsAreasCustom || [];
-                const isAreaFixa = AREAS_FIXAS.includes(area) && !areasCustomDoPerfil.includes(area);
+                // Plataforma livre - nenhuma área é fixa
+                const isAreaFixa = false;
                 
                 const card = document.createElement('div');
                 card.className = 'area-card-gerenciar';
@@ -8039,12 +8032,7 @@
         }
         
         function renomearArea(nomeArea) {
-            // Bloquear AREAS_FIXAS
-            if (AREAS_FIXAS.includes(nomeArea)) {
-                mostrarNotificacaoFeedback('⚠️ Não é possível renomear áreas fixas do sistema', 'error');
-                return;
-            }
-            
+            // Plataforma livre - qualquer área pode ser renomeada
             const nomeNovo = prompt(`Renomear área "${nomeArea}":\n\nDigite o novo nome:`, nomeArea);
             if (!nomeNovo || nomeNovo.trim() === nomeArea || !nomeNovo.trim()) return;
             
@@ -8125,13 +8113,8 @@
         }
         
         function apagarArea(nomeArea) {
-            // TRAVA 1: Bloquear AREAS_FIXAS
-            if (AREAS_FIXAS.includes(nomeArea)) {
-                mostrarNotificacaoFeedback('⚠️ Não é possível apagar áreas fixas do sistema', 'error');
-                return;
-            }
-            
-            // TRAVA 2: Verificar que área existe e tem temas
+            // Plataforma livre - qualquer área pode ser apagada
+            // Verificar que área existe e tem temas
             const temasDaArea = dados.filter(t => t.area === nomeArea);
             if (temasDaArea.length === 0) {
                 mostrarNotificacaoFeedback('⚠️ Área não encontrada ou não possui temas', 'error');
@@ -19762,10 +19745,8 @@
         
         // PATCH A: Helper para obter áreas base (fixas) do perfil ativo
         function getAreasBaseDoPerfil() {
-            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
-            // DEFAULT: retorna AREAS_FIXAS (compatibilidade)
-            // Perfis não-DEFAULT: retorna [] (nascem zerados)
-            return perfilAtivo === 'DEFAULT' ? AREAS_FIXAS : [];
+            // SEMPRE retorna [] - plataforma livre, sem áreas fixas
+            return [];
         }
         
         // PATCH A: Helper único para obter todas as áreas disponíveis do perfil ativo
@@ -19781,7 +19762,7 @@
         function obterListaAreasDisponiveis() {
             const areasDados = dados.map(t => t.area).filter(a => a && a.trim());
             const areasCustom = window.vrvsAreasCustom || [];
-            return [...new Set([...AREAS_FIXAS, ...areasCustom, ...areasDados])].sort();
+            return [...new Set([...areasCustom, ...areasDados])].sort();
         }
         
         // Função centralizada para atualizar TODOS os selects de área
@@ -19867,23 +19848,9 @@
         // P4.2: Helper para separar áreas por origem (usa variáveis globais)
         // P4.4 Android: Heurística para detectar aparelho "zerado" (não mostra AREAS_FIXAS)
         function obterAreasPorOrigem() {
-            // Android Zerado: Heurística para detectar se é aparelho novo/zerado
-            // Se dados não contém nenhum tema com área em AREAS_FIXAS, considerar zerado
-            const dadosArray = dados || [];
-            const areasDados = dadosArray.map(t => String(t.area || '').trim()).filter(Boolean);
-            const padraoLower = (AREAS_FIXAS || []).map(a => String(a).toLowerCase().trim());
-            const temAreasPadrao = areasDados.some(a => padraoLower.includes(a.toLowerCase()));
-            
-            // Verificar também localStorage.vrvs_config (se existir flag modoVRVS)
-            let configVRVS = {};
-            try {
-                const configRaw = localStorage.getItem('vrvs_config');
-                if (configRaw) configVRVS = JSON.parse(configRaw);
-            } catch(e) {}
-            const modoVRVS = configVRVS.modoVRVS === true || temAreasPadrao;
-            
-            // Fonte 1: Áreas padrão (fixas do sistema) - só mostrar se não for zerado
-            const padrao = modoVRVS ? (AREAS_FIXAS || []).map(a => String(a).trim()).filter(Boolean) : [];
+            // Plataforma livre - sem áreas fixas
+            // Fonte 1: Áreas padrão (removido - sempre vazio)
+            const padrao = [];
             
             // Fonte 2: Áreas custom (criadas pelo usuário neste dispositivo)
             // Usar window.vrvsAreasCustom (já carregado no boot, linha ~4400)

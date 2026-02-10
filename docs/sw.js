@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.223-fix-areas-custom-edit-20260210-0205";
+const CACHE_NAME = "vrvs-v5.3.224-remove-areas-fixas-20260210-0210";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
