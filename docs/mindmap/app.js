@@ -46,7 +46,13 @@ const layoutCfg = {
 
 // Voltar para VRVS
 btnBack.addEventListener('click', () => {
-  window.location.href = '../index.html';
+  const params = new URLSearchParams(location.search);
+  const from = params.get('from');
+  if (from === 'vrvs') {
+    window.location.href = '../index.html#mindmaps';
+  } else {
+    window.location.href = '../index.html';
+  }
 });
 
 // Obter ID do mapa via query param
@@ -55,26 +61,153 @@ function getMapId() {
   return params.get('id');
 }
 
+// Parser VRVS Outline v1 (embutido no viewer)
+function parseOutlineToMap(text) {
+  const lines = text.split('\n');
+  const stack = [];
+  const root = { id: 'root', label: 'Root', children: [], details: [] };
+  let lastNode = root;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    let indent = 0;
+    for (let j = 0; j < line.length; j++) {
+      if (line[j] === ' ') indent++;
+      else if (line[j] === '\t') indent += 2;
+      else break;
+    }
+    const level = Math.floor(indent / 2);
+    
+    if (trimmed.startsWith('- ')) {
+      const label = trimmed.substring(2).trim();
+      if (!label) continue;
+      
+      const node = {
+        id: `node_${i}_${Date.now()}_${Math.random()}`,
+        label: label,
+        children: [],
+        details: []
+      };
+      
+      while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+        stack.pop();
+      }
+      
+      const parent = stack.length > 0 ? stack[stack.length - 1].node : root;
+      parent.children.push(node);
+      
+      stack.push({ node, level });
+      lastNode = node;
+    } else if (trimmed.startsWith('* ')) {
+      const detail = trimmed.substring(2).trim();
+      if (detail && lastNode) {
+        lastNode.details.push(detail);
+      }
+    }
+  }
+  
+  return root.children.length > 0 ? root.children[0] : null;
+}
+
+// Mostrar tela de fallback amigável
+function showFallbackScreen(message) {
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('viewport').style.display = 'none';
+  
+  const fallback = document.createElement('div');
+  fallback.id = 'fallbackScreen';
+  fallback.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2000;
+  `;
+  
+  const msg = document.createElement('div');
+  msg.textContent = message;
+  msg.style.cssText = `
+    color: rgba(255,255,255,0.9);
+    font-size: 16px;
+    margin-bottom: 24px;
+    text-align: center;
+  `;
+  
+  const btn = document.createElement('button');
+  btn.textContent = 'Voltar para 🧠 Mapas';
+  btn.className = 'btn';
+  btn.style.cssText = `
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    background: rgba(0,206,209,0.8);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    touch-action: manipulation;
+    min-height: 44px;
+  `;
+  btn.addEventListener('click', () => {
+    window.location.href = '../index.html#mindmaps';
+  });
+  
+  fallback.appendChild(msg);
+  fallback.appendChild(btn);
+  document.body.appendChild(fallback);
+}
+
 // Carregar mapa do localStorage
 function loadMap() {
   const mapId = getMapId();
   if (!mapId) {
-    titleEl.textContent = 'Erro: ID não encontrado';
+    showFallbackScreen('Nenhum mapa selecionado.');
     return;
   }
 
   try {
     const raw = localStorage.getItem('vrvs_mindmaps');
-    if (!raw) throw new Error('vrvs_mindmaps não encontrado');
+    if (!raw) {
+      showFallbackScreen('Mapa não encontrado.');
+      return;
+    }
     
     const data = JSON.parse(raw);
     const items = data.version ? data.items : data;
     const item = items.find(m => m.id === mapId);
     
-    if (!item || !item.map) throw new Error('Mapa não encontrado');
+    if (!item) {
+      showFallbackScreen('Mapa não encontrado.');
+      return;
+    }
     
     titleEl.textContent = item.title || 'Mapa Mental';
-    state.rootId = item.map.id || 'root';
+    
+    // Gerar map em memória a partir de outlineText (se não tiver map legado)
+    let mapToRender = null;
+    if (item.map) {
+      // Legado: usar map existente
+      mapToRender = item.map;
+    } else if (item.outlineText) {
+      // Outline-only: gerar map a partir do outline
+      mapToRender = parseOutlineToMap(item.outlineText);
+      if (!mapToRender) {
+        showFallbackScreen('Erro ao processar outline do mapa.');
+        return;
+      }
+    } else {
+      showFallbackScreen('Mapa sem conteúdo válido.');
+      return;
+    }
+    
+    state.rootId = mapToRender.id || 'root';
 
     state.nodesById.clear();
     state.order.length = 0;
@@ -104,7 +237,7 @@ function loadMap() {
       state.nodesById.set(n.id, n);
       state.order.push(n.id);
     };
-    walk(item.map);
+    walk(mapToRender);
 
     if (!state.rootId || !state.nodesById.has(state.rootId)) {
       state.rootId = state.order[0];
@@ -118,7 +251,7 @@ function loadMap() {
     relayout({ fitAfter: true });
   } catch(e) {
     console.error('[MINDMAP] Erro ao carregar:', e);
-    titleEl.textContent = 'Erro ao carregar mapa';
+    showFallbackScreen('Erro ao carregar mapa.');
   }
 }
 

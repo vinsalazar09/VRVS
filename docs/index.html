@@ -4820,6 +4820,7 @@
             <div class="tab" onclick="showSection('feedback', event)">📝 Feedback</div>
             <div class="tab" id="tabDiario" onclick="showSection('diario', event)">📔 Diário</div>
             <div class="tab" onclick="showSection('caderno', event)">📓 Caderno</div>
+            <div class="tab" onclick="showSection('mindmaps', event)">🧠 Mapas</div>
             <!-- PLANEJAMENTO -->
             <div class="tab" onclick="showSection('agenda', event)">📅 Agenda</div>
             <div class="tab active" onclick="showSection('dados', event)">📊 Dados</div>
@@ -5391,6 +5392,46 @@
                 </div>
             </div>
             
+            <!-- MAPAS MENTAIS -->
+            <div id="mindmaps" class="section">
+                <div class="card">
+                    <div class="card-title">🧠 Mapas Mentais</div>
+                    
+                    <!-- Criar Novo Mapa -->
+                    <div style="margin-bottom: 24px; padding: 18px; background: rgba(0,206,209,0.05); border-radius: 12px; border: 1px solid rgba(0,206,209,0.2);">
+                        <h3 style="color: var(--turquesa-light); font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            ✨ Criar Novo Mapa
+                        </h3>
+                        
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <button class="btn btn-small" onclick="mindmaps_abrirGPT()" style="flex: 1;">
+                                🤖 Abrir GPT
+                            </button>
+                            <button class="btn btn-small" onclick="mindmaps_copiarPrompt()" style="flex: 1;">
+                                📋 Copiar Prompt
+                            </button>
+                        </div>
+                        
+                        <textarea id="mindmapsOutlineInput" placeholder="Cole aqui o outline gerado pelo GPT...&#10;&#10;Formato:&#10;- Nó principal&#10;  - Sub-nó&#10;    * Detalhe" style="width: 100%; min-height: 120px; padding: 12px; background: rgba(0,0,0,0.3); border: 1px dashed rgba(0,206,209,0.3); border-radius: 8px; color: rgba(255,255,255,0.9); font-size: 13px; font-family: 'SF Mono', monospace; resize: vertical;"></textarea>
+                        
+                        <button class="btn" onclick="mindmaps_gerarMapa()" style="width: 100%; margin-top: 12px; background: var(--turquesa-main);">
+                            🧠 GERAR MAPA
+                        </button>
+                    </div>
+                    
+                    <!-- Biblioteca -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="color: var(--turquesa-light); font-size: 16px;">📚 Biblioteca</h3>
+                            <span id="mindmapsCount" style="font-size: 12px; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 12px;">0 mapas</span>
+                        </div>
+                        <div id="mindmapsLista">
+                            <!-- Renderizado dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- ANÁLISES (Stats + Análises + Relatórios + Histórico) -->
             <div id="analytics" class="section">
                 <div class="card">
@@ -5427,7 +5468,7 @@
                             <button class="btn btn-secondary" onclick="exportarDiarioCSV()">📔 DIARIO.csv</button>
                             <button class="btn" onclick="exportarHotTopicsHTML()" style="background: var(--cobre-main);">🔥 Hot Topics HTML</button>
                             <button class="btn" onclick="exportarBackupJSON()" style="background: var(--turquesa-main);">📥 Backup Completo (.json)</button>
-                            <button class="btn" onclick="window.location.href='./mindmap/'" style="background: var(--turquesa-main);">🗺️ Abrir Mapas Mentais</button>
+                            <button class="btn" onclick="showSection('mindmaps')" style="background: var(--turquesa-main);">🗺️ Ir para 🧠 Mapas</button>
                         </div>
                     </div>
                     
@@ -5779,7 +5820,8 @@
                     vrvs_anotacoes: JSON.parse(localStorage.getItem(window.vrvs_key('anotacoes')) || '[]'),
                     vrvs_lembretes: JSON.parse(localStorage.getItem(window.vrvs_key('lembretes')) || '[]'),
                     vrvs_diario: JSON.parse(localStorage.getItem(window.vrvs_diarioKey()) || '{"entradas":[],"schemaVersion":"1.0"}'),
-                    vrvs_config: JSON.parse(localStorage.getItem('vrvs_config') || '{}')
+                    vrvs_config: JSON.parse(localStorage.getItem('vrvs_config') || '{}'),
+                    vrvs_mindmaps: mindmaps_getAll()
                 };
                 
                 // Contar itens para preview
@@ -6051,6 +6093,19 @@
                         } catch(e) {
                             alert('Falha ao restaurar vrvs_config (quota). Snapshot pré-import foi baixado.');
                             throw e;
+                        }
+                    }
+                    
+                    if (backup.vrvs_mindmaps) {
+                        try {
+                            if (typeof vrvs_safeSetItem === 'function') {
+                                vrvs_safeSetItem('vrvs_mindmaps', JSON.stringify(backup.vrvs_mindmaps), 'mindmaps');
+                            } else {
+                                localStorage.setItem('vrvs_mindmaps', JSON.stringify(backup.vrvs_mindmaps));
+                            }
+                            console.log('[IMPORT RAW] ✅ vrvs_mindmaps restaurado');
+                        } catch(e) {
+                            console.error('[IMPORT RAW] Erro ao restaurar vrvs_mindmaps:', e);
                         }
                     }
                     
@@ -10004,6 +10059,268 @@
         
         // ==================== FIM P3: DISPLAY NAMES ====================
         
+        // ==================== MAPAS MENTAIS ====================
+        
+        const MINDMAPS_GPT_URL = 'https://chatgpt.com/g/g-69864f5ec28881919ed073c3c11e9f19-avaliador-teot-2a-fase-6-min';
+        
+        // Parser VRVS Outline v1
+        function mindmaps_parseOutline(text) {
+            const lines = text.split('\n');
+            const stack = [];
+            const root = { id: 'root', label: 'Root', children: [], details: [] };
+            let lastNode = root;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                
+                let indent = 0;
+                for (let j = 0; j < line.length; j++) {
+                    if (line[j] === ' ') indent++;
+                    else if (line[j] === '\t') indent += 2;
+                    else break;
+                }
+                const level = Math.floor(indent / 2);
+                
+                if (trimmed.startsWith('- ')) {
+                    const label = trimmed.substring(2).trim();
+                    if (!label) continue;
+                    
+                    const node = {
+                        id: `node_${i}_${Date.now()}_${Math.random()}`,
+                        label: label,
+                        children: [],
+                        details: []
+                    };
+                    
+                    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+                        stack.pop();
+                    }
+                    
+                    const parent = stack.length > 0 ? stack[stack.length - 1].node : root;
+                    parent.children.push(node);
+                    
+                    stack.push({ node, level });
+                    lastNode = node;
+                } else if (trimmed.startsWith('* ')) {
+                    const detail = trimmed.substring(2).trim();
+                    if (detail && lastNode) {
+                        lastNode.details.push(detail);
+                    }
+                }
+            }
+            
+            return root.children.length > 0 ? root.children[0] : null;
+        }
+        
+        function mindmaps_generateId(title) {
+            const slug = title.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            return `${slug}_${Date.now()}`;
+        }
+        
+        function mindmaps_countNodes(node) {
+            if (!node) return 0;
+            let count = 1;
+            if (node.children) {
+                node.children.forEach(child => {
+                    count += mindmaps_countNodes(child);
+                });
+            }
+            return count;
+        }
+        
+        function mindmaps_getAll() {
+            try {
+                const raw = localStorage.getItem('vrvs_mindmaps');
+                if (!raw) return { version: 1, items: [] };
+                const parsed = JSON.parse(raw);
+                return parsed.version ? parsed : { version: 1, items: parsed };
+            } catch(e) {
+                return { version: 1, items: [] };
+            }
+        }
+        
+        function mindmaps_saveAll(data) {
+            try {
+                const jsonStr = JSON.stringify(data);
+                if (typeof vrvs_safeSetItem === 'function') {
+                    return vrvs_safeSetItem('vrvs_mindmaps', jsonStr, 'mindmaps');
+                } else {
+                    localStorage.setItem('vrvs_mindmaps', jsonStr);
+                    return true;
+                }
+            } catch(e) {
+                console.error('[MINDMAPS] Erro ao salvar:', e);
+                if (window.isQuotaExceeded && window.isQuotaExceeded(e)) {
+                    if (typeof vrvs_showQuotaModal === 'function') {
+                        vrvs_showQuotaModal('crit');
+                    }
+                }
+                mostrarNotificacaoFeedback('⚠️ Erro ao salvar. Verifique o armazenamento.', 'error');
+                return false;
+            }
+        }
+        
+        function mindmaps_gerarMapa() {
+            const textarea = document.getElementById('mindmapsOutlineInput');
+            const outline = textarea.value.trim();
+            
+            if (!outline) {
+                mostrarNotificacaoFeedback('⚠️ Cole um outline antes de gerar o mapa!', 'error');
+                return;
+            }
+            
+            const lines = outline.split('\n').filter(l => l.trim());
+            const hasNodes = lines.some(l => l.trim().startsWith('- '));
+            if (!hasNodes) {
+                mostrarNotificacaoFeedback('⚠️ Formato inválido. Use - para nós e * para detalhes.', 'error');
+                return;
+            }
+            
+            try {
+                // Parsear para validar e calcular nodeCount
+                const map = mindmaps_parseOutline(outline);
+                if (!map) {
+                    mostrarNotificacaoFeedback('⚠️ Erro ao parsear outline. Verifique o formato.', 'error');
+                    return;
+                }
+                
+                const title = map.label || 'Mapa Sem Título';
+                const id = mindmaps_generateId(title);
+                const nodeCount = mindmaps_countNodes(map);
+                
+                // Salvar APENAS outline (sem map) - arquitetura outline-only
+                const all = mindmaps_getAll();
+                all.items.push({
+                    id: id,
+                    title: title,
+                    updatedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    sourceType: 'outline',
+                    outlineText: outline,
+                    nodeCount: nodeCount
+                    // NÃO salvar item.map (gerado em memória no viewer)
+                });
+                
+                if (!mindmaps_saveAll(all)) {
+                    return;
+                }
+                
+                textarea.value = '';
+                mindmaps_renderLista();
+                
+                // Abrir viewer com from=vrvs
+                window.location.href = `./mindmap/?id=${id}&from=vrvs`;
+                
+            } catch(e) {
+                console.error('[MINDMAPS] Erro:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao gerar mapa: ' + (e.message || 'Erro desconhecido'), 'error');
+            }
+        }
+        
+        function mindmaps_renderLista() {
+            const container = document.getElementById('mindmapsLista');
+            const countEl = document.getElementById('mindmapsCount');
+            if (!container) return;
+            
+            const all = mindmaps_getAll();
+            const items = all.items || [];
+            
+            if (countEl) {
+                countEl.textContent = `${items.length} ${items.length === 1 ? 'mapa' : 'mapas'}`;
+            }
+            
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.5);">
+                        <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.5;">🧠</div>
+                        <p style="font-size: 14px;">Nenhum mapa ainda. Crie seu primeiro!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            items.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+            
+            container.innerHTML = items.map(item => {
+                // Compat: calcular nodeCount se não existir (legado)
+                let nodeCount = item.nodeCount;
+                if (!nodeCount && item.map) {
+                    nodeCount = mindmaps_countNodes(item.map);
+                } else if (!nodeCount && item.outlineText) {
+                    const tempMap = mindmaps_parseOutline(item.outlineText);
+                    nodeCount = tempMap ? mindmaps_countNodes(tempMap) : 0;
+                }
+                
+                const date = new Date(item.updatedAt || item.createdAt || Date.now());
+                const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                
+                return `
+                    <div class="mindmap-item" data-id="${item.id}" 
+                         onclick="mindmaps_abrirMapa('${item.id}')"
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(0,206,209,0.05); border-radius: 10px; margin-bottom: 8px; border: 1px solid rgba(0,206,209,0.2); cursor: pointer; touch-action: manipulation; min-height: 44px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="font-size: 14px; color: var(--turquesa-light); margin: 0 0 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${vrvs_escapeHTML(item.title)}</h4>
+                            <p style="font-size: 11px; color: rgba(255,255,255,0.6); margin: 0;">${nodeCount || 0} nós • ${dateStr}</p>
+                        </div>
+                        <span style="font-size: 20px; color: rgba(255,255,255,0.6); margin-left: 12px;">▶</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function mindmaps_abrirMapa(id) {
+            window.location.href = `./mindmap/?id=${id}&from=vrvs`;
+        }
+        
+        function mindmaps_abrirGPT() {
+            const url = MINDMAPS_GPT_URL || '';
+            if (url) {
+                window.open(url, '_blank');
+            } else {
+                mostrarNotificacaoFeedback('⚠️ URL do GPT não configurada', 'error');
+            }
+        }
+        
+        function mindmaps_copiarPrompt() {
+            const prompt = `Gere um resumo no formato VRVS Outline v1 para virar mapa mental.
+
+REGRAS:
+- Apenas linhas começando com "- " (nós) e "* " (detalhes).
+- Indentação: 2 espaços por nível.
+- Sem parágrafos soltos, sem numeração.
+- Seja hierárquico e objetivo.
+
+TEMA: [COLE O TEMA AQUI]`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(prompt).then(() => {
+                    mostrarNotificacaoFeedback('✅ Prompt copiado!');
+                });
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = prompt;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    mostrarNotificacaoFeedback('✅ Prompt copiado!');
+                } catch(e) {
+                    mostrarNotificacaoFeedback('⚠️ Erro ao copiar. Tente manualmente.', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+        }
+        
+        // ==================== FIM MAPAS MENTAIS ====================
+        
         // Listar perfis existentes (descobrir via localStorage + lista explícita)
         window.vrvs_listarPerfis = function() {
             // Tentar lista explícita primeiro
@@ -10705,6 +11022,9 @@
             }
             if (sectionId === 'backup') {
                 // Nada especial para renderizar
+            }
+            if (sectionId === 'mindmaps') {
+                mindmaps_renderLista();
             }
             if (sectionId === 'ajuda') {
                 renderAjuda();
@@ -12867,6 +13187,13 @@
             // Inicializar VRVS_BUILD na UI
             if (typeof VRVS_BUILD !== 'undefined') {
                 renderConfig();
+            }
+            
+            // Suporte a hash #mindmaps na URL
+            if (window.location.hash === '#mindmaps') {
+                setTimeout(() => {
+                    showSection('mindmaps');
+                }, 100);
             }
             
             // Verificar se é primeira vez e mostrar tutorial
