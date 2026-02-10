@@ -11621,6 +11621,7 @@
                         <li>🔄 Marque "VRVS 3P" para virar card de revisão</li>
                         <li>📅 Cards aparecem automaticamente para revisar depois</li>
                         <li>🧠 Sistema de revisão espaçada (quanto mais acerta, mais tempo até próxima revisão)</li>
+                        <li>🔍 <strong style="color: var(--turquesa-light);">NOVO:</strong> Zoom em imagens (pergunta e resposta) com gestos de pinch e pan</li>
                     </ul>
                     <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 O Diário é onde você transforma estudo em memória de longo prazo!</p>
                 `
@@ -11678,6 +11679,20 @@
                 `
             },
             {
+                titulo: "👤 Perfis e Organização",
+                conteudo: `
+                    <p style="margin-bottom: 10px;"><strong>Organize seus estudos em perfis separados:</strong></p>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li>👤 Crie múltiplos perfis para diferentes projetos</li>
+                        <li>✏️ Personalize o nome de exibição de cada perfil</li>
+                        <li>🔄 Troque entre perfis facilmente</li>
+                        <li>💾 Cada perfil tem seus próprios dados isolados</li>
+                        <li>📤 Exporte/importe backup por perfil</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💡 Use perfis diferentes para organizar estudos de diferentes áreas ou projetos!</p>
+                `
+            },
+            {
                 titulo: "📌 Extras e Backup",
                 conteudo: `
                     <p style="margin-bottom: 10px;"><strong>Outras funcionalidades:</strong></p>
@@ -11686,6 +11701,7 @@
                         <li>📥 Importar backup</li>
                         <li>📊 Análises e gráficos de progresso</li>
                         <li>📈 Painel de saúde VRVS 3P</li>
+                        <li>🔍 Zoom em imagens do Diário (pergunta e resposta)</li>
                     </ul>
                     <p style="margin-top: 15px; color: rgba(0,206,209,0.8);">💾 Tudo é salvo localmente no seu navegador! Faça backup regularmente.</p>
                 `
@@ -12152,7 +12168,9 @@
             
             // Feedback ao usuário
             if (typeof mostrarNotificacaoFeedback === 'function') {
-                mostrarNotificacaoFeedback(`✅ Perfil alterado para: ${novoPerfil}`, 'success');
+                // PATCH P1: Usar displayName atualizado em vez de ID direto
+                const nomeExibicao = window.vrvs_getDisplayName ? window.vrvs_getDisplayName(novoPerfil) : novoPerfil;
+                mostrarNotificacaoFeedback(`✅ Perfil alterado para: ${nomeExibicao}`, 'success');
             }
         };
         
