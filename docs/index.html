@@ -1555,6 +1555,18 @@
             color: rgba(255, 255, 255, 0.6);
         }
         
+        .area-badge-fixa-gerenciar {
+            padding: 3px 8px;
+            background: rgba(255, 184, 77, 0.15);
+            border: 1px solid rgba(255, 184, 77, 0.3);
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--ambar-claro);
+            cursor: help;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
         .area-actions-gerenciar {
             display: flex;
             gap: 6px;
@@ -7801,7 +7813,9 @@
             areasOrdenadas.forEach(area => {
                 const temas = porArea[area];
                 const areaId = `area-gerenciar-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                const isAreaFixa = AREAS_FIXAS.includes(area);
+                // Área só é fixa se estiver em AREAS_FIXAS E NÃO estiver em areas_custom do perfil ativo
+                const areasCustomDoPerfil = window.vrvsAreasCustom || [];
+                const isAreaFixa = AREAS_FIXAS.includes(area) && !areasCustomDoPerfil.includes(area);
                 
                 const card = document.createElement('div');
                 card.className = 'area-card-gerenciar';
@@ -7824,6 +7838,20 @@
                 
                 info.appendChild(nome);
                 info.appendChild(badge);
+                
+                // Badge "FIXA" para áreas travadas (UX opcional)
+                if (isAreaFixa) {
+                    const badgeFixa = document.createElement('span');
+                    badgeFixa.className = 'area-badge-fixa-gerenciar';
+                    badgeFixa.textContent = '🔒 FIXA';
+                    badgeFixa.title = 'Área fixa do sistema — não pode editar/apagar';
+                    badgeFixa.onclick = (e) => {
+                        e.stopPropagation();
+                        mostrarNotificacaoFeedback('🔒 Área fixa do sistema — não pode editar/apagar', 'info');
+                    };
+                    badgeFixa.style.cursor = 'help';
+                    info.appendChild(badgeFixa);
+                }
                 
                 const actions = document.createElement('div');
                 actions.className = 'area-actions-gerenciar';
