@@ -1,0 +1,60 @@
+═══════════════════════════════════════════════════════════════
+📋 PENDÊNCIAS ATUAIS - PLATAFORMA VRVS
+═══════════════════════════════════════════════════════════════
+
+**DATA DE CRIAÇÃO:** 2026-02-06 00:30
+**STATUS:** LISTA ATIVA (SEGUIR ESTA LISTA)
+
+⚠️ **IMPORTANTE:** Esta é a lista ATUAL de pendências. Não confundir com listas antigas de pendências anteriores.
+
+═══════════════════════════════════════════════════════════════
+✅ CONCLUÍDO NESTA SESSÃO (2026-02-06)
+═══════════════════════════════════════════════════════════════
+
+1. ✅ **Bug #1: Botão "Apagar Perfil" não funcionava no iPhone**
+   - Status: RESOLVIDO e VALIDADO
+   - Fix: Normalização do prompt (trim + uppercase)
+   - Commit: ad51492
+
+2. ✅ **Feature: Renomear Perfil**
+   - Status: IMPLEMENTADO e VALIDADO
+   - Funcionalidades: Renomear perfis não-ativos, rollback seguro
+   - Commit: ad51492
+
+═══════════════════════════════════════════════════════════════
+🔴 PENDÊNCIA ATUAL (DEIXAR PARA DEPOIS)
+═══════════════════════════════════════════════════════════════
+
+### Bug: Importação de backup grande falha com "quota exceeded"
+**Descrição:**
+- Sintoma: Backup grande (DEFAULT: 103 temas, 158 sessões, 103 anotações, 1 lembrete, 1099 entradas do Diário) falha com erro "quota exceeded"
+- Backup pequeno funciona: Perfil TESTE (1 tema, 1 anotação, 1 entrada) importou com sucesso
+- Erro específico: "Falha ao restaurar vrvs_diario (quota). Snapshot pré-import foi baixado."
+- Localização: `docs/index.html` função `importarBackupJSON` (linha ~5430)
+
+**Confirmação:**
+- ✅ Exportação funciona para qualquer perfil (grande ou pequeno)
+- ✅ Importação funciona para perfis pequenos (TESTE validado)
+- ❌ Importação falha para perfis grandes (DEFAULT validado)
+
+**Problemas identificados:**
+- Falta verificação de quota ANTES de começar importação
+- Falta rollback quando falha parcialmente
+- Ordem de restauração não otimizada (começa pelos menores, termina no maior)
+
+**Impacto:** Usuários não conseguem importar backups grandes
+
+**Prioridade:** BAIXA (não é urgente, deixar para depois)
+
+═══════════════════════════════════════════════════════════════
+📝 NOTAS IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+- Esta lista substitui qualquer lista antiga de pendências
+- Ordem de prioridade: P1 → P2 → P3 → F1
+- Sempre validar no iPhone após implementar
+- Sempre fazer bump de CACHE_NAME em `docs/sw.js` quando mexer em runtime/UI
+
+═══════════════════════════════════════════════════════════════
+FIM DA LISTA DE PENDÊNCIAS ATUAIS
+═══════════════════════════════════════════════════════════════

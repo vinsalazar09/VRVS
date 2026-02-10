@@ -616,7 +616,7 @@
             --cobre-main: #FF9F40;
             --cobre-dark: #E5892E;
             --cobre-darker: #B8701F;
-            --ambar-claro: #FFA366; /* P4: Âmbar claro para UI Perfis */
+            --ambar-claro: #FFB84D; /* SPEC OPUS: Âmbar dourado */
             
             /* GLASSMORPHISM */
             --glass-bg: rgba(20, 35, 45, 0.4);
@@ -1511,6 +1511,135 @@
         
         .btn-fechar-modal:hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* ==================== GERENCIAR ÁREAS/TEMAS (SPEC OPUS) ==================== */
+        .area-card-gerenciar {
+            margin-bottom: 12px;
+            background: rgba(15, 40, 50, 0.9);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+        
+        .area-header-gerenciar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: rgba(0, 206, 209, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0,206,209,0.2);
+        }
+        
+        .area-info-gerenciar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .area-name-gerenciar {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--turquesa-light);
+        }
+        
+        .area-badge-gerenciar {
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .area-actions-gerenciar {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        
+        .area-toggle-gerenciar {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-left: 8px;
+        }
+        
+        .area-content-gerenciar {
+            padding: 6px;
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            opacity: 1;
+        }
+        
+        .area-content-gerenciar.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        
+        .tema-item-gerenciar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        
+        .tema-item-gerenciar:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        
+        .tema-name-gerenciar {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .tema-actions-gerenciar {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .btn-sm-gerenciar {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        
+        .btn-edit-gerenciar {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .btn-edit-gerenciar:active {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(1px);
+        }
+        
+        .btn-delete-gerenciar {
+            background: rgba(255, 69, 58, 0.12);
+            color: #ff453a;
+        }
+        
+        .btn-delete-gerenciar:active {
+            background: rgba(255, 69, 58, 0.25);
+            transform: translateY(1px);
         }
         
         /* Mobile: modal mais próximo do topo */
@@ -4709,6 +4838,28 @@
                             💡 Dados salvam automaticamente
                         </div>
                     </div>
+                    
+                    <!-- GERENCIAR ÁREAS & TEMAS (SPEC OPUS) -->
+                    <div style="margin-bottom: 20px; padding: 16px; background: rgba(0,206,209,0.05); border: 1px solid rgba(0,206,209,0.2); border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="color: var(--turquesa-light); font-size: 16px; font-weight: 600; margin: 0;">🧠 Gerenciar Áreas & Temas</h3>
+                            <button id="btnAbrirGerenciador" class="btn btn-small" onclick="toggleGerenciadorAreasTemas()" style="background: var(--cobre-main); color: white; border: none;">
+                                Abrir gerenciador
+                            </button>
+                        </div>
+                        <div id="gerenciadorAreasTemas" style="display: none;">
+                            <input type="text" 
+                                   id="buscaAreasTemas" 
+                                   class="form-input" 
+                                   placeholder="🔍 Buscar área ou tema..." 
+                                   oninput="filtrarAreasTemas()"
+                                   style="width: 100%; padding: 12px; font-size: 14px; margin-bottom: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+                            <div id="areasTemasLista">
+                                <!-- Renderizado dinamicamente -->
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style="overflow-x: auto;">
                         <table class="data-table">
                             <thead>
@@ -7600,6 +7751,472 @@
                     </tr>
                 `;
             }).join('');
+            
+            // Renderizar gerenciador se estiver aberto
+            const gerenciador = document.getElementById('gerenciadorAreasTemas');
+            if (gerenciador && gerenciador.style.display !== 'none') {
+                renderGerenciarAreasTemas();
+            }
+        }
+        
+        // ==================== GERENCIAR ÁREAS/TEMAS (SPEC OPUS) ====================
+        
+        function toggleGerenciadorAreasTemas() {
+            const gerenciador = document.getElementById('gerenciadorAreasTemas');
+            const btn = document.getElementById('btnAbrirGerenciador');
+            if (!gerenciador || !btn) return;
+            
+            if (gerenciador.style.display === 'none') {
+                gerenciador.style.display = '';
+                btn.textContent = 'Fechar gerenciador';
+                renderGerenciarAreasTemas();
+            } else {
+                gerenciador.style.display = 'none';
+                btn.textContent = 'Abrir gerenciador';
+            }
+        }
+        
+        function renderGerenciarAreasTemas() {
+            const container = document.getElementById('areasTemasLista');
+            if (!container) return;
+            
+            // Agrupar temas por área (apenas do perfil ativo)
+            const porArea = {};
+            dados.forEach(t => {
+                const area = t.area || 'Sem área';
+                if (!porArea[area]) porArea[area] = [];
+                porArea[area].push(t);
+            });
+            
+            const areasOrdenadas = Object.keys(porArea).sort();
+            
+            if (areasOrdenadas.length === 0) {
+                container.textContent = 'Nenhuma área encontrada.';
+                return;
+            }
+            
+            // Construir HTML usando createElement (seguro, sem innerHTML com dados do usuário)
+            const fragment = document.createDocumentFragment();
+            
+            areasOrdenadas.forEach(area => {
+                const temas = porArea[area];
+                const areaId = `area-gerenciar-${area.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const isAreaFixa = AREAS_FIXAS.includes(area);
+                
+                const card = document.createElement('div');
+                card.className = 'area-card-gerenciar';
+                card.setAttribute('data-area', area);
+                
+                const header = document.createElement('div');
+                header.className = 'area-header-gerenciar';
+                header.onclick = () => toggleAreaGerenciar(areaId);
+                
+                const info = document.createElement('div');
+                info.className = 'area-info-gerenciar';
+                
+                const nome = document.createElement('span');
+                nome.className = 'area-name-gerenciar';
+                nome.textContent = area;
+                
+                const badge = document.createElement('span');
+                badge.className = 'area-badge-gerenciar';
+                badge.textContent = `${temas.length} tema${temas.length > 1 ? 's' : ''}`;
+                
+                info.appendChild(nome);
+                info.appendChild(badge);
+                
+                const actions = document.createElement('div');
+                actions.className = 'area-actions-gerenciar';
+                
+                if (!isAreaFixa) {
+                    const btnEdit = document.createElement('button');
+                    btnEdit.className = 'btn-sm-gerenciar btn-edit-gerenciar';
+                    btnEdit.textContent = '✏️';
+                    btnEdit.title = 'Renomear área';
+                    btnEdit.onclick = (e) => { e.stopPropagation(); renomearArea(area); };
+                    
+                    const btnDelete = document.createElement('button');
+                    btnDelete.className = 'btn-sm-gerenciar btn-delete-gerenciar';
+                    btnDelete.textContent = '🗑️';
+                    btnDelete.title = 'Apagar área';
+                    btnDelete.onclick = (e) => { e.stopPropagation(); apagarArea(area); };
+                    
+                    actions.appendChild(btnEdit);
+                    actions.appendChild(btnDelete);
+                }
+                
+                const toggle = document.createElement('span');
+                toggle.className = 'area-toggle-gerenciar';
+                toggle.textContent = '▼';
+                actions.appendChild(toggle);
+                
+                header.appendChild(info);
+                header.appendChild(actions);
+                
+                const content = document.createElement('div');
+                content.className = 'area-content-gerenciar collapsed';
+                content.id = areaId;
+                
+                temas.forEach(tema => {
+                    const temaItem = document.createElement('div');
+                    temaItem.className = 'tema-item-gerenciar';
+                    temaItem.setAttribute('data-tema-id', tema.id);
+                    
+                    const temaNome = document.createElement('span');
+                    temaNome.className = 'tema-name-gerenciar';
+                    temaNome.textContent = tema.tema;
+                    
+                    const temaActions = document.createElement('div');
+                    temaActions.className = 'tema-actions-gerenciar';
+                    
+                    const btnEditTema = document.createElement('button');
+                    btnEditTema.className = 'btn-sm-gerenciar btn-edit-gerenciar';
+                    btnEditTema.textContent = '✏️';
+                    btnEditTema.title = 'Renomear tema';
+                    btnEditTema.onclick = () => renomearTema(tema.id);
+                    
+                    const btnDeleteTema = document.createElement('button');
+                    btnDeleteTema.className = 'btn-sm-gerenciar btn-delete-gerenciar';
+                    btnDeleteTema.textContent = '🗑️';
+                    btnDeleteTema.title = 'Apagar tema';
+                    btnDeleteTema.onclick = () => deletarTema(tema.id);
+                    
+                    temaActions.appendChild(btnEditTema);
+                    temaActions.appendChild(btnDeleteTema);
+                    
+                    temaItem.appendChild(temaNome);
+                    temaItem.appendChild(temaActions);
+                    content.appendChild(temaItem);
+                });
+                
+                card.appendChild(header);
+                card.appendChild(content);
+                fragment.appendChild(card);
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(fragment);
+        }
+        
+        function toggleAreaGerenciar(areaId) {
+            const content = document.getElementById(areaId);
+            if (!content) return;
+            content.classList.toggle('collapsed');
+            const header = content.previousElementSibling;
+            const toggle = header.querySelector('.area-toggle-gerenciar');
+            if (toggle) toggle.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+        
+        function filtrarAreasTemas() {
+            const query = (document.getElementById('buscaAreasTemas')?.value || '').toLowerCase().trim();
+            const cards = document.querySelectorAll('.area-card-gerenciar');
+            
+            cards.forEach(card => {
+                const areaNome = (card.getAttribute('data-area') || '').toLowerCase();
+                const temas = card.querySelectorAll('.tema-item-gerenciar');
+                let areaMatch = areaNome.includes(query);
+                let temaMatch = false;
+                
+                temas.forEach(tema => {
+                    const temaNome = tema.querySelector('.tema-name-gerenciar')?.textContent.toLowerCase() || '';
+                    if (temaNome.includes(query)) {
+                        temaMatch = true;
+                        tema.style.display = '';
+                    } else {
+                        tema.style.display = query ? 'none' : '';
+                    }
+                });
+                
+                card.style.display = (areaMatch || temaMatch || !query) ? '' : 'none';
+            });
+        }
+        
+        function renomearTema(temaId) {
+            const tema = dados.find(t => String(t.id) === String(temaId));
+            if (!tema) {
+                mostrarNotificacaoFeedback('⚠️ Tema não encontrado', 'error');
+                return;
+            }
+            
+            const nomeAntigo = tema.tema;
+            const nomeNovo = prompt(`Renomear tema "${nomeAntigo}":\n\nDigite o novo nome:`, nomeAntigo);
+            if (!nomeNovo || nomeNovo.trim() === nomeAntigo || !nomeNovo.trim()) return;
+            
+            const nomeNovoTrim = nomeNovo.trim();
+            
+            // Bloquear colisão: mesmo nome na mesma área
+            const conflito = dados.find(t => 
+                String(t.id) !== String(temaId) && 
+                t.area === tema.area && 
+                t.tema === nomeNovoTrim
+            );
+            if (conflito) {
+                mostrarNotificacaoFeedback(`⚠️ Já existe um tema "${nomeNovoTrim}" na área "${tema.area}"`, 'error');
+                return;
+            }
+            
+            try {
+                // Atualizar dados[] (match exato ===)
+                dados.forEach(t => {
+                    if (t.area === tema.area && t.tema === nomeAntigo) {
+                        t.tema = nomeNovoTrim;
+                    }
+                });
+                
+                // Atualizar historico[] (match exato ===)
+                historico.forEach(h => {
+                    if (h.tema === nomeAntigo) {
+                        h.tema = nomeNovoTrim;
+                    }
+                });
+                
+                // Atualizar diario.entradas[] (match exato ===)
+                if (window.diario && window.diario.entradas) {
+                    window.diario.entradas.forEach(e => {
+                        if (e.tema === nomeAntigo) {
+                            e.tema = nomeNovoTrim;
+                        }
+                    });
+                    salvarDiario();
+                }
+                
+                // Atualizar anotacoes[] (match exato ===)
+                anotacoes.forEach(a => {
+                    if (a.tema === nomeAntigo) {
+                        a.tema = nomeNovoTrim;
+                    }
+                });
+                
+                // Salvar tudo
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                
+                // Re-renderizar
+                renderGerenciarAreasTemas();
+                renderDados();
+                renderTarefas();
+                renderAgenda();
+                renderHistorico();
+                renderDiario();
+                renderCaderno();
+                updateFeedbackSelect();
+                
+                mostrarNotificacaoFeedback(`✅ Tema renomeado: "${nomeAntigo}" → "${nomeNovoTrim}"`);
+                
+            } catch(e) {
+                console.error('[RENOMEAR TEMA] Erro:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao renomear tema', 'error');
+            }
+        }
+        
+        function renomearArea(nomeArea) {
+            // Bloquear AREAS_FIXAS
+            if (AREAS_FIXAS.includes(nomeArea)) {
+                mostrarNotificacaoFeedback('⚠️ Não é possível renomear áreas fixas do sistema', 'error');
+                return;
+            }
+            
+            const nomeNovo = prompt(`Renomear área "${nomeArea}":\n\nDigite o novo nome:`, nomeArea);
+            if (!nomeNovo || nomeNovo.trim() === nomeArea || !nomeNovo.trim()) return;
+            
+            const nomeNovoTrim = nomeNovo.trim();
+            
+            // Bloquear colisão: área já existe
+            const areasExistentes = getAreasDisponiveisDoPerfilAtivo();
+            if (areasExistentes.includes(nomeNovoTrim)) {
+                mostrarNotificacaoFeedback(`⚠️ Já existe uma área chamada "${nomeNovoTrim}"`, 'error');
+                return;
+            }
+            
+            try {
+                // Atualizar dados[] (match exato ===)
+                dados.forEach(t => {
+                    if (t.area === nomeArea) {
+                        t.area = nomeNovoTrim;
+                    }
+                });
+                
+                // Atualizar historico[] (match exato ===)
+                historico.forEach(h => {
+                    if (h.area === nomeArea) {
+                        h.area = nomeNovoTrim;
+                    }
+                });
+                
+                // Atualizar diario.entradas[] (match exato ===)
+                if (window.diario && window.diario.entradas) {
+                    window.diario.entradas.forEach(e => {
+                        if (e.area === nomeArea) {
+                            e.area = nomeNovoTrim;
+                        }
+                    });
+                    salvarDiario();
+                }
+                
+                // Atualizar anotacoes[] (match exato ===)
+                anotacoes.forEach(a => {
+                    if (a.area === nomeArea) {
+                        a.area = nomeNovoTrim;
+                    }
+                });
+                
+                // Atualizar vrvsAreasCustom (match exato ===)
+                if (window.vrvsAreasCustom) {
+                    const index = window.vrvsAreasCustom.indexOf(nomeArea);
+                    if (index !== -1) {
+                        window.vrvsAreasCustom[index] = nomeNovoTrim;
+                        window.vrvsAreasCustom.sort();
+                        localStorage.setItem(window.vrvs_key('areas_custom'), JSON.stringify(window.vrvsAreasCustom));
+                    }
+                }
+                
+                // Salvar tudo
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                
+                // Atualizar selects
+                atualizarTodosSelectsArea(nomeNovoTrim);
+                
+                // Re-renderizar
+                renderGerenciarAreasTemas();
+                renderDados();
+                renderTarefas();
+                renderAgenda();
+                renderHistorico();
+                renderDiario();
+                renderCaderno();
+                
+                mostrarNotificacaoFeedback(`✅ Área renomeada: "${nomeArea}" → "${nomeNovoTrim}"`);
+                
+            } catch(e) {
+                console.error('[RENOMEAR AREA] Erro:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao renomear área', 'error');
+            }
+        }
+        
+        function apagarArea(nomeArea) {
+            // TRAVA 1: Bloquear AREAS_FIXAS
+            if (AREAS_FIXAS.includes(nomeArea)) {
+                mostrarNotificacaoFeedback('⚠️ Não é possível apagar áreas fixas do sistema', 'error');
+                return;
+            }
+            
+            // TRAVA 2: Verificar que área existe e tem temas
+            const temasDaArea = dados.filter(t => t.area === nomeArea);
+            if (temasDaArea.length === 0) {
+                mostrarNotificacaoFeedback('⚠️ Área não encontrada ou não possui temas', 'error');
+                return;
+            }
+            
+            // TRAVA 3: Validar estrutura dos datasets antes de calcular impacto
+            if (!Array.isArray(dados) || !Array.isArray(historico) || !Array.isArray(anotacoes) || !Array.isArray(lembretes)) {
+                mostrarNotificacaoFeedback('⚠️ Erro: estrutura de dados inválida. Abortando.', 'error');
+                return;
+            }
+            
+            if (window.diario && (!window.diario.entradas || !Array.isArray(window.diario.entradas))) {
+                mostrarNotificacaoFeedback('⚠️ Erro: estrutura do diário inválida. Abortando.', 'error');
+                return;
+            }
+            
+            // Calcular contagens EXATAS (ANTES de confirmar)
+            const temaIds = temasDaArea.map(t => t.id);
+            
+            const sessoes = historico.filter(h => 
+                h.area === nomeArea || temaIds.some(id => String(h.temaId) === String(id))
+            );
+            
+            const entradasDiario = (window.diario?.entradas || []).filter(e => e.area === nomeArea);
+            
+            const anotacoesArea = anotacoes.filter(a => 
+                a.area === nomeArea || temaIds.some(id => String(a.temaId) === String(id))
+            );
+            
+            const lembretesArea = lembretes.filter(l => 
+                temaIds.some(id => String(l.temaId) === String(id))
+            );
+            
+            // Confirmação com contagens exatas (conforme spec)
+            const mensagem = `Apagar área "${nomeArea}"?\n\n` +
+                `Isso vai apagar ${temasDaArea.length} tema${temasDaArea.length > 1 ? 's' : ''} e todos os dados associados:\n\n` +
+                `📋 ${sessoes.length} sessão${sessoes.length > 1 ? 'ões' : ''} de estudo\n` +
+                `📓 ${entradasDiario.length} entrada${entradasDiario.length > 1 ? 's' : ''} do diário\n` +
+                `📝 ${anotacoesArea.length} anotação${anotacoesArea.length > 1 ? 'ões' : ''} do caderno\n` +
+                (lembretesArea.length > 0 ? `📌 ${lembretesArea.length} lembrete${lembretesArea.length > 1 ? 's' : ''}\n` : '') +
+                `⭐ Hot Topics relacionados\n\n` +
+                `Esta ação não pode ser desfeita.`;
+            
+            if (!confirm(mensagem)) return;
+            
+            try {
+                // OPERAÇÃO ATÔMICA: tudo ou nada
+                // 1. Apagar temas de dados[]
+                const dadosAntes = dados.length;
+                dados = dados.filter(t => t.area !== nomeArea);
+                if (dados.length === dadosAntes) {
+                    throw new Error('Falha ao remover temas de dados');
+                }
+                
+                // 2. Apagar sessões do histórico (área OU temaId dos temas)
+                historico = historico.filter(h => 
+                    h.area !== nomeArea && !temaIds.some(id => String(h.temaId) === String(id))
+                );
+                
+                // 3. Apagar entradas do diário (por área)
+                if (window.diario && window.diario.entradas) {
+                    window.diario.entradas = window.diario.entradas.filter(e => e.area !== nomeArea);
+                    salvarDiario();
+                }
+                
+                // 4. Apagar anotações (área OU temaId dos temas)
+                anotacoes = anotacoes.filter(a => 
+                    a.area !== nomeArea && !temaIds.some(id => String(a.temaId) === String(id))
+                );
+                
+                // 5. Apagar lembretes (por temaId dos temas)
+                lembretes = lembretes.filter(l => 
+                    !temaIds.some(id => String(l.temaId) === String(id))
+                );
+                
+                // 6. Remover de vrvsAreasCustom
+                if (window.vrvsAreasCustom) {
+                    window.vrvsAreasCustom = window.vrvsAreasCustom.filter(a => a !== nomeArea);
+                    localStorage.setItem(window.vrvs_key('areas_custom'), JSON.stringify(window.vrvsAreasCustom));
+                }
+                
+                // SALVAR TUDO (atomicamente)
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
+                
+                // Atualizar selects
+                atualizarTodosSelectsArea();
+                
+                // Mostrar resumo
+                mostrarNotificacaoFeedback(
+                    `✅ Área "${nomeArea}" e ${temasDaArea.length} tema${temasDaArea.length > 1 ? 's' : ''} apagados`
+                );
+                
+                // Re-renderizar tudo
+                renderGerenciarAreasTemas();
+                renderDados();
+                renderTarefas();
+                renderAgenda();
+                renderHistorico();
+                renderPendencias();
+                updateFeedbackSelect();
+                updateStats();
+                renderLembretes();
+                renderCaderno();
+                renderDiario();
+                
+            } catch(e) {
+                console.error('[APAGAR AREA] Erro:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao apagar área. Dados não foram alterados.', 'error');
+            }
         }
         
         function updateFeedbackSelect() {
@@ -7653,63 +8270,96 @@
                 return;
             }
             
-            // Confirmar exclusão
-            const confirmacao = confirm(
-                `⚠️ ATENÇÃO: Excluir tema "${tema.tema}"?\n\n` +
-                `Isso irá REMOVER PERMANENTEMENTE:\n` +
-                `• O tema dos dados\n` +
-                `• Todo o histórico relacionado\n` +
-                `• Lembretes vinculados\n` +
-                `• Anotações do caderno\n\n` +
-                `Esta ação NÃO pode ser desfeita!\n\n` +
-                `Confirmar exclusão?`
-            );
+            // Validar estrutura dos datasets antes de calcular impacto
+            if (!Array.isArray(dados) || !Array.isArray(historico) || !Array.isArray(anotacoes) || !Array.isArray(lembretes)) {
+                mostrarNotificacaoFeedback('⚠️ Erro: estrutura de dados inválida. Abortando.', 'error');
+                return;
+            }
             
-            if (!confirmacao) return;
+            if (window.diario && (!window.diario.entradas || !Array.isArray(window.diario.entradas))) {
+                mostrarNotificacaoFeedback('⚠️ Erro: estrutura do diário inválida. Abortando.', 'error');
+                return;
+            }
             
-            // Contar quantos registros serão removidos
+            // Calcular contagens EXATAS (ANTES de confirmar)
             const historicoRelacionado = historico.filter(h => String(h.temaId) === String(temaId));
             const lembretesRelacionados = lembretes.filter(l => String(l.temaId) === String(temaId));
             const anotacoesRelacionadas = anotacoes.filter(a => String(a.temaId) === String(temaId));
+            const entradasDiario = (window.diario?.entradas || []).filter(e => 
+                e.area === tema.area && e.tema === tema.tema
+            );
             
-            // Remover tema dos dados
-            dados = dados.filter(t => String(t.id) !== String(temaId));
+            // Confirmação com contagens exatas (conforme spec)
+            const mensagem = `Apagar tema "${tema.tema}"?\n\n` +
+                `Isso vai apagar:\n` +
+                `📋 ${historicoRelacionado.length} sessão${historicoRelacionado.length > 1 ? 'ões' : ''} de estudo\n` +
+                `📓 ${entradasDiario.length} entrada${entradasDiario.length > 1 ? 's' : ''} do diário\n` +
+                `📝 ${anotacoesRelacionadas.length} anotação${anotacoesRelacionadas.length > 1 ? 'ões' : ''} do caderno\n` +
+                (lembretesRelacionados.length > 0 ? `📌 ${lembretesRelacionados.length} lembrete${lembretesRelacionados.length > 1 ? 's' : ''}\n` : '') +
+                `\nEsta ação não pode ser desfeita.`;
             
-            // Remover histórico relacionado
-            historico = historico.filter(h => String(h.temaId) !== String(temaId));
+            if (!confirm(mensagem)) return;
             
-            // Remover lembretes relacionados
-            lembretes = lembretes.filter(l => String(l.temaId) !== String(temaId));
-            
-            // Remover anotações relacionadas
-            anotacoes = anotacoes.filter(a => String(a.temaId) !== String(temaId));
-            
-            // Salvar tudo no localStorage
-            localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
-            localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
-            localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
-            localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
-            
-            // Mostrar resumo do que foi removido
-            const resumo = [
-                `✅ Tema removido`,
-                historicoRelacionado.length > 0 ? `${historicoRelacionado.length} registro(s) de histórico` : '',
-                lembretesRelacionados.length > 0 ? `${lembretesRelacionados.length} lembrete(s)` : '',
-                anotacoesRelacionadas.length > 0 ? `${anotacoesRelacionadas.length} anotação(ões)` : ''
-            ].filter(r => r).join('\n');
-            
-            mostrarNotificacaoFeedback(resumo);
-            
-            // Atualizar todas as visualizações
-            renderDados();
-            renderTarefas();
-            renderAgenda();
-            renderHistorico();
-            renderPendencias();
-            updateFeedbackSelect();
-            updateStats();
-            renderLembretes();
-            renderCaderno();
+            try {
+                // OPERAÇÃO ATÔMICA: tudo ou nada
+                // 1. Remover tema dos dados
+                const dadosAntes = dados.length;
+                dados = dados.filter(t => String(t.id) !== String(temaId));
+                if (dados.length === dadosAntes) {
+                    throw new Error('Falha ao remover tema de dados');
+                }
+                
+                // 2. Remover histórico relacionado
+                historico = historico.filter(h => String(h.temaId) !== String(temaId));
+                
+                // 3. Remover lembretes relacionados
+                lembretes = lembretes.filter(l => String(l.temaId) === String(temaId));
+                
+                // 4. Remover anotações relacionadas
+                anotacoes = anotacoes.filter(a => String(a.temaId) === String(temaId));
+                
+                // 5. Remover entradas do diário (match area+tema)
+                if (window.diario && window.diario.entradas) {
+                    window.diario.entradas = window.diario.entradas.filter(e => 
+                        !(e.area === tema.area && e.tema === tema.tema)
+                    );
+                    salvarDiario();
+                }
+                
+                // SALVAR TUDO (atomicamente)
+                localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                localStorage.setItem(window.vrvs_key('lembretes'), JSON.stringify(lembretes));
+                localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                
+                // Mostrar resumo
+                const resumo = [
+                    `✅ Tema removido`,
+                    historicoRelacionado.length > 0 ? `${historicoRelacionado.length} registro(s) de histórico` : '',
+                    entradasDiario.length > 0 ? `${entradasDiario.length} entrada(s) do diário` : '',
+                    lembretesRelacionados.length > 0 ? `${lembretesRelacionados.length} lembrete(s)` : '',
+                    anotacoesRelacionadas.length > 0 ? `${anotacoesRelacionadas.length} anotação(ões)` : ''
+                ].filter(r => r).join('\n');
+                
+                mostrarNotificacaoFeedback(resumo);
+                
+                // Re-renderizar tudo
+                renderGerenciarAreasTemas();
+                renderDados();
+                renderTarefas();
+                renderAgenda();
+                renderHistorico();
+                renderPendencias();
+                updateFeedbackSelect();
+                updateStats();
+                renderLembretes();
+                renderCaderno();
+                renderDiario();
+                
+            } catch(e) {
+                console.error('[DELETAR TEMA] Erro:', e);
+                mostrarNotificacaoFeedback('⚠️ Erro ao apagar tema. Dados não foram alterados.', 'error');
+            }
         }
         
         function desfazerUltimoFeedback() {
