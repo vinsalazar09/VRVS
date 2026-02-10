@@ -5322,6 +5322,22 @@
                         <button onclick="abrirNovaEntradaDiario()" id="btnNovaDiario" class="btn-nova-diario" style="background: #FF9F40 !important; color: #FFFFFF !important; border: 2px solid #FFB84D !important; padding: 10px 18px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 700 !important; cursor: pointer !important; min-width: 90px !important; box-shadow: 0 2px 8px rgba(255, 159, 64, 0.4) !important; transition: all 0.2s ease; display: inline-block !important; position: relative !important; z-index: 10 !important; -webkit-tap-highlight-color: rgba(255, 159, 64, 0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; opacity: 1 !important; visibility: visible !important;">+ Nova</button>
                     </div>
                     
+                    <!-- Box Modo Avançado -->
+                    <div id="diarioModoAvancadoBox" style="background: linear-gradient(135deg, rgba(255,184,77,0.1), rgba(255,184,77,0.05)); border-radius: 8px; padding: 14px; margin-bottom: 16px; border-left: 3px solid rgba(255,184,77,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 4px; color: rgba(255,255,255,0.9); font-size: 14px;">⚙️ Modo Avançado</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.6);">Acompanhe desempenho nos casos clínicos</div>
+                            </div>
+                            <label style="position: relative; display: inline-block; width: 56px; height: 34px; flex-shrink: 0;">
+                                <input type="checkbox" id="toggleModoAvancado" onchange="modoAvancado_toggle()" style="opacity: 0; width: 0; height: 0;">
+                                <span id="toggleModoAvancadoSpan" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); border-radius: 17px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;">
+                                    <span id="toggleModoAvancadoThumb" style="position: absolute; content: ''; height: 28px; width: 28px; left: 3px; bottom: 3px; background: linear-gradient(145deg, #fff, #e8e8e8); border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
                     <!-- Tabs Lista / Sessão -->
                     <div class="diario-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
                         <button id="diarioTabLista" class="diario-tab active" onclick="setAbaDiario('lista')">
@@ -10392,6 +10408,9 @@ function modoAvancado_toggle() {
     const ativo = checkbox.checked;
     modoAvancado_setAtivo(ativo);
     
+    // Atualizar visual do toggle
+    diarioModoAvancado_atualizarToggleVisual();
+    
     if (ativo) {
         mostrarNotificacaoFeedback('✨ Modo Avançado ativado<br>Agora você pode acompanhar seu desempenho nos casos clínicos.', 'success', 3000);
     }
@@ -10458,6 +10477,9 @@ function modoAvancado_toggle() {
                     }
                 }
             }
+            
+            // Atualizar toggle visual ao renderizar UI
+            diarioModoAvancado_atualizarToggleVisual();
         }
         
         function diarioModoAvancado_renderBoxDesempenho(entradaOpt) {
@@ -10509,6 +10531,31 @@ function modoAvancado_toggle() {
                     const display = document.getElementById('novaDiarioNotaDesempenhoValue');
                     if (display) display.textContent = val.toFixed(1);
                 });
+            }
+        }
+        
+        function diarioModoAvancado_atualizarToggleVisual() {
+            const checkbox = document.getElementById('toggleModoAvancado');
+            const span = document.getElementById('toggleModoAvancadoSpan');
+            const thumb = document.getElementById('toggleModoAvancadoThumb');
+            
+            if (!checkbox || !span || !thumb) return;
+            
+            const ativo = modoAvancado_getAtivo();
+            checkbox.checked = ativo;
+            
+            if (ativo) {
+                span.style.background = 'linear-gradient(135deg, rgba(0,206,209,0.2), rgba(0,206,209,0.3))';
+                span.style.borderColor = 'rgba(0,206,209,0.5)';
+                span.style.boxShadow = '0 0 20px rgba(0,206,209,0.15)';
+                thumb.style.left = '24px';
+                thumb.style.background = 'linear-gradient(145deg, #fff, rgba(0,206,209,0.8))';
+            } else {
+                span.style.background = 'rgba(255,255,255,0.1)';
+                span.style.borderColor = 'rgba(255,255,255,0.1)';
+                span.style.boxShadow = 'none';
+                thumb.style.left = '3px';
+                thumb.style.background = 'linear-gradient(145deg, #fff, #e8e8e8)';
             }
         }
         
@@ -13392,6 +13439,11 @@ function modoAvancado_toggle() {
             // Renderizar UI do Modo Avançado ao carregar
             if (typeof diarioModoAvancado_renderUI === 'function') {
                 diarioModoAvancado_renderUI();
+            }
+            
+            // Atualizar toggle visual ao carregar
+            if (typeof diarioModoAvancado_atualizarToggleVisual === 'function') {
+                diarioModoAvancado_atualizarToggleVisual();
             }
             
             // Verificar se é primeira vez e mostrar tutorial
@@ -21964,21 +22016,7 @@ function modoAvancado_toggle() {
                     </div>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, rgba(255,184,77,0.1), rgba(255,184,77,0.05)); border-radius: 8px; padding: 20px; margin-bottom: 20px; border-left: 3px solid rgba(255,184,77,0.3);">
-                    <h3 style="color: var(--ambar-claro); font-size: 16px; margin-bottom: 15px;">📔 DIÁRIO</h3>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255,184,77,0.2);">
-                        <div>
-                            <div style="font-weight: 600; margin-bottom: 4px; color: rgba(255,255,255,0.9);">Modo Avançado</div>
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Acompanhe desempenho nos casos clínicos</div>
-                        </div>
-                        <label style="position: relative; display: inline-block; width: 56px; height: 34px;">
-                            <input type="checkbox" id="toggleModoAvancado" onchange="modoAvancado_toggle()" style="opacity: 0; width: 0; height: 0;" ${modoAvancado_getAtivo() ? 'checked' : ''}>
-                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); border-radius: 17px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; ${modoAvancado_getAtivo() ? 'background: linear-gradient(135deg, rgba(0,206,209,0.2), rgba(0,206,209,0.3)); border-color: rgba(0,206,209,0.5); box-shadow: 0 0 20px rgba(0,206,209,0.15);' : ''}">
-                                <span style="position: absolute; content: ''; height: 28px; width: 28px; left: 3px; bottom: 3px; background: linear-gradient(145deg, #fff, #e8e8e8); border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); ${modoAvancado_getAtivo() ? 'left: 24px; background: linear-gradient(145deg, #fff, rgba(0,206,209,0.8));' : ''}"></span>
-                            </span>
-                        </label>
-                    </div>
-                </div>
+                <!-- Box Modo Avançado removido - agora está na aba Diário -->
                 
                 <div style="background: linear-gradient(135deg, rgba(255,127,80,0.1), rgba(255,127,80,0.05)); border-radius: 8px; padding: 20px; border-left: 3px solid var(--cobre-main);">
                     <h3 style="color: var(--cobre-light); font-size: 16px; margin-bottom: 15px;">💡 Fluxo Diário Recomendado</h3>
