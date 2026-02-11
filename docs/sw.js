@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.232-modal-buttons-liquid-glass-20260210-2355";
+const CACHE_NAME = "vrvs-v5.3.233-modal-buttons-css-fix-20260211-0000";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
