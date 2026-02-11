@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.231-modal-botoes-cores-glow-20260210-2345";
+const CACHE_NAME = "vrvs-v5.3.230-liquid-glass-hierarquia-20260210-2300";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
