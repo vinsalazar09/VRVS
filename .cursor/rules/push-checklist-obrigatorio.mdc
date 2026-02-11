@@ -9,6 +9,8 @@ alwaysApply: true
 
 **NUNCA** fazer push sem trazer checklist de validação para o usuário.
 
+**SEMPRE** após commit de alterações de código: fazer o PUSH. Checklist sem push feito = inútil. O usuário precisa que o push esteja no jeito para validar no iPhone.
+
 ## Por quê
 
 Usuário precisa validar visualmente no iPhone após cada push. Sem checklist = não dá para bater o olho e validar rapidamente.
@@ -30,6 +32,7 @@ Checklist simples, visual, direto. Sem termos técnicos. Qualquer pessoa consegu
 - **TODOS** os commits que fazem push
 - **SEMPRE** incluir checklist na saída final após push
 - **NUNCA** executar push sem checklist
+- **SEMPRE** fazer o push após commit — não deixar só o commit. Push precisa estar no jeito.
 
 ## Exemplo
 
