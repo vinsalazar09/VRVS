@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.233-modal-buttons-css-fix-20260211-0000";
+const CACHE_NAME = "vrvs-v5.3.234-modal-buttons-meio-termo-20260211-0010";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
