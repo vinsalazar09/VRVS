@@ -623,6 +623,135 @@
             --glass-border: rgba(255, 127, 80, 0.3);
             --text-light: rgba(255, 255, 255, 0.95);
         }
+        
+        /* ==================== HIERARQUIA DE INTENSIDADE (OPUS) ==================== */
+        
+        /* BASE GLASS (container, sem alterar texto) */
+        .glass-base {
+            background: rgba(255,255,255, 0.03);
+            border: 1px solid rgba(255,255,255, 0.08);
+        }
+        
+        /* TABS DO DIÁRIO — ESTADOS */
+        .modo-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .modo-inativo {
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            border: 1px solid transparent;
+            box-shadow: none;
+        }
+        
+        /* Nível 2 — DESTAQUE (15%) */
+        .nivel-2-turquesa {
+            background: linear-gradient(135deg, rgba(0,206,209,0.08), rgba(0,206,209,0.04));
+            border: 1px solid rgba(0,206,209,0.20);
+            color: rgba(0,206,209,0.85);
+            box-shadow: 0 0 20px rgba(0,206,209,0.08);
+        }
+        
+        .nivel-2-ambar {
+            background: linear-gradient(135deg, rgba(255,184,77,0.08), rgba(255,184,77,0.04));
+            border: 1px solid rgba(255,184,77,0.20);
+            color: rgba(255,184,77,0.85);
+            box-shadow: 0 0 20px rgba(255,184,77,0.08);
+        }
+        
+        .nivel-2-vermelho {
+            background: linear-gradient(135deg, rgba(255,82,82,0.08), rgba(255,82,82,0.04));
+            border: 1px solid rgba(255,82,82,0.15);
+            color: rgba(255,82,82,0.70);
+            box-shadow: 0 0 20px rgba(255,82,82,0.08);
+        }
+        
+        /* Nível 3 — AÇÃO (5%) */
+        .nivel-3-ambar {
+            background: linear-gradient(135deg, rgba(255,184,77,0.15), rgba(255,184,77,0.08));
+            border: 1px solid rgba(255,184,77,0.30);
+            color: rgba(255,184,77,0.95);
+            box-shadow: 0 0 24px rgba(255,184,77,0.10);
+        }
+        
+        /* FAIXAS RANKING (Nível 1 + cor sutil) */
+        .faixa-baixa {
+            background: linear-gradient(135deg, rgba(255,82,82,0.06), transparent);
+            border: 1px solid rgba(255,82,82,0.12);
+        }
+        
+        .faixa-baixa .rank-badge {
+            background: rgba(255,82,82,0.10);
+            border: 1px solid rgba(255,82,82,0.20);
+            color: rgba(255,82,82,0.80);
+        }
+        
+        .faixa-baixa .nota-display {
+            color: rgba(255,82,82,0.75);
+        }
+        
+        .faixa-media {
+            background: linear-gradient(135deg, rgba(255,184,77,0.06), transparent);
+            border: 1px solid rgba(255,184,77,0.12);
+        }
+        
+        .faixa-media .rank-badge {
+            background: rgba(255,184,77,0.10);
+            border: 1px solid rgba(255,184,77,0.20);
+            color: rgba(255,184,77,0.80);
+        }
+        
+        .faixa-media .nota-display {
+            color: rgba(255,184,77,0.75);
+        }
+        
+        .faixa-alta {
+            background: linear-gradient(135deg, rgba(80,220,100,0.06), transparent);
+            border: 1px solid rgba(80,220,100,0.12);
+        }
+        
+        .faixa-alta .rank-badge {
+            background: rgba(80,220,100,0.10);
+            border: 1px solid rgba(80,220,100,0.20);
+            color: rgba(80,220,100,0.80);
+        }
+        
+        .faixa-alta .nota-display {
+            color: rgba(80,220,100,0.75);
+        }
+        
+        /* BADGE AVANÇADO (Nível 1 âmbar discreto) */
+        .badge-avancado {
+            background: linear-gradient(135deg, rgba(255,184,77,0.08), rgba(255,184,77,0.04));
+            border: 1px solid rgba(255,184,77,0.15);
+            color: rgba(255,184,77,0.75);
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        /* OBSERVAÇÃO — MULTILINE (sem cor fixa) */
+        .obs-desempenho {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.4;
+            margin-top: 6px;
+            font-size: 12px;
+            font-style: italic;
+            color: rgba(255,255,255,0.65);
+        }
+        
+        /* ==================== FIM HIERARQUIA ==================== */
 
         html, body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
@@ -4631,12 +4760,12 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn" onclick="(async () => { await salvarEntradaDiario(); })()" style="flex: 1;">💾 SALVAR</button>
-                    <button type="button" class="btn btn-secondary" onclick="(async () => { await salvarEContinuarDiario(); })()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
+                    <button type="button" class="btn nivel-3-ambar" onclick="(async () => { await salvarEntradaDiario(); })()" style="flex: 1; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">💾 SALVAR</button>
+                    <button type="button" class="btn nivel-2-turquesa" onclick="(async () => { await salvarEContinuarDiario(); })()" style="flex: 1; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">➕ SALVAR E ADICIONAR OUTRA</button>
                 </div>
                 
                 <div id="btnExcluirEntradaWrapper" style="display: none; margin-top: 16px;">
-                    <button type="button" class="btn btn-danger" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; background: #EF4444; border-color: #EF4444; color: #FFFFFF; font-weight: 800;">
+                    <button type="button" class="btn nivel-2-vermelho" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; font-weight: 800; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
                         🗑️ Apagar este card
                     </button>
                 </div>
@@ -5352,10 +5481,10 @@
                     <div id="diarioListaWrapper">
                     <!-- Toggle de Modo -->
                     <div class="diario-modos" style="margin-bottom: 16px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; width: fit-content;">
-                        <button class="modo-btn active" id="modoRecall" onclick="setModoDiario('recall')" style="background: var(--cobre-main); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        <button class="modo-btn nivel-2-turquesa active" id="modoRecall" onclick="setModoDiario('recall')">
                             🧠 Recall
                         </button>
-                        <button class="modo-btn" id="modoRespostas" onclick="setModoDiario('respostas')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        <button class="modo-btn modo-inativo" id="modoRespostas" onclick="setModoDiario('respostas')">
                             📖 Respostas
                         </button>
                         <span id="diarioRankingBtnMount"></span>
@@ -10453,7 +10582,7 @@ function modoAvancado_toggle() {
             const badgeMount = document.getElementById('diarioBadgeAvancadoMount');
             if (badgeMount) {
                 if (modoAvancado_getAtivo()) {
-                    badgeMount.innerHTML = '<span class="badge-avancado" style="background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.2)); border: 1px solid rgba(255,184,77,0.3); color: rgba(255,184,77,0.9); padding: 6px 14px; border-radius: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-left: 10px;">AVANÇADO</span>';
+                    badgeMount.innerHTML = '<span class="badge-avancado" style="margin-left: 10px;">AVANÇADO</span>';
                 } else {
                     badgeMount.innerHTML = '';
                 }
@@ -10463,7 +10592,7 @@ function modoAvancado_toggle() {
             const rankingBtnMount = document.getElementById('diarioRankingBtnMount');
             if (rankingBtnMount) {
                 if (modoAvancado_getAtivo()) {
-                    rankingBtnMount.innerHTML = `<button class="modo-btn" id="modoRanking" onclick="setModoDiario('ranking')" style="background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                    rankingBtnMount.innerHTML = `<button class="modo-btn modo-inativo" id="modoRanking" onclick="setModoDiario('ranking')">
                             🏆 Ranking
                         </button>`;
                 } else {
@@ -10512,7 +10641,7 @@ function modoAvancado_toggle() {
                     </div>
                     <div>
                         <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Observação (opcional)</label>
-                        <input type="text" id="novaDiarioObsDesempenho" placeholder="Ex: confundi classificação..." value="${vrvs_escapeHTML(obs)}" style="width: 100%; padding: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: rgba(255,255,255,0.9); font-size: 15px;">
+                        <textarea id="novaDiarioObsDesempenho" placeholder="Ex: confundi classificação..." rows="3" style="width: 100%; padding: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: rgba(255,255,255,0.9); font-size: 15px; resize: vertical; min-height: 60px; white-space: pre-wrap; word-wrap: break-word; font-family: inherit;">${vrvs_escapeHTML(obs)}</textarea>
                     </div>
                 </div>
             `;
@@ -15749,31 +15878,32 @@ function modoAvancado_toggle() {
             const btnRespostas = document.getElementById('modoRespostas');
             const btnRanking = document.getElementById('modoRanking');
             
+            // Resetar todos para inativo (usar classes, não inline)
             [btnRecall, btnRespostas, btnRanking].forEach(btn => {
                 if (btn) {
-                    btn.style.background = 'transparent';
-                    btn.style.color = 'rgba(255,255,255,0.6)';
-                    btn.style.border = 'none';
-                    btn.classList.remove('active');
+                    btn.classList.remove('nivel-2-turquesa', 'nivel-2-ambar', 'nivel-3-ambar', 'active');
+                    btn.classList.add('modo-inativo');
                 }
             });
             
+            // Aplicar estado ativo conforme modo (usar classes)
             if (modo === 'recall' && btnRecall) {
-                btnRecall.style.background = 'var(--cobre-main)';
-                btnRecall.style.color = 'white';
-                btnRecall.classList.add('active');
+                btnRecall.classList.remove('modo-inativo');
+                btnRecall.classList.add('nivel-2-turquesa', 'active');
             } else if (modo === 'respostas' && btnRespostas) {
-                btnRespostas.style.background = 'var(--cobre-main)';
-                btnRespostas.style.color = 'white';
-                btnRespostas.classList.add('active');
+                btnRespostas.classList.remove('modo-inativo');
+                btnRespostas.classList.add('nivel-2-turquesa', 'active');
             } else if (modo === 'ranking' && btnRanking) {
-                btnRanking.style.background = 'linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.15))';
-                btnRanking.style.color = 'rgba(255,184,77,0.9)';
-                btnRanking.style.border = '1px solid rgba(255,184,77,0.2)';
-                btnRanking.classList.add('active');
+                btnRanking.classList.remove('modo-inativo');
+                btnRanking.classList.add('nivel-2-ambar', 'active');
             }
             
-            renderDiario();
+            // Renderizar conteúdo conforme modo
+            if (modo === 'ranking') {
+                renderRanking();
+            } else {
+                renderDiario();
+            }
         }
         
         // Auto-resize para textarea do Tópico
@@ -16782,27 +16912,16 @@ function modoAvancado_toggle() {
                 const temNota = typeof nota === 'number' && !isNaN(nota);
                 const notaStr = temNota ? nota.toFixed(1) : '—';
                 
-                let classeCor = 'neutro';
-                let corTexto = 'rgba(255,255,255,0.7)';
-                let corBg = 'rgba(255,255,255,0.03)';
-                let corBorder = 'rgba(255,255,255,0.1)';
+                // Determinar faixa (usar classes CSS)
+                let faixaClass = '';
                 
                 if (temNota) {
                     if (nota < 5) {
-                        classeCor = 'low';
-                        corTexto = 'rgba(255,82,82,0.7)';
-                        corBg = 'rgba(255,82,82,0.08)';
-                        corBorder = 'rgba(255,82,82,0.2)';
+                        faixaClass = 'faixa-baixa';
                     } else if (nota >= 5 && nota < 7) {
-                        classeCor = 'mid';
-                        corTexto = 'rgba(255,184,77,0.8)';
-                        corBg = 'rgba(255,184,77,0.08)';
-                        corBorder = 'rgba(255,184,77,0.2)';
+                        faixaClass = 'faixa-media';
                     } else {
-                        classeCor = 'high';
-                        corTexto = 'rgba(80,220,100,0.8)';
-                        corBg = 'rgba(80,220,100,0.08)';
-                        corBorder = 'rgba(80,220,100,0.2)';
+                        faixaClass = 'faixa-alta';
                     }
                 }
                 
@@ -16813,8 +16932,8 @@ function modoAvancado_toggle() {
                 const diasStr = diasAtras === 0 ? 'hoje' : diasAtras === 1 ? 'há 1 dia' : `há ${diasAtras} dias`;
                 
                 html += `
-                    <div onclick="editarEntradaDiario('${entrada.id}')" style="display: flex; gap: 14px; align-items: flex-start; padding: 18px; background: linear-gradient(135deg, ${corBg}, transparent); border-radius: 18px; margin-bottom: 12px; border: 1px solid ${corBorder}; cursor: pointer; touch-action: manipulation;">
-                        <div style="width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; flex-shrink: 0; background: ${corBg}; color: ${corTexto}; border: 1px solid ${corBorder};">
+                    <div onclick="editarEntradaDiario('${entrada.id}')" class="${faixaClass}" style="display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 18px; margin-bottom: 12px; cursor: pointer; touch-action: manipulation;">
+                        <div class="rank-badge" style="width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; flex-shrink: 0;">
                             ${posicao}
                         </div>
                         <div style="flex: 1; min-width: 0;">
@@ -16822,10 +16941,12 @@ function modoAvancado_toggle() {
                             <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: ${entrada.obsDesempenho ? '6px' : '0'};">
                                 ${vrvs_escapeHTML(entrada.area || '')} • ${vrvs_escapeHTML(entrada.tema || '')} • ${diasStr}
                             </div>
-                            ${entrada.obsDesempenho ? `<div style="font-size: 11px; color: rgba(255,184,77,0.8); font-style: italic; display: flex; align-items: center; gap: 4px;">⚠ ${vrvs_escapeHTML(entrada.obsDesempenho)}</div>` : ''}
+                            ${entrada.obsDesempenho ? `<div class="obs-desempenho">⚠ ${vrvs_escapeHTML(entrada.obsDesempenho)}</div>` : ''}
                         </div>
                         <div style="text-align: right; flex-shrink: 0;">
-                            <div style="font-size: 26px; font-weight: 800; line-height: 1; color: ${corTexto};">${notaStr}</div>
+                            <div class="nota-display" style="font-size: 26px; font-weight: 800; line-height: 1;">
+                                ${notaStr}
+                            </div>
                             <div style="font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;">nota</div>
                         </div>
                     </div>
