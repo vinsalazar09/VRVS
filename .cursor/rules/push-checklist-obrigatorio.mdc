@@ -1,0 +1,40 @@
+---
+description: PUSH = CHECKLIST obrigatório — Sempre trazer checklist antes de push
+alwaysApply: true
+---
+
+# PUSH = CHECKLIST OBRIGATÓRIO
+
+## Regra absoluta
+
+**NUNCA** fazer push sem trazer checklist de validação para o usuário.
+
+## Por quê
+
+Usuário precisa validar visualmente no iPhone após cada push. Sem checklist = não dá para bater o olho e validar rapidamente.
+
+## Formato obrigatório
+
+Checklist simples, visual, direto. Sem termos técnicos. Qualquer pessoa consegue validar rapidamente.
+
+```
+## CHECKLIST DE VALIDAÇÃO (iPhone)
+
+- [ ] Passo 1: o que você vai testar
+- [ ] Passo 2: o que você vai verificar
+- [ ] Resultado esperado: descrição clara
+```
+
+## Quando aplicar
+
+- **TODOS** os commits que fazem push
+- **SEMPRE** incluir checklist na saída final após push
+- **NUNCA** executar push sem checklist
+
+## Exemplo
+
+Se implementou correção de botão:
+- [ ] Abrir app no iPhone
+- [ ] Ir para tela X
+- [ ] Botão deve aparecer corretamente (não "morto")
+- [ ] Confirmar que funciona ao tocar

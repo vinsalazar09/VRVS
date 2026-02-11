@@ -1,0 +1,29 @@
+---
+description: Mobile-first — Plataforma usada principalmente no iPhone
+alwaysApply: true
+---
+
+# MOBILE-FIRST (IPHONE)
+
+## Regra crítica
+
+Plataforma é usada **principalmente no iPhone**. Não em desktop.
+
+## O que SEMPRE fazer
+
+- **SEMPRE** pensar em mobile primeiro em correções e implementações
+- **SEMPRE** adicionar suporte para eventos touch (touchend) além de click
+- **SEMPRE** adicionar `touch-action: manipulation` em botões/interações
+- **SEMPRE** testar pensando em iPhone, não desktop
+
+## O que NUNCA fazer
+
+- **NUNCA** assumir que funciona em mobile só porque funciona em desktop
+- **NUNCA** esquecer que usuário usa principalmente iPhone
+- **NUNCA** implementar/testar apenas pensando em desktop
+
+## Aplica-se a
+
+- Correções de bugs
+- Implementações de interações (cliques, toques)
+- Event listeners (sempre considerar touch)

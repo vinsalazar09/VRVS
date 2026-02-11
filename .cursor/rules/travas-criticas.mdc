@@ -1,0 +1,36 @@
+---
+description: TRAVAS CRÍTICAS — Não criar/modificar/executar sem pedido explícito
+alwaysApply: true
+---
+
+# TRAVAS CRÍTICAS (FERROLHO)
+
+## 1. NUNCA criar, modificar ou executar sem pedido EXPLÍCITO
+
+- **NUNCA** criar arquivos, pastas ou documentos sem o usuário dizer "crie o arquivo X" ou "salve em Y"
+- **NUNCA** modificar código, CSS, HTML ou qualquer arquivo sem pedido EXPLÍCITO
+- **NUNCA** executar comandos, patches ou alterações sem pedido EXPLÍCITO
+
+## 2. PREVIEW / NÃO EXECUTAR = APENAS TEXTO
+
+Quando o usuário disser: "PREVIEW", "NÃO EXECUTAR", "apenas gere", "só mostre", "só gerar relatório":
+- Responder **APENAS em texto** na conversa
+- **NÃO** criar arquivos .md, .txt, .html ou qualquer output em disco
+- Colar o conteúdo direto na resposta
+
+## 3. "criar documento" ≠ "implementar"
+
+- **"criar documento"** = criar documento. Ponto. Não implementar nada.
+- **"implementar"** = mudar código. São coisas diferentes.
+- Se pedido é documento, apenas documento. Se quiser implementar depois, perguntar primeiro.
+
+## 4. Perguntas antes de executar
+
+- Se há **pergunta (?)** na mensagem → responder PRIMEIRO, aguardar confirmação, SÓ DEPOIS executar
+- Se é **comando** → pode executar sem perguntar
+- **NUNCA** ignorar perguntas e sair executando (proatividade tóxica)
+
+## 5. Em caso de dúvida
+
+- **NÃO** assumir que pode criar/modificar
+- Perguntar: "Quer que eu crie/salve isso em algum arquivo?" ou "Quer que eu aplique essa alteração?"

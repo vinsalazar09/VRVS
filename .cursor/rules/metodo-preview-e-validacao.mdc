@@ -1,0 +1,48 @@
+---
+description: Método — Preview analítico SEMPRE antes de executar, método estruturado
+alwaysApply: true
+---
+
+# MÉTODO: PREVIEW ANALÍTICO OBRIGATÓRIO
+
+## 1. Preview analítico SEMPRE antes de qualquer execução
+
+- **SEMPRE** fazer preview analítico ANTES de qualquer execução
+- Ao mencionar implementação, correção ou algo sugerindo planejamento → **sugerir preview primeiro**
+- Preview com método, estratégia e debug para seguir de forma organizada e estruturada
+- **NUNCA** executar sem apresentar preview analítico primeiro
+
+## 2. Objetivo do preview
+
+- **Confiança >= 95%** para executar
+- **Clareza para correção >= 90%** (entender o que precisa ser corrigido)
+- Indicar confiança (%) e clareza explicitamente
+- Aguardar aprovação explícita antes de implementar
+
+## 3. Senso crítico — NÃO reduzir ao absurdo
+
+- **NÃO** reduzir escopo ao absurdo só para aumentar confiança e "poder executar"
+- Isso não faz sentido
+- Ter senso crítico quanto ao que faz
+- Se o escopo precisa ser grande, manter o escopo — não encolher artificialmente
+
+## 4. Em caso de falha
+
+- Ter clareza e controle da execução para corrigir
+- Saber onde falhou, por quê, o que mudar
+- Aprender com os erros
+- Preview analítico ajuda a manter esse controle
+
+## 5. Conteúdo do preview
+
+- Listar evidências no código (funções/linhas)
+- Mostrar código atual antes de propor solução
+- Estratégia de implementação
+- Riscos e dependências
+- Forma de validar se corrigiu
+
+## 6. Outras regras
+
+- "criar documento" ≠ "implementar"
+- Verificar código atual antes de afirmar status
+- Confiança < 95% → PARAR no preview e trazer relatório antes de executar

@@ -751,13 +751,13 @@
             color: rgba(255,255,255,0.65);
         }
         
-        /* === BOTÕES MODAL (Liquid Glass Suave) === */
-        /* Especificidade maior: .btn.btn-modal-* sobrescreve .btn genérico */
+        /* === BOTÕES MODAL (Liquid Glass CTA) === */
+        /* Valores CTA: grad 0.15→0.08, border 0.30, shadow 0.14, text 0.90 */
         .btn.btn-modal-primary {
-            background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.06)) !important;
-            border: 1px solid rgba(255,184,77,0.25) !important;
-            color: rgba(255,255,255,0.92) !important;
-            box-shadow: 0 0 18px rgba(255,184,77,0.12) !important;
+            background: linear-gradient(135deg, rgba(255,184,77,0.15), rgba(255,184,77,0.08)) !important;
+            border: 1px solid rgba(255,184,77,0.30) !important;
+            color: rgba(255,255,255,0.90) !important;
+            box-shadow: 0 0 18px rgba(255,184,77,0.14) !important;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             -webkit-tap-highlight-color: transparent;
@@ -766,10 +766,10 @@
         }
         
         .btn.btn-modal-secondary {
-            background: linear-gradient(135deg, rgba(0,206,209,0.12), rgba(0,206,209,0.06)) !important;
-            border: 1px solid rgba(0,206,209,0.25) !important;
-            color: rgba(255,255,255,0.92) !important;
-            box-shadow: 0 0 18px rgba(0,206,209,0.12) !important;
+            background: linear-gradient(135deg, rgba(0,206,209,0.15), rgba(0,206,209,0.08)) !important;
+            border: 1px solid rgba(0,206,209,0.30) !important;
+            color: rgba(255,255,255,0.90) !important;
+            box-shadow: 0 0 18px rgba(0,206,209,0.14) !important;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             -webkit-tap-highlight-color: transparent;
@@ -778,10 +778,10 @@
         }
         
         .btn.btn-modal-danger {
-            background: linear-gradient(135deg, rgba(255,82,82,0.12), rgba(255,82,82,0.06)) !important;
-            border: 1px solid rgba(255,82,82,0.25) !important;
-            color: rgba(255,255,255,0.92) !important;
-            box-shadow: 0 0 18px rgba(255,82,82,0.12) !important;
+            background: linear-gradient(135deg, rgba(255,82,82,0.15), rgba(255,82,82,0.08)) !important;
+            border: 1px solid rgba(255,82,82,0.30) !important;
+            color: rgba(255,255,255,0.90) !important;
+            box-shadow: 0 0 18px rgba(255,82,82,0.14) !important;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             -webkit-tap-highlight-color: transparent;
@@ -1345,6 +1345,74 @@
             box-shadow: 
                 0 4px 15px rgba(0, 206, 209, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        /* =========================================================
+           FIX FINAL: Botões do MODAL do Diário (Liquid Glass CTA)
+           - Escopo fechado no modal
+           - Vence .btn genérico (ordem + !important)
+           ========================================================= */
+        #modalNovaDiario .btn.btn-modal-primary,
+        #modalNovaDiario .btn.btn-modal-secondary,
+        #modalNovaDiario .btn.btn-modal-danger {
+          /* Neutraliza herança do .btn para não "matar" o glass */
+          text-transform: none !important;
+          letter-spacing: normal !important;
+          box-shadow: none !important;
+          filter: none !important;
+          transform: none !important;
+
+          /* Toque iOS */
+          -webkit-tap-highlight-color: transparent;
+
+          /* Presença (CTA) - não pode parecer desativado */
+          color: rgba(255,255,255,0.92) !important;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          transition: transform .08s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+        }
+
+        /* AMBAR — SALVAR (CTA principal) */
+        #modalNovaDiario .btn.btn-modal-primary {
+          background: linear-gradient(135deg,
+            rgba(255,184,77,0.28),
+            rgba(255,184,77,0.14)
+          ) !important;
+          border: 1px solid rgba(255,184,77,0.38) !important;
+          box-shadow: 0 0 22px rgba(255,184,77,0.18) !important;
+        }
+
+        /* TURQUESA — SALVAR E ADICIONAR */
+        #modalNovaDiario .btn.btn-modal-secondary {
+          background: linear-gradient(135deg,
+            rgba(0,206,209,0.28),
+            rgba(0,206,209,0.14)
+          ) !important;
+          border: 1px solid rgba(0,206,209,0.38) !important;
+          box-shadow: 0 0 22px rgba(0,206,209,0.18) !important;
+        }
+
+        /* VERMELHO — APAGAR */
+        #modalNovaDiario .btn.btn-modal-danger {
+          background: linear-gradient(135deg,
+            rgba(255,82,82,0.26),
+            rgba(255,82,82,0.12)
+          ) !important;
+          border: 1px solid rgba(255,82,82,0.36) !important;
+          box-shadow: 0 0 22px rgba(255,82,82,0.16) !important;
+        }
+
+        /* Hover/Active próprios do modal (não usar hover do .btn genérico) */
+        #modalNovaDiario .btn.btn-modal-primary:hover,
+        #modalNovaDiario .btn.btn-modal-secondary:hover,
+        #modalNovaDiario .btn.btn-modal-danger:hover {
+          transform: translateY(-1px);
+        }
+
+        #modalNovaDiario .btn.btn-modal-primary:active,
+        #modalNovaDiario .btn.btn-modal-secondary:active,
+        #modalNovaDiario .btn.btn-modal-danger:active {
+          transform: translateY(1px);
         }
         
         /* ==================== MODAL GERENCIAR PERFIS (P4 - REFATORADO) ==================== */
