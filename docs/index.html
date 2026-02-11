@@ -8599,6 +8599,70 @@
             }
         }
         
+        /**
+         * Propaga mudança de área/tema feita pelo modal de edição (🔧)
+         * para todos os stores que guardam strings de área/tema.
+         * Critérios: temaId quando disponível; fallback por match exato de strings.
+         */
+        function propagarMudancaTemaGlobal({ temaId, oldArea, oldTema, newArea, newTema }) {
+            if (oldArea === newArea && oldTema === newTema) return 0;
+            let alteracoes = 0;
+            let diarioMudou = false;
+            try {
+                // 1. vrvs_historico — prefere temaId; fallback strings
+                if (Array.isArray(historico)) {
+                    historico.forEach(h => {
+                        let match = false;
+                        if (temaId && h.temaId != null && String(h.temaId) === String(temaId)) {
+                            match = true;
+                        } else if (h.area === oldArea && h.tema === oldTema) {
+                            match = true;
+                        }
+                        if (match) {
+                            if (oldArea !== newArea) h.area = newArea;
+                            if (oldTema !== newTema) h.tema = newTema;
+                            alteracoes++;
+                        }
+                    });
+                    localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                }
+
+                // 2. vrvs_diario — match por strings (entradas não têm temaId)
+                if (window.diario && Array.isArray(window.diario.entradas)) {
+                    window.diario.entradas.forEach(e => {
+                        if (e.area === oldArea && e.tema === oldTema) {
+                            if (oldArea !== newArea) e.area = newArea;
+                            if (oldTema !== newTema) e.tema = newTema;
+                            diarioMudou = true;
+                            alteracoes++;
+                        }
+                    });
+                    if (diarioMudou) salvarDiario();
+                }
+
+                // 3. vrvs_anotacoes — prefere temaId; fallback strings
+                if (Array.isArray(anotacoes)) {
+                    anotacoes.forEach(a => {
+                        let match = false;
+                        if (temaId && a.temaId != null && String(a.temaId) === String(temaId)) {
+                            match = true;
+                        } else if (a.area === oldArea && a.tema === oldTema) {
+                            match = true;
+                        }
+                        if (match) {
+                            if (oldArea !== newArea) a.area = newArea;
+                            if (oldTema !== newTema) a.tema = newTema;
+                            alteracoes++;
+                        }
+                    });
+                    localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                }
+            } catch (err) {
+                console.error('[PROPAGAR TEMA] Erro:', err);
+            }
+            return alteracoes;
+        }
+
         function apagarArea(nomeArea) {
             // Plataforma livre - qualquer área pode ser apagada
             // Verificar que área existe e tem temas
@@ -14801,6 +14865,10 @@ function modoAvancado_toggle() {
                     return;
                 }
                 
+                // Capturar valores antigos ANTES de sobrescrever
+                const oldArea = tema.area;
+                const oldTema = tema.tema;
+
                 // Atualizar área do tema editado (normalizada)
                 tema.area = normalizeArea(areaEdit);
                 tema.tema = document.getElementById('editTema').value.trim();
@@ -14819,6 +14887,15 @@ function modoAvancado_toggle() {
                 }
                 
                 localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+
+                // Propagar mudança de área/tema para diário/histórico/anotações
+                propagarMudancaTemaGlobal({
+                    temaId: tema.id,
+                    oldArea: oldArea,
+                    oldTema: oldTema,
+                    newArea: tema.area,
+                    newTema: tema.tema
+                });
                 
                 closeEditModal();
                 mostrarNotificacaoFeedback('✅ Tema atualizado com sucesso!');
@@ -14828,6 +14905,9 @@ function modoAvancado_toggle() {
                 renderAgenda();
                 renderPendencias();
                 updateFeedbackSelect();
+                if (typeof renderDiario === 'function') renderDiario();
+                if (typeof renderCaderno === 'function') renderCaderno();
+                if (typeof renderHistorico === 'function') renderHistorico();
             };
             
             // LEMBRETE FORM (null-check para evitar erro se elemento foi removido)
