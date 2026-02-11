@@ -727,6 +727,102 @@
             color: rgba(80,220,100,0.75);
         }
         
+        /* === RANKING CARDS 11/02 — LIQUID GLASS (spec exata) === */
+        #diarioContainer .rank-card {
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #diarioContainer .rank-card.baixa {
+            background: linear-gradient(135deg, rgba(255,82,82,0.12), rgba(255,82,82,0.06));
+            border: 1px solid rgba(255,82,82,0.25);
+        }
+        #diarioContainer .rank-card.baixa .rank-badge {
+            background: rgba(255,82,82,0.18);
+            border: 1px solid rgba(255,82,82,0.35);
+            color: rgba(255,82,82,0.9);
+        }
+        #diarioContainer .rank-card.baixa .nota-valor { color: rgba(255,82,82,0.85); }
+        #diarioContainer .rank-card.baixa .obs-text { color: rgba(255,82,82,0.7); }
+        #diarioContainer .rank-card.baixa .timeline-dot { background: #FF5252; }
+        #diarioContainer .rank-card.baixa .timeline-nota { color: #FF5252; }
+
+        #diarioContainer .rank-card.media {
+            background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.06));
+            border: 1px solid rgba(255,184,77,0.25);
+        }
+        #diarioContainer .rank-card.media .rank-badge {
+            background: rgba(255,184,77,0.18);
+            border: 1px solid rgba(255,184,77,0.35);
+            color: rgba(255,184,77,0.9);
+        }
+        #diarioContainer .rank-card.media .nota-valor { color: rgba(255,184,77,0.85); }
+        #diarioContainer .rank-card.media .obs-text { color: rgba(255,184,77,0.7); }
+        #diarioContainer .rank-card.media .timeline-dot { background: #FFB84D; }
+        #diarioContainer .rank-card.media .timeline-nota { color: #FFB84D; }
+
+        #diarioContainer .rank-card.alta {
+            background: linear-gradient(135deg, rgba(80,220,100,0.12), rgba(80,220,100,0.06));
+            border: 1px solid rgba(80,220,100,0.25);
+        }
+        #diarioContainer .rank-card.alta .rank-badge {
+            background: rgba(80,220,100,0.18);
+            border: 1px solid rgba(80,220,100,0.35);
+            color: rgba(80,220,100,0.9);
+        }
+        #diarioContainer .rank-card.alta .nota-valor { color: rgba(80,220,100,0.85); }
+        #diarioContainer .rank-card.alta .obs-text { color: rgba(80,220,100,0.7); }
+        #diarioContainer .rank-card.alta .timeline-dot { background: #50DC64; }
+        #diarioContainer .rank-card.alta .timeline-nota { color: #50DC64; }
+
+        #diarioContainer .rank-card .card-header { display: flex; align-items: center; gap: 14px; }
+        #diarioContainer .rank-card .rank-badge { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; font-weight: 800; flex-shrink: 0; }
+        #diarioContainer .rank-card .card-info { flex: 1; min-width: 0; }
+        #diarioContainer .rank-card .card-info h4 { font-size: 15px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #diarioContainer .rank-card .card-info .meta { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+        #diarioContainer .rank-card .card-nota { text-align: right; flex-shrink: 0; }
+        #diarioContainer .rank-card .nota-valor { font-size: 26px; font-weight: 800; line-height: 1; }
+        #diarioContainer .rank-card .nota-label { font-size: 9px; text-transform: uppercase; color: rgba(255,255,255,0.35); letter-spacing: 0.5px; }
+        #diarioContainer .rank-card .chevron { color: rgba(255,255,255,0.25); font-size: 10px; margin-left: 10px; transition: transform 0.3s ease; }
+        #diarioContainer .rank-card .chevron.open { transform: rotate(180deg); }
+
+        #diarioContainer .rank-card .card-timeline {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-4px);
+            transition: all 0.3s ease;
+        }
+        #diarioContainer .rank-card.open .card-timeline {
+            max-height: 2000px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #diarioContainer .rank-card .timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        #diarioContainer .rank-card .timeline-header h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.5); }
+        #diarioContainer .btn-add-registro {
+            background: linear-gradient(135deg, rgba(0,206,209,0.15), rgba(0,206,209,0.08));
+            border: 1px solid rgba(0,206,209,0.3);
+            color: rgba(0,206,209,0.9);
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        #diarioContainer .timeline-item { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        #diarioContainer .timeline-item:last-child { border-bottom: none; }
+        #diarioContainer .timeline-item:last-child .timeline-connector { display: none; }
+        #diarioContainer .timeline-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        #diarioContainer .timeline-connector { width: 2px; flex: 1; background: rgba(255,255,255,0.08); margin-top: 4px; }
+        #diarioContainer .timeline-date { font-size: 10px; color: rgba(255,255,255,0.35); }
+        #diarioContainer .timeline-nota { font-size: 18px; font-weight: 700; margin: 3px 0; }
+        #diarioContainer .timeline-obs { font-size: 12px; color: rgba(255,255,255,0.55); font-style: italic; line-height: 1.4; }
+        
         /* BADGE AVANÇADO (Nível 1 âmbar discreto) */
         .badge-avancado {
             background: linear-gradient(135deg, rgba(255,184,77,0.08), rgba(255,184,77,0.04));
@@ -3276,6 +3372,24 @@
             justify-content: center;
         }
         
+        .modal.modal-bottom-sheet.active {
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .modal.modal-bottom-sheet .modal-content.modal-content-bottom {
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+        .modal.modal-bottom-sheet .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+        
         .modal-content {
             background: linear-gradient(135deg,
                 rgba(20, 35, 45, 0.95),
@@ -4904,6 +5018,26 @@
                 <button class="btn" onclick="fecharModalConfirmarExclusaoDiario()" style="flex: 1;">Cancelar</button>
                 <button class="btn btn-danger" onclick="executarExcluirEntradaDiario()" style="flex: 1; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #FFFFFF;">🗑️ Excluir</button>
             </div>
+        </div>
+    </div>
+    
+    <!-- MODAL REGISTRO TREINO CASO (11/02) -->
+    <div id="modalRegistroTreinoCaso" class="modal modal-bottom-sheet" onclick="if(event.target===this)fecharModalRegistroTreino()">
+        <div class="modal-content modal-content-bottom">
+            <div class="modal-handle"></div>
+            <div class="modal-title" style="margin-bottom: 20px; color: rgba(255,255,255,0.9); font-size: 17px;">📝 Novo Registro — <span id="modalRegistroCasoNome"></span></div>
+            <div class="form-field">
+                <label class="form-label" style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; display: block;">NOTA DO TREINO</label>
+                <div class="form-slider-row" style="display: flex; align-items: center; gap: 16px;">
+                    <input type="range" id="modalRegistroNota" min="0" max="10" step="0.5" value="5" style="flex: 1;">
+                    <div id="modalRegistroNotaDisplay" style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #FFB84D; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;">5.0</div>
+                </div>
+            </div>
+            <div class="form-field">
+                <label class="form-label" style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; display: block;">OBSERVAÇÃO (OPCIONAL)</label>
+                <textarea id="modalRegistroObs" maxlength="200" placeholder="Ex: acertei classificação..." rows="3" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: #fff; font-size: 14px; resize: none;"></textarea>
+            </div>
+            <button class="modal-btn" onclick="salvarRegistroTreino()" style="width: 100%; padding: 16px; background: linear-gradient(135deg, rgba(255,184,77,0.2), rgba(255,184,77,0.1)); border: 1px solid rgba(255,184,77,0.35); border-radius: 14px; color: #FFB84D; font-size: 15px; font-weight: 700;">💾 Salvar Registro</button>
         </div>
     </div>
     
@@ -10637,6 +10771,82 @@ TEMA: [COLE O TEMA AQUI]`;
             localStorage.setItem('rankingOrdem', ordem === 'desc' ? 'desc' : 'asc');
         }
         
+        /* === RANKING 11/02: Helpers + histórico === */
+        let expandedCasoId = null;
+        function faixaPorNota(n) {
+            if (n == null || typeof n !== 'number' || isNaN(n)) return '';
+            if (n < 5) return 'baixa';
+            if (n < 7) return 'media';
+            return 'alta';
+        }
+        function gerarIdHistorico() {
+            return 'h' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
+        }
+        function obterNotaRanking(entrada) {
+            if (Array.isArray(entrada.historico) && entrada.historico.length > 0) return entrada.historico[0].nota;
+            return entrada.notaDesempenho;
+        }
+        function migrarCasoHistorico(entrada) {
+            if (Array.isArray(entrada.historico) && entrada.historico.length > 0) return false;
+            if (typeof entrada.notaDesempenho !== 'number' || isNaN(entrada.notaDesempenho)) return false;
+            const data = entrada.data || entrada.ultimaAtualizacao || obterYMDLocal();
+            entrada.historico = [{ id: gerarIdHistorico(), data: data, nota: entrada.notaDesempenho, obs: entrada.obsDesempenho || '' }];
+            return true;
+        }
+        function toggleRankingCard(entradaId) {
+            if (expandedCasoId === entradaId) expandedCasoId = null;
+            else expandedCasoId = entradaId;
+            renderRanking();
+        }
+        function abrirModalRegistroTreino(entradaId) {
+            const entrada = window.diario?.entradas?.find(e => String(e.id) === String(entradaId));
+            if (!entrada) return;
+            window.modalRegistroEntradaId = entradaId;
+            document.getElementById('modalRegistroCasoNome').textContent = vrvs_escapeHTML(entrada.topico || 'Sem título');
+            document.getElementById('modalRegistroNota').value = obterNotaRanking(entrada) ?? 5;
+            document.getElementById('modalRegistroNotaDisplay').textContent = (obterNotaRanking(entrada) ?? 5).toFixed(1);
+            document.getElementById('modalRegistroObs').value = '';
+            const y = window.scrollY; window._modalScrollY = y;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${y}px`;
+            document.body.style.left = '0'; document.body.style.right = '0';
+            document.getElementById('modalRegistroTreinoCaso').classList.add('active');
+            const slider = document.getElementById('modalRegistroNota');
+            const display = document.getElementById('modalRegistroNotaDisplay');
+            if (slider && display) {
+                const onInput = function() { display.textContent = parseFloat(this.value).toFixed(1); };
+                slider.oninput = onInput;
+            }
+        }
+        function fecharModalRegistroTreino() {
+            const y = window._modalScrollY || 0;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            window.scrollTo(0, y);
+            document.getElementById('modalRegistroTreinoCaso').classList.remove('active');
+            window.modalRegistroEntradaId = null;
+        }
+        function salvarRegistroTreino() {
+            const entradaId = window.modalRegistroEntradaId;
+            if (!entradaId) return;
+            const entrada = window.diario?.entradas?.find(e => String(e.id) === String(entradaId));
+            if (!entrada) return;
+            const nota = parseFloat(document.getElementById('modalRegistroNota').value);
+            if (isNaN(nota) || nota < 0 || nota > 10) return;
+            const obs = (document.getElementById('modalRegistroObs').value || '').trim().slice(0, 200);
+            const hoje = obterYMDLocal();
+            const reg = { id: gerarIdHistorico(), data: hoje, nota: nota, obs: obs };
+            if (!Array.isArray(entrada.historico)) entrada.historico = [];
+            entrada.historico.unshift(reg);
+            entrada.notaDesempenho = nota;
+            entrada.obsDesempenho = obs;
+            salvarDiario();
+            fecharModalRegistroTreino();
+            renderRanking();
+        }
+        
         function calcularDiasEntreDatas(data1, data2) {
             // Parse seguro com T00:00:00 para evitar timezone
             const d1 = new Date(data1 + 'T00:00:00');
@@ -10734,9 +10944,17 @@ function modoAvancado_toggle() {
                 return;
             }
             
-            // Renderizar box completo
-            const nota = entradaOpt && typeof entradaOpt.notaDesempenho === 'number' && !isNaN(entradaOpt.notaDesempenho) ? entradaOpt.notaDesempenho : null;
-            const obs = entradaOpt && entradaOpt.obsDesempenho ? entradaOpt.obsDesempenho : '';
+            // Renderizar box completo (historico[0] como fonte principal; fallback notaDesempenho/obsDesempenho)
+            let nota = null, obs = '';
+            if (entradaOpt) {
+                if (Array.isArray(entradaOpt.historico) && entradaOpt.historico.length > 0) {
+                    nota = typeof entradaOpt.historico[0].nota === 'number' ? entradaOpt.historico[0].nota : null;
+                    obs = entradaOpt.historico[0].obs || '';
+                } else {
+                    nota = typeof entradaOpt.notaDesempenho === 'number' && !isNaN(entradaOpt.notaDesempenho) ? entradaOpt.notaDesempenho : null;
+                    obs = entradaOpt.obsDesempenho || '';
+                }
+            }
             
             mount.innerHTML = `
                 <div class="desempenho-box" style="background: linear-gradient(135deg, rgba(255,184,77,0.12), rgba(255,184,77,0.05)); border: 1px solid rgba(255,184,77,0.2); border-radius: 18px; padding: 20px; margin-top: 24px; margin-bottom: 16px;">
@@ -16344,9 +16562,13 @@ function modoAvancado_toggle() {
                         entrada.topico = topico;
                         entrada.resposta = resposta;
                         entrada.ultimaAtualizacao = hoje;
-                        // Modo Avançado: atualizar nota/obs mesmo vindo da sessão
+                        // Modo Avançado: atualizar nota/obs mesmo vindo da sessão (+ espelho historico[0])
                         entrada.notaDesempenho = notaDesempenho;
                         entrada.obsDesempenho = obsDesempenho;
+                        if (Array.isArray(entrada.historico) && entrada.historico.length > 0) {
+                            entrada.historico[0].nota = notaDesempenho;
+                            entrada.historico[0].obs = obsDesempenho;
+                        }
                         // NÃO mexer em área, tema, atencao, data
                         // NÃO resetar SRS (manter estágio, intervalo, proximaRevisao, historicoRespostas)
                         
@@ -16429,9 +16651,13 @@ function modoAvancado_toggle() {
                     entrada.tema = tema;
                     entrada.topico = topico;
                     entrada.resposta = respostaNormalizada;
-                    // Modo Avançado: atualizar nota/obs
+                    // Modo Avançado: atualizar nota/obs (+ espelho historico[0])
                     entrada.notaDesempenho = notaDesempenho;
                     entrada.obsDesempenho = obsDesempenho;
+                    if (Array.isArray(entrada.historico) && entrada.historico.length > 0) {
+                        entrada.historico[0].nota = notaDesempenho;
+                        entrada.historico[0].obs = obsDesempenho;
+                    }
                     // PATCH 4: Não setar atencao (legado removido)
                     entrada.data = data; // Usar data do campo
                     entrada.ultimaAtualizacao = hoje;
@@ -16991,18 +17217,14 @@ function modoAvancado_toggle() {
             if (revisarHoje) revisarHoje.style.display = 'none';
             
             const entradas = window.diario?.entradas || [];
+            let diarioDirty = false;
+            entradas.forEach(e => { if (migrarCasoHistorico(e)) diarioDirty = true; });
+            if (diarioDirty) salvarDiario();
+            
             const ordem = modoAvancado_getRankingOrdem();
-            
-            // BUG 1 CORRIGIDO: nota 0 é válida
-            const comNota = entradas.filter(e => typeof e.notaDesempenho === 'number' && !isNaN(e.notaDesempenho));
-            const semNota = entradas.filter(e => e.notaDesempenho == null || typeof e.notaDesempenho !== 'number' || isNaN(e.notaDesempenho));
-            
-            // AJUSTE OPCIONAL: remover || 0 do sort (comNota já filtra numbers válidos)
-            comNota.sort((a, b) => {
-                return ordem === 'asc' ? a.notaDesempenho - b.notaDesempenho : b.notaDesempenho - a.notaDesempenho;
-            });
-            
-            // BUG 2 CORRIGIDO: spread operator correto
+            const comNota = entradas.filter(e => obterNotaRanking(e) != null && typeof obterNotaRanking(e) === 'number' && !isNaN(obterNotaRanking(e)));
+            const semNota = entradas.filter(e => { const n = obterNotaRanking(e); return n == null || typeof n !== 'number' || isNaN(n); });
+            comNota.sort((a, b) => ordem === 'asc' ? obterNotaRanking(a) - obterNotaRanking(b) : obterNotaRanking(b) - obterNotaRanking(a));
             const todasOrdenadas = [...comNota, ...semNota];
             
             if (todasOrdenadas.length === 0) {
@@ -17019,48 +17241,59 @@ function modoAvancado_toggle() {
                 </div>
             `;
             
+            const hoje = obterYMDLocal();
             todasOrdenadas.forEach((entrada, idx) => {
                 const posicao = idx + 1;
-                const nota = entrada.notaDesempenho;
+                const nota = obterNotaRanking(entrada);
                 const temNota = typeof nota === 'number' && !isNaN(nota);
                 const notaStr = temNota ? nota.toFixed(1) : '—';
-                
-                // Determinar faixa (usar classes CSS)
-                let faixaClass = '';
-                
-                if (temNota) {
-                    if (nota < 5) {
-                        faixaClass = 'faixa-baixa';
-                    } else if (nota >= 5 && nota < 7) {
-                        faixaClass = 'faixa-media';
-                    } else {
-                        faixaClass = 'faixa-alta';
-                    }
-                }
-                
-                // Parse seguro de data
-                const dataEntrada = entrada.data || entrada.ultimaAtualizacao || obterYMDLocal();
-                const hoje = obterYMDLocal();
-                const diasAtras = calcularDiasEntreDatas(dataEntrada, hoje);
+                const faixaClass = faixaPorNota(nota) || 'media';
+                const hist = Array.isArray(entrada.historico) ? entrada.historico : [];
+                const qtdRegistros = hist.length;
+                const dataRef = hist.length > 0 ? hist[0].data : (entrada.data || entrada.ultimaAtualizacao || hoje);
+                const diasAtras = calcularDiasEntreDatas(dataRef, hoje);
                 const diasStr = diasAtras === 0 ? 'hoje' : diasAtras === 1 ? 'há 1 dia' : `há ${diasAtras} dias`;
+                const area = vrvs_escapeHTML(entrada.area || '');
+                const isOpen = expandedCasoId === String(entrada.id);
+                
+                let timelineItemsHTML = '';
+                const histOrdenado = [...hist].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+                histOrdenado.forEach((reg, i) => {
+                    const opac = i === 0 ? 1 : i === 1 ? 0.6 : 0.35;
+                    timelineItemsHTML += `
+                        <div class="timeline-item">
+                            <div class="timeline-line">
+                                <div class="timeline-dot" style="opacity: ${opac};"></div>
+                                <div class="timeline-connector"></div>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">${formatarDataBR(reg.data)}</div>
+                                <div class="timeline-nota">${typeof reg.nota === 'number' ? reg.nota.toFixed(1) : reg.nota}</div>
+                                ${reg.obs ? `<div class="timeline-obs">${vrvs_escapeHTML(reg.obs)}</div>` : ''}
+                            </div>
+                        </div>`;
+                });
                 
                 html += `
-                    <div onclick="editarEntradaDiario('${entrada.id}')" class="${faixaClass}" style="display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 18px; margin-bottom: 12px; cursor: pointer; touch-action: manipulation;">
-                        <div class="rank-badge" style="width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; flex-shrink: 0;">
-                            ${posicao}
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <h5 style="font-size: 15px; font-weight: 600; margin: 0 0 4px 0; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${vrvs_escapeHTML(entrada.topico || 'Sem título')}</h5>
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: ${entrada.obsDesempenho ? '6px' : '0'};">
-                                ${vrvs_escapeHTML(entrada.area || '')} • ${vrvs_escapeHTML(entrada.tema || '')} • ${diasStr}
+                    <div class="rank-card ${faixaClass} ${isOpen ? 'open' : ''}" onclick="toggleRankingCard('${entrada.id}')" data-entrada-id="${entrada.id}">
+                        <div class="card-header">
+                            <div class="rank-badge">${posicao}</div>
+                            <div class="card-info">
+                                <h4>${vrvs_escapeHTML(entrada.topico || 'Sem título')}</h4>
+                                <div class="meta">${area} • ${qtdRegistros} registro${qtdRegistros !== 1 ? 's' : ''} • ${diasStr}</div>
                             </div>
-                            ${entrada.obsDesempenho ? `<div class="obs-desempenho">${vrvs_escapeHTML(entrada.obsDesempenho)}</div>` : ''}
-                        </div>
-                        <div style="text-align: right; flex-shrink: 0;">
-                            <div class="nota-display" style="font-size: 26px; font-weight: 800; line-height: 1;">
-                                ${notaStr}
+                            <div class="card-nota">
+                                <div class="nota-valor">${notaStr}</div>
+                                <div class="nota-label">Última</div>
                             </div>
-                            <div style="font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;">nota</div>
+                            <span class="chevron ${isOpen ? 'open' : ''}">▼</span>
+                        </div>
+                        <div class="card-timeline">
+                            <div class="timeline-header">
+                                <h5>📈 Histórico de Treinos</h5>
+                                <div class="btn-add-registro" onclick="event.stopPropagation(); abrirModalRegistroTreino('${entrada.id}')">+ Registrar</div>
+                            </div>
+                            <div class="timeline-list">${timelineItemsHTML}</div>
                         </div>
                     </div>
                 `;
