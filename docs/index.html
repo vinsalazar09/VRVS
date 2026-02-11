@@ -16941,7 +16941,7 @@ function modoAvancado_toggle() {
                             <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: ${entrada.obsDesempenho ? '6px' : '0'};">
                                 ${vrvs_escapeHTML(entrada.area || '')} • ${vrvs_escapeHTML(entrada.tema || '')} • ${diasStr}
                             </div>
-                            ${entrada.obsDesempenho ? `<div class="obs-desempenho">⚠ ${vrvs_escapeHTML(entrada.obsDesempenho)}</div>` : ''}
+                            ${entrada.obsDesempenho ? `<div class="obs-desempenho">${vrvs_escapeHTML(entrada.obsDesempenho)}</div>` : ''}
                         </div>
                         <div style="text-align: right; flex-shrink: 0;">
                             <div class="nota-display" style="font-size: 26px; font-weight: 800; line-height: 1;">
