@@ -778,9 +778,9 @@
         #diarioContainer .rank-card.alta .timeline-nota { color: #50DC64; }
 
         #diarioContainer .rank-card .card-header { display: flex; align-items: center; gap: 14px; }
-        #diarioContainer .rank-card .rank-badge { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; font-weight: 800; flex-shrink: 0; }
+        #diarioContainer .rank-card .rank-badge { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; line-height: 1; flex-shrink: 0; }
         #diarioContainer .rank-card .card-info { flex: 1; min-width: 0; }
-        #diarioContainer .rank-card .card-info h4 { font-size: 15px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #diarioContainer .rank-card .card-info h4 { font-size: 15px; color: #fff; white-space: normal; overflow: visible; text-overflow: unset; word-wrap: break-word; line-height: 1.3; }
         #diarioContainer .rank-card .card-info .meta { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
         #diarioContainer .rank-card .card-nota { text-align: right; flex-shrink: 0; }
         #diarioContainer .rank-card .nota-valor { font-size: 26px; font-weight: 800; line-height: 1; }
@@ -821,7 +821,7 @@
         #diarioContainer .timeline-connector { width: 2px; flex: 1; background: rgba(255,255,255,0.08); margin-top: 4px; }
         #diarioContainer .timeline-date { font-size: 10px; color: rgba(255,255,255,0.35); }
         #diarioContainer .timeline-nota { font-size: 18px; font-weight: 700; margin: 3px 0; }
-        #diarioContainer .timeline-obs { font-size: 12px; color: rgba(255,255,255,0.55); font-style: italic; line-height: 1.4; }
+        #diarioContainer .timeline-obs { font-size: 12px; color: rgba(255,255,255,0.55); font-style: normal; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
         
         /* BADGE AVANÇADO (Nível 1 âmbar discreto) */
         .badge-avancado {
@@ -3377,10 +3377,11 @@
             justify-content: center;
         }
         .modal.modal-bottom-sheet .modal-content.modal-content-bottom {
-            border-radius: 24px 24px 0 0;
+            border-radius: 28px 28px 0 0;
             width: 100%;
             max-width: 600px;
-            padding: 20px;
+            padding: 24px;
+            min-height: 70vh;
         }
         .modal.modal-bottom-sheet .modal-handle {
             width: 40px;
@@ -5030,12 +5031,15 @@
                 <label class="form-label" style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; display: block;">NOTA DO TREINO</label>
                 <div class="form-slider-row" style="display: flex; align-items: center; gap: 16px;">
                     <input type="range" id="modalRegistroNota" min="0" max="10" step="0.5" value="5" style="flex: 1;">
-                    <div id="modalRegistroNotaDisplay" style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #FFB84D; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;">5.0</div>
+                    <div style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                        <div id="modalRegistroNotaDisplay" onclick="event.stopPropagation(); document.getElementById('modalRegistroNota').value=0; this.textContent='0.0';" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: #FFB84D; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; cursor: pointer; touch-action: manipulation;">5.0</div>
+                        <span style="font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 4px; white-space: nowrap;">toque = zerar</span>
+                    </div>
                 </div>
             </div>
             <div class="form-field">
                 <label class="form-label" style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; display: block;">OBSERVAÇÃO (OPCIONAL)</label>
-                <textarea id="modalRegistroObs" maxlength="200" placeholder="Ex: acertei classificação..." rows="3" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: #fff; font-size: 14px; resize: none;"></textarea>
+                <textarea id="modalRegistroObs" maxlength="200" placeholder="Ex: acertei classificação, errei indicação cirúrgica, confundi tratamento conservador com cirúrgico..." rows="6" style="width: 100%; min-height: 140px; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: #fff; font-size: 14px; resize: vertical; line-height: 1.35; font-family: inherit;"></textarea>
             </div>
             <button class="modal-btn" onclick="salvarRegistroTreino()" style="width: 100%; padding: 16px; background: linear-gradient(135deg, rgba(255,184,77,0.2), rgba(255,184,77,0.1)); border: 1px solid rgba(255,184,77,0.35); border-radius: 14px; color: #FFB84D; font-size: 15px; font-weight: 700;">💾 Salvar Registro</button>
         </div>
@@ -10836,6 +10840,7 @@ TEMA: [COLE O TEMA AQUI]`;
             const nota = parseFloat(document.getElementById('modalRegistroNota').value);
             if (isNaN(nota) || nota < 0 || nota > 10) return;
             const obs = (document.getElementById('modalRegistroObs').value || '').trim().slice(0, 200);
+            if (!confirm('Salvar este registro?')) return;
             const hoje = obterYMDLocal();
             const reg = { id: gerarIdHistorico(), data: hoje, nota: nota, obs: obs };
             if (!Array.isArray(entrada.historico)) entrada.historico = [];

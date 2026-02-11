@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.235-ranking-historico-20260211-01";
+const CACHE_NAME = "vrvs-v5.3.236-ranking-hotfix-ui-20260211-02";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
