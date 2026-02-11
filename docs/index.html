@@ -10531,6 +10531,23 @@ function modoAvancado_toggle() {
                     const display = document.getElementById('novaDiarioNotaDesempenhoValue');
                     if (display) display.textContent = val.toFixed(1);
                 });
+                
+                // Adicionar listener de clique no box da nota para resetar para indefinido
+                valueDisplay.style.cursor = 'pointer';
+                valueDisplay.title = 'Clique para remover a nota';
+                const resetNota = function() {
+                    const currentSlider = document.getElementById('novaDiarioNotaDesempenho');
+                    const currentDisplay = document.getElementById('novaDiarioNotaDesempenhoValue');
+                    if (currentSlider && currentDisplay) {
+                        currentSlider.value = '0';
+                        currentSlider.dataset.touched = '0';
+                        currentDisplay.textContent = '—';
+                    }
+                };
+                // Remover listener anterior se existir
+                const newValueDisplay = valueDisplay.cloneNode(true);
+                valueDisplay.parentNode.replaceChild(newValueDisplay, valueDisplay);
+                newValueDisplay.addEventListener('click', resetNota);
             }
         }
         
