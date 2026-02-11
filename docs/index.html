@@ -751,6 +751,44 @@
             color: rgba(255,255,255,0.65);
         }
         
+        /* === BOTÕES MODAL (Liquid Glass Suave) === */
+        .btn-modal-primary {
+            background: linear-gradient(135deg, rgba(255,184,77,0.10), rgba(255,184,77,0.05));
+            border: 1px solid rgba(255,184,77,0.22);
+            color: rgba(255,255,255,0.92);
+            box-shadow: 0 0 18px rgba(255,184,77,0.10);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-modal-secondary {
+            background: linear-gradient(135deg, rgba(0,206,209,0.10), rgba(0,206,209,0.05));
+            border: 1px solid rgba(0,206,209,0.22);
+            color: rgba(255,255,255,0.92);
+            box-shadow: 0 0 18px rgba(0,206,209,0.10);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-modal-danger {
+            background: linear-gradient(135deg, rgba(255,82,82,0.10), rgba(255,82,82,0.05));
+            border: 1px solid rgba(255,82,82,0.20);
+            color: rgba(255,255,255,0.92);
+            box-shadow: 0 0 18px rgba(255,82,82,0.10);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* hover/active bem leve */
+        .btn-modal-primary:active,
+        .btn-modal-secondary:active,
+        .btn-modal-danger:active {
+            transform: translateY(1px);
+        }
+        
         /* ==================== FIM HIERARQUIA ==================== */
 
         html, body {
@@ -4760,12 +4798,12 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn nivel-3-ambar" onclick="(async () => { await salvarEntradaDiario(); })()" style="flex: 1; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">💾 SALVAR</button>
-                    <button type="button" class="btn nivel-2-turquesa" onclick="(async () => { await salvarEContinuarDiario(); })()" style="flex: 1; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">➕ SALVAR E ADICIONAR OUTRA</button>
+                    <button type="button" class="btn btn-modal-primary" onclick="(async () => { await salvarEntradaDiario(); })()" style="flex: 1;">💾 SALVAR</button>
+                    <button type="button" class="btn btn-modal-secondary" onclick="(async () => { await salvarEContinuarDiario(); })()" style="flex: 1;">➕ SALVAR E ADICIONAR OUTRA</button>
                 </div>
                 
                 <div id="btnExcluirEntradaWrapper" style="display: none; margin-top: 16px;">
-                    <button type="button" class="btn nivel-2-vermelho" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; font-weight: 800; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+                    <button type="button" class="btn btn-modal-danger" onclick="confirmarExcluirEntradaDiario()" style="width: 100%; font-weight: 800;">
                         🗑️ Apagar este card
                     </button>
                 </div>
