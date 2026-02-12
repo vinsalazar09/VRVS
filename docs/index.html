@@ -6087,18 +6087,13 @@
         const VRVS_BUILD = "v5.3.191";
         
         // ==================== DADOS E INICIALIZAÇÃO ====================
-        // Função para corrigir inversão área↔tema ANTES de carregar dados
+        // fixAreaTemaObjeto: heurística de swap desativada (causava corrupção — bug 12/02/2026)
+        // Mantida como passthrough para não quebrar chamadas existentes.
         function fixAreaTemaObjeto(obj) {
             if (!obj) return obj;
-            const area = String(obj.area || '');
-            const tema = String(obj.tema || '');
-            // Se área está muito longa (>20) E tema contém palavra-chave de área, inverter
-            const areaLikeKeywords = ['trauma', 'ombro', 'cotovelo', 'mão', 'mao', 'punho', 'joelho', 'quadril', 'pelve', 'pé', 'pe', 'tornozelo', 'coluna', 'oncologia', 'tumores', 'mmss', 'mmii'];
-            const temaPareceArea = areaLikeKeywords.some(k => tema.toLowerCase().includes(k));
-            if (area.length > 20 && temaPareceArea) {
-                const tmp = obj.area;
-                obj.area = obj.tema;
-                obj.tema = tmp;
+            // Normalizar area se existir (sem swap)
+            if (obj.area && typeof normalizarArea === 'function') {
+                obj.area = normalizarArea(obj.area);
             }
             return obj;
         }
@@ -6789,6 +6784,147 @@
         if (typeof __vrvsMark === 'function') __vrvsMark(3); // Logo após concluir o carregamento dos dados
         if (typeof setBootStep === 'function') setBootStep(3);
         
+        // ===== MIGRAÇÃO ÚNICA: corrigir inversão área↔tema ORAL/Coluna (12/02/2026) =====
+        (function migracaoOralColuna() {
+            var FLAG = 'vrvs_migracao_oral_coluna_20260212';
+            if (localStorage.getItem(FLAG)) return;
+            try {
+                // Backup leve dos 4 storages
+                try {
+                    localStorage.setItem('vrvs_bkp_migracao_dados_' + Date.now(), JSON.stringify(dados).slice(0, 50000));
+                } catch(bkErr) { /* ignora se quota */ }
+
+                var mudouDados = false;
+                var i, d;
+
+                // Variações de "Caso clínico" para match
+                function ehCasoClinico(t) {
+                    if (!t) return false;
+                    var tl = t.toLowerCase().trim();
+                    return tl === 'caso clínico' || tl === 'caso clinico' || tl === 'casos clínicos' || tl === 'casos clinicos' || tl === 'caso clínico' || tl.match(/^casos?\s+cl[ií]nic/);
+                }
+
+                // 2.1a — Corrigir registro invertido IN-PLACE (area="Coluna", tema contém "ORAL")
+                for (i = 0; i < dados.length; i++) {
+                    d = dados[i];
+                    if (d.area === 'Coluna' && d.tema && (d.tema.includes('ORAL') || d.tema.includes('Casos'))) {
+                        // Swap de volta: restaurar área original, tema = Coluna
+                        d.area = d.tema;  // "ORAL - Casos Clínicos"
+                        d.tema = 'Coluna';
+                        mudouDados = true;
+                    }
+                }
+
+                // 2.1b — Renomear "Caso clínico" → "Coluna" IN-PLACE em ORAL
+                for (i = 0; i < dados.length; i++) {
+                    d = dados[i];
+                    if (d.area === 'ORAL - Casos Clínicos' && ehCasoClinico(d.tema)) {
+                        d.tema = 'Coluna';
+                        mudouDados = true;
+                    }
+                }
+
+                // 2.1c — Deduplicação: se existem 2+ registros ORAL+Coluna, mesclar por MAX
+                var duplicados = [];
+                for (i = 0; i < dados.length; i++) {
+                    if (dados[i].area === 'ORAL - Casos Clínicos' && dados[i].tema === 'Coluna') {
+                        duplicados.push(i);
+                    }
+                }
+                if (duplicados.length > 1) {
+                    // Escolher o com mais sessoes como base
+                    var melhorIdx = duplicados[0];
+                    for (var di = 1; di < duplicados.length; di++) {
+                        if ((dados[duplicados[di]].sessoes || 0) > (dados[melhorIdx].sessoes || 0)) {
+                            melhorIdx = duplicados[di];
+                        }
+                    }
+                    // Mesclar MAX dos campos numéricos
+                    for (var di2 = 0; di2 < duplicados.length; di2++) {
+                        if (duplicados[di2] !== melhorIdx) {
+                            var outro = dados[duplicados[di2]];
+                            var base = dados[melhorIdx];
+                            base.sessoes = Math.max(base.sessoes || 0, outro.sessoes || 0);
+                            base.tempo = Math.max(base.tempo || 0, outro.tempo || 0);
+                            base.contador80 = Math.max(base.contador80 || 0, outro.contador80 || 0);
+                            base.rendimento = Math.max(base.rendimento || 0, outro.rendimento || 0);
+                            base.prioridade = base.prioridade || outro.prioridade || 3;
+                        }
+                    }
+                    // Remover duplicados (manter só o melhor)
+                    for (var di3 = duplicados.length - 1; di3 >= 0; di3--) {
+                        if (duplicados[di3] !== melhorIdx) {
+                            dados.splice(duplicados[di3], 1);
+                        }
+                    }
+                    mudouDados = true;
+                }
+
+                if (mudouDados) {
+                    localStorage.setItem(window.vrvs_key('dados'), JSON.stringify(dados));
+                }
+
+                // 2.2 — Migrar diário (ler do localStorage direto)
+                var diarioMudou = false;
+                try {
+                    var diarioRaw = localStorage.getItem(window.vrvs_diarioKey());
+                    if (diarioRaw) {
+                        var diarioObj = JSON.parse(diarioRaw);
+                        if (diarioObj && Array.isArray(diarioObj.entradas)) {
+                            diarioObj.entradas.forEach(function(e) {
+                                if (e.area === 'ORAL - Casos Clínicos' && ehCasoClinico(e.tema)) {
+                                    e.tema = 'Coluna';
+                                    diarioMudou = true;
+                                }
+                            });
+                            if (diarioMudou) {
+                                localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(diarioObj));
+                                if (window.diario) window.diario = diarioObj;
+                            }
+                        }
+                    }
+                } catch(de) { /* silencioso */ }
+
+                // 2.3 — Migrar histórico
+                try {
+                    if (Array.isArray(historico)) {
+                        var histMudou = false;
+                        historico.forEach(function(h) {
+                            if (h.area === 'ORAL - Casos Clínicos' && ehCasoClinico(h.tema)) {
+                                h.tema = 'Coluna';
+                                histMudou = true;
+                            }
+                        });
+                        if (histMudou) {
+                            localStorage.setItem(window.vrvs_key('historico'), JSON.stringify(historico));
+                        }
+                    }
+                } catch(he) { /* silencioso */ }
+
+                // 2.3b — Migrar anotações
+                try {
+                    if (Array.isArray(anotacoes)) {
+                        var anotMudou = false;
+                        anotacoes.forEach(function(a) {
+                            if (a.area === 'ORAL - Casos Clínicos' && ehCasoClinico(a.tema)) {
+                                a.tema = 'Coluna';
+                                anotMudou = true;
+                            }
+                        });
+                        if (anotMudou) {
+                            localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
+                        }
+                    }
+                } catch(ae) { /* silencioso */ }
+
+                // Flag: só setar se tudo rodou sem exceção
+                localStorage.setItem(FLAG, new Date().toISOString());
+            } catch(err) {
+                // Falha silenciosa — não travar o boot
+            }
+        })();
+        // ===== FIM MIGRAÇÃO ORAL/COLUNA =====
+        
         // Limpar dados corrompidos
         function limparDadosCorretos() {
             const dadosOriginais = dados.length;
@@ -7159,24 +7295,11 @@
             return normalizarArea(rawArea);
         }
         
+        // fixAreaTema: heurística de swap desativada (causava corrupção — bug 12/02/2026)
+        // Mantida como passthrough com normalização de área (sem swap).
         function fixAreaTema(area, tema) {
             if (!area || !tema) return { area: area || '', tema: tema || '' };
-            
-            // Verificar se área e tema estão invertidos
-            // Se o "tema" parece ser uma área (contém palavras-chave de área)
-            const areaKeywords = ['trauma', 'ombro', 'cotovelo', 'mão', 'punho', 'joelho', 'quadril', 'pelve', 'pé', 'tornozelo', 'coluna', 'oncologia', 'tumores'];
-            const temaLower = String(tema).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            
-            // Se tema contém palavras-chave de área e área não, provavelmente estão invertidos
-            const temaEhArea = areaKeywords.some(keyword => temaLower.includes(keyword));
-            const areaEhArea = areaKeywords.some(keyword => String(area).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(keyword));
-            
-            if (temaEhArea && !areaEhArea) {
-                // Estão invertidos, trocar
-                return { area: normalizeArea(tema, ''), tema: area };
-            }
-            
-            return { area: normalizeArea(area, tema), tema: tema };
+            return { area: normalizarArea(area), tema: tema };
         }
         
         function dataValida(data) {

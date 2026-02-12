@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.237-fix-propagar-rename-20260211-03";
+const CACHE_NAME = "vrvs-v5.3.238-fix-swap-migracao-oral-20260212-01";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
