@@ -4744,6 +4744,163 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         /* ==================== FIM MODO AVANÇADO RANGE ==================== */
+
+        /* ==================== VRVS NOTES EDITOR (FULLSCREEN) ==================== */
+        .vrvs-notes-editor {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            background: rgba(6, 20, 22, 0.98);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .vrvs-notes-editor.is-open { display: flex; }
+
+        .vrvs-notes-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 12px 10px;
+            border-bottom: 1px solid rgba(0, 206, 209, 0.22);
+            flex-shrink: 0;
+        }
+        .vrvs-notes-title { flex: 1; min-width: 0; }
+        .vrvs-notes-title-small {
+            font-size: 12px;
+            opacity: 0.8;
+            color: rgba(255,255,255,0.85);
+        }
+        .vrvs-notes-title-big {
+            font-size: 15px;
+            font-weight: 700;
+            color: #00CED1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .vrvs-notes-btn {
+            border: 1px solid rgba(0, 206, 209, 0.25);
+            background: rgba(0, 206, 209, 0.08);
+            color: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .vrvs-notes-btn-ghost {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .vrvs-notes-btn-primary {
+            border-color: rgba(255, 184, 77, 0.55);
+            background: rgba(255, 184, 77, 0.18);
+            color: #FFB84D;
+        }
+
+        .vrvs-notes-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(0, 206, 209, 0.18);
+            position: relative;
+            flex-shrink: 0;
+        }
+        .vrvs-notes-tool {
+            border: 1px solid rgba(0, 206, 209, 0.22);
+            background: rgba(0, 206, 209, 0.06);
+            color: rgba(255,255,255,0.92);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .vrvs-notes-tool.is-active {
+            border-color: rgba(255, 184, 77, 0.60);
+            background: rgba(255, 184, 77, 0.16);
+            color: #FFB84D;
+        }
+        .vrvs-notes-sep {
+            width: 1px;
+            height: 26px;
+            background: rgba(255,255,255,0.12);
+            margin: 0 4px;
+        }
+
+        .vrvs-notes-colors {
+            position: absolute;
+            top: 52px;
+            left: 12px;
+            display: none;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 206, 209, 0.22);
+            background: rgba(6, 20, 22, 0.98);
+            z-index: 100;
+        }
+        .vrvs-notes-colors.is-open { display: flex; }
+        .vrvs-notes-swatch {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: #fff;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .vrvs-notes-swatch[data-color="#00CED1"] { background: #00CED1; }
+        .vrvs-notes-swatch[data-color="#FFB84D"] { background: #FFB84D; }
+        .vrvs-notes-swatch[data-color="rgb(80, 220, 100)"] { background: rgb(80, 220, 100); }
+        .vrvs-notes-swatch[data-color="#FF5252"] { background: #FF5252; }
+        .vrvs-notes-swatch[data-color="#A78BFA"] { background: #A78BFA; }
+
+        /* CORREÇÃO #2: flex:1, NÃO height:100dvh */
+        .vrvs-notes-body {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            padding: 12px;
+            display: flex;
+        }
+        .vrvs-notes-area {
+            flex: 1;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 206, 209, 0.18);
+            background: rgba(0, 0, 0, 0.18);
+            color: rgba(255,255,255,0.95);
+            font-size: 15px;
+            line-height: 1.75;   /* CORREÇÃO #3 */
+            outline: none;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .vrvs-notes-area:empty::before {
+            content: 'Comece a escrever...';
+            color: rgba(255,255,255,0.25);
+            font-style: italic;
+        }
+        body.vrvs-notes-lock {
+            position: fixed;
+            width: 100%;
+            overflow: hidden;
+        }
+        /* ==================== FIM VRVS NOTES EDITOR ==================== */
     </style>
 </head>
 <body class="splash-loading">
@@ -13380,8 +13537,9 @@ function modoAvancado_toggle() {
             const anotacao = obterOuCriarAnotacao(temaId);
             if (!anotacao) return;
             
-            anotacao.conteudo = textarea.value.trim();
-            anotacao.hotTopics = hotTopicsTextarea ? hotTopicsTextarea.value.trim() : '';
+            // BRIDGE: lê HTML rico se disponível (via dataset.vrvsHtml), senão value
+            anotacao.conteudo = (typeof vrvsNotes_getElHtml === 'function') ? vrvsNotes_getElHtml(textarea) : textarea.value.trim();
+            anotacao.hotTopics = hotTopicsTextarea ? ((typeof vrvsNotes_getElHtml === 'function') ? vrvsNotes_getElHtml(hotTopicsTextarea) : hotTopicsTextarea.value.trim()) : '';
             anotacao.ultimaAtualizacao = new Date().toISOString().split('T')[0];
             
             localStorage.setItem(window.vrvs_key('anotacoes'), JSON.stringify(anotacoes));
@@ -16615,8 +16773,11 @@ function modoAvancado_toggle() {
                     tema = temaSelect?.value.trim() || '';
                 }
                 
-                const topico = document.getElementById('novaDiarioTopico')?.value.trim();
-                const resposta = document.getElementById('novaDiarioResposta')?.value.trim();
+                // BRIDGE: lê HTML rico se disponível
+                const _topicoEl = document.getElementById('novaDiarioTopico');
+                const _respostaEl = document.getElementById('novaDiarioResposta');
+                const topico = (typeof vrvsNotes_getElHtml === 'function' && _topicoEl) ? vrvsNotes_getElHtml(_topicoEl).trim() : (_topicoEl?.value?.trim() || '');
+                const resposta = (typeof vrvsNotes_getElHtml === 'function' && _respostaEl) ? vrvsNotes_getElHtml(_respostaEl).trim() : (_respostaEl?.value?.trim() || '');
                 // PATCH 4: Checkbox agora controla APENAS VRVS 3P (não atencao)
                 const incluirVRVS3P = document.getElementById('novaDiarioAtencao')?.checked || false;
             const dataInput = document.getElementById('novaDiarioData');
@@ -16756,8 +16917,9 @@ function modoAvancado_toggle() {
                     }
                 }
                 
-                if (obs && obs.value.trim()) {
-                    obsDesempenho = obs.value.trim();
+                if (obs) {
+                    var _obsVal = (typeof vrvsNotes_getElHtml === 'function') ? vrvsNotes_getElHtml(obs).trim() : obs.value.trim();
+                    if (_obsVal) obsDesempenho = _obsVal;
                 }
             }
             
@@ -21468,16 +21630,27 @@ function modoAvancado_toggle() {
             document.getElementById('editAnotacaoTemaId').value = temaId;
             document.getElementById('editAnotacaoTema').textContent = tema.tema;
             document.getElementById('editAnotacaoArea').textContent = tema.area;
-            document.getElementById('editAnotacaoHotTopics').value = anotacao?.hotTopics || '';
-            document.getElementById('editAnotacaoConteudo').value = anotacao?.conteudo || '';
+            // BRIDGE: restaurar HTML rico no dataset para o editor fullscreen
+            var _htEl = document.getElementById('editAnotacaoHotTopics');
+            var _ctEl = document.getElementById('editAnotacaoConteudo');
+            if (typeof vrvsNotes_setElHtml === 'function') {
+                vrvsNotes_setElHtml(_htEl, anotacao?.hotTopics || '');
+                vrvsNotes_setElHtml(_ctEl, anotacao?.conteudo || '');
+            } else {
+                _htEl.value = anotacao?.hotTopics || '';
+                _ctEl.value = anotacao?.conteudo || '';
+            }
             
             document.getElementById('modalEditarAnotacao').classList.add('active');
         }
         
         function salvarAnotacaoModal() {
             const temaId = document.getElementById('editAnotacaoTemaId').value;
-            const hotTopics = document.getElementById('editAnotacaoHotTopics').value.trim();
-            const conteudo = document.getElementById('editAnotacaoConteudo').value.trim();
+            // BRIDGE: lê HTML rico se disponível
+            const _htEl2 = document.getElementById('editAnotacaoHotTopics');
+            const _ctEl2 = document.getElementById('editAnotacaoConteudo');
+            const hotTopics = (typeof vrvsNotes_getElHtml === 'function') ? vrvsNotes_getElHtml(_htEl2) : (_htEl2?.value?.trim() || '');
+            const conteudo = (typeof vrvsNotes_getElHtml === 'function') ? vrvsNotes_getElHtml(_ctEl2) : (_ctEl2?.value?.trim() || '');
             
             const tema = dados.find(t => String(t.id) === String(temaId));
             if (!tema) return;
@@ -24849,6 +25022,409 @@ function modoAvancado_toggle() {
             }
         })();
     </script>
+
+<!-- =================== VRVS: EDITOR FULLSCREEN (RICH NOTES) =================== -->
+<div id="vrvsNotesEditor" class="vrvs-notes-editor" aria-hidden="true">
+  <div class="vrvs-notes-header">
+    <button type="button" class="vrvs-notes-btn vrvs-notes-btn-ghost" id="vrvsNotesCloseBtn" aria-label="Fechar">✕</button>
+    <div class="vrvs-notes-title">
+      <div class="vrvs-notes-title-small" id="vrvsNotesTitleSmall">Editor</div>
+      <div class="vrvs-notes-title-big" id="vrvsNotesTitleBig">Notas</div>
+    </div>
+    <button type="button" class="vrvs-notes-btn vrvs-notes-btn-primary" id="vrvsNotesSaveBtn" aria-label="Salvar">Salvar</button>
+  </div>
+  <div class="vrvs-notes-toolbar" role="toolbar" aria-label="Formatação">
+    <button type="button" class="vrvs-notes-tool" data-cmd="bold" aria-label="Negrito"><b>B</b></button>
+    <button type="button" class="vrvs-notes-tool" data-cmd="italic" aria-label="Itálico"><i>I</i></button>
+    <button type="button" class="vrvs-notes-tool" data-cmd="underline" aria-label="Sublinhado"><u>U</u></button>
+    <div class="vrvs-notes-sep"></div>
+    <button type="button" class="vrvs-notes-tool" id="vrvsNotesColorBtn" aria-label="Cor do texto">A▾</button>
+    <div class="vrvs-notes-colors" id="vrvsNotesColors" aria-hidden="true">
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" aria-label="Branco"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" aria-label="Turquesa"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" aria-label="Âmbar"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="rgb(80, 220, 100)" aria-label="Verde"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" aria-label="Vermelho"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#A78BFA" aria-label="Roxo"></button>
+    </div>
+  </div>
+  <div class="vrvs-notes-body">
+    <div id="vrvsNotesArea" class="vrvs-notes-area" contenteditable="true" spellcheck="true" aria-label="Área de texto"></div>
+  </div>
+</div>
+
+<script>
+/* ==================== VRVS NOTES EDITOR (FULLSCREEN) ==================== */
+(function(){
+  'use strict';
+  var editorEl = document.getElementById('vrvsNotesEditor');
+  var areaEl = document.getElementById('vrvsNotesArea');
+  var btnClose = document.getElementById('vrvsNotesCloseBtn');
+  var btnSave  = document.getElementById('vrvsNotesSaveBtn');
+  var titleSmallEl = document.getElementById('vrvsNotesTitleSmall');
+  var titleBigEl   = document.getElementById('vrvsNotesTitleBig');
+  var colorBtn = document.getElementById('vrvsNotesColorBtn');
+  var colorsPop = document.getElementById('vrvsNotesColors');
+  if (!editorEl || !areaEl) return;
+
+  // --- helpers ---
+  function escapeHtml(str){
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function looksLikeHtml(str){
+    return /<\/?[a-z][\s\S]*>/i.test(String(str||''));
+  }
+  function plainToHtml(text){
+    return escapeHtml(text).replace(/\n/g,'<br>');
+  }
+  function normalizeBlockTags(html){
+    var h = String(html||'');
+    h = h.replace(/<\/(div|p)>\s*<(div|p)[^>]*>/gi,'<br>');
+    h = h.replace(/<(div|p)[^>]*>/gi,'');
+    h = h.replace(/<\/(div|p)>/gi,'');
+    return h;
+  }
+  function sanitizeHTML(input){
+    var html = String(input||'');
+    if (!looksLikeHtml(html)) html = plainToHtml(html);
+    var parser = new DOMParser();
+    var doc = parser.parseFromString('<div>' + html + '</div>', 'text/html');
+    var root = doc.body.firstChild;
+    var ALLOWED = {BR:1,B:1,STRONG:1,I:1,EM:1,U:1,SPAN:1};
+    var ALLOWED_STYLES = {color:1};
+    (function walk(node){
+      var kids = Array.from(node.childNodes);
+      for (var i=0; i<kids.length; i++){
+        var c = kids[i];
+        if (c.nodeType === 1){
+          var tag = c.tagName.toUpperCase();
+          if (!ALLOWED[tag]){
+            var frag = doc.createDocumentFragment();
+            while(c.firstChild) frag.appendChild(c.firstChild);
+            node.replaceChild(frag, c);
+            continue;
+          }
+          var attrs = Array.from(c.attributes||[]);
+          for (var a=0; a<attrs.length; a++){
+            var nm = attrs[a].name.toLowerCase();
+            if (tag==='SPAN' && nm==='style'){
+              var style = c.getAttribute('style')||'';
+              var m = style.match(/color\s*:\s*([^;]+)\s*;?/i);
+              if(m){ c.setAttribute('style','color:'+m[1].trim()); }
+              else { c.removeAttribute('style'); }
+            } else if (nm==='style' || nm.indexOf('on')===0){
+              c.removeAttribute(attrs[a].name);
+            }
+          }
+          walk(c);
+        } else if (c.nodeType === 8){
+          node.removeChild(c);
+        }
+      }
+    })(root);
+    var out = normalizeBlockTags(root.innerHTML);
+    out = out.replace(/(<br>\s*){3,}/gi, '<br><br>');
+    return out.trim();
+  }
+  function htmlToPlainText(input){
+    var safe = sanitizeHTML(input);
+    var div = document.createElement('div');
+    div.innerHTML = safe.replace(/<br\s*\/?>/gi, '\n');
+    return (div.textContent||'').replace(/\n{3,}/g, '\n\n');
+  }
+
+  // --- dataset bridge ---
+  function getElHtml(el){
+    if (!el) return '';
+    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') return el.dataset.vrvsHtml;
+    var raw = (el.value != null) ? String(el.value) : '';
+    return looksLikeHtml(raw) ? raw : plainToHtml(raw);
+  }
+  function setElHtml(el, html){
+    if (!el) return;
+    var safe = sanitizeHTML(html);
+    if (el.dataset) el.dataset.vrvsHtml = safe;
+    if (el.value != null) el.value = htmlToPlainText(safe);
+  }
+  function getValueById(id){
+    var el = document.getElementById(id);
+    return el ? getElHtml(el) : '';
+  }
+  function setValueById(id, html){
+    var el = document.getElementById(id);
+    if (el) setElHtml(el, html);
+  }
+
+  // --- expose globals ---
+  window.abrirEditorNotas = function(opts){ openEditor(opts); };
+  window.vrvsNotes_getElHtml = getElHtml;
+  window.vrvsNotes_setElHtml = setElHtml;
+  window.vrvsNotes_getValueById = getValueById;
+  window.vrvsNotes_setValueById = setValueById;
+  window.vrvsNotes_sanitizeHTML = sanitizeHTML;
+  window.vrvsNotes_htmlToPlainText = htmlToPlainText;
+
+  // --- editor state ---
+  var state = {
+    open: false,
+    campoEl: null,
+    originalHtml: '',
+    dirty: false,
+    onSalvar: null,
+    scrollY: 0
+  };
+
+  function lockBody(){
+    state.scrollY = window.scrollY || 0;
+    document.body.classList.add('vrvs-notes-lock');
+    document.body.style.top = (-state.scrollY) + 'px';
+  }
+  function unlockBody(){
+    document.body.classList.remove('vrvs-notes-lock');
+    var top = document.body.style.top;
+    document.body.style.top = '';
+    var y = top ? -parseInt(top, 10) : state.scrollY;
+    window.scrollTo(0, y || 0);
+  }
+
+  function openEditor(opts){
+    var campoEl = opts.campoEl || null;
+    state.campoEl = campoEl;
+    state.onSalvar = (typeof opts.onSalvar === 'function') ? opts.onSalvar : null;
+    state.originalHtml = campoEl ? sanitizeHTML(getElHtml(campoEl)) : '';
+    state.dirty = false;
+
+    titleSmallEl.textContent = opts.tituloSmall || opts.tipo || 'Editor';
+    titleBigEl.textContent = opts.tituloBig || opts.titulo || 'Notas';
+
+    try { document.execCommand('styleWithCSS', false, true); } catch(e){}
+
+    areaEl.innerHTML = state.originalHtml || '';
+    editorEl.classList.add('is-open');
+    editorEl.setAttribute('aria-hidden','false');
+    state.open = true;
+
+    lockBody();
+    closeColors();
+
+    // iOS: visualViewport
+    if (window.visualViewport) {
+      var vv = window.visualViewport;
+      editorEl.style.height = vv.height + 'px';
+      var onVV = function(){ editorEl.style.height = (vv.height || window.innerHeight) + 'px'; };
+      vv.addEventListener('resize', onVV);
+      vv.addEventListener('scroll', onVV);
+      editorEl._vvCleanup = function(){
+        vv.removeEventListener('resize', onVV);
+        vv.removeEventListener('scroll', onVV);
+        editorEl.style.height = '';
+      };
+    }
+
+    setTimeout(function(){
+      placeCaretAtEnd(areaEl);
+      areaEl.focus();
+    }, 50);
+  }
+
+  function closeEditor(opts){
+    if (!state.open) return;
+    var salvar = opts && opts.salvar;
+
+    // CORREÇÃO #4: confirm ao fechar sem salvar
+    if (!salvar && state.dirty){
+      if (!window.confirm('Descartar alterações?')) return;
+    }
+
+    editorEl.classList.remove('is-open');
+    editorEl.setAttribute('aria-hidden','true');
+    state.open = false;
+
+    if (editorEl._vvCleanup){ editorEl._vvCleanup(); editorEl._vvCleanup = null; }
+    unlockBody();
+
+    state.campoEl = null;
+    state.onSalvar = null;
+    state.originalHtml = '';
+    state.dirty = false;
+    areaEl.innerHTML = '';
+    closeColors();
+  }
+
+  function saveEditor(){
+    if (!state.open) return;
+    var html = sanitizeHTML(areaEl.innerHTML);
+    if (state.campoEl){
+      setElHtml(state.campoEl, html);
+      try { state.campoEl.dispatchEvent(new Event('input', {bubbles:true})); } catch(e){}
+      try { state.campoEl.dispatchEvent(new Event('change', {bubbles:true})); } catch(e){}
+      try { state.campoEl.blur(); } catch(e){}
+    }
+    if (state.onSalvar){
+      try { state.onSalvar(html, state.campoEl); } catch(e){}
+    }
+    closeEditor({salvar:true});
+  }
+
+  function placeCaretAtEnd(el){
+    try{
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }catch(e){}
+  }
+
+  function closeColors(){
+    if(colorsPop){ colorsPop.classList.remove('is-open'); colorsPop.setAttribute('aria-hidden','true'); }
+  }
+  function toggleColors(){
+    if(!colorsPop) return;
+    var open = colorsPop.classList.toggle('is-open');
+    colorsPop.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  // --- toolbar ---
+  function exec(cmd, val){
+    try{
+      areaEl.focus();
+      document.execCommand(cmd, false, val);
+      state.dirty = true;
+      updateActiveTools();
+    }catch(e){}
+  }
+  function updateActiveTools(){
+    editorEl.querySelectorAll('.vrvs-notes-tool[data-cmd]').forEach(function(btn){
+      var cmd = btn.getAttribute('data-cmd');
+      var active = false;
+      try { active = document.queryCommandState(cmd); } catch(e){}
+      btn.classList.toggle('is-active', !!active);
+    });
+  }
+
+  // paste: plain text only
+  areaEl.addEventListener('paste', function(e){
+    e.preventDefault();
+    var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
+    exec('insertText', txt);
+  });
+  // drop: block
+  areaEl.addEventListener('drop', function(e){ e.preventDefault(); });
+  // dirty tracking
+  areaEl.addEventListener('input', function(){ state.dirty = true; });
+  // toolbar state on selection change
+  document.addEventListener('selectionchange', function(){ if(state.open) updateActiveTools(); });
+
+  // toolbar clicks (event delegation)
+  editorEl.addEventListener('click', function(e){
+    var tool = e.target.closest('.vrvs-notes-tool');
+    var swatch = e.target.closest('.vrvs-notes-swatch');
+    if (tool && tool.dataset && tool.dataset.cmd){
+      e.preventDefault();
+      exec(tool.dataset.cmd);
+      return;
+    }
+    if (tool && tool.id === 'vrvsNotesColorBtn'){
+      e.preventDefault();
+      toggleColors();
+      return;
+    }
+    if (swatch && swatch.dataset && swatch.dataset.color){
+      e.preventDefault();
+      exec('foreColor', swatch.dataset.color);
+      closeColors();
+      return;
+    }
+  });
+
+  // toolbar: keep selection on iOS
+  editorEl.querySelector('.vrvs-notes-toolbar').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.vrvs-notes-tool') || e.target.closest('.vrvs-notes-swatch')){
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  btnClose.addEventListener('click', function(e){ e.preventDefault(); closeEditor({salvar:false}); });
+  btnSave.addEventListener('click', function(e){ e.preventDefault(); saveEditor(); });
+
+  // close colors on tap outside
+  editorEl.addEventListener('pointerdown', function(e){
+    if (!colorsPop.classList.contains('is-open')) return;
+    var inside = e.target.closest('#vrvsNotesColors') || e.target.closest('#vrvsNotesColorBtn');
+    if (!inside) closeColors();
+  }, {capture:true});
+
+  // --- DELEGAÇÃO: abrir editor ao tocar campos-alvo ---
+  var STATIC_IDS = {
+    'editAnotacaoHotTopics':1, 'editAnotacaoConteudo':1,
+    'novaDiarioTopico':1, 'novaDiarioResposta':1,
+    'novaDiarioObsDesempenho':1, 'modalRegistroObs':1
+  };
+
+  function isTargetField(el){
+    if (!el) return false;
+    var id = el.id || '';
+    if (STATIC_IDS[id]) return true;
+    if (/^hotTopics_\d+$/i.test(id)) return true;
+    if (/^anotacao_\d+$/i.test(id)) return true;
+    return false;
+  }
+
+  function titleForField(el){
+    var id = el.id || '';
+    if (id === 'editAnotacaoHotTopics') return {small:'Caderno', big:'Hot Topics'};
+    if (id === 'editAnotacaoConteudo') return {small:'Caderno', big:'Anotações'};
+    if (id === 'novaDiarioTopico') return {small:'Diário', big:'Tópico'};
+    if (id === 'novaDiarioResposta') return {small:'Diário', big:'Resposta'};
+    if (/^hotTopics_\d+$/i.test(id)){
+      var tid = id.substring(10);
+      var t = Array.isArray(window.dados) ? window.dados.find(function(d){return String(d.id)===String(tid);}) : null;
+      return {small:'Hot Topics', big: t ? (t.area + ' · ' + t.tema) : 'Hot Topics'};
+    }
+    if (/^anotacao_\d+$/i.test(id)){
+      var tid2 = id.substring(9);
+      var t2 = Array.isArray(window.dados) ? window.dados.find(function(d){return String(d.id)===String(tid2);}) : null;
+      return {small:'Anotações', big: t2 ? (t2.area + ' · ' + t2.tema) : 'Anotações'};
+    }
+    if (id === 'novaDiarioObsDesempenho' || id === 'modalRegistroObs') return {small:'Diário', big:'Obs Desempenho'};
+    return {small:'Editor', big:'Notas'};
+  }
+
+  function buildOnSalvar(el){
+    var id = el.id || '';
+    // Para textareas dinâmicos do caderno, chamar salvarAnotacao após setar valor
+    if (/^hotTopics_\d+$/i.test(id) || /^anotacao_\d+$/i.test(id)){
+      var tid = /^hotTopics_/.test(id) ? id.substring(10) : id.substring(9);
+      return function(html){
+        setElHtml(el, html);
+        if (typeof salvarAnotacao === 'function') salvarAnotacao(parseInt(tid) || tid);
+      };
+    }
+    return null;
+  }
+
+  // Delegação no document (funciona para DOM atual e futuro)
+  document.addEventListener('pointerdown', function(e){
+    var el = e.target && (e.target.closest ? e.target.closest('textarea') : null);
+    if (!el) return;
+    if (!isTargetField(el)) return;
+    e.preventDefault();
+    setElHtml(el, getElHtml(el));
+    var t = titleForField(el);
+    openEditor({
+      campoEl: el,
+      tituloSmall: t.small,
+      tituloBig: t.big,
+      onSalvar: buildOnSalvar(el)
+    });
+    setTimeout(function(){ try{ el.blur(); }catch(e){} }, 0);
+  }, {capture:true});
+
+})();
+/* ==================== FIM VRVS NOTES EDITOR ==================== */
+</script>
 </body>
 </html>
 
