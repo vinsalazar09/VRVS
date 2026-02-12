@@ -11153,7 +11153,8 @@ TEMA: [COLE O TEMA AQUI]`;
             document.getElementById('modalRegistroCasoNome').textContent = vrvs_escapeHTML(entrada.topico || 'Sem título');
             document.getElementById('modalRegistroNota').value = obterNotaRanking(entrada) ?? 5;
             document.getElementById('modalRegistroNotaDisplay').textContent = (obterNotaRanking(entrada) ?? 5).toFixed(1);
-            document.getElementById('modalRegistroObs').value = '';
+            var _mrObs = document.getElementById('modalRegistroObs');
+            if (_mrObs) { _mrObs.value = ''; if (_mrObs.dataset) delete _mrObs.dataset.vrvsHtml; }
             const y = window.scrollY; window._modalScrollY = y;
             document.body.style.position = 'fixed';
             document.body.style.top = `-${y}px`;
@@ -13563,8 +13564,8 @@ function modoAvancado_toggle() {
                 
                 const textarea = document.getElementById(`anotacao_${temaId}`);
                 const hotTopicsTextarea = document.getElementById(`hotTopics_${temaId}`);
-                if (textarea) textarea.value = '';
-                if (hotTopicsTextarea) hotTopicsTextarea.value = '';
+                if (textarea) { textarea.value = ''; if (textarea.dataset) delete textarea.dataset.vrvsHtml; }
+                if (hotTopicsTextarea) { hotTopicsTextarea.value = ''; if (hotTopicsTextarea.dataset) delete hotTopicsTextarea.dataset.vrvsHtml; }
                 
                 mostrarNotificacaoFeedback('🗑️ Anotação limpa!');
                 
@@ -25143,10 +25144,23 @@ function modoAvancado_toggle() {
     return out.trim();
   }
   function htmlToPlainText(input){
+    if (!input) return '';
     var safe = sanitizeHTML(input);
     var div = document.createElement('div');
-    div.innerHTML = safe.replace(/<br\s*\/?>/gi, '\n');
-    return (div.textContent||'').replace(/\n{3,}/g, '\n\n');
+    div.style.whiteSpace = 'pre-wrap';
+    // Inserir no DOM temporariamente para innerText funcionar
+    div.style.position = 'absolute';
+    div.style.left = '-9999px';
+    div.style.top = '0';
+    document.body.appendChild(div);
+    div.innerHTML = safe;
+    // innerText preserva <br> e blocos como quebras de linha reais
+    var t = (div.innerText || '').replace(/\u00A0/g, ' ');
+    document.body.removeChild(div);
+    // Normalizar: max 2 linhas vazias seguidas, trim final
+    t = t.replace(/\r/g, '');
+    t = t.replace(/\n{3,}/g, '\n\n');
+    return t.trimEnd();
   }
 
   // --- dataset bridge ---
@@ -25428,14 +25442,13 @@ function modoAvancado_toggle() {
     return null;
   }
 
-  // Delegação: LONG-PRESS (400ms) para abrir editor (FIX A5: evita abrir em toque acidental)
+  // Delegação: LONG-PRESS (600ms) para abrir editor (evita abrir em toque acidental)
   var _lp = { timer: null, el: null, sx: 0, sy: 0, moved: false };
-  var LP_MS = 400;
+  var LP_MS = 600;
   var LP_MOVE_THRESHOLD = 10;
 
   function _lpCancel(){
     if (_lp.timer) clearTimeout(_lp.timer);
-    // Remover feedback visual se existir
     if (_lp.el) _lp.el.style.boxShadow = '';
     _lp.timer = null; _lp.el = null; _lp.moved = false;
   }
@@ -25452,9 +25465,23 @@ function modoAvancado_toggle() {
       if (!_lp.el || _lp.moved) return;
       var target = _lp.el;
       _lp.el = null; _lp.timer = null;
+
+      // HIDRATAÇÃO: sincronizar dataset com value ANTES de abrir
+      var curVal = (target.value || '').trim();
+      var curDs = (target.dataset && typeof target.dataset.vrvsHtml === 'string') ? target.dataset.vrvsHtml.trim() : '';
+      // Se value vazio mas dataset tem lixo stale → limpar
+      if (!curVal && curDs) {
+        delete target.dataset.vrvsHtml;
+      }
+      // Se value tem conteúdo mas dataset não existe → criar dataset a partir do value
+      if (curVal && !target.dataset.vrvsHtml) {
+        setElHtml(target, getElHtml(target));
+      }
+
       // Feedback visual rápido
       target.style.boxShadow = '0 0 0 2px rgba(0,206,209,0.6)';
       setTimeout(function(){ target.style.boxShadow = ''; }, 600);
+
       // Abrir editor
       var t = titleForField(target);
       openEditor({

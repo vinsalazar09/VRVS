@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.240-hotfix-editor-trunca-fantasma-lp-20260212-03";
+const CACHE_NAME = "vrvs-v5.3.241-fix-editor-blank-newlines-lp600-20260212-04";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
