@@ -16619,10 +16619,14 @@ function modoAvancado_toggle() {
             }
             window.diario_imagemNovaSelecionada = false; // Garantir estado limpo
             
-            // Limpar campos
+            // Limpar campos (+ dataset.vrvsHtml para evitar texto fantasma)
             document.getElementById('novaDiarioId').value = '';
-            document.getElementById('novaDiarioTopico').value = '';
-            document.getElementById('novaDiarioResposta').value = '';
+            var _ntEl = document.getElementById('novaDiarioTopico');
+            var _nrEl = document.getElementById('novaDiarioResposta');
+            if (_ntEl) { _ntEl.value = ''; if (_ntEl.dataset) delete _ntEl.dataset.vrvsHtml; }
+            if (_nrEl) { _nrEl.value = ''; if (_nrEl.dataset) delete _nrEl.dataset.vrvsHtml; }
+            var _noEl = document.getElementById('novaDiarioObsDesempenho');
+            if (_noEl) { _noEl.value = ''; if (_noEl.dataset) delete _noEl.dataset.vrvsHtml; }
             document.getElementById('novaDiarioAtencao').checked = false;
             
             // PATCH 4: Ocultar botão de excluir ao criar nova entrada
@@ -18857,8 +18861,16 @@ function modoAvancado_toggle() {
                 }
             }, 150); // Aumentado para 150ms para garantir que temas foram populados (mobile pode ser mais lento)
             
-            document.getElementById('novaDiarioTopico').value = entrada.topico;
-            document.getElementById('novaDiarioResposta').value = entrada.resposta || '';
+            // FIX A4: usar setElHtml para sincronizar dataset + value (evita fantasma/truncamento)
+            var _edTp = document.getElementById('novaDiarioTopico');
+            var _edRp = document.getElementById('novaDiarioResposta');
+            if (typeof vrvsNotes_setElHtml === 'function') {
+                vrvsNotes_setElHtml(_edTp, entrada.topico || '');
+                vrvsNotes_setElHtml(_edRp, entrada.resposta || '');
+            } else {
+                _edTp.value = entrada.topico || '';
+                _edRp.value = entrada.resposta || '';
+            }
             // PATCH 4: Marcar checkbox APENAS se entrada tem SRS ativo (não usar atencao legado)
             const temSrsAtivo = entrada.srs && entrada.srs.ativo;
             document.getElementById('novaDiarioAtencao').checked = temSrsAtivo || false;
@@ -25079,9 +25091,13 @@ function modoAvancado_toggle() {
   }
   function normalizeBlockTags(html){
     var h = String(html||'');
-    h = h.replace(/<\/(div|p)>\s*<(div|p)[^>]*>/gi,'<br>');
-    h = h.replace(/<(div|p)[^>]*>/gi,'');
-    h = h.replace(/<\/(div|p)>/gi,'');
+    // iOS Safari gera <div> para cada linha; converter TODA abertura <div|p|li> em <br>
+    h = h.replace(/<\/(div|p|li)>/gi, '');
+    h = h.replace(/<(div|p|li)[^>]*>/gi, '<br>');
+    // Normalizar múltiplos <br> seguidos (max 2)
+    h = h.replace(/(\s*<br\s*\/?\s*>\s*){3,}/gi, '<br><br>');
+    // Remover <br> inicial solto
+    h = h.replace(/^\s*(<br\s*\/?\s*>\s*)+/i, '');
     return h;
   }
   function sanitizeHTML(input){
@@ -25136,8 +25152,15 @@ function modoAvancado_toggle() {
   // --- dataset bridge ---
   function getElHtml(el){
     if (!el) return '';
-    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') return el.dataset.vrvsHtml;
     var raw = (el.value != null) ? String(el.value) : '';
+    // Se campo está vazio, limpar dataset stale e retornar vazio (FIX FANTASMA)
+    if (!raw.trim()) {
+      if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
+      return '';
+    }
+    // Se dataset existe (setado pelo editor), usar
+    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') return el.dataset.vrvsHtml;
+    // Fallback: converter do value
     return looksLikeHtml(raw) ? raw : plainToHtml(raw);
   }
   function setElHtml(el, html){
@@ -25405,22 +25428,56 @@ function modoAvancado_toggle() {
     return null;
   }
 
-  // Delegação no document (funciona para DOM atual e futuro)
+  // Delegação: LONG-PRESS (400ms) para abrir editor (FIX A5: evita abrir em toque acidental)
+  var _lp = { timer: null, el: null, sx: 0, sy: 0, moved: false };
+  var LP_MS = 400;
+  var LP_MOVE_THRESHOLD = 10;
+
+  function _lpCancel(){
+    if (_lp.timer) clearTimeout(_lp.timer);
+    // Remover feedback visual se existir
+    if (_lp.el) _lp.el.style.boxShadow = '';
+    _lp.timer = null; _lp.el = null; _lp.moved = false;
+  }
+
   document.addEventListener('pointerdown', function(e){
     var el = e.target && (e.target.closest ? e.target.closest('textarea') : null);
-    if (!el) return;
-    if (!isTargetField(el)) return;
-    e.preventDefault();
-    setElHtml(el, getElHtml(el));
-    var t = titleForField(el);
-    openEditor({
-      campoEl: el,
-      tituloSmall: t.small,
-      tituloBig: t.big,
-      onSalvar: buildOnSalvar(el)
-    });
-    setTimeout(function(){ try{ el.blur(); }catch(e){} }, 0);
-  }, {capture:true});
+    if (!el || !isTargetField(el)) return;
+    // NÃO faz preventDefault — permite interação normal (foco, teclado, seleção)
+    _lp.el = el; _lp.moved = false;
+    _lp.sx = e.clientX; _lp.sy = e.clientY;
+    if (_lp.timer) clearTimeout(_lp.timer);
+
+    _lp.timer = setTimeout(function(){
+      if (!_lp.el || _lp.moved) return;
+      var target = _lp.el;
+      _lp.el = null; _lp.timer = null;
+      // Feedback visual rápido
+      target.style.boxShadow = '0 0 0 2px rgba(0,206,209,0.6)';
+      setTimeout(function(){ target.style.boxShadow = ''; }, 600);
+      // Abrir editor
+      var t = titleForField(target);
+      openEditor({
+        campoEl: target,
+        tituloSmall: t.small,
+        tituloBig: t.big,
+        onSalvar: buildOnSalvar(target)
+      });
+      try { target.blur(); } catch(ex){}
+    }, LP_MS);
+  }, {capture: false});
+
+  document.addEventListener('pointermove', function(e){
+    if (!_lp.timer || !_lp.el) return;
+    var dx = e.clientX - _lp.sx, dy = e.clientY - _lp.sy;
+    if (Math.sqrt(dx*dx + dy*dy) > LP_MOVE_THRESHOLD) {
+      _lp.moved = true;
+      _lpCancel();
+    }
+  }, {passive: true});
+
+  document.addEventListener('pointerup', function(){ _lpCancel(); }, {passive: true});
+  document.addEventListener('pointercancel', function(){ _lpCancel(); }, {passive: true});
 
 })();
 /* ==================== FIM VRVS NOTES EDITOR ==================== */
