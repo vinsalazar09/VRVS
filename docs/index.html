@@ -25244,17 +25244,23 @@ function modoAvancado_toggle() {
     lockBody();
     closeColors();
 
-    // iOS: visualViewport
+    // iOS: visualViewport — compensar height + offsetTop (fix tela sobe)
     if (window.visualViewport) {
       var vv = window.visualViewport;
-      editorEl.style.height = vv.height + 'px';
-      var onVV = function(){ editorEl.style.height = (vv.height || window.innerHeight) + 'px'; };
+      var onVV = function(){
+        var h = vv.height || window.innerHeight;
+        var t = vv.offsetTop || 0;
+        editorEl.style.height = h + 'px';
+        editorEl.style.top = t + 'px';
+      };
+      onVV(); // aplicar imediatamente
       vv.addEventListener('resize', onVV);
       vv.addEventListener('scroll', onVV);
       editorEl._vvCleanup = function(){
         vv.removeEventListener('resize', onVV);
         vv.removeEventListener('scroll', onVV);
         editorEl.style.height = '';
+        editorEl.style.top = '';
       };
     }
 
@@ -25383,8 +25389,19 @@ function modoAvancado_toggle() {
     }
   }, {passive:false});
 
-  btnClose.addEventListener('click', function(e){ e.preventDefault(); closeEditor({salvar:false}); });
-  btnSave.addEventListener('click', function(e){ e.preventDefault(); saveEditor(); });
+  // Guard anti-duplo (touchend + click não disparam 2x)
+  var _btnLastAction = 0;
+  function _btnGuardAction(action){
+    var now = Date.now();
+    if (now - _btnLastAction < 600) return;
+    _btnLastAction = now;
+    action();
+  }
+  btnClose.addEventListener('click', function(e){ e.preventDefault(); _btnGuardAction(function(){ closeEditor({salvar:false}); }); });
+  btnSave.addEventListener('click', function(e){ e.preventDefault(); _btnGuardAction(function(){ saveEditor(); }); });
+  // iOS: touchend reforço (hit area pode desalinhar com viewport offset)
+  btnClose.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); _btnGuardAction(function(){ closeEditor({salvar:false}); }); }, {passive:false});
+  btnSave.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); _btnGuardAction(function(){ saveEditor(); }); }, {passive:false});
 
   // close colors on tap outside
   editorEl.addEventListener('pointerdown', function(e){
