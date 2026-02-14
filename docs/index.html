@@ -849,40 +849,36 @@
         
         /* === BOTÕES MODAL (Liquid Glass CTA) === */
         /* Valores CTA: grad 0.15→0.08, border 0.30, shadow 0.14, text 0.90 */
+        .btn.btn-modal-primary,
+        .btn.btn-modal-secondary,
+        .btn.btn-modal-danger {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
+            text-transform: none;
+            letter-spacing: normal;
+        }
         .btn.btn-modal-primary {
             background: linear-gradient(135deg, rgba(255,184,77,0.15), rgba(255,184,77,0.08)) !important;
             border: 1px solid rgba(255,184,77,0.30) !important;
             color: rgba(255,255,255,0.90) !important;
             box-shadow: 0 0 18px rgba(255,184,77,0.14) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            -webkit-tap-highlight-color: transparent;
-            text-transform: none;
-            letter-spacing: normal;
         }
-        
         .btn.btn-modal-secondary {
             background: linear-gradient(135deg, rgba(0,206,209,0.15), rgba(0,206,209,0.08)) !important;
             border: 1px solid rgba(0,206,209,0.30) !important;
             color: rgba(255,255,255,0.90) !important;
             box-shadow: 0 0 18px rgba(0,206,209,0.14) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            -webkit-tap-highlight-color: transparent;
-            text-transform: none;
-            letter-spacing: normal;
         }
-        
         .btn.btn-modal-danger {
             background: linear-gradient(135deg, rgba(255,82,82,0.15), rgba(255,82,82,0.08)) !important;
             border: 1px solid rgba(255,82,82,0.30) !important;
             color: rgba(255,255,255,0.90) !important;
             box-shadow: 0 0 18px rgba(255,82,82,0.14) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            -webkit-tap-highlight-color: transparent;
-            text-transform: none;
-            letter-spacing: normal;
         }
         
         /* hover/active bem leve */
@@ -25031,6 +25027,24 @@ function modoAvancado_toggle() {
         })();
     </script>
 
+<!-- iOS touchend reforço: botões de modal que usam onclick podem não responder -->
+<script>
+(function(){
+  'use strict';
+  // Seleciona botões críticos que usam onclick inline
+  var sels = '.btn-modal-primary, .btn-modal-secondary, .btn-modal-danger, #novaDiarioImagemPerguntaBtn, #novaDiarioImagemBtn';
+  document.querySelectorAll(sels).forEach(function(btn){
+    btn.addEventListener('touchend', function(e){
+      // Dispara o onclick nativo se o touch não foi cancelado
+      if (btn.onclick || btn.getAttribute('onclick')) {
+        e.preventDefault();
+        btn.click();
+      }
+    }, {passive: false});
+  });
+})();
+</script>
+
 <!-- =================== VRVS: EDITOR FULLSCREEN (RICH NOTES) =================== -->
 <div id="vrvsNotesEditor" class="vrvs-notes-editor" aria-hidden="true">
   <div class="vrvs-notes-header">
@@ -25258,13 +25272,21 @@ function modoAvancado_toggle() {
     closeColors();
 
     // iOS: visualViewport — compensar height + offsetTop (fix tela sobe)
+    // Usa transform em vez de top para evitar layout shift (GPU compositing)
     if (window.visualViewport) {
       var vv = window.visualViewport;
+      var _vvRafId = null;
+      editorEl.style.willChange = 'transform, height';
+      editorEl.style.top = '0px';
       var onVV = function(){
-        var h = vv.height || window.innerHeight;
-        var t = vv.offsetTop || 0;
-        editorEl.style.height = h + 'px';
-        editorEl.style.top = t + 'px';
+        if (_vvRafId) return; // debounce via rAF
+        _vvRafId = requestAnimationFrame(function(){
+          _vvRafId = null;
+          var h = vv.height || window.innerHeight;
+          var t = vv.offsetTop || 0;
+          editorEl.style.height = h + 'px';
+          editorEl.style.transform = 'translateY(' + t + 'px)';
+        });
       };
       onVV(); // aplicar imediatamente
       vv.addEventListener('resize', onVV);
@@ -25272,8 +25294,11 @@ function modoAvancado_toggle() {
       editorEl._vvCleanup = function(){
         vv.removeEventListener('resize', onVV);
         vv.removeEventListener('scroll', onVV);
+        if (_vvRafId) { cancelAnimationFrame(_vvRafId); _vvRafId = null; }
         editorEl.style.height = '';
         editorEl.style.top = '';
+        editorEl.style.transform = '';
+        editorEl.style.willChange = '';
       };
     }
 
