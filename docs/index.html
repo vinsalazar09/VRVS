@@ -25523,6 +25523,15 @@ function modoAvancado_toggle() {
   document.addEventListener('pointerup', function(){ _lpCancel(); }, {passive: true});
   document.addEventListener('pointercancel', function(){ _lpCancel(); }, {passive: true});
 
+  /* ---- PATCH 2a: invalidar dataset.vrvsHtml quando usuario edita textarea diretamente ---- */
+  document.addEventListener('input', function(e){
+    if (!e.isTrusted) return;                       // ignora input programático
+    var el = e.target;
+    if (!el || el.tagName !== 'TEXTAREA') return;   // só textareas
+    if (!isTargetField(el)) return;                 // só campos do editor
+    if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;  // invalida cache
+  }, {capture: false});
+
 })();
 /* ==================== FIM VRVS NOTES EDITOR ==================== */
 </script>
