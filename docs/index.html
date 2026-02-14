@@ -4854,28 +4854,30 @@
             top: 52px;
             left: 12px;
             display: none;
-            gap: 10px;
-            padding: 10px;
-            border-radius: 12px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 12px;
+            border-radius: 14px;
             border: 1px solid rgba(0, 206, 209, 0.22);
             background: rgba(6, 20, 22, 0.98);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 100;
         }
-        .vrvs-notes-colors.is-open { display: flex; }
+        .vrvs-notes-colors.is-open { display: grid; }
         .vrvs-notes-swatch {
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.18);
-            background: #fff;
+            border: 2px solid rgba(255,255,255,0.12);
             cursor: pointer;
             touch-action: manipulation;
+            transition: transform 0.15s ease, border-color 0.15s ease;
         }
-        .vrvs-notes-swatch[data-color="#00CED1"] { background: #00CED1; }
-        .vrvs-notes-swatch[data-color="#FFB84D"] { background: #FFB84D; }
-        .vrvs-notes-swatch[data-color="rgb(80, 220, 100)"] { background: rgb(80, 220, 100); }
-        .vrvs-notes-swatch[data-color="#FF5252"] { background: #FF5252; }
-        .vrvs-notes-swatch[data-color="#A78BFA"] { background: #A78BFA; }
+        .vrvs-notes-swatch:active {
+            transform: scale(0.88);
+            border-color: rgba(255,255,255,0.5);
+        }
 
         /* CORREÇÃO #2: flex:1, NÃO height:100dvh */
         .vrvs-notes-body {
@@ -11164,7 +11166,7 @@ TEMA: [COLE O TEMA AQUI]`;
             document.getElementById('modalRegistroNota').value = obterNotaRanking(entrada) ?? 5;
             document.getElementById('modalRegistroNotaDisplay').textContent = (obterNotaRanking(entrada) ?? 5).toFixed(1);
             var _mrObs = document.getElementById('modalRegistroObs');
-            if (_mrObs) { _mrObs.value = ''; if (_mrObs.dataset) delete _mrObs.dataset.vrvsHtml; }
+            if (_mrObs) { _mrObs.value = ''; if (_mrObs.dataset) { delete _mrObs.dataset.vrvsHtml; delete _mrObs.dataset.vrvsPlain; } }
             const y = window.scrollY; window._modalScrollY = y;
             document.body.style.position = 'fixed';
             document.body.style.top = `-${y}px`;
@@ -13574,8 +13576,8 @@ function modoAvancado_toggle() {
                 
                 const textarea = document.getElementById(`anotacao_${temaId}`);
                 const hotTopicsTextarea = document.getElementById(`hotTopics_${temaId}`);
-                if (textarea) { textarea.value = ''; if (textarea.dataset) delete textarea.dataset.vrvsHtml; }
-                if (hotTopicsTextarea) { hotTopicsTextarea.value = ''; if (hotTopicsTextarea.dataset) delete hotTopicsTextarea.dataset.vrvsHtml; }
+                if (textarea) { textarea.value = ''; if (textarea.dataset) { delete textarea.dataset.vrvsHtml; delete textarea.dataset.vrvsPlain; } }
+                if (hotTopicsTextarea) { hotTopicsTextarea.value = ''; if (hotTopicsTextarea.dataset) { delete hotTopicsTextarea.dataset.vrvsHtml; delete hotTopicsTextarea.dataset.vrvsPlain; } }
                 
                 mostrarNotificacaoFeedback('🗑️ Anotação limpa!');
                 
@@ -16634,10 +16636,10 @@ function modoAvancado_toggle() {
             document.getElementById('novaDiarioId').value = '';
             var _ntEl = document.getElementById('novaDiarioTopico');
             var _nrEl = document.getElementById('novaDiarioResposta');
-            if (_ntEl) { _ntEl.value = ''; if (_ntEl.dataset) delete _ntEl.dataset.vrvsHtml; }
-            if (_nrEl) { _nrEl.value = ''; if (_nrEl.dataset) delete _nrEl.dataset.vrvsHtml; }
+            if (_ntEl) { _ntEl.value = ''; if (_ntEl.dataset) { delete _ntEl.dataset.vrvsHtml; delete _ntEl.dataset.vrvsPlain; } }
+            if (_nrEl) { _nrEl.value = ''; if (_nrEl.dataset) { delete _nrEl.dataset.vrvsHtml; delete _nrEl.dataset.vrvsPlain; } }
             var _noEl = document.getElementById('novaDiarioObsDesempenho');
-            if (_noEl) { _noEl.value = ''; if (_noEl.dataset) delete _noEl.dataset.vrvsHtml; }
+            if (_noEl) { _noEl.value = ''; if (_noEl.dataset) { delete _noEl.dataset.vrvsHtml; delete _noEl.dataset.vrvsPlain; } }
             document.getElementById('novaDiarioAtencao').checked = false;
             
             // PATCH 4: Ocultar botão de excluir ao criar nova entrada
@@ -25095,12 +25097,31 @@ function modoAvancado_toggle() {
     <div class="vrvs-notes-sep"></div>
     <button type="button" class="vrvs-notes-tool" id="vrvsNotesColorBtn" aria-label="Cor do texto">A▾</button>
     <div class="vrvs-notes-colors" id="vrvsNotesColors" aria-hidden="true">
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" aria-label="Branco"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" aria-label="Turquesa"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" aria-label="Âmbar"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="rgb(80, 220, 100)" aria-label="Verde"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" aria-label="Vermelho"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#A78BFA" aria-label="Roxo"></button>
+      <!-- Linha 1: Neutros (branco → cinza escuro) -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" style="background:#FFFFFF;" aria-label="Branco"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#B0B0B0" style="background:#B0B0B0;" aria-label="Cinza claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#707070" style="background:#707070;" aria-label="Cinza medio"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#404040" style="background:#404040;" aria-label="Cinza escuro"></button>
+      <!-- Linha 2: Vermelhos (claro → escuro) -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#FF9999" style="background:#FF9999;" aria-label="Vermelho claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" style="background:#FF5252;" aria-label="Vermelho"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#D32F2F" style="background:#D32F2F;" aria-label="Vermelho escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#8B1A1A" style="background:#8B1A1A;" aria-label="Vermelho profundo"></button>
+      <!-- Linha 3: Amarelos/Âmbar (claro → escuro) -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFE082" style="background:#FFE082;" aria-label="Amarelo claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" style="background:#FFB84D;" aria-label="Âmbar"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#F09000" style="background:#F09000;" aria-label="Laranja"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#C06000" style="background:#C06000;" aria-label="Âmbar escuro"></button>
+      <!-- Linha 4: Verdes (claro → escuro) -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#A5F0B0" style="background:#A5F0B0;" aria-label="Verde claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#50DC64" style="background:#50DC64;" aria-label="Verde"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#2E8B57" style="background:#2E8B57;" aria-label="Verde escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#1B5E20" style="background:#1B5E20;" aria-label="Verde profundo"></button>
+      <!-- Linha 5: Azuis/Turquesa (claro → escuro) -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#80E8EA" style="background:#80E8EA;" aria-label="Turquesa claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" style="background:#00CED1;" aria-label="Turquesa"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#0097A7" style="background:#0097A7;" aria-label="Azul petroleo"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#005F6B" style="background:#005F6B;" aria-label="Azul profundo"></button>
     </div>
   </div>
   <div class="vrvs-notes-body">
@@ -25213,21 +25234,23 @@ function modoAvancado_toggle() {
     // 1. Se campo visível está vazio, limpar dataset stale e retornar vazio
     if (!raw.trim()) {
       if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
+      if (el.dataset && el.dataset.vrvsPlain) delete el.dataset.vrvsPlain;
       return '';
     }
 
-    // 2. PROTEÇÃO CONTRA PERDA DE DADOS:
-    // Se dataset existe, verificar se ainda é válido comparando plain text.
-    // Se o usuário digitou direto no textarea, o dataset fica stale — devemos ignorá-lo.
+    // 2. PROTEÇÃO CONTRA PERDA DE DADOS (via assinatura):
+    // Compara textarea.value com a assinatura vrvsPlain gravada no setElHtml.
+    // Se são iguais, o usuário NÃO editou direto no textarea → dataset confiável.
+    // Se são diferentes, o usuário editou direto → dataset stale, regenerar.
     if (el.dataset && typeof el.dataset.vrvsHtml === 'string') {
-      var hiddenPlain = htmlToPlainText(el.dataset.vrvsHtml).trim();
-      var visiblePlain = raw.trim();
-      if (hiddenPlain !== visiblePlain) {
-        // Usuário editou direto no textarea — dataset desatualizado, forçar regeneração
-        delete el.dataset.vrvsHtml;
-      } else {
-        // Dataset é confiável — retorna HTML rico (preserva formatação)
+      var storedPlain = (typeof el.dataset.vrvsPlain === 'string') ? el.dataset.vrvsPlain : '';
+      if (raw.trim() === storedPlain.trim()) {
+        // Assinatura confere — dataset é válido, retorna HTML rico (preserva formatação)
         return el.dataset.vrvsHtml;
+      } else {
+        // Usuário editou direto no textarea — dataset desatualizado
+        delete el.dataset.vrvsHtml;
+        delete el.dataset.vrvsPlain;
       }
     }
 
@@ -25237,8 +25260,12 @@ function modoAvancado_toggle() {
   function setElHtml(el, html){
     if (!el) return;
     var safe = sanitizeHTML(html);
-    if (el.dataset) el.dataset.vrvsHtml = safe;
-    if (el.value != null) el.value = htmlToPlainText(safe);
+    var plain = htmlToPlainText(safe);
+    if (el.dataset) {
+      el.dataset.vrvsHtml = safe;
+      el.dataset.vrvsPlain = plain; // assinatura: plain text exato gravado junto com o HTML
+    }
+    if (el.value != null) el.value = plain;
   }
   function getValueById(id){
     var el = document.getElementById(id);
@@ -25420,11 +25447,20 @@ function modoAvancado_toggle() {
     });
   }
 
-  // paste: plain text only
+  // paste: limpa formatação externa mas PRESERVA quebras de linha
   areaEl.addEventListener('paste', function(e){
     e.preventDefault();
     var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
-    exec('insertText', txt);
+    if (!txt) return;
+    // Converter \n para <br> e inserir como HTML (insertText engole quebras no iOS)
+    var safeHtml = escapeHtml(txt).replace(/\n/g, '<br>');
+    try {
+      document.execCommand('insertHTML', false, safeHtml);
+    } catch(ex) {
+      // Fallback extremo
+      document.execCommand('insertText', false, txt);
+    }
+    state.dirty = true;
   });
   // drop: block
   areaEl.addEventListener('drop', function(e){ e.preventDefault(); });
@@ -25562,6 +25598,7 @@ function modoAvancado_toggle() {
       // Se value vazio mas dataset tem lixo stale → limpar
       if (!curVal && curDs) {
         delete target.dataset.vrvsHtml;
+        delete target.dataset.vrvsPlain;
       }
       // Se value tem conteúdo mas dataset não existe → criar dataset a partir do value
       if (curVal && !target.dataset.vrvsHtml) {

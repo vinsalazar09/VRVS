@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.243-fix-stale-dataset-gpu-viewport-touchend-20260214-01";
+const CACHE_NAME = "vrvs-v5.3.244-fix-paste-formatting-colors-20260214-02";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
