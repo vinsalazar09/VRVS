@@ -25351,7 +25351,15 @@ function modoAvancado_toggle() {
   areaEl.addEventListener('paste', function(e){
     e.preventDefault();
     var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
-    exec('insertText', txt);
+    if (!txt) return;
+    // Converter \n em <br> para preservar quebras de linha (iPhone Notas, etc.)
+    var safeHtml = escapeHtml(txt).replace(/\n/g, '<br>');
+    try {
+      document.execCommand('insertHTML', false, safeHtml);
+    } catch(ex) {
+      exec('insertText', txt); // fallback seguro
+    }
+    state.dirty = true;
   });
   // drop: block
   areaEl.addEventListener('drop', function(e){ e.preventDefault(); });

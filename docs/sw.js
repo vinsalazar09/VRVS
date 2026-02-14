@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.243-patch-input-stale-dataset-20260214-01";
+const CACHE_NAME = "vrvs-v5.3.244-patch-paste-linebreaks-20260214-01";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
