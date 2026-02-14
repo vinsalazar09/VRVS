@@ -885,6 +885,16 @@
             letter-spacing: normal;
         }
         
+        /* iPhone: garantir que botões de modal respondem ao touch sempre */
+        .btn.btn-modal-primary,
+        .btn.btn-modal-secondary,
+        .btn.btn-modal-danger {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         /* hover/active bem leve */
         .btn.btn-modal-primary:active,
         .btn.btn-modal-secondary:active,
@@ -25036,6 +25046,38 @@ function modoAvancado_toggle() {
         })();
     </script>
 
+<!-- iOS: reforço touchend em botões críticos do modal Diário (fix botões mortos após edição longa) -->
+<script>
+(function(){
+  'use strict';
+  // Botões com onclick inline podem parar de responder ao click no iOS após teclado virtual longo.
+  // touchend como fallback garante que a ação sempre dispara.
+  var _touchGuard = 0;
+  function reforcarBotao(btnEl){
+    if (!btnEl || btnEl._vrvsTouch) return;
+    btnEl._vrvsTouch = true;
+    btnEl.addEventListener('touchend', function(e){
+      var now = Date.now();
+      if (now - _touchGuard < 800) return; // guard anti-duplo
+      _touchGuard = now;
+      e.preventDefault();
+      btnEl.click(); // dispara o onclick original
+    }, {passive: false});
+  }
+  // Aguarda DOM e reforça botões existentes + observer para botões dinâmicos
+  document.addEventListener('DOMContentLoaded', function(){
+    // Botões estáticos do modal Diário
+    var ids = ['novaDiarioImagemPerguntaBtn', 'novaDiarioImagemBtn'];
+    ids.forEach(function(id){ reforcarBotao(document.getElementById(id)); });
+    // Botões por classe (SALVAR, SALVAR E ADICIONAR, EXCLUIR)
+    var modDiario = document.getElementById('modalNovaDiario');
+    if (modDiario) {
+      modDiario.querySelectorAll('.btn.btn-modal-primary, .btn.btn-modal-secondary, .btn.btn-modal-danger').forEach(reforcarBotao);
+    }
+  });
+})();
+</script>
+
 <!-- =================== VRVS: EDITOR FULLSCREEN (RICH NOTES) =================== -->
 <div id="vrvsNotesEditor" class="vrvs-notes-editor" aria-hidden="true">
   <div class="vrvs-notes-header">
@@ -25167,14 +25209,29 @@ function modoAvancado_toggle() {
   function getElHtml(el){
     if (!el) return '';
     var raw = (el.value != null) ? String(el.value) : '';
-    // Se campo está vazio, limpar dataset stale e retornar vazio (FIX FANTASMA)
+
+    // 1. Se campo visível está vazio, limpar dataset stale e retornar vazio
     if (!raw.trim()) {
       if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
       return '';
     }
-    // Se dataset existe (setado pelo editor), usar
-    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') return el.dataset.vrvsHtml;
-    // Fallback: converter do value
+
+    // 2. PROTEÇÃO CONTRA PERDA DE DADOS:
+    // Se dataset existe, verificar se ainda é válido comparando plain text.
+    // Se o usuário digitou direto no textarea, o dataset fica stale — devemos ignorá-lo.
+    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') {
+      var hiddenPlain = htmlToPlainText(el.dataset.vrvsHtml).trim();
+      var visiblePlain = raw.trim();
+      if (hiddenPlain !== visiblePlain) {
+        // Usuário editou direto no textarea — dataset desatualizado, forçar regeneração
+        delete el.dataset.vrvsHtml;
+      } else {
+        // Dataset é confiável — retorna HTML rico (preserva formatação)
+        return el.dataset.vrvsHtml;
+      }
+    }
+
+    // 3. Fallback: gerar HTML a partir do value atual
     return looksLikeHtml(raw) ? raw : plainToHtml(raw);
   }
   function setElHtml(el, html){
@@ -25244,23 +25301,39 @@ function modoAvancado_toggle() {
     lockBody();
     closeColors();
 
-    // iOS: visualViewport — compensar height + offsetTop (fix tela sobe)
+    // iOS: visualViewport — compensar height + offsetTop via GPU (transform, não top)
     if (window.visualViewport) {
       var vv = window.visualViewport;
+      var _vvRafId = null;
+
+      // will-change setado 1x ao abrir (compositing layer isolada = hit areas estáveis)
+      editorEl.style.willChange = 'transform, height';
+      editorEl.style.top = '0px'; // fixo em 0, posição visual via transform
+
       var onVV = function(){
-        var h = vv.height || window.innerHeight;
-        var t = vv.offsetTop || 0;
-        editorEl.style.height = h + 'px';
-        editorEl.style.top = t + 'px';
+        // rAF debounce: evita layout thrashing em rajadas de eventos do iOS
+        if (_vvRafId) return;
+        _vvRafId = requestAnimationFrame(function(){
+          _vvRafId = null;
+          var h = vv.height || window.innerHeight;
+          var t = vv.offsetTop || 0;
+          editorEl.style.height = h + 'px';
+          editorEl.style.transform = 'translateY(' + t + 'px)';
+        });
       };
+
       onVV(); // aplicar imediatamente
       vv.addEventListener('resize', onVV);
       vv.addEventListener('scroll', onVV);
+
       editorEl._vvCleanup = function(){
         vv.removeEventListener('resize', onVV);
         vv.removeEventListener('scroll', onVV);
+        if (_vvRafId) { cancelAnimationFrame(_vvRafId); _vvRafId = null; }
         editorEl.style.height = '';
         editorEl.style.top = '';
+        editorEl.style.transform = '';
+        editorEl.style.willChange = '';
       };
     }
 
