@@ -885,16 +885,6 @@
             letter-spacing: normal;
         }
         
-        /* iPhone: garantir que botões de modal respondem ao touch sempre */
-        .btn.btn-modal-primary,
-        .btn.btn-modal-secondary,
-        .btn.btn-modal-danger {
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
         /* hover/active bem leve */
         .btn.btn-modal-primary:active,
         .btn.btn-modal-secondary:active,
@@ -4854,30 +4844,28 @@
             top: 52px;
             left: 12px;
             display: none;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            padding: 12px;
-            border-radius: 14px;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 12px;
             border: 1px solid rgba(0, 206, 209, 0.22);
             background: rgba(6, 20, 22, 0.98);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             z-index: 100;
         }
-        .vrvs-notes-colors.is-open { display: grid; }
+        .vrvs-notes-colors.is-open { display: flex; }
         .vrvs-notes-swatch {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 999px;
-            border: 2px solid rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            background: #fff;
             cursor: pointer;
             touch-action: manipulation;
-            transition: transform 0.15s ease, border-color 0.15s ease;
         }
-        .vrvs-notes-swatch:active {
-            transform: scale(0.88);
-            border-color: rgba(255,255,255,0.5);
-        }
+        .vrvs-notes-swatch[data-color="#00CED1"] { background: #00CED1; }
+        .vrvs-notes-swatch[data-color="#FFB84D"] { background: #FFB84D; }
+        .vrvs-notes-swatch[data-color="rgb(80, 220, 100)"] { background: rgb(80, 220, 100); }
+        .vrvs-notes-swatch[data-color="#FF5252"] { background: #FF5252; }
+        .vrvs-notes-swatch[data-color="#A78BFA"] { background: #A78BFA; }
 
         /* CORREÇÃO #2: flex:1, NÃO height:100dvh */
         .vrvs-notes-body {
@@ -25048,38 +25036,6 @@ function modoAvancado_toggle() {
         })();
     </script>
 
-<!-- iOS: reforço touchend em botões críticos do modal Diário (fix botões mortos após edição longa) -->
-<script>
-(function(){
-  'use strict';
-  // Botões com onclick inline podem parar de responder ao click no iOS após teclado virtual longo.
-  // touchend como fallback garante que a ação sempre dispara.
-  var _touchGuard = 0;
-  function reforcarBotao(btnEl){
-    if (!btnEl || btnEl._vrvsTouch) return;
-    btnEl._vrvsTouch = true;
-    btnEl.addEventListener('touchend', function(e){
-      var now = Date.now();
-      if (now - _touchGuard < 800) return; // guard anti-duplo
-      _touchGuard = now;
-      e.preventDefault();
-      btnEl.click(); // dispara o onclick original
-    }, {passive: false});
-  }
-  // Aguarda DOM e reforça botões existentes + observer para botões dinâmicos
-  document.addEventListener('DOMContentLoaded', function(){
-    // Botões estáticos do modal Diário
-    var ids = ['novaDiarioImagemPerguntaBtn', 'novaDiarioImagemBtn'];
-    ids.forEach(function(id){ reforcarBotao(document.getElementById(id)); });
-    // Botões por classe (SALVAR, SALVAR E ADICIONAR, EXCLUIR)
-    var modDiario = document.getElementById('modalNovaDiario');
-    if (modDiario) {
-      modDiario.querySelectorAll('.btn.btn-modal-primary, .btn.btn-modal-secondary, .btn.btn-modal-danger').forEach(reforcarBotao);
-    }
-  });
-})();
-</script>
-
 <!-- =================== VRVS: EDITOR FULLSCREEN (RICH NOTES) =================== -->
 <div id="vrvsNotesEditor" class="vrvs-notes-editor" aria-hidden="true">
   <div class="vrvs-notes-header">
@@ -25097,31 +25053,12 @@ function modoAvancado_toggle() {
     <div class="vrvs-notes-sep"></div>
     <button type="button" class="vrvs-notes-tool" id="vrvsNotesColorBtn" aria-label="Cor do texto">A▾</button>
     <div class="vrvs-notes-colors" id="vrvsNotesColors" aria-hidden="true">
-      <!-- Linha 1: Neutros (branco → cinza escuro) -->
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" style="background:#FFFFFF;" aria-label="Branco"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#B0B0B0" style="background:#B0B0B0;" aria-label="Cinza claro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#707070" style="background:#707070;" aria-label="Cinza medio"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#404040" style="background:#404040;" aria-label="Cinza escuro"></button>
-      <!-- Linha 2: Vermelhos (claro → escuro) -->
-      <button type="button" class="vrvs-notes-swatch" data-color="#FF9999" style="background:#FF9999;" aria-label="Vermelho claro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" style="background:#FF5252;" aria-label="Vermelho"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#D32F2F" style="background:#D32F2F;" aria-label="Vermelho escuro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#8B1A1A" style="background:#8B1A1A;" aria-label="Vermelho profundo"></button>
-      <!-- Linha 3: Amarelos/Âmbar (claro → escuro) -->
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFE082" style="background:#FFE082;" aria-label="Amarelo claro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" style="background:#FFB84D;" aria-label="Âmbar"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#F09000" style="background:#F09000;" aria-label="Laranja"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#C06000" style="background:#C06000;" aria-label="Âmbar escuro"></button>
-      <!-- Linha 4: Verdes (claro → escuro) -->
-      <button type="button" class="vrvs-notes-swatch" data-color="#A5F0B0" style="background:#A5F0B0;" aria-label="Verde claro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#50DC64" style="background:#50DC64;" aria-label="Verde"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#2E8B57" style="background:#2E8B57;" aria-label="Verde escuro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#1B5E20" style="background:#1B5E20;" aria-label="Verde profundo"></button>
-      <!-- Linha 5: Azuis/Turquesa (claro → escuro) -->
-      <button type="button" class="vrvs-notes-swatch" data-color="#80E8EA" style="background:#80E8EA;" aria-label="Turquesa claro"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" style="background:#00CED1;" aria-label="Turquesa"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#0097A7" style="background:#0097A7;" aria-label="Azul petroleo"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#005F6B" style="background:#005F6B;" aria-label="Azul profundo"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" aria-label="Branco"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" aria-label="Turquesa"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" aria-label="Âmbar"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="rgb(80, 220, 100)" aria-label="Verde"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" aria-label="Vermelho"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#A78BFA" aria-label="Roxo"></button>
     </div>
   </div>
   <div class="vrvs-notes-body">
@@ -25227,25 +25164,17 @@ function modoAvancado_toggle() {
   }
 
   // --- dataset bridge ---
-  // ESTRATÉGIA: dataset.vrvsHtml é confiável enquanto não for invalidado.
-  // Invalidação acontece via listener de 'input' (usuário digitou direto no textarea).
-  // Programmatic .value = ... NÃO dispara 'input', logo dataset permanece válido.
   function getElHtml(el){
     if (!el) return '';
     var raw = (el.value != null) ? String(el.value) : '';
-
-    // 1. Se campo visível está vazio, limpar dataset e retornar vazio
+    // Se campo está vazio, limpar dataset stale e retornar vazio (FIX FANTASMA)
     if (!raw.trim()) {
       if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
       return '';
     }
-
-    // 2. Se dataset existe, é confiável (invalidado pelo input listener se user editou)
-    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') {
-      return el.dataset.vrvsHtml;
-    }
-
-    // 3. Fallback: gerar HTML a partir do value atual
+    // Se dataset existe (setado pelo editor), usar
+    if (el.dataset && typeof el.dataset.vrvsHtml === 'string') return el.dataset.vrvsHtml;
+    // Fallback: converter do value
     return looksLikeHtml(raw) ? raw : plainToHtml(raw);
   }
   function setElHtml(el, html){
@@ -25315,39 +25244,23 @@ function modoAvancado_toggle() {
     lockBody();
     closeColors();
 
-    // iOS: visualViewport — compensar height + offsetTop via GPU (transform, não top)
+    // iOS: visualViewport — compensar height + offsetTop (fix tela sobe)
     if (window.visualViewport) {
       var vv = window.visualViewport;
-      var _vvRafId = null;
-
-      // will-change setado 1x ao abrir (compositing layer isolada = hit areas estáveis)
-      editorEl.style.willChange = 'transform, height';
-      editorEl.style.top = '0px'; // fixo em 0, posição visual via transform
-
       var onVV = function(){
-        // rAF debounce: evita layout thrashing em rajadas de eventos do iOS
-        if (_vvRafId) return;
-        _vvRafId = requestAnimationFrame(function(){
-          _vvRafId = null;
-          var h = vv.height || window.innerHeight;
-          var t = vv.offsetTop || 0;
-          editorEl.style.height = h + 'px';
-          editorEl.style.transform = 'translateY(' + t + 'px)';
-        });
+        var h = vv.height || window.innerHeight;
+        var t = vv.offsetTop || 0;
+        editorEl.style.height = h + 'px';
+        editorEl.style.top = t + 'px';
       };
-
       onVV(); // aplicar imediatamente
       vv.addEventListener('resize', onVV);
       vv.addEventListener('scroll', onVV);
-
       editorEl._vvCleanup = function(){
         vv.removeEventListener('resize', onVV);
         vv.removeEventListener('scroll', onVV);
-        if (_vvRafId) { cancelAnimationFrame(_vvRafId); _vvRafId = null; }
         editorEl.style.height = '';
         editorEl.style.top = '';
-        editorEl.style.transform = '';
-        editorEl.style.willChange = '';
       };
     }
 
@@ -25434,20 +25347,11 @@ function modoAvancado_toggle() {
     });
   }
 
-  // paste: limpa formatação externa mas PRESERVA quebras de linha
+  // paste: plain text only
   areaEl.addEventListener('paste', function(e){
     e.preventDefault();
     var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
-    if (!txt) return;
-    // Converter \n para <br> e inserir como HTML (insertText engole quebras no iOS)
-    var safeHtml = escapeHtml(txt).replace(/\n/g, '<br>');
-    try {
-      document.execCommand('insertHTML', false, safeHtml);
-    } catch(ex) {
-      // Fallback extremo
-      document.execCommand('insertText', false, txt);
-    }
-    state.dirty = true;
+    exec('insertText', txt);
   });
   // drop: block
   areaEl.addEventListener('drop', function(e){ e.preventDefault(); });
@@ -25618,18 +25522,6 @@ function modoAvancado_toggle() {
 
   document.addEventListener('pointerup', function(){ _lpCancel(); }, {passive: true});
   document.addEventListener('pointercancel', function(){ _lpCancel(); }, {passive: true});
-
-  // --- INVALIDAÇÃO DO DATASET: quando usuário digita DIRETO no textarea ---
-  // .value = ... (programático) NÃO dispara 'input'. Só interação real do user dispara.
-  // e.isTrusted filtra eventos sintéticos (dispatchEvent) que o saveEditor faz.
-  document.addEventListener('input', function(e){
-    if (!e.isTrusted) return; // ignorar eventos sintéticos
-    var el = e.target;
-    if (!el || el.tagName !== 'TEXTAREA') return;
-    if (!isTargetField(el)) return;
-    // Usuário editou direto no textarea — invalidar dataset rico
-    if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
-  }, {capture: false});
 
 })();
 /* ==================== FIM VRVS NOTES EDITOR ==================== */
