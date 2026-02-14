@@ -11166,7 +11166,7 @@ TEMA: [COLE O TEMA AQUI]`;
             document.getElementById('modalRegistroNota').value = obterNotaRanking(entrada) ?? 5;
             document.getElementById('modalRegistroNotaDisplay').textContent = (obterNotaRanking(entrada) ?? 5).toFixed(1);
             var _mrObs = document.getElementById('modalRegistroObs');
-            if (_mrObs) { _mrObs.value = ''; if (_mrObs.dataset) { delete _mrObs.dataset.vrvsHtml; delete _mrObs.dataset.vrvsPlain; } }
+            if (_mrObs) { _mrObs.value = ''; if (_mrObs.dataset) delete _mrObs.dataset.vrvsHtml; }
             const y = window.scrollY; window._modalScrollY = y;
             document.body.style.position = 'fixed';
             document.body.style.top = `-${y}px`;
@@ -13576,8 +13576,8 @@ function modoAvancado_toggle() {
                 
                 const textarea = document.getElementById(`anotacao_${temaId}`);
                 const hotTopicsTextarea = document.getElementById(`hotTopics_${temaId}`);
-                if (textarea) { textarea.value = ''; if (textarea.dataset) { delete textarea.dataset.vrvsHtml; delete textarea.dataset.vrvsPlain; } }
-                if (hotTopicsTextarea) { hotTopicsTextarea.value = ''; if (hotTopicsTextarea.dataset) { delete hotTopicsTextarea.dataset.vrvsHtml; delete hotTopicsTextarea.dataset.vrvsPlain; } }
+                if (textarea) { textarea.value = ''; if (textarea.dataset) delete textarea.dataset.vrvsHtml; }
+                if (hotTopicsTextarea) { hotTopicsTextarea.value = ''; if (hotTopicsTextarea.dataset) delete hotTopicsTextarea.dataset.vrvsHtml; }
                 
                 mostrarNotificacaoFeedback('🗑️ Anotação limpa!');
                 
@@ -16636,10 +16636,10 @@ function modoAvancado_toggle() {
             document.getElementById('novaDiarioId').value = '';
             var _ntEl = document.getElementById('novaDiarioTopico');
             var _nrEl = document.getElementById('novaDiarioResposta');
-            if (_ntEl) { _ntEl.value = ''; if (_ntEl.dataset) { delete _ntEl.dataset.vrvsHtml; delete _ntEl.dataset.vrvsPlain; } }
-            if (_nrEl) { _nrEl.value = ''; if (_nrEl.dataset) { delete _nrEl.dataset.vrvsHtml; delete _nrEl.dataset.vrvsPlain; } }
+            if (_ntEl) { _ntEl.value = ''; if (_ntEl.dataset) delete _ntEl.dataset.vrvsHtml; }
+            if (_nrEl) { _nrEl.value = ''; if (_nrEl.dataset) delete _nrEl.dataset.vrvsHtml; }
             var _noEl = document.getElementById('novaDiarioObsDesempenho');
-            if (_noEl) { _noEl.value = ''; if (_noEl.dataset) { delete _noEl.dataset.vrvsHtml; delete _noEl.dataset.vrvsPlain; } }
+            if (_noEl) { _noEl.value = ''; if (_noEl.dataset) delete _noEl.dataset.vrvsHtml; }
             document.getElementById('novaDiarioAtencao').checked = false;
             
             // PATCH 4: Ocultar botão de excluir ao criar nova entrada
@@ -25227,31 +25227,22 @@ function modoAvancado_toggle() {
   }
 
   // --- dataset bridge ---
+  // ESTRATÉGIA: dataset.vrvsHtml é confiável enquanto não for invalidado.
+  // Invalidação acontece via listener de 'input' (usuário digitou direto no textarea).
+  // Programmatic .value = ... NÃO dispara 'input', logo dataset permanece válido.
   function getElHtml(el){
     if (!el) return '';
     var raw = (el.value != null) ? String(el.value) : '';
 
-    // 1. Se campo visível está vazio, limpar dataset stale e retornar vazio
+    // 1. Se campo visível está vazio, limpar dataset e retornar vazio
     if (!raw.trim()) {
       if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
-      if (el.dataset && el.dataset.vrvsPlain) delete el.dataset.vrvsPlain;
       return '';
     }
 
-    // 2. PROTEÇÃO CONTRA PERDA DE DADOS (via assinatura):
-    // Compara textarea.value com a assinatura vrvsPlain gravada no setElHtml.
-    // Se são iguais, o usuário NÃO editou direto no textarea → dataset confiável.
-    // Se são diferentes, o usuário editou direto → dataset stale, regenerar.
+    // 2. Se dataset existe, é confiável (invalidado pelo input listener se user editou)
     if (el.dataset && typeof el.dataset.vrvsHtml === 'string') {
-      var storedPlain = (typeof el.dataset.vrvsPlain === 'string') ? el.dataset.vrvsPlain : '';
-      if (raw.trim() === storedPlain.trim()) {
-        // Assinatura confere — dataset é válido, retorna HTML rico (preserva formatação)
-        return el.dataset.vrvsHtml;
-      } else {
-        // Usuário editou direto no textarea — dataset desatualizado
-        delete el.dataset.vrvsHtml;
-        delete el.dataset.vrvsPlain;
-      }
+      return el.dataset.vrvsHtml;
     }
 
     // 3. Fallback: gerar HTML a partir do value atual
@@ -25260,12 +25251,8 @@ function modoAvancado_toggle() {
   function setElHtml(el, html){
     if (!el) return;
     var safe = sanitizeHTML(html);
-    var plain = htmlToPlainText(safe);
-    if (el.dataset) {
-      el.dataset.vrvsHtml = safe;
-      el.dataset.vrvsPlain = plain; // assinatura: plain text exato gravado junto com o HTML
-    }
-    if (el.value != null) el.value = plain;
+    if (el.dataset) el.dataset.vrvsHtml = safe;
+    if (el.value != null) el.value = htmlToPlainText(safe);
   }
   function getValueById(id){
     var el = document.getElementById(id);
@@ -25598,7 +25585,6 @@ function modoAvancado_toggle() {
       // Se value vazio mas dataset tem lixo stale → limpar
       if (!curVal && curDs) {
         delete target.dataset.vrvsHtml;
-        delete target.dataset.vrvsPlain;
       }
       // Se value tem conteúdo mas dataset não existe → criar dataset a partir do value
       if (curVal && !target.dataset.vrvsHtml) {
@@ -25632,6 +25618,18 @@ function modoAvancado_toggle() {
 
   document.addEventListener('pointerup', function(){ _lpCancel(); }, {passive: true});
   document.addEventListener('pointercancel', function(){ _lpCancel(); }, {passive: true});
+
+  // --- INVALIDAÇÃO DO DATASET: quando usuário digita DIRETO no textarea ---
+  // .value = ... (programático) NÃO dispara 'input'. Só interação real do user dispara.
+  // e.isTrusted filtra eventos sintéticos (dispatchEvent) que o saveEditor faz.
+  document.addEventListener('input', function(e){
+    if (!e.isTrusted) return; // ignorar eventos sintéticos
+    var el = e.target;
+    if (!el || el.tagName !== 'TEXTAREA') return;
+    if (!isTargetField(el)) return;
+    // Usuário editou direto no textarea — invalidar dataset rico
+    if (el.dataset && el.dataset.vrvsHtml) delete el.dataset.vrvsHtml;
+  }, {capture: false});
 
 })();
 /* ==================== FIM VRVS NOTES EDITOR ==================== */

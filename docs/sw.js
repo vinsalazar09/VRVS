@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.244-fix-paste-formatting-colors-20260214-02";
+const CACHE_NAME = "vrvs-v5.3.245-fix-input-event-dataset-invalidation-20260214-03";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
