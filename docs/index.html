@@ -4844,28 +4844,23 @@
             top: 52px;
             left: 12px;
             display: none;
-            gap: 10px;
-            padding: 10px;
+            grid-template-columns: repeat(5, 30px);
+            gap: 8px;
+            padding: 12px;
             border-radius: 12px;
             border: 1px solid rgba(0, 206, 209, 0.22);
             background: rgba(6, 20, 22, 0.98);
             z-index: 100;
         }
-        .vrvs-notes-colors.is-open { display: flex; }
+        .vrvs-notes-colors.is-open { display: grid; }
         .vrvs-notes-swatch {
-            width: 26px;
-            height: 26px;
+            width: 30px;
+            height: 30px;
             border-radius: 999px;
             border: 1px solid rgba(255,255,255,0.18);
-            background: #fff;
             cursor: pointer;
             touch-action: manipulation;
         }
-        .vrvs-notes-swatch[data-color="#00CED1"] { background: #00CED1; }
-        .vrvs-notes-swatch[data-color="#FFB84D"] { background: #FFB84D; }
-        .vrvs-notes-swatch[data-color="rgb(80, 220, 100)"] { background: rgb(80, 220, 100); }
-        .vrvs-notes-swatch[data-color="#FF5252"] { background: #FF5252; }
-        .vrvs-notes-swatch[data-color="#A78BFA"] { background: #A78BFA; }
 
         /* CORREÇÃO #2: flex:1, NÃO height:100dvh */
         .vrvs-notes-body {
@@ -25053,12 +25048,30 @@ function modoAvancado_toggle() {
     <div class="vrvs-notes-sep"></div>
     <button type="button" class="vrvs-notes-tool" id="vrvsNotesColorBtn" aria-label="Cor do texto">A▾</button>
     <div class="vrvs-notes-colors" id="vrvsNotesColors" aria-hidden="true">
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" aria-label="Branco"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" aria-label="Turquesa"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" aria-label="Âmbar"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="rgb(80, 220, 100)" aria-label="Verde"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" aria-label="Vermelho"></button>
-      <button type="button" class="vrvs-notes-swatch" data-color="#A78BFA" aria-label="Roxo"></button>
+      <!-- Neutros -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFFFFF" style="background:#FFFFFF" aria-label="Branco"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#B0B0B0" style="background:#B0B0B0" aria-label="Cinza"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#6B6B6B" style="background:#6B6B6B" aria-label="Cinza escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#3A3A3A" style="background:#3A3A3A" aria-label="Quase preto"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#000000" style="background:#000000;border-color:rgba(255,255,255,0.35)" aria-label="Preto"></button>
+      <!-- Turquesa -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#B2F5F7" style="background:#B2F5F7" aria-label="Turquesa claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#00CED1" style="background:#00CED1" aria-label="Turquesa"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#008B8B" style="background:#008B8B" aria-label="Turquesa escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#005F5F" style="background:#005F5F" aria-label="Turquesa profundo"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#4169E1" style="background:#4169E1" aria-label="Azul royal"></button>
+      <!-- Âmbar / Laranja -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFE0A3" style="background:#FFE0A3" aria-label="Âmbar claro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FFB84D" style="background:#FFB84D" aria-label="Âmbar"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FF8C00" style="background:#FF8C00" aria-label="Laranja"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#CC6600" style="background:#CC6600" aria-label="Laranja escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#8B4513" style="background:#8B4513" aria-label="Marrom"></button>
+      <!-- Verde / Vermelho / Roxo -->
+      <button type="button" class="vrvs-notes-swatch" data-color="#50DC64" style="background:#50DC64" aria-label="Verde"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#228B22" style="background:#228B22" aria-label="Verde escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#FF5252" style="background:#FF5252" aria-label="Vermelho"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#CC0000" style="background:#CC0000" aria-label="Vermelho escuro"></button>
+      <button type="button" class="vrvs-notes-swatch" data-color="#A78BFA" style="background:#A78BFA" aria-label="Roxo"></button>
     </div>
   </div>
   <div class="vrvs-notes-body">
