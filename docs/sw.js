@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.239-editor-fullscreen-notas-20260212-02";
+const CACHE_NAME = "vrvs-v5.3.247-fix-truncamento-viewport-paste-cores-20260215-01";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
