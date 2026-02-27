@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.247-fix-truncamento-viewport-paste-cores-20260215-01";
+const CACHE_NAME = "vrvs-v5.3.250-diario-hotfixA-ime-20260227-1200";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

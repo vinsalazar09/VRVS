@@ -15286,6 +15286,11 @@ function modoAvancado_toggle() {
         const DIARIO_SCHEMA_VERSION = '1.0';
         let modoDiario = 'recall'; // 'recall' ou 'respostas'
         
+        // HOTFIX A: blur antes de ler campos (iOS IME)
+        function diario_commitBlur() {
+            try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (_) {}
+        }
+        
         // ==================== SRS - SISTEMA DE REVISÃO ESPAÇADA ====================
         
         // Modo da aba do Diário: 'lista' ou 'sessao'
@@ -16552,9 +16557,13 @@ function modoAvancado_toggle() {
             try {
                 window.diario.schemaVersion = DIARIO_SCHEMA_VERSION;
                 localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(window.diario));
+                return true;
             } catch (e) {
                 console.error('[DIÁRIO] Erro ao salvar:', e);
-                mostrarNotificacaoFeedback('⚠️ Erro ao salvar diário!', 'error');
+                if (typeof mostrarNotificacaoFeedback === 'function') {
+                    mostrarNotificacaoFeedback('⚠️ Erro ao salvar. NÃO feche esta tela; copie o texto e tente novamente.', 'error');
+                }
+                return false;
             }
         }
         
@@ -16736,6 +16745,8 @@ function modoAvancado_toggle() {
         }
         
         async function salvarEntradaDiario() {
+            diario_commitBlur();
+            await new Promise(r => setTimeout(r, 0));
             // S3M: Hardening - garantir que window.diario existe e está válido
             const _SV = (typeof DIARIO_SCHEMA_VERSION !== 'undefined') ? DIARIO_SCHEMA_VERSION : '1.0';
             if (!window.diario || typeof window.diario !== 'object') window.diario = { entradas: [], schemaVersion: _SV };
@@ -17165,7 +17176,12 @@ function modoAvancado_toggle() {
                 window.diario.entradas.push(novaEntrada);
             }
             
-            salvarDiario();
+            const ok = salvarDiario();
+            if (!ok) {
+                const respEl = document.getElementById('novaDiarioResposta');
+                if (respEl) { respEl.focus(); if (respEl.select) respEl.select(); }
+                return false;
+            }
             
             // B1: Limpar imagem após salvar
             if (typeof diario_limparImagemModal === 'function') {
@@ -17301,20 +17317,23 @@ function modoAvancado_toggle() {
                     atualizarChipVrvs3p();
             mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
                 }, 50);
+            return true;
             } catch (error) {
                 console.error('[DIÁRIO] Erro ao salvar entrada:', error);
-                mostrarNotificacaoFeedback('⚠️ Erro ao salvar entrada. Verifique o console.', 'error');
-                // SEMPRE limpar flag e fechar modal mesmo em erro
+                if (typeof mostrarNotificacaoFeedback === 'function') {
+                    mostrarNotificacaoFeedback('⚠️ Erro ao salvar. NÃO feche esta tela; copie o texto e tente novamente.', 'error');
+                }
                 window.editandoDaSessao = false;
-                fecharModalDiario();
+                const respEl = document.getElementById('novaDiarioResposta');
+                if (respEl) { respEl.focus(); if (respEl.select) respEl.select(); }
+                return false;
             }
         }
         
-        function salvarEContinuarDiario() {
-            salvarEntradaDiario();
-            setTimeout(() => {
-                abrirNovaEntradaDiario();
-            }, 300);
+        async function salvarEContinuarDiario() {
+            const ok = await salvarEntradaDiario();
+            if (!ok) return;
+            setTimeout(abrirNovaEntradaDiario, 300);
         }
         
         // PATCH 2: Atualizar indicadores VRVS 3P no cabeçalho
