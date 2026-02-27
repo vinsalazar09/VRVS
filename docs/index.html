@@ -16744,6 +16744,26 @@ function modoAvancado_toggle() {
             }
         }
         
+        function diario_lerTextoPreferValue(el){
+          if (!el) return '';
+          if (el.value != null) {
+            const v = String(el.value);
+            if (v.trim()) return v.trim();
+          }
+          if (el.isContentEditable) {
+            const t = String(el.innerText || el.textContent || '');
+            if (t.trim()) return t.trim();
+          }
+          if (el.dataset && typeof el.dataset.vrvsHtml === 'string') {
+            const ds = String(el.dataset.vrvsHtml || '');
+            const tmp = document.createElement('div');
+            tmp.innerHTML = ds.replace(/<br\s*\/?>/gi, '\n');
+            const plain = String(tmp.textContent || tmp.innerText || '');
+            return plain.trim();
+          }
+          return '';
+        }
+        
         async function salvarEntradaDiario() {
             diario_commitBlur();
             await new Promise(r => setTimeout(r, 0));
@@ -16782,8 +16802,8 @@ function modoAvancado_toggle() {
                 // BRIDGE: lê HTML rico se disponível
                 const _topicoEl = document.getElementById('novaDiarioTopico');
                 const _respostaEl = document.getElementById('novaDiarioResposta');
-                const topico = (typeof vrvsNotes_getElHtml === 'function' && _topicoEl) ? vrvsNotes_getElHtml(_topicoEl).trim() : (_topicoEl?.value?.trim() || '');
-                const resposta = (typeof vrvsNotes_getElHtml === 'function' && _respostaEl) ? vrvsNotes_getElHtml(_respostaEl).trim() : (_respostaEl?.value?.trim() || '');
+                const topico = diario_lerTextoPreferValue(_topicoEl);
+                const resposta = diario_lerTextoPreferValue(_respostaEl);
                 // PATCH 4: Checkbox agora controla APENAS VRVS 3P (não atencao)
                 const incluirVRVS3P = document.getElementById('novaDiarioAtencao')?.checked || false;
             const dataInput = document.getElementById('novaDiarioData');
@@ -17315,7 +17335,7 @@ function modoAvancado_toggle() {
                     }
                     // Atualizar chip VRVS 3P e indicadores após salvar (PATCH 2)
                     atualizarChipVrvs3p();
-            mostrarNotificacaoFeedback('✅ Entrada salva com sucesso!');
+            mostrarNotificacaoFeedback('✅ Entrada salva com sucesso! (B1)');
                 }, 50);
             return true;
             } catch (error) {
