@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.191-teot-clean-20260312-1405";
+const CACHE_NAME = "vrvs-v5.3.192-q1-quarantine-list-20260312-1410";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

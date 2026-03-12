@@ -6195,6 +6195,7 @@
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('2026-03')">🔎 Raw search "2026-03"</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugInspectKey('vrvs_VIDA_diario')">🧪 Inspect vrvs_VIDA_diario</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugDumpKey('vrvs_VIDA_diario')">⬇️ Dump vrvs_VIDA_diario</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugListQuarantine()">🧯 Listar quarentenas TEOT</button>
                                 </div>
                             </div>
                         </div>
@@ -24596,6 +24597,23 @@ function modoAvancado_toggle() {
           }catch(e){
             alert('Erro inspect: ' + (e?.message||e));
           }
+        };
+
+        window.vrvs_debugListQuarantine = function(){
+          const keys = Object.keys(localStorage).filter(k => String(k).includes('vrvs_VIDA_diario__quarantine_'));
+          if (!keys.length){ alert('Nenhuma quarentena encontrada.'); return; }
+          const lines = [];
+          for (const k of keys){
+            const raw = localStorage.getItem(k)||'';
+            let count='?';
+            try{
+              const obj = JSON.parse(raw);
+              const arr = Array.isArray(obj?.entradas) ? obj.entradas : (Array.isArray(obj?.entries) ? obj.entries : null);
+              if (arr) count = arr.length;
+            }catch(e){}
+            lines.push(`${k} | bytes=${raw.length} | entradas=${count}`);
+          }
+          alert(lines.join('\n'));
         };
         
         async function diagnosticoApp() {
