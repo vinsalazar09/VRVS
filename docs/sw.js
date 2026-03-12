@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.262-teot-gating-fix-20260312-1200";
+const CACHE_NAME = "vrvs-v5.3.263-f1-debug-post-fev-20250227-1400";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [

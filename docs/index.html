@@ -6189,6 +6189,7 @@
                                     <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugListDiarioKeys()">🔎 Diagnóstico Diário</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugDeepDiario()">🔬 Diagnóstico Diário (E2)</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugFindEntriesAfter('2026-02-01')">🔎 Diagnóstico pós 01/02</button>
                                 </div>
                             </div>
                         </div>
@@ -24479,6 +24480,93 @@ function modoAvancado_toggle() {
             }catch(err){
                 alert('Erro ao analisar vrvs_diario: ' + (err && err.message ? err.message : err));
             }
+        };
+
+        window.vrvs_debugFindEntriesAfter = function(minDateStr){
+          const min = String(minDateStr || '2026-02-01');
+          const results = [];
+
+          function pickDate(e){
+            return (e && (e.data || e.criadoEm || e.ultimaAtualizacao)) ? String(e.data || e.criadoEm || e.ultimaAtualizacao) : '';
+          }
+          function isLikelyEntry(e){
+            if (!e || typeof e !== 'object') return false;
+            const d = pickDate(e);
+            if (!d || d.length < 8) return false;
+            return ('topico' in e) || ('tema' in e) || ('resposta' in e) || ('area' in e);
+          }
+          function scanArray(arr){
+            if (!Array.isArray(arr) || arr.length === 0) return null;
+            let hitsProbe = 0;
+            for (let i=0;i<Math.min(arr.length, 30);i++){
+              if (isLikelyEntry(arr[i])) { hitsProbe++; if (hitsProbe>=2) break; }
+            }
+            if (hitsProbe < 2) return null;
+
+            let total = 0, after = 0;
+            let minD = null, maxD = null;
+            let sample = null;
+
+            for (const e of arr){
+              if (!isLikelyEntry(e)) continue;
+              const d = pickDate(e);
+              total++;
+              if (!minD || d < minD) minD = d;
+              if (!maxD || d > maxD) maxD = d;
+              if (d >= min){
+                after++;
+                if (!sample) {
+                  const s = String(e.topico || e.tema || e.area || e.resposta || '').slice(0, 60);
+                  sample = s;
+                }
+              }
+            }
+            return { total, after, minD, maxD, sample };
+          }
+
+          try{
+            for (const k of Object.keys(localStorage)){
+              const raw = localStorage.getItem(k);
+              if (!raw) continue;
+              let obj;
+              try { obj = JSON.parse(raw); } catch(_) { continue; }
+
+              if (obj && typeof obj === 'object'){
+                for (const prop of Object.keys(obj)){
+                  const val = obj[prop];
+                  if (Array.isArray(val)){
+                    const info = scanArray(val);
+                    if (info && info.after > 0){
+                      results.push({ key: k, prop, ...info });
+                    }
+                  }
+                }
+                if (Array.isArray(obj.entradas)){
+                  const info = scanArray(obj.entradas);
+                  if (info && info.after > 0) results.push({ key: k, prop: 'entradas', ...info });
+                }
+                if (Array.isArray(obj.entries)){
+                  const info = scanArray(obj.entries);
+                  if (info && info.after > 0) results.push({ key: k, prop: 'entries', ...info });
+                }
+              }
+
+              if (Array.isArray(obj)){
+                const info = scanArray(obj);
+                if (info && info.after > 0) results.push({ key: k, prop: '(root array)', ...info });
+              }
+            }
+
+            results.sort((a,b)=> (b.after - a.after) || (b.total - a.total));
+
+            const head = results.slice(0, 10).map((r,i)=>
+              `${i+1}) ${r.key} :: ${r.prop} | >=${min}: ${r.after}/${r.total} | ${r.minD || '-'}..${r.maxD || '-'} | ex: ${r.sample || '-'}`
+            ).join('\n');
+
+            alert(head || `Nenhuma entrada tipo-diário encontrada com data >= ${min}.`);
+          } catch(e){
+            alert('Erro no diagnóstico F1: ' + (e && e.message ? e.message : e));
+          }
         };
         
         async function diagnosticoApp() {
