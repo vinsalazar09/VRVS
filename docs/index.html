@@ -6838,13 +6838,8 @@
             return `vrvs_${p}_${baseKey}`; // Namespaced (ex: vrvs_VIDA_dados)
         };
         
-        // Alias para compatibilidade com código existente; override via config.diarioKeyMap
+        // Alias para compatibilidade com código existente
         window.vrvs_diarioKey = function() {
-            const perfilId = window.vrvs_perfilAtivo || 'DEFAULT';
-            const config = (typeof vrvs_getConfig === 'function') ? vrvs_getConfig() : {};
-            const map = config.diarioKeyMap || {};
-            const override = map[perfilId];
-            if (typeof override === 'string' && override.trim()) return override.trim();
             return window.vrvs_key('diario');
         };
         
@@ -11885,18 +11880,12 @@ function modoAvancado_toggle() {
         };
         
         function vrvs_getConfig() {
-            if (window.vrvs_config && typeof window.vrvs_config === 'object') {
-                if (!window.vrvs_config.diarioKeyMap || typeof window.vrvs_config.diarioKeyMap !== 'object') {
-                    window.vrvs_config.diarioKeyMap = window.vrvs_config.diarioKeyMap || {};
-                }
-                return window.vrvs_config;
-            }
+            if (window.vrvs_config && typeof window.vrvs_config === 'object') return window.vrvs_config;
             let cfg = {};
             const raw = localStorage.getItem('vrvs_config');
             if (raw) {
                 try { cfg = JSON.parse(raw) || {}; } catch(e) { cfg = {}; }
             }
-            cfg.diarioKeyMap = cfg.diarioKeyMap || {};
             window.vrvs_config = cfg;
             return cfg;
         }
@@ -16484,26 +16473,6 @@ function modoAvancado_toggle() {
         
         // ==================== FIM SRS ====================
         
-        // Recuperação: listar chaves *_diario no localStorage com entradas > 0
-        function vrvs_listarDiariosNoStorage() {
-            const resultado = [];
-            try {
-                Object.keys(localStorage).forEach(key => {
-                    if (key !== 'vrvs_diario' && !key.endsWith('_diario')) return;
-                    let obj, count = 0;
-                    try {
-                        const raw = localStorage.getItem(key);
-                        if (!raw) return;
-                        obj = JSON.parse(raw);
-                        if (obj && Array.isArray(obj.entradas)) count = obj.entradas.length;
-                        else if (obj && Array.isArray(obj.entries)) count = obj.entries.length;
-                    } catch(e) { return; }
-                    if (count > 0) resultado.push({ key: key, count: count });
-                });
-            } catch(e) {}
-            return resultado;
-        }
-        
         function carregarDiario() {
             try {
                 const diarioSalvo = localStorage.getItem(window.vrvs_diarioKey());
@@ -16570,34 +16539,6 @@ function modoAvancado_toggle() {
                 } else {
                     window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
                     inicializarSrsEmTodasEntradas(); // Seguro mesmo vazio
-                }
-                // RECOVERY: se 0 entradas, oferecer recuperar de outra chave
-                const countAtual = (window.diario && Array.isArray(window.diario.entradas)) ? window.diario.entradas.length : 0;
-                if (countAtual === 0 && typeof vrvs_listarDiariosNoStorage === 'function') {
-                    const chaveAtual = window.vrvs_diarioKey();
-                    const candidatos = vrvs_listarDiariosNoStorage().filter(c => c.key !== chaveAtual);
-                    const perfilId = window.vrvs_perfilAtivo || 'DEFAULT';
-                    window.__diarioRecoveryAsked = window.__diarioRecoveryAsked || {};
-                    if (candidatos.length > 0 && !window.__diarioRecoveryAsked[perfilId]) {
-                        window.__diarioRecoveryAsked[perfilId] = true;
-                        const msg = 'Diário deste perfil está vazio. Encontrei outras chaves com entradas:\n\n' +
-                            candidatos.map((c, i) => (i + 1) + ') ' + c.key + ' (' + c.count + ' entradas)').join('\n') +
-                            '\n\nDigite o número para recuperar ou Cancelar.';
-                        const escolha = prompt(msg);
-                        const idx = parseInt(escolha, 10);
-                        if (idx >= 1 && idx <= candidatos.length) {
-                            const chaveEscolhida = candidatos[idx - 1].key;
-                            const cfg = vrvs_getConfig();
-                            cfg.diarioKeyMap = cfg.diarioKeyMap || {};
-                            cfg.diarioKeyMap[perfilId] = chaveEscolhida;
-                            window.vrvs_config = cfg;
-                            if (typeof vrvs_saveConfig === 'function') vrvs_saveConfig();
-                            carregarDiario();
-                            if (typeof renderDiario === 'function') renderDiario();
-                            if (typeof mostrarNotificacaoFeedback === 'function') mostrarNotificacaoFeedback('✅ Diário recuperado para este perfil.');
-                            return;
-                        }
-                    }
                 }
                 // Atualizar chip VRVS 3P e indicadores após carregar (PATCH 2)
                 atualizarChipVrvs3p();
