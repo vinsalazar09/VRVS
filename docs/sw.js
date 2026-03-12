@@ -1,6 +1,6 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.260-fallback-2afase-teot-20250227";
+const CACHE_NAME = "vrvs-v5.3.261-diario-teot-fallback-20260312";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
