@@ -6196,6 +6196,7 @@
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugInspectKey('vrvs_VIDA_diario')">🧪 Inspect vrvs_VIDA_diario</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugDumpKey('vrvs_VIDA_diario')">⬇️ Dump vrvs_VIDA_diario</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugListQuarantine()">🧯 Listar quarentenas TEOT</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugScanEstruturado()">🧭 Scan estruturado pós 01/02</button>
                                 </div>
                             </div>
                         </div>
@@ -24614,6 +24615,65 @@ function modoAvancado_toggle() {
             lines.push(`${k} | bytes=${raw.length} | entradas=${count}`);
           }
           alert(lines.join('\n'));
+        };
+
+        window.vrvs_debugScanEstruturado = function(){
+          const MIN = '2026-02-01';
+          const keys = Object.keys(localStorage).filter(k =>
+            k.startsWith('vrvs_backup_') ||
+            k === 'vrvs_VIDA_anotacoes' ||
+            k === 'vrvs_mindmaps' ||
+            k === 'vrvs_dados' ||
+            k === 'vrvs_diario' ||
+            k === 'vrvs_VIDA_diario' ||
+            k.startsWith('vrvs_VIDA_diario__quarantine_')
+          );
+
+          const hits = [];
+
+          function pickTs(o){
+            const v = o?.createdAt || o?.updatedAt || o?.data || o?.criadoEm || o?.ultimaAtualizacao;
+            return v ? String(v) : '';
+          }
+          function looksLikeNote(o){
+            if(!o || typeof o!=='object') return false;
+            return ('resposta' in o) || ('topico' in o) || ('tema' in o) || ('area' in o) || ('pergunta' in o) || ('texto' in o);
+          }
+          function scanAny(val, path, keyName){
+            if(!val) return;
+            if(Array.isArray(val)){
+              for(const it of val){
+                if(looksLikeNote(it)){
+                  const ts = pickTs(it);
+                  if(ts && ts >= MIN){
+                    const sample = String(it.topico || it.tema || it.area || it.pergunta || it.texto || it.resposta || '').slice(0,50);
+                    hits.push({key:keyName, path, ts, sample});
+                    break;
+                  }
+                }
+              }
+            } else if(typeof val === 'object'){
+              for(const p of Object.keys(val)){
+                const v = val[p];
+                if(Array.isArray(v) || (v && typeof v === 'object')) scanAny(v, path ? (path+'.'+p) : p, keyName);
+              }
+            }
+          }
+
+          for(const k of keys){
+            const raw = localStorage.getItem(k);
+            if(!raw) continue;
+            let obj;
+            try{ obj = JSON.parse(raw); } catch(e){ continue; }
+            scanAny(obj, '', k);
+          }
+
+          hits.sort((a,b)=> (a.ts>b.ts?-1:1));
+          const msg = hits.length
+            ? hits.slice(0,20).map((h,i)=>`${i+1}) ${h.key} :: ${h.path} :: ${h.ts} :: ${h.sample}`).join('\n\n')
+            : `Nenhum item tipo-nota encontrado com timestamp >= ${MIN} nas keys alvo.`;
+
+          alert(msg);
         };
         
         async function diagnosticoApp() {
