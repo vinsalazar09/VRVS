@@ -6187,6 +6187,7 @@
                                     <button class="btn btn-small" onclick="forcarAtualizacaoApp()" style="text-align: left; background: rgba(0, 206, 209, 0.2); border-color: rgba(0, 206, 209, 0.5);">🔄 Verificar Atualizações do App</button>
                                     <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
                                     <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugListDiarioKeys()">🔎 Diagnóstico Diário</button>
                                 </div>
                             </div>
                         </div>
@@ -24314,6 +24315,29 @@ function modoAvancado_toggle() {
         // === FUNÇÕES DIAGNÓSTICO/RESET (2025-01-01) ===
         const APP_BUILD = "20260126-2140";
         const APP_BUILD_CACHE = "vrvs-v5.3.174-splash-bottomlines-wrap-20260126-2140";
+        
+        window.vrvs_debugListDiarioKeys = function(){
+            const rows = [];
+            const keys = Object.keys(localStorage);
+            for (const k of keys) {
+                const kl = String(k||'').toLowerCase();
+                if (!kl.includes('diario')) continue;
+                try {
+                    const raw = localStorage.getItem(k);
+                    if (!raw) continue;
+                    const obj = JSON.parse(raw);
+                    const arr = Array.isArray(obj?.entradas) ? obj.entradas : (Array.isArray(obj?.entries) ? obj.entries : null);
+                    if (!arr) continue;
+                    const count = arr.length;
+                    if (count > 0) rows.push({k, count});
+                } catch(e) {}
+            }
+            rows.sort((a,b)=>b.count-a.count);
+            const msg = rows.length
+                ? rows.map((r,i)=>`${i+1}) ${r.k}  (${r.count})`).join('\n')
+                : 'Nenhuma chave com entradas encontrada contendo "diario".';
+            alert(msg);
+        };
         
         async function diagnosticoApp() {
             let info = `📋 DIAGNÓSTICO DO APP\n\n`;
