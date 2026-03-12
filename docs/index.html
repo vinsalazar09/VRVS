@@ -6188,6 +6188,7 @@
                                     <button class="btn btn-small" onclick="diagnosticoApp()" style="text-align: left; background: rgba(255, 159, 64, 0.2); border-color: rgba(255, 159, 64, 0.5);">📋 Diagnóstico do App</button>
                                     <button class="btn btn-small" onclick="resetAppShell()" style="text-align: left; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">🧹 Reset App Shell (sem apagar dados)</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugListDiarioKeys()">🔎 Diagnóstico Diário</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugDeepDiario()">🔬 Diagnóstico Diário (E2)</button>
                                 </div>
                             </div>
                         </div>
@@ -24337,6 +24338,41 @@ function modoAvancado_toggle() {
                 ? rows.map((r,i)=>`${i+1}) ${r.k}  (${r.count})`).join('\n')
                 : 'Nenhuma chave com entradas encontrada contendo "diario".';
             alert(msg);
+        };
+        
+        window.vrvs_debugDeepDiario = function(){
+            try{
+                const raw = localStorage.getItem('vrvs_diario');
+                if(!raw){ alert('vrvs_diario não encontrado.'); return; }
+                const obj = JSON.parse(raw);
+                const arr = Array.isArray(obj?.entradas) ? obj.entradas : (Array.isArray(obj?.entries) ? obj.entries : []);
+                const total = arr.length;
+
+                const byTag = {};
+                let teotHits = 0;
+
+                for(const e of arr){
+                    const tag = (e && (e.perfilId || e.perfil || e.dataset || e.profile || e.projeto)) ? String(e.perfilId || e.perfil || e.dataset || e.profile || e.projeto) : '__sem_tag__';
+                    byTag[tag] = (byTag[tag]||0) + 1;
+
+                    const a = String(e?.area||'');
+                    const t = String(e?.tema||'');
+                    const p = String(e?.topico||'');
+                    const joined = (a+' '+t+' '+p).toLowerCase();
+                    if (joined.includes('teot') || joined.includes('2ª') || joined.includes('2a') || joined.includes('segunda fase')) teotHits++;
+                }
+
+                const topTags = Object.entries(byTag).sort((a,b)=>b[1]-a[1]).slice(0,12)
+                    .map(([k,v])=>`${k}: ${v}`).join('\n');
+
+                alert(
+                    `vrvs_diario total: ${total}\n\n` +
+                    `TEOT/2a fase hits (area/tema/topico): ${teotHits}\n\n` +
+                    `Distribuição por tag (perfilId/perfil/dataset/profile/projeto):\n${topTags}`
+                );
+            }catch(err){
+                alert('Erro ao analisar vrvs_diario: ' + (err && err.message ? err.message : err));
+            }
         };
         
         async function diagnosticoApp() {
