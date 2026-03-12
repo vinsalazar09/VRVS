@@ -6193,6 +6193,8 @@
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('2026-02')">🔎 Raw search "2026-02"</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('/02/2026')">🔎 Raw search "/02/2026"</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('2026-03')">🔎 Raw search "2026-03"</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugInspectKey('vrvs_VIDA_diario')">🧪 Inspect vrvs_VIDA_diario</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugDumpKey('vrvs_VIDA_diario')">⬇️ Dump vrvs_VIDA_diario</button>
                                 </div>
                             </div>
                         </div>
@@ -24590,6 +24592,50 @@ function modoAvancado_toggle() {
             ? hits.slice(0, 15).map((h,i)=>`${i+1}) ${h.k} (idx ${h.idx}) ... ${h.snippet}`).join('\n\n')
             : `Nenhuma key contém "${p}".`;
           alert(msg);
+        };
+
+        window.vrvs_debugDumpKey = function(key){
+          try{
+            const k = String(key||'');
+            const raw = localStorage.getItem(k);
+            if(!raw){ alert('Key não encontrada: ' + k); return; }
+            const blob = new Blob([raw], {type:'application/json;charset=utf-8'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${k}__dump.json`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+            alert('Dump gerado: ' + k);
+          }catch(e){
+            alert('Erro dump: ' + (e?.message||e));
+          }
+        };
+
+        window.vrvs_debugInspectKey = function(key){
+          try{
+            const k = String(key||'');
+            const raw = localStorage.getItem(k);
+            if(!raw){ alert('Key não encontrada: ' + k); return; }
+            const obj = JSON.parse(raw);
+            const lines = [];
+            lines.push(`KEY: ${k}`);
+            lines.push(`Tipo raiz: ${Array.isArray(obj) ? 'Array' : typeof obj}`);
+            if (obj && typeof obj === 'object' && !Array.isArray(obj)){
+              const props = Object.keys(obj);
+              lines.push(`Props: ${props.slice(0,30).join(', ')}${props.length>30?' ...':''}`);
+              for(const p of props){
+                const v = obj[p];
+                if(Array.isArray(v)){
+                  const sample = v.find(x=>x && typeof x==='object' && ('topico'in x || 'tema'in x || 'resposta'in x || 'area'in x)) || null;
+                  lines.push(`- ${p}: array len=${v.length}${sample ? ' (parece entradas)' : ''}`);
+                }
+              }
+            }
+            alert(lines.join('\n'));
+          }catch(e){
+            alert('Erro inspect: ' + (e?.message||e));
+          }
         };
         
         async function diagnosticoApp() {
