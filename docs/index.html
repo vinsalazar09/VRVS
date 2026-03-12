@@ -7317,52 +7317,10 @@
                 if (arr.length > 0) {
                     window.diario = Array.isArray(diarioParsed) ? { entradas: diarioParsed, schemaVersion: schemaVersion } : (diarioParsed && diarioParsed.entradas ? diarioParsed : { entradas: [], schemaVersion: schemaVersion });
                 } else {
-                    // FALLBACK 2ª FASE TEOT: perfil tem chave mas 0 entradas
-                    const p = (window.vrvs_perfilAtivo || '').toLowerCase();
-                    const eh2aFase = p.includes('teot') && (p.includes('2a') || p.includes('2ª') || p.includes('segunda fase'));
-                    if (eh2aFase) {
-                        try {
-                            const raw = localStorage.getItem('vrvs_diario');
-                            if (raw) {
-                                const obj = JSON.parse(raw);
-                                const entradas = Array.isArray(obj?.entradas) ? obj.entradas : (Array.isArray(obj?.entries) ? obj.entries : []);
-                                const filtradas = entradas.filter(function(e) {
-                                    const j = (String(e?.area||'')+' '+String(e?.tema||'')+' '+String(e?.topico||'')).toLowerCase();
-                                    return j.includes('teot') || j.includes('2ª') || j.includes('2a') || j.includes('segunda fase');
-                                });
-                                if (filtradas.length > 0) window.diario = { entradas: filtradas, schemaVersion: schemaVersion };
-                                else window.diario = { entradas: [], schemaVersion: schemaVersion };
-                            } else {
-                                window.diario = { entradas: [], schemaVersion: schemaVersion };
-                            }
-                        } catch(_) { window.diario = { entradas: [], schemaVersion: schemaVersion }; }
-                    } else {
-                        window.diario = { entradas: [], schemaVersion: schemaVersion };
-                    }
-                }
-            } else {
-                // FALLBACK 2ª FASE TEOT: perfil vazio → vrvs_diario filtrado por TEOT/2ª fase
-                const p = (window.vrvs_perfilAtivo || '').toLowerCase();
-                const eh2aFase = p.includes('teot') && (p.includes('2a') || p.includes('2ª') || p.includes('segunda fase'));
-                if (eh2aFase) {
-                    try {
-                        const raw = localStorage.getItem('vrvs_diario');
-                        if (raw) {
-                            const obj = JSON.parse(raw);
-                            const entradas = Array.isArray(obj?.entradas) ? obj.entradas : (Array.isArray(obj?.entries) ? obj.entries : []);
-                            const filtradas = entradas.filter(function(e) {
-                                const j = (String(e?.area||'')+' '+String(e?.tema||'')+' '+String(e?.topico||'')).toLowerCase();
-                                return j.includes('teot') || j.includes('2ª') || j.includes('2a') || j.includes('segunda fase');
-                            });
-                            if (filtradas.length > 0) window.diario = { entradas: filtradas, schemaVersion: schemaVersion };
-                            else window.diario = { entradas: [], schemaVersion: schemaVersion };
-                        } else {
-                            window.diario = { entradas: [], schemaVersion: schemaVersion };
-                        }
-                    } catch(_) { window.diario = { entradas: [], schemaVersion: schemaVersion }; }
-                } else {
                     window.diario = { entradas: [], schemaVersion: schemaVersion };
                 }
+            } else {
+                window.diario = { entradas: [], schemaVersion: schemaVersion };
             }
         } catch (e) {
             if (typeof setBootErr === 'function') {
@@ -16536,6 +16494,29 @@ function modoAvancado_toggle() {
             const ok2 = p.includes('segunda') || p.includes('2a') || p.includes('2 fase');
             return okTeot && okFase && ok2;
         }
+        function vrvs_maxDataISO(entradas) {
+            let max = '';
+            for (const e of (entradas || [])) {
+                const d = String(e?.data || e?.criadoEm || '');
+                if (d && d.length >= 10 && d > max) max = d;
+            }
+            return max;
+        }
+        function vrvs_limparContaminacaoTeotSeNecessario() {
+            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
+            if (typeof ehPerfil2aFaseTEOT !== 'function' || !ehPerfil2aFaseTEOT(perfilAtivo)) return;
+            const ents = (window.diario && Array.isArray(window.diario.entradas)) ? window.diario.entradas : [];
+            if (ents.length === 0) return;
+            const maxD = vrvs_maxDataISO(ents);
+            if (!maxD || maxD >= '2026-02-01') return;
+            const qKey = 'vrvs_VIDA_diario__quarantine_' + Date.now();
+            try { localStorage.setItem(qKey, JSON.stringify(window.diario)); } catch (e) {}
+            window.diario.entradas = [];
+            try { localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(window.diario)); } catch (e) {}
+            if (typeof mostrarNotificacaoFeedback === 'function') {
+                mostrarNotificacaoFeedback('🧹 Diário TEOT limpo (removidas entradas antigas copiadas).');
+            }
+        }
         function ehEntradaTeot2aFase(e) {
             const a = String(e?.area||'');
             const t = String(e?.tema||'');
@@ -16603,21 +16584,6 @@ function modoAvancado_toggle() {
                     inicializarSrsEmTodasEntradas();
                     migrarSRSParaVRVS3P();
                     
-                    // FALLBACK 2ª FASE TEOT: perfil tem chave mas entradas vazias → usar vrvs_diario filtrado
-                    const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
-                    if (typeof ehPerfil2aFaseTEOT === 'function' && ehPerfil2aFaseTEOT(perfilAtivo)) {
-                        const count = (diarioMigrado && Array.isArray(diarioMigrado.entradas)) ? diarioMigrado.entradas.length : 0;
-                        if (count === 0 && typeof carregarDiarioFallbackTeot2aFase === 'function') {
-                            const fallback = carregarDiarioFallbackTeot2aFase();
-                            if (fallback && fallback.entradas && fallback.entradas.length > 0) {
-                                window.diario = fallback;
-                                try {
-                                    localStorage.setItem(window.vrvs_diarioKey(), JSON.stringify(window.diario));
-                                } catch(e) {}
-                            }
-                        }
-                    }
-                    
                     // S3K: Salvar migração APENAS se migrou e tem dados
                     if (diarioMigrado && diarioMigrado.entradas && diarioMigrado.entradas.length > 0) {
                         // Verificar se realmente migrou (array ou entries -> entradas)
@@ -16633,18 +16599,12 @@ function modoAvancado_toggle() {
                         }
                     }
                 } else {
-                    // FALLBACK 2ª FASE TEOT: perfil vazio → usar vrvs_diario filtrado por TEOT/2ª fase
-                    const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
-                    if (ehPerfil2aFaseTEOT(perfilAtivo)) {
-                        const fallback = carregarDiarioFallbackTeot2aFase();
-                        window.diario = fallback || { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
-                        if (fallback && fallback.entradas && fallback.entradas.length > 0) {
-                            console.log('[DIÁRIO] Fallback 2ª fase TEOT: carregadas', fallback.entradas.length, 'entradas de vrvs_diario');
-                        }
-                    } else {
-                        window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
-                    }
-                    inicializarSrsEmTodasEntradas(); // Seguro mesmo vazio
+                    window.diario = { entradas: [], schemaVersion: DIARIO_SCHEMA_VERSION };
+                    inicializarSrsEmTodasEntradas();
+                }
+                // TEOT-CLEAN: remover contaminação pré-01/02 do diário 2ª fase
+                if (typeof vrvs_limparContaminacaoTeotSeNecessario === 'function') {
+                    vrvs_limparContaminacaoTeotSeNecessario();
                 }
                 // Atualizar chip VRVS 3P e indicadores após carregar (PATCH 2)
                 atualizarChipVrvs3p();
