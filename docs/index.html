@@ -6148,9 +6148,6 @@
                                 </select>
                             </div>
                             <button class="btn btn-secondary" onclick="abrirModalGerenciarPerfis()" style="font-size: 13px; padding: 10px 18px; min-height: 40px; border-radius: 6px; transition: all 0.2s; box-shadow: 0 0 0 1px rgba(255,163,102,0.15), 0 2px 4px rgba(0,206,209,0.1);">⚙️ Gerenciar perfis</button>
-                            <div id="configDiarioOverrideWrap" style="display: none; margin-top: 8px;">
-                                <button class="btn btn-small btn-secondary" onclick="vrvs_corrigirDiarioOverrideAtual(); return false;" style="font-size: 13px; padding: 8px 14px; min-height: 36px;">🧯 Corrigir Diário deste perfil</button>
-                            </div>
                             <p style="margin: 10px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;">Crie datasets separados para diferentes projetos de estudo.</p>
                         </div>
                         
@@ -10760,12 +10757,6 @@
                 });
                 selectPerfil.value = window.vrvs_perfilAtivo || 'DEFAULT';
             }
-            // C1: Botão "Corrigir Diário" só aparece quando há override ativo
-            const perfilAtivo = window.vrvs_perfilAtivo || 'DEFAULT';
-            const cfg = (typeof vrvs_getConfig === 'function') ? vrvs_getConfig() : (window.vrvs_config || {});
-            const temOverride = !!(cfg && cfg.diarioKeyMap && cfg.diarioKeyMap[perfilAtivo]);
-            const wrapOverride = document.getElementById('configDiarioOverrideWrap');
-            if (wrapOverride) wrapOverride.style.display = temOverride ? '' : 'none';
         }
         
         // ==================== GERENCIAR PERFIS V1 - PATCH D1 ====================
@@ -11919,54 +11910,6 @@ function modoAvancado_toggle() {
                 return false;
             }
         }
-        
-        window.vrvs_corrigirDiarioOverrideAtual = function() {
-            const perfilId = window.vrvs_perfilAtivo || 'DEFAULT';
-            if (!confirm('Isso vai desfazer o vínculo com outro perfil. Prosseguir?')) return;
-            const cfg = (typeof vrvs_getConfig === 'function') ? vrvs_getConfig() : (window.vrvs_config || {});
-            if (cfg && cfg.diarioKeyMap && cfg.diarioKeyMap[perfilId]) delete cfg.diarioKeyMap[perfilId];
-            window.vrvs_config = cfg;
-            if (typeof vrvs_saveConfig === 'function') vrvs_saveConfig();
-            window.__diarioRecoveryAsked = window.__diarioRecoveryAsked || {};
-            delete window.__diarioRecoveryAsked[perfilId];
-            if (typeof carregarDiario === 'function') carregarDiario();
-            if (typeof renderDiario === 'function') renderDiario();
-            if (typeof renderConfig === 'function') renderConfig();
-            const countAtual = (window.diario && Array.isArray(window.diario.entradas)) ? window.diario.entradas.length : 0;
-            if (countAtual === 0 && typeof vrvs_listarDiariosNoStorage === 'function') {
-                const chaveAtual = window.vrvs_diarioKey();
-                const lista = vrvs_listarDiariosNoStorage().filter(c => c.key !== chaveAtual);
-                if (lista.length > 0) {
-                    const linhas = lista.map((c, i) => {
-                        const label = (c.key === 'vrvs_diario') ? ' — R3 (global)' : '';
-                        return (i + 1) + ') ' + c.key + label + ' (' + c.count + ' entradas)';
-                    });
-                    const msg = 'Diário deste perfil está vazio. Encontrei outras chaves:\n\n' + linhas.join('\n') + '\n\nDigite o número para recuperar ou Cancelar.';
-                    const escolha = prompt(msg);
-                    const idx = parseInt(escolha, 10);
-                    if (idx >= 1 && idx <= lista.length) {
-                        const escolhida = lista[idx - 1];
-                        const chaveEscolhida = escolhida.key;
-                        if (chaveEscolhida === 'vrvs_diario') {
-                            if (!confirm('⚠️ vrvs_diario contém dados do R3 (global). Tem certeza que deseja usar para este perfil?')) return;
-                        }
-                        const cfg2 = vrvs_getConfig();
-                        cfg2.diarioKeyMap = cfg2.diarioKeyMap || {};
-                        cfg2.diarioKeyMap[perfilId] = chaveEscolhida;
-                        window.vrvs_config = cfg2;
-                        if (typeof vrvs_saveConfig === 'function') vrvs_saveConfig();
-                        if (typeof carregarDiario === 'function') carregarDiario();
-                        if (typeof renderDiario === 'function') renderDiario();
-                        if (typeof renderConfig === 'function') renderConfig();
-                        if (typeof mostrarNotificacaoFeedback === 'function') mostrarNotificacaoFeedback('✅ Diário recuperado para este perfil.');
-                    }
-                } else if (typeof mostrarNotificacaoFeedback === 'function') {
-                    mostrarNotificacaoFeedback('✅ Diário restaurado para este perfil.');
-                }
-            } else if (typeof mostrarNotificacaoFeedback === 'function') {
-                mostrarNotificacaoFeedback('✅ Diário restaurado para este perfil.');
-            }
-        };
         
         function vrvs_isDiarioEnabled() {
             // ESCAPE HATCH: Diário sempre visível (Config será refeita depois)
