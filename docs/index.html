@@ -6190,6 +6190,9 @@
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugListDiarioKeys()">🔎 Diagnóstico Diário</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugDeepDiario()">🔬 Diagnóstico Diário (E2)</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugFindEntriesAfter('2026-02-01')">🔎 Diagnóstico pós 01/02</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('2026-02')">🔎 Raw search "2026-02"</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('/02/2026')">🔎 Raw search "/02/2026"</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_debugRawSearch('2026-03')">🔎 Raw search "2026-03"</button>
                                 </div>
                             </div>
                         </div>
@@ -24567,6 +24570,26 @@ function modoAvancado_toggle() {
           } catch(e){
             alert('Erro no diagnóstico F1: ' + (e && e.message ? e.message : e));
           }
+        };
+
+        window.vrvs_debugRawSearch = function(pattern){
+          const p = String(pattern || '2026-02');
+          const hits = [];
+          for (const k of Object.keys(localStorage)){
+            const raw = localStorage.getItem(k) || '';
+            if (!raw) continue;
+            if (raw.includes(p)){
+              const idx = raw.indexOf(p);
+              const start = Math.max(0, idx - 40);
+              const end = Math.min(raw.length, idx + 80);
+              const snippet = raw.slice(start, end).replace(/\s+/g,' ');
+              hits.push({k, idx, snippet});
+            }
+          }
+          const msg = hits.length
+            ? hits.slice(0, 15).map((h,i)=>`${i+1}) ${h.k} (idx ${h.idx}) ... ${h.snippet}`).join('\n\n')
+            : `Nenhuma key contém "${p}".`;
+          alert(msg);
         };
         
         async function diagnosticoApp() {
