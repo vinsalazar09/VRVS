@@ -6197,6 +6197,7 @@
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugDumpKey('vrvs_VIDA_diario')">⬇️ Dump vrvs_VIDA_diario</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugListQuarantine()">🧯 Listar quarentenas TEOT</button>
                                     <button class="btn btn-small btn-secondary" onclick="vrvs_debugScanEstruturado()">🧭 Scan estruturado pós 01/02</button>
+                                    <button class="btn btn-small btn-secondary" onclick="vrvs_migrarVidaAnotacoesParaDiario()">🛟 Migrar Anotações → Diário (TEOT)</button>
                                 </div>
                             </div>
                         </div>
@@ -24674,6 +24675,91 @@ function modoAvancado_toggle() {
             : `Nenhum item tipo-nota encontrado com timestamp >= ${MIN} nas keys alvo.`;
 
           alert(msg);
+        };
+
+        function vrvs_extractNotasVida(obj, MIN, path, results) {
+          if (results === undefined) results = [];
+          if (!obj) return results;
+          if (Array.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+              vrvs_extractNotasVida(obj[i], MIN, (path ? path + '[' + i + ']' : '[' + i + ']'), results);
+            }
+            return results;
+          }
+          if (typeof obj !== 'object') return results;
+          {
+            const texto = String(obj.texto || obj.conteudo || obj.anotacao || obj.resposta || obj.body || obj.note || obj.hotTopics || '').trim();
+            const tsRaw = obj.ultimaAtualizacao || obj.updatedAt || obj.createdAt || obj.data || obj.criadoEm || '';
+            const tsStr = String(tsRaw).slice(0, 10);
+            if (tsStr && tsStr.length >= 10 && tsStr >= MIN) {
+              const temTexto = texto.length > 0 || (obj.area && String(obj.area).trim()) || (obj.tema && String(obj.tema).trim());
+              if (temTexto) {
+                results.push({
+                  tsISO: tsRaw,
+                  area: obj.area || '',
+                  tema: obj.tema || '',
+                  topico: obj.topico || '',
+                  texto: texto || (obj.area || '') + ' ' + (obj.tema || ''),
+                  origemKey: 'vrvs_VIDA_anotacoes',
+                  origemPath: path || '',
+                  origemId: obj.id
+                });
+              }
+            }
+            for (const p of Object.keys(obj)) {
+              if (p === 'texto' || p === 'conteudo' || p === 'anotacao' || p === 'resposta' || p === 'body' || p === 'note') continue;
+              vrvs_extractNotasVida(obj[p], MIN, path ? path + '.' + p : p, results);
+            }
+          }
+          return results;
+        }
+
+        window.vrvs_migrarVidaAnotacoesParaDiario = function(){
+          const MIN = '2026-02-01';
+          const rawA = localStorage.getItem('vrvs_VIDA_anotacoes');
+          if(!rawA){ alert('Sem vrvs_VIDA_anotacoes'); return; }
+          let objA; try{ objA = JSON.parse(rawA); }catch(e){ alert('JSON inválido em vrvs_VIDA_anotacoes'); return; }
+          const rawD = localStorage.getItem('vrvs_VIDA_diario');
+          let objD = null;
+          try{ objD = rawD ? JSON.parse(rawD) : null; }catch(e){ objD = null; }
+          if(!objD || typeof objD !== 'object') objD = { entradas: [], schemaVersion: '1.0' };
+          if(!Array.isArray(objD.entradas)) objD.entradas = [];
+          const ts = Date.now();
+          try{
+            localStorage.setItem('vrvs_VIDA_anotacoes__before_migracao_' + ts, rawA);
+            localStorage.setItem('vrvs_VIDA_diario__before_migracao_' + ts, JSON.stringify(objD));
+          }catch(e){}
+          const candidatos = vrvs_extractNotasVida(objA, MIN, '', []);
+          const seen = new Set(objD.entradas.map(e => {
+            const d = String(e?.data||'');
+            const t = String(e?.topico||e?.tema||'');
+            const r = String(e?.resposta||'');
+            return (d+'|'+t+'|'+r).slice(0,220);
+          }));
+          let added = 0;
+          for(const n of candidatos){
+            const data = String(n.tsISO).slice(0,10);
+            const top = (n.topico || n.tema || n.area || '').toString().slice(0,120);
+            const resp = (n.texto || '').toString();
+            const fp = (data+'|'+top+'|'+resp).slice(0,220);
+            if(seen.has(fp)) continue;
+            seen.add(fp);
+            objD.entradas.push({
+              id: 'mig_' + ts + '_' + added,
+              data,
+              area: n.area || '',
+              tema: n.tema || '',
+              topico: top,
+              resposta: resp,
+              criadoEm: data,
+              ultimaAtualizacao: data,
+              origem: { key: 'vrvs_VIDA_anotacoes', path: n.origemPath || '', origemId: n.origemId || '' }
+            });
+            added++;
+          }
+          localStorage.setItem('vrvs_VIDA_diario', JSON.stringify(objD));
+          if (added > 0 && typeof carregarDiario === 'function') carregarDiario();
+          alert('Migração concluída. Adicionadas: ' + added + ' entradas ao vrvs_VIDA_diario.');
         };
         
         async function diagnosticoApp() {
