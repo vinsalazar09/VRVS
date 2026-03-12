@@ -16512,11 +16512,23 @@ function modoAvancado_toggle() {
         
         // ==================== FIM SRS ====================
         
+        function vrvs_normPerfilStr(s) {
+            return String(s || '')
+                .toLowerCase()
+                .replace(/ª/g, 'a')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
         // FALLBACK 2ª FASE TEOT: quando perfil 2ª fase TEOT está vazio, usar vrvs_diario filtrado por TEOT
         function ehPerfil2aFaseTEOT(perfil) {
             if (!perfil || perfil === 'DEFAULT') return false;
-            const p = String(perfil).toLowerCase();
-            return p.includes('teot') && (p.includes('2a') || p.includes('2ª') || p.includes('segunda fase'));
+            const nome = (typeof window.vrvs_getDisplayName === 'function') ? window.vrvs_getDisplayName(perfil) : String(perfil);
+            const p = vrvs_normPerfilStr(nome);
+            const okTeot = p.includes('teot');
+            const okFase = p.includes('fase');
+            const ok2 = p.includes('segunda') || p.includes('2a') || p.includes('2 fase');
+            return okTeot && okFase && ok2;
         }
         function ehEntradaTeot2aFase(e) {
             const a = String(e?.area||'');
@@ -24451,10 +24463,18 @@ function modoAvancado_toggle() {
                 const topTags = Object.entries(byTag).sort((a,b)=>b[1]-a[1]).slice(0,12)
                     .map(([k,v])=>`${k}: ${v}`).join('\n');
 
+                const perfilBruto = window.vrvs_perfilAtivo || '—';
+                const nomeResolvido = (typeof window.vrvs_getDisplayName === 'function') ? window.vrvs_getDisplayName(perfilBruto) : perfilBruto;
+                const ehTeot2a = (typeof ehPerfil2aFaseTEOT === 'function') ? ehPerfil2aFaseTEOT(perfilBruto) : false;
+                const fb = (typeof carregarDiarioFallbackTeot2aFase === 'function') ? carregarDiarioFallbackTeot2aFase() : null;
+                const fallbackCount = fb && fb.entradas ? fb.entradas.length : (fb === null ? 'n/a' : 0);
+                const debugE2 = `\n\n[E2+ DEBUG]\nperfilBruto: ${perfilBruto}\nnomeResolvido: ${nomeResolvido}\nehTeot2a: ${ehTeot2a}\nfallbackCount: ${fallbackCount}`;
+
                 alert(
                     `vrvs_diario total: ${total}\n\n` +
                     `TEOT/2a fase hits (area/tema/topico): ${teotHits}\n\n` +
-                    `Distribuição por tag (perfilId/perfil/dataset/profile/projeto):\n${topTags}`
+                    `Distribuição por tag (perfilId/perfil/dataset/profile/projeto):\n${topTags}` +
+                    debugE2
                 );
             }catch(err){
                 alert('Erro ao analisar vrvs_diario: ' + (err && err.message ? err.message : err));
