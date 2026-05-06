@@ -1,0 +1,35 @@
+---
+description: Continuidade entre chats, handoff ChatGPT↔Cursor, cruzar com o repo
+alwaysApply: true
+---
+
+# MODUS OPERANDI — CONTINUIDADE E CRUZAMENTO
+
+## 1. Chat novo não carrega o fio
+
+- Este chat **não** herda conversas antigas (nem de outro Cursor, nem de ChatGPT).
+- Antes de falar de estado do projeto como **fato** ou de **implementar**, **consultar o repositório** (arquivos relevantes, busca no código, histórico git quando fizer sentido) e as demais rules em `.cursor/rules/`.
+- **Não** inventar “como está o código” sem evidência no repo.
+
+## 2. Instruções vindas de fora (ex.: ChatGPT, e-mail, mensagem)
+
+- Se o usuário colar **plano, patch, diff, checklist ou ordem** produzida por outro assistente ou canal:
+  - **Cruzar** com o que existe **neste** workspace (trechos atuais, nomes de funções/keys, branches).
+  - **Avisar** com clareza se algo for redundante, desatualizado, arriscado ou **contraditório** com o código atual ou com `travas-criticas.mdc` / `metodo-preview-e-validacao.mdc`.
+- **NUNCA** aplicar mudanças “em piloto automático” só porque o texto veio pronto de outro lugar.
+
+## 3. Ordem de precedência
+
+1. **Evidência no repo** + rules deste workspace.
+2. Texto externo só depois de **validado** contra (1).
+3. Se houver conflito: **parar** e relatar o conflito; não seguir o plano externo às cegas.
+
+## 4. Encaixe com preview e travas
+
+- Planejamento vindo de fora **não dispensa** preview analítico para mudanças de código, conforme `metodo-preview-e-validacao.mdc`, nem dispensa **pedido explícito** para criar/editar arquivos, conforme `travas-criticas.mdc`.
+- Depois que o usuário **aprovou** o preview (ou deu comando explícito de implementar / aplicar / salvar), aí sim executar o combinado.
+
+## 5. Handoff quando o fio “queima”
+
+- Chat novo ou conversa poluída: o usuário pode colar um resumo em bullets; o agente deve **confirmar no código/git** antes de afirmar que o estado bate com esse resumo.
+- Registrar decisões que precisam perdurar **nestas rules** ou em documentação que o usuário pedir explicitamente — não contar com memória de chat.

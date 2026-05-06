@@ -1,0 +1,57 @@
+═══════════════════════════════════════════════════════════════
+📋 RESUMO DE SESSÃO — 2026-02-11 (Terça-feira)
+═══════════════════════════════════════════════════════════════
+
+**Horário:** ~01:50 - 02:10
+**Duração:** ~20 min
+**Objetivo:** Corrigir botões do modal do Diário ("mortos") + regras Cursor
+
+═══════════════════════════════════════════════════════════════
+✅ O QUE FOI FEITO
+═══════════════════════════════════════════════════════════════
+
+1. **Botões do modal do Diário — Corrigidos**
+   - Problema: botões Salvar/Salvar+Adicionar/Apagar pareciam "mortos" (desativados)
+   - Causa: .btn-modal-* estava antes de .btn no arquivo; .btn genérico (hover, uppercase, shadow) sobrescrevia
+   - Solução: bloco CSS FIX FINAL escopado em #modalNovaDiario, inserido DEPOIS de .btn
+   - Ajuste de alphas (+vida): âmbar/turquesa 0.28→0.32, 0.14→0.16; border 0.38→0.42; shadow 0.18→0.22
+   - Vermelho: 0.26→0.30, 0.12→0.14; border 0.36→0.40; shadow 0.16→0.20
+
+2. **Regras Cursor (.cursor/rules/) — Criadas**
+   - travas-criticas.mdc: não criar/modificar sem pedido, PREVIEW=texto, criar doc≠implementar
+   - push-checklist-obrigatorio.mdc: checklist obrigatório + PUSH após commit
+   - metodo-preview-e-validacao.mdc: preview analítico sempre, confiança≥95%, não reduzir ao absurdo
+   - mobile-first-iphone.mdc: plataforma no iPhone primeiro
+
+3. **Regra push obrigatório**
+   - Checklist sem push feito = inútil
+   - Sempre fazer push após commit (quando aplicável)
+
+4. **Limpeza de commits**
+   - .DS_Store removido do tracking (gitignore já tinha)
+   - docs/DIAGNOSTICO_MODAL_BOTOES.txt adicionado ao gitignore
+
+═══════════════════════════════════════════════════════════════
+📁 ARQUIVOS MODIFICADOS/CRIADOS
+═══════════════════════════════════════════════════════════════
+
+- docs/index.html (bloco CSS #modalNovaDiario .btn.btn-modal-*)
+- .cursor/rules/travas-criticas.mdc (novo)
+- .cursor/rules/push-checklist-obrigatorio.mdc (novo)
+- .cursor/rules/metodo-preview-e-validacao.mdc (novo)
+- .cursor/rules/mobile-first-iphone.mdc (novo)
+- .gitignore (DIAGNOSTICO_MODAL_BOTOES.txt, .DS_Store removido do tracking)
+
+═══════════════════════════════════════════════════════════════
+✅ PROBLEMAS RESOLVIDOS
+═══════════════════════════════════════════════════════════════
+
+- Botões do modal do Diário com presença visual (Liquid Glass CTA)
+- Regras do projeto centralizadas em .cursor/rules/ (carregadas automaticamente)
+
+═══════════════════════════════════════════════════════════════
+📌 OBSERVAÇÕES
+═══════════════════════════════════════════════════════════════
+
+- Push via terminal falhou (Device not configured); usuário fez via GitHub Desktop
+- Validação no iPhone: usuário confirmou que funcionou

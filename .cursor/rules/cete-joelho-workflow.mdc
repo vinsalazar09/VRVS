@@ -1,0 +1,65 @@
+---
+description: Workflow CETE Joelho — extração de capítulos, organização de material e contexto do projeto de estudo
+alwaysApply: true
+---
+
+# CETE JOELHO — CONTEXTO E WORKFLOW
+
+## O que é
+
+Projeto de estudo para especialização em joelho (CETE — Centro Especializado de Trauma do Esporte). O material é produzido a partir de dois livros-base, organizados por tema em PDFs recortados, que depois são enviados ao ChatGPT ou Claude para produção de HTML didático.
+
+## Livros-fonte (NUNCA mover, renomear ou modificar)
+
+- `~/Desktop/CETE mac/Insall & Scott - Cirurgia do Joelho.pdf` (Insall)
+- `~/Desktop/CETE mac/CIRURGIA DO JOELHO.pdf` (SBCJ)
+
+## Pasta de trabalho
+
+`~/Desktop/CETE mac/Capitulos/` — subpastas por tema:
+- `Base_Inicial/` — anatomia, biomecânica, exame clínico, imagem (base geral)
+- `LCA/` — ligamento cruzado anterior
+- `Menisco/` — lesões meniscais
+- `Mecanismo_Extensor/` — mecanismo extensor
+- *(novas pastas seguem o mesmo padrão)*
+
+## Modelo padrão (HTML)
+
+`~/Desktop/CETE mac/MODELO_PADRAO_CETE_JOELHO.md` — instrução definitiva para produção de HTML didático. Contém paleta, fontes, CSS, JS, regras de conteúdo e linguagem. O HTML de referência é `~/Desktop/CETE mac/lca_cete_final.html`.
+
+## REGRAS DE EXTRAÇÃO DE CAPÍTULOS
+
+### Como extrair
+1. Usar Python com `PyMuPDF` (fitz)
+2. **Varrer o sumário completo** dos dois PDFs (primeiras 30-50 páginas de cada) E buscar por palavras-chave no texto do PDF inteiro
+3. Palavras-chave: usar TODAS as variações relevantes do tema (ex: para patela → "patela", "patelar", "patelofemoral", "MPFL", "subluxação", "luxação", "realinhamento", "tilt", "patella", "patellofemoral")
+4. **Fechar os intervalos de página EXATOS** antes de mostrar ao usuário — não devolver trabalho incompleto
+5. Apresentar ao usuário uma lista LIMPA e FECHADA: nome do capítulo + páginas de início e fim
+6. **SEMPRE** aguardar confirmação explícita antes de salvar qualquer arquivo
+7. Após confirmação, extrair TUDO de uma vez e reportar o que foi salvo
+
+### O que o Composer NUNCA deve fazer na busca
+- **NUNCA** devolver resultado parcial pedindo ao usuário que decida o que buscar
+- **NUNCA** dizer "não achei" sem ter varrido sumário + texto completo com múltiplas palavras-chave
+- **NUNCA** pedir ao usuário páginas — o trabalho de localizar é do Composer
+- Se o livro usa nomenclatura diferente (ex: "patelofemoral" em vez de "instabilidade patelar"), o Composer deve resolver isso sozinho buscando variações
+
+### Nomeação
+- Prefixo `INSALL_` para Insall & Scott
+- Prefixo `SBCJ_` para Cirurgia do Joelho (SBCJ)
+- Nome descritivo do conteúdo: `INSALL_InstabilidadePatelar_Caps41-48.pdf`
+- Salvar na subpasta temática dentro de `Capitulos/`
+
+### O que NUNCA fazer
+- **NUNCA** criar arquivos `.md` com texto extraído dos PDFs (OCR ruim, especialmente SBCJ)
+- **NUNCA** criar `LEIAME.txt` ou README em pastas
+- **NUNCA** abreviar ou resumir conteúdo — o recorte é do PDF original, intacto
+- **NUNCA** extrair sem mostrar o que encontrou primeiro
+- Só PDF recortado. Ponto.
+
+## REGRAS DE ORGANIZAÇÃO
+
+- Uma pasta por tema dentro de `Capitulos/`
+- Não misturar temas na mesma pasta
+- Não criar arquivos soltos na raiz de `CETE mac/` (scripts temporários: usar e apagar)
+- Se precisar criar pasta nova, seguir padrão: `Capitulos/Nome_Do_Tema/`

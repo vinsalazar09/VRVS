@@ -27,6 +27,7 @@ build/
 # Arquivos temporários e de diagnóstico na raiz
 *.md
 !README.md
+!material_estudo/README.md
 !docs/README.md
 !docs/ARQUITETURA_DADOS.md
 !docs/DOCUMENTACAO_COMPLETA.md
@@ -40,6 +41,11 @@ DIARIO/CURSOR/*.txt
 !DIARIO/CURSOR/00_LEIA_PRIMEIRO_SEMPRE.txt
 !DIARIO/CURSOR/BASE_CONHECIMENTO_PLATAFORMA.md
 !DIARIO/CURSOR/CADERNO_ERROS_ACERTOS.txt
+!DIARIO/CURSOR/README.md
+# Histórico de sessões (arquivado; permanece no git)
+!DIARIO/CURSOR/_ARQUIVADOS/
+!DIARIO/CURSOR/_ARQUIVADOS/*.md
+!DIARIO/CURSOR/_ARQUIVADOS/*.txt
 DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.md
 DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.sh
 DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.txt
@@ -48,6 +54,8 @@ DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.txt
 *.py
 *.html
 *.js
+!scripts/*.py
+!scripts/*.js
 !docs/index.html
 !docs/sw.js
 !docs/manifest.json
@@ -74,6 +82,4 @@ docs/PLANO_SEGURANCA_IMPLEMENTACAO.md
 docs/PROMPT_DIARIO_APRENDIZADOS_OPUS.md
 docs/RESUMO_IMPLEMENTACAO_20251211.md
 docs/SOLUCAO_OPUS_APLICADA.md
-docs/chatgpt/
-docs/opus/
 docs/DIAGNOSTICO_MODAL_BOTOES.txt

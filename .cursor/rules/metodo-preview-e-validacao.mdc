@@ -46,3 +46,4 @@ alwaysApply: true
 - "criar documento" ≠ "implementar"
 - Verificar código atual antes de afirmar status
 - Confiança < 95% → PARAR no preview e trazer relatório antes de executar
+- Chats novos e planos colados de fora (ex.: ChatGPT): cruzar com o repo e rules — ver `modus-operandi-continuidade.mdc`

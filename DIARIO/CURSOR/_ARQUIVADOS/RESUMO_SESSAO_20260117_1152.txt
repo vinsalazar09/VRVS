@@ -1,0 +1,217 @@
+═══════════════════════════════════════════════════════════════
+📅 RESUMO DE SESSÃO — CURSOR AI — VRVS
+═══════════════════════════════════════════════════════════════
+
+**Data:** 17/01/2026  
+**Horário:** 11:52  
+**Duração:** ~2 horas  
+**Status:** ✅ SESSÃO CONCLUÍDA
+
+═══════════════════════════════════════════════════════════════
+🎯 OBJETIVO DA SESSÃO
+═══════════════════════════════════════════════════════════════
+
+1. Executar ROTA A (reversão de PATCH 1 e PATCH 3, manter PATCH 2)
+2. Aplicar fix parcial de quebra de linha no Diário (R-A2)
+3. Preparar documentação completa para novo ChatGPT
+4. Garantir alinhamento total para próximo chat
+
+═══════════════════════════════════════════════════════════════
+✅ O QUE FOI FEITO
+═══════════════════════════════════════════════════════════════
+
+### PATCH R-A1 — Reversão Cirúrgica
+
+1. **Removidos helpers de preservação de estado:**
+   - Função `vrvsCaptureRenderState()` (linhas ~15169-15201)
+   - Função `vrvsRestoreRenderState()` (linhas ~15204-15264)
+   - Variável global `window.__vrvsRenderAnchorSel` (linha ~15166)
+
+2. **Removidas chamadas capture/restore em 4 funções render:**
+   - `renderDiario()` (linhas ~12100-12101, ~12216-12219)
+   - `renderCadernoV2()` (linhas ~14944-14945, ~15101-15104)
+   - `renderTarefas()` (linhas ~5639-5640, ~5776-5779)
+   - `renderPendencias()` (linhas ~5113-5114, ~5205-5208)
+
+3. **Ajustadas assinaturas de funções auxiliares:**
+   - `renderDiarioPorData()`: removido parâmetro `renderState`
+   - `renderDiarioPorTema()`: removido parâmetro `renderState`
+   - Chamadas ajustadas para não passar `renderState`
+
+4. **Removida setagem de âncora:**
+   - `salvarEntradaDiario()`: removido bloco que setava `window.__vrvsRenderAnchorSel` (linhas ~11933-11937)
+
+5. **Removidos blocos "Ver respostas" do treino:**
+   - Modo avaliação (linhas ~13920-13941)
+   - Modo normal (linhas ~13992-13913)
+
+6. **Preservado PATCH 2:**
+   - Botão "Apagar este card" (linha ~3226) — contraste correto mantido
+
+7. **Preservado snapshot:**
+   - `window.treinoLivreFimDados` — mantido para uso futuro
+
+### PATCH R-A2 — Fix Quebra de Linha (PARCIAL)
+
+1. **Adicionado CSS na resposta modo 1:**
+   - Linha ~12368: Adicionado `white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;`
+   - Corrige exibição quando resposta é mostrada diretamente
+
+**PROBLEMA IDENTIFICADO:** Fix parcial — ainda faltam 2 locais:
+- Tópico no Diário (linha ~12357)
+- Resposta modo 2 ao clicar "Ver Resposta" (linha ~12380)
+
+### Documentação Criada
+
+1. **`RELATORIO_EXECUCAO_ROTA_A_20260117.md`:**
+   - Relatório completo do que foi executado
+   - Linhas exatas modificadas
+   - Motivos de cada mudança
+   - Feedback recebido
+   - Análise do problema identificado
+
+2. **`PREVIEW_ANALITICO_ROTA_A2B_QUEBRA_LINHA_COMPLETA_20260117.md`:**
+   - Preview completo do próximo patch
+   - Diagnóstico dos 2 locais faltantes
+   - Plano de correção completo
+   - Confiança 98%
+
+3. **`PREVIEW_ANALITICO_ROTA_A_REVERSAO_20260117.md`:**
+   - Preview analítico da ROTA A (já executado)
+   - Mantido para referência histórica
+
+### Atualizações de Protocolos
+
+1. **`00_LEIA_PRIMEIRO_SEMPRE.txt`:**
+   - Adicionada seção "PROTOCOLOS OBRIGATÓRIOS DE EXECUÇÃO"
+   - Confiança ≥95% obrigatória
+   - Cobrar padrão do Cursor sempre
+   - Anti-regressão obrigatória
+   - Micro-patches isolados
+
+═══════════════════════════════════════════════════════════════
+📁 ARQUIVOS MODIFICADOS/CRIADOS
+═══════════════════════════════════════════════════════════════
+
+**Modificados:**
+- `docs/index.html` (-192 linhas, +6 linhas)
+- `docs/sw.js` (CACHE_NAME atualizado 2x)
+
+**Criados:**
+- `DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/RELATORIO_EXECUCAO_ROTA_A_20260117.md`
+- `DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/PREVIEW_ANALITICO_ROTA_A2B_QUEBRA_LINHA_COMPLETA_20260117.md`
+- `DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/PREVIEW_ANALITICO_ROTA_A_REVERSAO_20260117.md`
+
+**Atualizados:**
+- `DIARIO/CURSOR/00_LEIA_PRIMEIRO_SEMPRE.txt` (protocolos obrigatórios)
+
+═══════════════════════════════════════════════════════════════
+✅ PROBLEMAS RESOLVIDOS
+═══════════════════════════════════════════════════════════════
+
+1. ✅ **PATCH 3 — "Ver respostas" criando nova aba:**
+   - Blocos `<details>` removidos completamente
+   - Sessão de treino volta ao fluxo anterior (sem nova aba)
+
+2. ✅ **PATCH 1 — Preservação de estado não funcionando:**
+   - Helpers removidos completamente
+   - Sistema de âncora removido
+   - Estado volta ao comportamento anterior (aceitável por enquanto)
+
+3. ✅ **PATCH 2 — Contraste botão preservado:**
+   - Botão "Apagar este card" mantido com contraste correto
+
+4. ✅ **Fix parcial quebra de linha:**
+   - Resposta modo 1 corrigida (linha ~12368)
+
+═══════════════════════════════════════════════════════════════
+⚠️ PROBLEMAS IDENTIFICADOS MAS NÃO RESOLVIDOS
+═══════════════════════════════════════════════════════════════
+
+1. ❌ **Quebra de linha incompleta no Diário:**
+   - **Tópico (linha ~12357):** Ainda sem CSS de quebra de linha
+   - **Resposta modo 2 (linha ~12380):** Ainda sem CSS de quebra de linha
+   - **Status:** Preview analítico completo criado (R-A2-B)
+   - **Confiança:** 98% — pronto para execução
+
+═══════════════════════════════════════════════════════════════
+📋 DECISÕES TOMADAS
+═══════════════════════════════════════════════════════════════
+
+1. **Estratégia ROTA A:** Reverter primeiro, depois fix forward baixo risco
+2. **PATCH 2 preservado:** Contraste botão funcionando — manter intacto
+3. **Snapshot preservado:** `window.treinoLivreFimDados` mantido para futuro
+4. **Fix parcial:** Aplicar correção mínima primeiro, depois completar
+5. **Documentação completa:** Criar relatórios detalhados para novo ChatGPT
+
+═══════════════════════════════════════════════════════════════
+📊 PRÓXIMOS PASSOS
+═══════════════════════════════════════════════════════════════
+
+### Imediato (próximo chat):
+
+1. **PATCH R-A2-B — Fix completo quebra de linha:**
+   - Adicionar CSS no tópico (linha ~12357)
+   - Adicionar CSS na resposta modo 2 (linha ~12380)
+   - Confiança: 98% — preview completo pronto
+
+### Backlog (futuro):
+
+1. **Reintroduzir "Ver respostas" no treino:**
+   - Patch dedicado com estrutura HTML correta
+   - Não criar nova aba — aparecer no final da tela
+   - Confiança estimada: 85% → precisa diagnóstico adicional
+
+2. **Resolver preservação de estado/âncora do Diário:**
+   - Patch dedicado, foco apenas no Diário
+   - Diagnóstico rigoroso (timing/seletores/fluxo)
+   - Confiança estimada: 75% → precisa debug antes
+
+═══════════════════════════════════════════════════════════════
+💡 APRENDIZADOS E LIÇÕES
+═══════════════════════════════════════════════════════════════
+
+1. **Micro-patches isolados funcionam:**
+   - Reversão cirúrgica permitiu manter PATCH 2 intacto
+   - Fix parcial identificou problema restante claramente
+
+2. **Documentação completa é essencial:**
+   - Relatórios detalhados facilitam handoff entre chats
+   - Preview analítico aumenta confiança antes de executar
+
+3. **Protocolos obrigatórios funcionam:**
+   - Confiança ≥95% evita execuções arriscadas
+   - Anti-regressão (grep conflitos) previne problemas
+
+4. **Validação iPhone é crítica:**
+   - Problema de quebra de linha só apareceu após validação visual
+   - Fix parcial identificou locais faltantes claramente
+
+═══════════════════════════════════════════════════════════════
+🔧 MÉTODO UTILIZADO
+═══════════════════════════════════════════════════════════════
+
+**Preview analítico:** ✅ Sim (confiança 95% para R-A1, 98% para R-A2-B)  
+**Consulta paralela ChatGPT:** ✅ Sim (decisão estratégica ROTA A)  
+**Inspeção objetiva:** ✅ Sim (grep de dependências, verificação de preservação)  
+**Validação iPhone:** ⏳ Pendente (aguardando usuário)
+
+**Tentativas frustradas:** Nenhuma — execução direta conforme preview
+
+**Desfecho final:** ✅ Sucesso parcial — R-A1 completo, R-A2 parcial (próximo patch identificado)
+
+═══════════════════════════════════════════════════════════════
+📝 OBSERVAÇÕES IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+1. **Commit realizado:** `ae4f644` — pronto para push
+2. **CACHE_NAME atualizado:** `vrvs-v5.3.99-rotaA-revert-patch1-patch3-fix-quebra-linha`
+3. **Conflitos Git:** ✅ 0 conflitos verificados
+4. **Dependências:** ✅ Nenhuma dependência oculta encontrada
+
+═══════════════════════════════════════════════════════════════
+
+**CHAT ENCERRADO:** 17/01/2026 (Quinta-feira) 11:52
+
+═══════════════════════════════════════════════════════════════
+

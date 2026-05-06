@@ -34,3 +34,7 @@ Quando o usuário disser: "PREVIEW", "NÃO EXECUTAR", "apenas gere", "só mostre
 
 - **NÃO** assumir que pode criar/modificar
 - Perguntar: "Quer que eu crie/salve isso em algum arquivo?" ou "Quer que eu aplique essa alteração?"
+
+## 6. Plano ou patch de outro canal
+
+- Se o usuário trouxer texto pronto de **outro** assistente (ex.: ChatGPT), **não** executar às cegas: seguir `modus-operandi-continuidade.mdc` (cruzar com código e estas rules antes de alterar).
