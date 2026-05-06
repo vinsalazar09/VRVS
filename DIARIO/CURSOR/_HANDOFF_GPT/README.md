@@ -1,33 +1,13 @@
-# 📦 HANDOFF GPT — Documentos para ChatGPT
+# Handoff ChatGPT — só texto (código na pasta `docs/`)
 
-**Esta pasta contém APENAS os documentos atuais necessários para iniciar um novo chat no ChatGPT.**
+Anexe na ordem que fizer sentido para o chat:
 
----
+1. `00_LEIA_PRIMEIRO_SEMPRE.txt` — conduta e workflow  
+2. `BASE_CONHECIMENTO_PLATAFORMA.md` — arquitetura  
+3. `CADERNO_ERROS_ACERTOS.txt` — histórico técnico  
+4. `HANDOFF_CHAT_GPT_*.md` ou `RELATORIO_BUGS_ATUAL.md` — estado recente, se existir  
+5. `PROMPT_RESOLVER_CONFUSAO_CHATGPT.md` — se precisar alinhar o modelo  
 
-## 📋 ARQUIVOS PARA ANEXAR (ORDEM OBRIGATÓRIA)
+**Código da PWA atual:** use sempre os arquivos do repositório em **`docs/index.html`** e **`docs/sw.js`** (não há mais cópia HTML antiga nesta pasta).
 
-1. **`00_LEIA_PRIMEIRO_SEMPRE.txt`** - Código de conduta e workflow
-2. **`BASE_CONHECIMENTO_PLATAFORMA.md`** - Arquitetura e estrutura técnica
-3. **`CADERNO_ERROS_ACERTOS.txt`** - Histórico de erros e acertos
-4. **`HANDOFF_CHAT_GPT_YYYYMMDD.md`** - Estado atual e contexto recente
-
----
-
-## 🔄 ATUALIZAÇÃO AUTOMÁTICA
-
-**Quando você disser "vou abrir chat novo GPT":**
-- ✅ Cursor atualiza automaticamente esta pasta
-- ✅ Copia documentos estruturais mais recentes
-- ✅ Atualiza HANDOFF com estado atual
-- ✅ Lista arquivos prontos para anexar
-
----
-
-## 📝 PROMPT INICIAL
-
-Após anexar os documentos, use o prompt do arquivo `COMO_ALINHAR_CHAT_GPT.md` em `_TEMPORARIOS_HANDOFF/`
-
----
-
-**Última atualização:** 2025-12-30
-
+Os três primeiros arquivos podem estar desatualizados em relação à pasta pai `DIARIO/CURSOR/`; se quiser uma única fonte de verdade, copie de lá antes de anexar.

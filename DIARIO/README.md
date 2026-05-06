@@ -1,31 +1,21 @@
-# 📖 Diário da Plataforma de Revisão TEOT (VRVS)
+# DIARIO — trabalho e contexto VRVS
 
-Este diretório contém o diário de trabalho e contexto da plataforma de revisão.
+## Estrutura
 
-## 📁 Estrutura
+| Caminho | Função |
+|---------|--------|
+| `01_ESTADO_ATUAL.txt` | Retrato do estado da plataforma (atualizar ao fim das sessões importantes) |
+| `README.md` | Este mapa |
+| **`REGISTROS/`** | Notas datadas (planos, pendências, freezes) |
+| **`CURSOR/`** | Âncoras do Cursor + arquivo histórico + handoffs + backups HTML |
 
-```
-DIARIO/
-├── README.md                    # Este arquivo
-├── 01_ESTADO_ATUAL.txt         # Estado atual da plataforma (sempre atualizado)
-└── CURSOR/                     # Pasta específica do Cursor AI
-    ├── README.md               # Regras da pasta
-    ├── 00_LEIA_PRIMEIRO_SEMPRE.txt  # Código de conduta (LEMA PRIMEIRO)
-    ├── RESUMO_SESSAO_*.txt     # Resumos de cada sessão
-    └── CADERNO_ERROS_ACERTOS.txt    # Erros e acertos (histórico)
-```
+## CURSOR/ (detalhe)
 
-## 🎯 Objetivo
+- Ficheiros fixos no topo: `00_LEIA_PRIMEIRO_SEMPRE.txt`, `BASE_CONHECIMENTO_PLATAFORMA.md`, `CADERNO_ERROS_ACERTOS.txt`, `README.md`
+- **`_ARQUIVADOS/`** — sessões, relatórios e análises antigas (nada apagado)
+- **`_HANDOFF_GPT/`**, **`_HANDOFF_OPUS/`** — pacotes para colar noutros modelos (sem cópia obsoleta da PWA)
+- **`BACKUPS/`** — snapshots HTML antigos (dezembro 2024); só referência
 
-Manter contexto estruturado e organizado para facilitar continuidade entre sessões de trabalho.
+## PWA publicada
 
-## 📋 Regras
-
-- **`01_ESTADO_ATUAL.txt`**: Sempre atualizado ao final de cada sessão
-- **`CURSOR/`**: Pasta específica do Cursor AI - apenas 4 tipos de arquivos permitidos
-- **Sempre adicionar ao final**, nunca sobrescrever completamente
-
-## 🔄 Fluxo
-
-1. Início de chat → Ler protocolo → Trabalhar → Encerramento → Atualizar documentos
-
+Código em **`../docs/`** (`index.html`, `sw.js`, assets).

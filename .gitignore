@@ -28,6 +28,9 @@ build/
 *.md
 !README.md
 !material_estudo/README.md
+!DIARIO/REGISTROS/
+!DIARIO/REGISTROS/*.md
+!DIARIO/REGISTROS/*.txt
 !docs/README.md
 !docs/ARQUITETURA_DADOS.md
 !docs/DOCUMENTACAO_COMPLETA.md
