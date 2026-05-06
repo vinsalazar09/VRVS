@@ -60,6 +60,7 @@ DIARIO/CURSOR/_TEMPORARIOS_HANDOFF/*.txt
 !scripts/*.py
 !scripts/*.js
 !docs/index.html
+!docs/MANUAL_VRVS_v3.html
 !docs/sw.js
 !docs/manifest.json
 !docs/logo.*

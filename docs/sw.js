@@ -1,11 +1,12 @@
 // Service Worker para VRVS - Funcionamento Offline
 // ATUALIZAR ESTA VERSÃO SEMPRE QUE FIZER MUDANÇAS PARA FORÇAR ATUALIZAÇÃO
-const CACHE_NAME = "vrvs-v5.3.271-debug-a1-inspect-dump-anotacoes-20260312-1700";
+const CACHE_NAME = "vrvs-v5.3.272-manual-html-cached-20260507";
 
 // Arquivos essenciais para cache
 const FILES_TO_CACHE = [
     './',
     './index.html',
+    './MANUAL_VRVS_v3.html',
     './recover.html',
     './manifest.json',
     './logo.png',

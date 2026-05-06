@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>📚 Manual VRVS - Guia Completo</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a1a1f;
+            --bg-card: rgba(10, 26, 31, 0.95);
+            --turquesa-main: #00CED1;
+            --turquesa-light: #00FFE0;
+            --cobre-main: #FF7F50;
+            --cobre-light: #FFA366;
+            --text-white: #FFFFFF;
+            --text-light: rgba(255, 255, 255, 0.85);
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #dc3545;
+        }
+        
+        body {
+            font-family: 'Poppins', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0a1a1f 0%, #1a2a35 50%, #0f3460 100%);
+            color: var(--text-light);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* HEADER */
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(0, 206, 209, 0.15) 0%, rgba(255, 127, 80, 0.15) 100%);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(0, 206, 209, 0.3);
+        }
+        
+        .header-emoji { font-size: 80px; margin-bottom: 20px; display: block; }
+        .header h1 { 
+            font-size: 42px; 
+            font-weight: 800; 
+            color: var(--turquesa-light);
+            margin-bottom: 10px;
+        }
+        .header .subtitle { 
+            font-size: 20px; 
+            color: var(--cobre-light);
+            font-weight: 500;
+        }
+        .header .version {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+        
+        /* NAVEGAÇÃO */
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 206, 209, 0.2);
+        }
+        
+        .nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: rgba(0, 206, 209, 0.1);
+        }
+        
+        .nav a:hover {
+            background: rgba(0, 206, 209, 0.3);
+            color: var(--text-white);
+        }
+        
+        /* SEÇÕES */
+        .section {
+            margin-bottom: 50px;
+            scroll-margin-top: 20px;
+        }
+        
+        .section-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--turquesa-light);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 206, 209, 0.3);
+        }
+        
+        .section-title .emoji { font-size: 36px; }
+        
+        h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--cobre-light);
+            margin: 30px 0 15px;
+        }
+        
+        h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-white);
+            margin: 20px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: var(--text-light);
+        }
+        
+        strong { color: var(--text-white); }
+        
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 206, 209, 0.2);
+            border-left: 4px solid var(--turquesa-main);
+        }
+        
+        .card.cobre { border-left-color: var(--cobre-main); }
+        .card.success { border-left-color: var(--success); }
+        .card.warning { border-left-color: var(--warning); }
+        .card.danger { border-left-color: var(--danger); }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--turquesa-light);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card.cobre .card-title { color: var(--cobre-light); }
+        .card.success .card-title { color: var(--success); }
+        .card.warning .card-title { color: var(--warning); }
+        .card.danger .card-title { color: var(--danger); }
+        
+        /* LISTAS */
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+            color: var(--text-light);
+            font-size: 15px;
+        }
+        
+        li strong { color: var(--turquesa-light); }
+        
+        /* STEPS */
+        .step {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 206, 209, 0.2);
+            position: relative;
+            padding-left: 80px;
+        }
+        
+        .step-number {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--turquesa-main), var(--cobre-main));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+        }
+        
+        .step h4 {
+            margin-top: 0;
+            color: var(--turquesa-light);
+        }
+        
+        /* HIGHLIGHT BOX */
+        .highlight {
+            background: linear-gradient(135deg, rgba(0, 206, 209, 0.15) 0%, rgba(0, 206, 209, 0.05) 100%);
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-left: 4px solid var(--turquesa-main);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .highlight.cobre {
+            background: linear-gradient(135deg, rgba(255, 127, 80, 0.15) 0%, rgba(255, 127, 80, 0.05) 100%);
+            border-color: rgba(255, 127, 80, 0.3);
+            border-left-color: var(--cobre-main);
+        }
+        
+        .highlight.success {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%);
+            border-color: rgba(34, 197, 94, 0.3);
+            border-left-color: var(--success);
+        }
+        
+        .highlight-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--turquesa-light);
+            margin-bottom: 15px;
+        }
+        
+        .highlight.cobre .highlight-title { color: var(--cobre-light); }
+        .highlight.success .highlight-title { color: var(--success); }
+        
+        /* URL BOX */
+        .url-box {
+            background: var(--bg-card);
+            border: 2px solid var(--turquesa-main);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .url-box code {
+            display: inline-block;
+            background: rgba(0, 206, 209, 0.2);
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--turquesa-light);
+            margin-top: 10px;
+            word-break: break-all;
+            border: 1px solid rgba(0, 206, 209, 0.4);
+        }
+        
+        /* TABELA DE ABAS */
+        .aba-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .aba-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(0, 206, 209, 0.2);
+        }
+        
+        .aba-item .aba-name {
+            font-weight: 700;
+            color: var(--turquesa-light);
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .aba-item .aba-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        
+        /* BOTÕES VRVS 3P */
+        .btn-demo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        
+        .btn-esqueci { background: var(--danger); color: white; }
+        .btn-lembrei { background: var(--warning); color: white; }
+        .btn-facil { background: var(--success); color: white; }
+        .btn-neutro { 
+            background: rgba(0, 206, 209, 0.2); 
+            color: var(--turquesa-light);
+            border: 1px solid rgba(0, 206, 209, 0.4);
+        }
+        
+        /* FLUXO VISUAL */
+        .flow-box {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 2px solid rgba(0, 206, 209, 0.3);
+            text-align: center;
+        }
+        
+        .flow-box h4 {
+            color: var(--turquesa-light);
+            margin-bottom: 20px;
+        }
+        
+        .flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .flow-step {
+            background: rgba(0, 206, 209, 0.15);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            font-size: 14px;
+            color: var(--text-white);
+        }
+        
+        .flow-arrow {
+            color: var(--cobre-main);
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* TABELAS */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .data-table th {
+            background: rgba(0, 206, 209, 0.2);
+            color: var(--turquesa-light);
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(0, 206, 209, 0.3);
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 206, 209, 0.1);
+            color: var(--text-light);
+        }
+        
+        .data-table tr:hover {
+            background: rgba(0, 206, 209, 0.05);
+        }
+        
+        .data-table .highlight-row {
+            background: rgba(255, 127, 80, 0.1);
+        }
+        
+        /* BARRA DE PROGRESSO DEMO */
+        .progress-demo {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-demo .fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-demo .fill.baixa { background: linear-gradient(90deg, #dc3545, #ff6b6b); width: 60%; }
+        .progress-demo .fill.media { background: linear-gradient(90deg, #f59e0b, #fbbf24); width: 75%; }
+        .progress-demo .fill.alta { background: linear-gradient(90deg, #22c55e, #4ade80); width: 90%; }
+        
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 50px;
+            border-top: 1px solid rgba(0, 206, 209, 0.2);
+        }
+        
+        .footer-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--turquesa-light);
+            margin-bottom: 10px;
+        }
+        
+        .footer p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .header { padding: 40px 20px; }
+            .header h1 { font-size: 32px; }
+            .section-title { font-size: 26px; }
+            .step { padding-left: 70px; }
+            .step-number { width: 40px; height: 40px; font-size: 18px; left: 15px; }
+            .flow-steps { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+            .data-table { font-size: 14px; }
+            .data-table th, .data-table td { padding: 10px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- HEADER -->
+        <div class="header">
+            <span class="header-emoji">🧠</span>
+            <h1>Manual VRVS</h1>
+            <div class="subtitle">Guia Completo para Usar a Plataforma</div>
+            <div class="version">Plataforma VRVS Circuit Tech • build alinhada a maio/2026 (PWA + cache v5.3.271+) • Manual v3.1</div>
+        </div>
+        
+        <!-- NAVEGAÇÃO -->
+        <nav class="nav">
+            <a href="#bemvindo">👋 Início</a>
+            <a href="#instalacao">📲 Instalação</a>
+            <a href="#abas">📑 Abas</a>
+            <a href="#primeiro-uso">🚀 Primeiro Uso</a>
+            <a href="#perfis-teot">👤 Perfis &amp; TEOT</a>
+            <a href="#diario">📔 Diário</a>
+            <a href="#vrvs3p">🔄 VRVS 3P</a>
+            <a href="#algoritmo">🧮 Algoritmo</a>
+            <a href="#painel">📊 Painel Saúde</a>
+            <a href="#caderno">📝 Caderno</a>
+            <a href="#fluxo">🎯 Fluxo Diário</a>
+            <a href="#suporte-dados">🔧 Dados (avançado)</a>
+            <a href="#backup">💾 Backup</a>
+        </nav>
+        
+        <!-- BEM-VINDO -->
+        <section id="bemvindo" class="section">
+            <h2 class="section-title"><span class="emoji">👋</span> Bem-vindo à VRVS!</h2>
+            
+            <p>Este manual apresenta tudo o que é necessário para usar a plataforma do zero. É simples!</p>
+            <p style="font-size: 14px; color: var(--text-muted);">Arquivo deste manual: <strong>MANUAL_VRVS_v3.html</strong> (publicado junto do site). No GitHub Pages: <code>…/MANUAL_VRVS_v3.html</code>. Fica em cache com a PWA para consulta offline.</p>
+            
+            <div class="highlight">
+                <div class="highlight-title">🎯 O que a VRVS faz?</div>
+                <ul>
+                    <li><strong>Organiza os temas</strong> de estudo em um só lugar</li>
+                    <li><strong>Calcula automaticamente</strong> quando cada tema deve ser revisado</li>
+                    <li><strong>Registra aprendizados</strong> e transforma em cards de revisão</li>
+                    <li><strong>Mostra o progresso</strong> com gráficos e estatísticas</li>
+                </ul>
+                <p style="margin-top: 15px; margin-bottom: 0;"><strong>Basta registrar quando estudou.</strong> A plataforma cuida do resto.</p>
+            </div>
+        </section>
+        
+        <!-- INSTALAÇÃO -->
+        <section id="instalacao" class="section">
+            <h2 class="section-title"><span class="emoji">📲</span> Instalando no iPhone</h2>
+            
+            <div class="url-box">
+                <p style="color: var(--text-light); margin-bottom: 10px;">🔗 Link de Acesso:</p>
+                <code>https://vinsalazar09.github.io/VRVS/</code>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Abrir o Safari</h4>
+                <p>Usar o <strong>Safari</strong> (navegador padrão do iPhone). Não funciona corretamente no Chrome.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Acessar o link</h4>
+                <p>Colar o link acima na barra de endereço e aguardar carregar.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Tocar no botão Compartilhar</h4>
+                <p>Na parte inferior do Safari, tocar no ícone de <strong>caixa com seta para cima</strong>.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h4>Adicionar à Tela de Início</h4>
+                <p>Rolar as opções e tocar em <strong>"Adicionar à Tela de Início"</strong>. Confirmar tocando em "Adicionar".</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <h4>Pronto!</h4>
+                <p>O app VRVS aparecerá na tela inicial. <strong>Sempre abrir por esse ícone</strong>, não pelo Safari.</p>
+            </div>
+            
+            <div class="highlight success">
+                <div class="highlight-title">✅ Vantagens de instalar como app</div>
+                <ul>
+                    <li>Funciona <strong>offline</strong> (sem internet)</li>
+                    <li>Abre mais <strong>rápido</strong></li>
+                    <li>Fica sempre à mão na tela inicial</li>
+                    <li>Os dados ficam salvos no celular</li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- ABAS -->
+        <section id="abas" class="section">
+            <h2 class="section-title"><span class="emoji">📑</span> Conhecendo as Abas</h2>
+            
+            <p>A plataforma tem várias abas na parte superior. Cada uma faz algo diferente:</p>
+            
+            <div class="aba-grid">
+                <div class="aba-item">
+                    <div class="aba-name">📋 Tarefa</div>
+                    <div class="aba-desc">O que precisa ser estudado HOJE. Comece por aqui!</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">📝 Feedback</div>
+                    <div class="aba-desc">Registrar quando terminar de estudar um tema</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">📔 Diário</div>
+                    <div class="aba-desc">Anotar aprendizados e criar cards de revisão</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">📝 Caderno</div>
+                    <div class="aba-desc">Anotações detalhadas e Hot Topics por tema</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">📅 Agenda</div>
+                    <div class="aba-desc">Ver revisões futuras e atrasados</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">📊 Dados</div>
+                    <div class="aba-desc">Lista todos os temas cadastrados</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">📈 Análises</div>
+                    <div class="aba-desc">Gráficos, estatísticas e painel VRVS 3P</div>
+                </div>
+                <div class="aba-item">
+                    <div class="aba-name">💾 Backup</div>
+                    <div class="aba-desc">Exportar e importar dados</div>
+                </div>
+            </div>
+            
+            <div class="card cobre">
+                <div class="card-title">💡 Dica de Ouro</div>
+                <p>No dia a dia, as 3 abas principais são:</p>
+                <ul>
+                    <li><strong>Tarefa</strong> → Ver o que estudar</li>
+                    <li><strong>Diário</strong> → Registrar aprendizados</li>
+                    <li><strong>Feedback</strong> → Registrar que estudou</li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- PRIMEIRO USO -->
+        <section id="primeiro-uso" class="section">
+            <h2 class="section-title"><span class="emoji">🚀</span> Primeiro Uso</h2>
+            
+            <p>Se a plataforma estiver vazia, é necessário cadastrar os temas primeiro.</p>
+            
+            <h3>Cadastrando um Tema</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Ir na aba Dados</h4>
+                <p>Tocar em <strong>"📊 Dados"</strong> no menu superior.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Tocar em "Novo Tema"</h4>
+                <p>Preencher: <strong>Área</strong> (ex: Joelho), <strong>Tema</strong> (ex: LCA) e <strong>Prioridade</strong> (1 a 5, sendo 5 = mais importante).</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Salvar</h4>
+                <p>Tocar em <strong>"Cadastrar"</strong>. Pronto! O tema está na plataforma.</p>
+            </div>
+            
+            <h3>Registrando uma Sessão de Estudo</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Ir na aba Feedback</h4>
+                <p>Depois de estudar um tema, ir em <strong>"📝 Feedback"</strong>.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Selecionar o tema</h4>
+                <p>Escolher o tema que foi estudado no campo "Tema".</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Informar o rendimento</h4>
+                <p>De 0 a 100: quanto foi aprendido?</p>
+                <ul>
+                    <li><strong>0-50:</strong> Preciso estudar mais</li>
+                    <li><strong>50-80:</strong> Aprendi bem</li>
+                    <li><strong>80-100:</strong> Dominei o tema</li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h4>Registrar</h4>
+                <p>Tocar em <strong>"✅ Registrar Sessão"</strong>.</p>
+            </div>
+            
+            <div class="highlight">
+                <div class="highlight-title">🎯 O que acontece automaticamente?</div>
+                <p>Quando uma sessão é registrada, a plataforma:</p>
+                <ul>
+                    <li>✅ Atualiza o número de sessões</li>
+                    <li>✅ Calcula quando revisar</li>
+                    <li>✅ Mostra na aba Tarefa quando for hora</li>
+                </ul>
+                <p style="margin-bottom: 0;"><strong>Não é necessário fazer nada!</strong> A plataforma cuida de tudo.</p>
+            </div>
+        </section>
+        
+        <!-- PERFIS E TEOT -->
+        <section id="perfis-teot" class="section">
+            <h2 class="section-title"><span class="emoji">👤</span> Perfis de estudo e TEOT / VIDA</h2>
+            
+            <p>A VRVS permite <strong>vários perfis</strong> no mesmo aparelho. Cada perfil tem os <strong>próprios temas, histórico, diário e anotações</strong> guardados separadamente.</p>
+            
+            <div class="card">
+                <div class="card-title">Trocar de perfil</div>
+                <p>Na zona de <strong>configuração / cópia de segurança (Backup)</strong>, use o seletor de perfil para ativar o perfil correto antes de estudar. O nome apresentado pode ser personalizado (nome de exibição) sem perder os dados.</p>
+            </div>
+            
+            <div class="card cobre">
+                <div class="card-title">Perfil TEOT — 2.ª fase (VIDA)</div>
+                <p>Para quem usa o fluxo TEOT em fase VIDA, existe um <strong>Diário</strong> dedicado a esse contexto. As <strong>anotações</strong> do Caderno e as entradas do <strong>Diário</strong> são coisas diferentes no armazenamento: não assuma que tudo aparece no mesmo sítio.</p>
+                <p style="margin-bottom: 0;">Se notar falta de notas após mudanças ou migrações, <strong>faça cópia de segurança (JSON)</strong> antes de pedir ajuda ou usar qualquer ferramenta de suporte na aba Backup.</p>
+            </div>
+            
+            <div class="card warning">
+                <div class="card-title">Atualização da app no iPhone</div>
+                <p>O site é uma <strong>PWA</strong>: depois de um deploy novo, pode ser preciso fechar a app da pasta completa, voltar a abrir pela ícone na Tela de Início ou limpar cache do site no Safari se a versão antiga “grudar”.</p>
+            </div>
+        </section>
+        
+        <!-- DIÁRIO -->
+        <section id="diario" class="section">
+            <h2 class="section-title"><span class="emoji">📔</span> Diário de Aprendizados</h2>
+            
+            <p>O Diário é onde são registradas coisas aprendidas, dúvidas tiradas, pontos importantes.</p>
+            
+            <div class="highlight cobre">
+                <div class="highlight-title">💡 Duas formas de usar o Diário</div>
+                <ul>
+                    <li><strong>Só anotação:</strong> Registra e pronto. Fica salvo mas não vira card de revisão.</li>
+                    <li><strong>Com VRVS 3P:</strong> Vira um card que aparece automaticamente para revisar depois!</li>
+                </ul>
+            </div>
+            
+            <h3>Criando uma Entrada</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Ir na aba Diário → Tocar em "+ Nova"</h4>
+                <p>Um modal vai abrir para preenchimento.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Preencher os campos</h4>
+                <ul>
+                    <li><strong>Área:</strong> A área do tema (ex: Coluna)</li>
+                    <li><strong>Tema:</strong> O tema específico (ex: Espondilolistese)</li>
+                    <li><strong>Tópico/Pergunta:</strong> O que foi aprendido ou quer lembrar</li>
+                    <li><strong>Resposta:</strong> A explicação ou resposta</li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Quer que vire card de revisão?</h4>
+                <p>Marcar o checkbox <strong>"📅 Incluir nas revisões programadas (VRVS 3P)"</strong>.</p>
+                <p>Se marcar, esse tópico vai aparecer para revisar automaticamente nos próximos dias!</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h4>Salvar</h4>
+                <p>Tocar em <strong>"Salvar"</strong>. Pronto!</p>
+            </div>
+        </section>
+        
+        <!-- VRVS 3P -->
+        <section id="vrvs3p" class="section">
+            <h2 class="section-title"><span class="emoji">🔄</span> Sistema VRVS 3P (Revisão Espaçada)</h2>
+            
+            <p>O VRVS 3P é o sistema de revisão espaçada da plataforma. Ele funciona assim:</p>
+            
+            <div class="card">
+                <div class="card-title">🧠 Como funciona?</div>
+                <ol>
+                    <li>Uma entrada é criada no Diário com VRVS 3P marcado</li>
+                    <li>No dia seguinte, ela aparece para revisão</li>
+                    <li>A resposta é dada: <strong>lembrou</strong> ou <strong>esqueceu</strong></li>
+                    <li>O sistema agenda a próxima revisão baseado na resposta</li>
+                    <li>Quanto mais acertos, mais tempo até a próxima revisão</li>
+                </ol>
+            </div>
+            
+            <h3>Os 3 Botões de Resposta</h3>
+            
+            <p>Quando um card é revisado, escolhe-se uma das opções:</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+                <span class="btn-demo btn-esqueci">❌ ESQUECI</span>
+                <span class="btn-demo btn-lembrei">👍 LEMBREI</span>
+                <span class="btn-demo btn-facil">😌 FÁCIL</span>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">O que cada botão faz?</div>
+                <ul>
+                    <li><strong style="color: var(--danger);">❌ ESQUECI:</strong> Não lembrou. O card volta em breve (estágio recua).</li>
+                    <li><strong style="color: var(--warning);">👍 LEMBREI:</strong> Lembrou! Próxima revisão em mais dias (sobe 1 estágio).</li>
+                    <li><strong style="color: var(--success);">😌 FÁCIL:</strong> Muito fácil! Próxima revisão ainda mais distante (sobe 2 estágios).</li>
+                </ul>
+            </div>
+            
+            <h3>Onde revisar os cards?</h3>
+            
+            <div class="card cobre">
+                <div class="card-title">📋 Pela aba Tarefas</div>
+                <p>No topo da aba Tarefas, aparece:</p>
+                <ul>
+                    <li><strong>📅 REVISÕES DO DIA:</strong> Mostra quantos cards há para revisar hoje</li>
+                    <li>Tocar em <strong>"🔁 REVISAR TODOS"</strong> para começar a sessão</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">📔 Pela aba Diário</div>
+                <p>Na aba Diário, tocar em <strong>"🔄 Sessão"</strong> (ao lado de "📋 Lista").</p>
+                <ul>
+                    <li><strong>Revisão programada:</strong> Só os cards do dia (valendo!)</li>
+                    <li><strong>Treino livre:</strong> Treinar qualquer card (não conta)</li>
+                </ul>
+            </div>
+            
+            <div class="highlight success">
+                <div class="highlight-title">💡 Dica: Ser honesto!</div>
+                <p>Se não lembrou, marcar "ESQUECI". Isso ajuda o sistema a calcular melhor quando deve revisar de novo. Não adianta mentir pro sistema!</p>
+            </div>
+        </section>
+        
+        <!-- ALGORITMO -->
+        <section id="algoritmo" class="section">
+            <h2 class="section-title"><span class="emoji">🧮</span> O Algoritmo VRVS 3P</h2>
+            
+            <p>O VRVS 3P é um sistema de revisão espaçada inspirado no FSRS (Free Spaced Repetition Scheduler), mas simplificado e calibrado para o contexto de preparação para provas.</p>
+            
+            <div class="highlight">
+                <div class="highlight-title">🎯 Filosofia do Algoritmo</div>
+                <p>A ideia central é: <strong>quanto mais vezes você lembra de algo, mais tempo pode esperar antes de revisar novamente.</strong></p>
+                <p style="margin-bottom: 0;">O VRVS 3P usa <strong>11 estágios</strong> (0 a 10), cada um com um intervalo de revisão específico.</p>
+            </div>
+            
+            <h3>📊 Tabela de Estágios e Intervalos</h3>
+            
+            <p>Cada card tem um <strong>estágio</strong>. O estágio determina em quantos dias será a próxima revisão:</p>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Estágio</th>
+                        <th>Intervalo (dias)</th>
+                        <th>Retenção Nominal</th>
+                        <th>Classificação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0</td>
+                        <td>1 dia</td>
+                        <td>40%</td>
+                        <td>🆕 Novo</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>2 dias</td>
+                        <td>48%</td>
+                        <td>🆕 Novo</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>4 dias</td>
+                        <td>56%</td>
+                        <td>🔧 Fixando</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>7 dias</td>
+                        <td>64%</td>
+                        <td>🔧 Fixando</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td>4</td>
+                        <td>12 dias</td>
+                        <td>72%</td>
+                        <td>📚 Maduro</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td>5</td>
+                        <td>20 dias</td>
+                        <td>80%</td>
+                        <td>📚 Maduro</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td>6</td>
+                        <td>35 dias</td>
+                        <td>86%</td>
+                        <td>📚 Maduro</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>60 dias</td>
+                        <td>90%</td>
+                        <td>✅ Consolidado</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>90 dias</td>
+                        <td>93%</td>
+                        <td>✅ Consolidado</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>135 dias</td>
+                        <td>96%</td>
+                        <td>✅ Consolidado</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>200 dias</td>
+                        <td>98%</td>
+                        <td>✅ Consolidado</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>🔄 Regras de Transição</h3>
+            
+            <p>O que acontece quando você responde cada botão:</p>
+            
+            <div class="card danger">
+                <div class="card-title">❌ ESQUECI</div>
+                <ul>
+                    <li>Se estágio ≤ 1 → <strong>Volta para estágio 0</strong></li>
+                    <li>Se estágio ≥ 2 → <strong>Desce 2 estágios</strong> (ex: 6 → 4)</li>
+                </ul>
+                <p style="margin-bottom: 0;"><strong>Resultado:</strong> O intervalo diminui e o card volta mais cedo.</p>
+            </div>
+            
+            <div class="card warning">
+                <div class="card-title">👍 LEMBREI</div>
+                <ul>
+                    <li><strong>Sobe 1 estágio</strong> (até o máximo de 10)</li>
+                </ul>
+                <p style="margin-bottom: 0;"><strong>Resultado:</strong> O intervalo aumenta progressivamente.</p>
+            </div>
+            
+            <div class="card success">
+                <div class="card-title">😌 FÁCIL</div>
+                <ul>
+                    <li><strong>Sobe 2 estágios</strong> (até o máximo de 10)</li>
+                </ul>
+                <p style="margin-bottom: 0;"><strong>Resultado:</strong> O intervalo aumenta mais rapidamente.</p>
+            </div>
+            
+            <h3>📈 Exemplo Prático</h3>
+            
+            <div class="card">
+                <div class="card-title">Cenário: Card sobre "LCA"</div>
+                <ol>
+                    <li><strong>Dia 1:</strong> Card criado → Estágio 0 → Revisão amanhã (1 dia)</li>
+                    <li><strong>Dia 2:</strong> LEMBREI → Estágio 1 → Revisão em 2 dias</li>
+                    <li><strong>Dia 4:</strong> LEMBREI → Estágio 2 → Revisão em 4 dias</li>
+                    <li><strong>Dia 8:</strong> FÁCIL → Estágio 4 → Revisão em 12 dias</li>
+                    <li><strong>Dia 20:</strong> LEMBREI → Estágio 5 → Revisão em 20 dias</li>
+                    <li><strong>Dia 40:</strong> ESQUECI → Estágio 3 → Revisão em 7 dias</li>
+                    <li><strong>Dia 47:</strong> LEMBREI → Estágio 4 → Revisão em 12 dias</li>
+                </ol>
+                <p style="margin-bottom: 0;">Note como o sistema se adapta: quando erra, volta. Quando acerta, avança.</p>
+            </div>
+            
+            <h3>🆚 VRVS 3P vs FSRS</h3>
+            
+            <div class="highlight cobre">
+                <div class="highlight-title">Comparação Honesta</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Aspecto</th>
+                            <th>FSRS</th>
+                            <th>VRVS 3P</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Parâmetros</td>
+                            <td>19+ parâmetros adaptativos</td>
+                            <td>Tabela fixa de 11 estágios</td>
+                        </tr>
+                        <tr>
+                            <td>Aprendizado</td>
+                            <td>Aprende com os dados</td>
+                            <td>Valores pré-calibrados</td>
+                        </tr>
+                        <tr>
+                            <td>Complexidade</td>
+                            <td>Alta</td>
+                            <td>Simples de entender</td>
+                        </tr>
+                        <tr>
+                            <td>Calibração</td>
+                            <td>Automática</td>
+                            <td>Manual (para TEOT)</td>
+                        </tr>
+                        <tr>
+                            <td>Ideal para</td>
+                            <td>Power users, milhares de cards</td>
+                            <td>Estudo focado, dezenas/centenas de cards</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 15px; margin-bottom: 0;"><strong>Resumo:</strong> O VRVS 3P é um FSRS simplificado e determinístico, calibrado para o contexto de preparação de prova em 3-6 meses.</p>
+            </div>
+        </section>
+        
+        <!-- PAINEL DE SAÚDE -->
+        <section id="painel" class="section">
+            <h2 class="section-title"><span class="emoji">📊</span> Painel de Saúde VRVS 3P</h2>
+            
+            <p>O Painel de Saúde fica na aba <strong>Análises → Resumo</strong>. Ele mostra o status geral dos cards de revisão.</p>
+            
+            <h3>🧮 Como é Calculada a Retenção?</h3>
+            
+            <div class="card">
+                <div class="card-title">O Cálculo</div>
+                <p>Cada estágio tem uma <strong>retenção nominal</strong> (veja tabela acima).</p>
+                <p>A <strong>retenção global</strong> é a <strong>média simples</strong> das retenções nominais de todos os cards ativos.</p>
+                <p style="margin-bottom: 0;"><strong>Exemplo:</strong> Se todos os cards estão no estágio 3, a retenção global será 64%.</p>
+            </div>
+            
+            <h3>📊 O que Significa a Barra?</h3>
+            
+            <p>A barra de retenção mostra visualmente a média de retenção:</p>
+            
+            <div class="card danger">
+                <div class="card-title">🔴 Baixa (< 65%)</div>
+                <div class="progress-demo"><div class="fill baixa"></div></div>
+                <p style="margin-bottom: 0;">A maioria dos cards está em estágios iniciais. Continuar revisando para consolidar.</p>
+            </div>
+            
+            <div class="card warning">
+                <div class="card-title">🟡 Média (65% - 79%)</div>
+                <div class="progress-demo"><div class="fill media"></div></div>
+                <p style="margin-bottom: 0;">Progresso bom! Alguns temas já estão fixando, outros ainda precisam de atenção.</p>
+            </div>
+            
+            <div class="card success">
+                <div class="card-title">🟢 Alta (≥ 80%)</div>
+                <div class="progress-demo"><div class="fill alta"></div></div>
+                <p style="margin-bottom: 0;">Excelente! A maioria dos cards está em estágios avançados. O conteúdo está consolidado.</p>
+            </div>
+            
+            <h3>📋 As Métricas do Painel</h3>
+            
+            <div class="card">
+                <div class="card-title">O que cada número significa</div>
+                <ul>
+                    <li><strong>XX ativos:</strong> Total de cards com VRVS 3P ativo</li>
+                    <li><strong>X para hoje:</strong> Quantos cards vencem hoje (precisam ser revisados)</li>
+                    <li><strong>X atrasados:</strong> Cards que já passaram da data de revisão</li>
+                </ul>
+            </div>
+            
+            <h3>📝 As Mensagens</h3>
+            
+            <p>A mensagem do painel combina <strong>retenção + pendências</strong>:</p>
+            
+            <div class="highlight">
+                <div class="highlight-title">Interpretação das Mensagens</div>
+                <ul>
+                    <li><strong>"Excelente! Consolidado e em dia"</strong> → Retenção alta + sem pendências</li>
+                    <li><strong>"Em dia, mas retenção baixa"</strong> → Sem pendências, mas média de estágios baixa</li>
+                    <li><strong>"Tópicos para revisar hoje"</strong> → Tem cards vencendo hoje</li>
+                    <li><strong>"Existem tópicos atrasados"</strong> → Cards passaram da data de revisão</li>
+                </ul>
+            </div>
+            
+            <div class="card cobre">
+                <div class="card-title">💡 Como Subir a Retenção?</div>
+                <ol>
+                    <li><strong>Revisar todos os dias:</strong> Responder os cards quando vencem</li>
+                    <li><strong>Ser honesto:</strong> Marcar ESQUECI quando não lembrar</li>
+                    <li><strong>Usar FÁCIL com moderação:</strong> Só quando realmente dominar</li>
+                    <li><strong>Dar tempo:</strong> A retenção sobe conforme os cards avançam de estágio</li>
+                </ol>
+                <p style="margin-bottom: 0;">É um processo gradual. A barra vai ficando mais verde ao longo das semanas.</p>
+            </div>
+        </section>
+        
+        <!-- CADERNO -->
+        <section id="caderno" class="section">
+            <h2 class="section-title"><span class="emoji">📝</span> Caderno e Hot Topics</h2>
+            
+            <p>O Caderno é onde são feitas anotações mais detalhadas sobre cada tema.</p>
+            
+            <h3>🔥 O que são Hot Topics?</h3>
+            
+            <div class="card cobre">
+                <div class="card-title">🔥 Hot Topics = Pontos-Chave</div>
+                <p>São os pontos mais importantes do tema, o "esqueleto" que precisa ser conhecido.</p>
+                <p><strong>Exemplo para "LCA":</strong></p>
+                <ul>
+                    <li>1) Mecanismo de lesão</li>
+                    <li>2) Testes clínicos (Lachman, Pivot-Shift)</li>
+                    <li>3) Indicações cirúrgicas</li>
+                    <li>4) Técnica (BTB vs Hamstrings)</li>
+                    <li>5) Complicações</li>
+                </ul>
+            </div>
+            
+            <h3>Como usar o Caderno</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Ir na aba Caderno</h4>
+                <p>Tocar em <strong>"📝 Caderno"</strong> no menu.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Selecionar a área</h4>
+                <p>Escolher a área no filtro (ex: Joelho).</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Expandir o tema</h4>
+                <p>Tocar no tema que quer editar. Aparecerá:</p>
+                <ul>
+                    <li><strong>🔥 Hot Topics:</strong> Pontos-chave</li>
+                    <li><strong>📝 Anotações:</strong> Texto mais detalhado</li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h4>Editar e salvar</h4>
+                <p>Tocar no botão de editar, preencher, e salvar.</p>
+            </div>
+            
+            <div class="highlight">
+                <div class="highlight-title">💡 Onde aparecem os Hot Topics?</div>
+                <p>Quando um tema é expandido na aba <strong>Tarefas</strong>, os Hot Topics aparecem ali! Assim já se sabe o que precisa estudar antes de começar.</p>
+            </div>
+        </section>
+        
+        <!-- FLUXO DIÁRIO -->
+        <section id="fluxo" class="section">
+            <h2 class="section-title"><span class="emoji">🎯</span> Fluxo de Uso Diário</h2>
+            
+            <p>Como usar a plataforma no dia a dia:</p>
+            
+            <div class="flow-box">
+                <h4>🌅 Fluxo Diário Recomendado</h4>
+                <div class="flow-steps">
+                    <div class="flow-step">📋 Abrir aba Tarefas</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">🔄 Revisar cards VRVS 3P</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">📚 Estudar um tema</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">📔 Anotar no Diário</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">📝 Registrar no Feedback</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">☀️ De Manhã (10-15 min)</div>
+                <ol>
+                    <li>Abrir a aba <strong>Tarefas</strong></li>
+                    <li>Ver o box <strong>"📅 Revisões do Dia"</strong></li>
+                    <li>Tocar em <strong>"🔁 Revisar Todos"</strong> e responder os cards</li>
+                    <li>Escolher 1-2 temas para estudar hoje</li>
+                </ol>
+            </div>
+            
+            <div class="card cobre">
+                <div class="card-title">📚 Durante o Estudo</div>
+                <ol>
+                    <li>Ver os <strong>Hot Topics</strong> do tema (expandindo o card na aba Tarefas)</li>
+                    <li>Estudar o conteúdo</li>
+                    <li>Quando aprender algo importante, anotar no <strong>Diário</strong></li>
+                    <li>Marcar <strong>VRVS 3P</strong> se quiser revisar depois</li>
+                </ol>
+            </div>
+            
+            <div class="card success">
+                <div class="card-title">✅ Depois de Estudar</div>
+                <ol>
+                    <li>Ir na aba <strong>Feedback</strong></li>
+                    <li>Selecionar o tema que estudou</li>
+                    <li>Informar o rendimento (0-100)</li>
+                    <li>Tocar em <strong>"✅ Registrar Sessão"</strong></li>
+                </ol>
+                <p style="margin-bottom: 0;">Pronto! A plataforma calcula automaticamente quando revisar.</p>
+            </div>
+        </section>
+        
+        <!-- SUPORTE DADOS -->
+        <section id="suporte-dados" class="section">
+            <h2 class="section-title"><span class="emoji">🔧</span> Dados e ferramentas de suporte (avançado)</h2>
+            
+            <p>Na aba <strong>Backup</strong> podem existir botões de <strong>diagnóstico</strong> pensados para investigar o armazenamento local (inspect/dump de chaves, leitura de quarentena, pesquisa por datas, etc.).</p>
+            
+            <div class="card danger">
+                <div class="card-title">Usar só com critério</div>
+                <ul style="margin-bottom: 0;">
+                    <li>Leitura e exportação de dados costumam ser seguras.</li>
+                    <li>Ações como <strong>migração</strong> ou limpeza podem <strong>alterar</strong> o diário ou criar cópias de segurança automáticas — só depois de entender o que cada botão faz e, de preferência, com <strong>JSON de backup</strong> recente.</li>
+                    <li>Em caso de dúvida, peça orientação em vez de experimentar ao acaso.</li>
+                </ul>
+            </div>
+            
+            <div class="card success">
+                <div class="card-title">Boa prática</div>
+                <p style="margin-bottom: 0;">Antes de qualquer operação de suporte: <strong>exportar backup completo (JSON)</strong> e guardar uma cópia (Drive, e-mail, etc.).</p>
+            </div>
+        </section>
+        
+        <!-- BACKUP -->
+        <section id="backup" class="section">
+            <h2 class="section-title"><span class="emoji">💾</span> Backup (Importante!)</h2>
+            
+            <div class="card danger">
+                <div class="card-title">⚠️ Fazer backup regularmente!</div>
+                <p>Os dados ficam salvos no celular. Se trocar de celular ou reinstalar o app, pode perder tudo.</p>
+                <p style="margin-bottom: 0;"><strong>Solução:</strong> Fazer backup semanal ou mensal.</p>
+            </div>
+            
+            <h3>Como fazer backup</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Ir na aba Backup</h4>
+                <p>Tocar em <strong>"💾 Backup"</strong> no menu.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Exportar o backup completo</h4>
+                <p>Tocar em <strong>"📦 Exportar Backup Completo (JSON)"</strong>.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Guardar o arquivo</h4>
+                <p>Salvar o arquivo em algum lugar seguro:</p>
+                <ul>
+                    <li>iCloud Drive</li>
+                    <li>Google Drive</li>
+                    <li>Email para si mesmo</li>
+                </ul>
+            </div>
+            
+            <div class="highlight success">
+                <div class="highlight-title">✅ O backup JSON salva TUDO</div>
+                <ul>
+                    <li>Todos os temas</li>
+                    <li>Todas as sessões registradas</li>
+                    <li>Todas as entradas do Diário (com VRVS 3P)</li>
+                    <li>Todas as anotações do Caderno</li>
+                    <li>Hot Topics</li>
+                    <li>Configurações</li>
+                </ul>
+            </div>
+            
+            <h3>Como restaurar backup</h3>
+            
+            <p>Se precisar restaurar os dados:</p>
+            <ol>
+                <li>Ir na aba <strong>Backup</strong></li>
+                <li>Tocar em <strong>"📥 Importar Backup (JSON)"</strong></li>
+                <li>Selecionar o arquivo que foi salvo</li>
+                <li>Confirmar a importação</li>
+            </ol>
+            
+            <h3>Exportar dados para análise</h3>
+            
+            <div class="card">
+                <div class="card-title">📊 Analisando os dados fora da plataforma</div>
+                <p>O arquivo JSON exportado pode ser usado para:</p>
+                <ul>
+                    <li>Analisar em Python ou Excel</li>
+                    <li>Criar gráficos personalizados</li>
+                    <li>Estudar o comportamento do algoritmo</li>
+                    <li>Fazer simulações</li>
+                </ul>
+                <p style="margin-bottom: 0;">O JSON contém todos os dados: estágios, intervalos, datas de revisão, histórico completo.</p>
+            </div>
+        </section>
+        
+        <!-- DICAS FINAIS -->
+        <section class="section">
+            <h2 class="section-title"><span class="emoji">✨</span> Dicas Finais</h2>
+            
+            <div class="card">
+                <div class="card-title">🎯 Resumo: O que fazer todos os dias</div>
+                <ol>
+                    <li><strong>Revisar cards VRVS 3P</strong> (10-15 min de manhã)</li>
+                    <li><strong>Estudar</strong> pelo menos 1 tema</li>
+                    <li><strong>Anotar</strong> aprendizados importantes no Diário</li>
+                    <li><strong>Registrar</strong> a sessão no Feedback</li>
+                </ol>
+            </div>
+            
+            <div class="card cobre">
+                <div class="card-title">💡 Dicas de Ouro</div>
+                <ul>
+                    <li><strong>Ser honesto nas respostas:</strong> Se não lembrou, marcar "ESQUECI"</li>
+                    <li><strong>Fazer backup semanal:</strong> Exportar o JSON regularmente</li>
+                    <li><strong>Usar a aba Tarefas:</strong> Ela mostra exatamente o que precisa ser feito</li>
+                    <li><strong>Preencher os Hot Topics:</strong> Ajuda muito na hora de estudar</li>
+                    <li><strong>Explorar:</strong> Não ter medo de clicar nos botões!</li>
+                </ul>
+            </div>
+            
+            <div class="highlight success">
+                <div class="highlight-title">🚀 Pronto para começar!</div>
+                <p>Agora é só começar a usar. A plataforma foi feita para ser simples — o jeito é pego rapidinho!</p>
+                <p style="margin-bottom: 0;">Se tiver dúvidas, voltar neste manual a qualquer momento. 😊</p>
+            </div>
+        </section>
+        
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="footer-title">🧠 Plataforma VRVS</div>
+            <p>Manual de Uso • Versão 3.1 (rev. maio/2026)</p>
+            <p style="margin-top: 10px; font-size: 12px;">Quando a organização encontra a tecnologia</p>
+        </div>
+        
+    </div>
+</body>
+</html>
